@@ -80,7 +80,6 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         food_item_id: body.food_item_id || null,
         custom_name: body.custom_name || "Repas",
-        meal_type: body.meal_type || "repas",
         portion_g: Number(body.portion_g || 0),
         calories: Number(body.calories || 0),
         protein_g: Number(body.protein_g || 0),
