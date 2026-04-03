@@ -151,7 +151,30 @@ export default function ScannerPage() {
         )
     }
 
+    function buildMealName(selectedFoods: any[]) {
+
+        if (selectedFoods.length === 0) return "Repas"
+
+        const base = selectedFoods.find(f =>
+            f.category?.toLowerCase().includes("glucide")
+        )
+
+        const baseName = base?.name || base?.name_fr
+
+        const others = selectedFoods.filter(f => f !== base)
+        const otherNames = others.map(f => f.name || f.name_fr)
+
+        if (!baseName) {
+            return selectedFoods.map(f => f.name || f.name_fr).join(", ")
+        }
+
+        if (otherNames.length === 0) return baseName
+
+        return `${baseName} avec ${otherNames.join(", ")}`
+    }
+
     const handleSaveMeal = async () => {
+        const mealName = buildMealName(selectedFoods)
         if (selectedFoods.length === 0) return
 
         setIsSaving(true)
@@ -169,7 +192,7 @@ export default function ScannerPage() {
                     },
                     body: JSON.stringify({
                         food_item_id: food.id,
-                        custom_name: food.name || food.name_fr,
+                        custom_name: mealName,
                         meal_type: 'dejeuner',
                         portion_g: food.default_portion_g || 200,
                         calories: food.calories_per_100g,
