@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const createSupabaseServer = (req: NextRequest) => {
+// 🔐 client avec token user
+const createUserClient = (req: NextRequest) => {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // ✅ IMPORTANT
         {
             global: {
                 headers: {
@@ -15,9 +16,16 @@ const createSupabaseServer = (req: NextRequest) => {
     )
 }
 
+// 🔥 client service role (DB full access)
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+
 // 🔥 GET
 export async function GET(req: NextRequest) {
-    const supabase = createSupabaseServer(req)
+    const supabase = createUserClient(req)
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -28,7 +36,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const date = searchParams.get('date')
 
-    let query = supabase
+    let query = supabaseAdmin
         .from('meals')
         .select('*')
         .eq('user_id', user.id)
@@ -43,26 +51,31 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query.order('logged_at', { ascending: false })
 
     if (error) {
+        console.log("❌ GET ERROR:", error)
         return NextResponse.json({ success: false, error: error.message })
     }
 
     return NextResponse.json({ success: true, data })
-
 }
+
 
 // 🔥 POST
 export async function POST(req: NextRequest) {
-    const supabase = createSupabaseServer(req)
+    const supabase = createUserClient(req)
 
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+        console.log("❌ NO USER")
         return NextResponse.json({ success: false, error: 'Non autorisé' })
     }
 
     const body = await req.json()
 
-    const { data, error } = await supabase
+    console.log("📥 BODY:", body)
+    console.log("👤 USER:", user.id)
+
+    const { data, error } = await supabaseAdmin
         .from('meals')
         .insert({
             user_id: user.id,
@@ -81,17 +94,20 @@ export async function POST(req: NextRequest) {
         .select()
         .single()
 
+    console.log("🧾 INSERT DATA:", data)
+    console.log("❌ INSERT ERROR:", error)
+
     if (error) {
         return NextResponse.json({ success: false, error: error.message })
     }
 
     return NextResponse.json({ success: true, data })
-
 }
 
-// 🔥 DELETE (NOUVEAU)
+
+// 🔥 DELETE
 export async function DELETE(req: NextRequest) {
-    const supabase = createSupabaseServer(req)
+    const supabase = createUserClient(req)
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -106,16 +122,15 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'ID manquant' })
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
         .from('meals')
         .delete()
         .eq('id', mealId)
-        .eq('user_id', user.id) // 🔒 sécurité
+        .eq('user_id', user.id)
 
     if (error) {
         return NextResponse.json({ success: false, error: error.message })
     }
 
     return NextResponse.json({ success: true })
-
 }
