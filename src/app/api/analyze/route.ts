@@ -18,6 +18,13 @@ function normalize(text: string) {
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
 }
+const SYNONYMS: Record<string, string[]> = {
+    spaghetti: ["pasta", "noodles", "nouilles"],
+    riz: ["rice"],
+    poulet: ["chicken"],
+    thon: ["tuna"],
+    oeuf: ["egg"],
+}
 
 // 🔥 SCORE
 function scoreFood(itemName: string, food: any) {
@@ -32,14 +39,24 @@ function scoreFood(itemName: string, food: any) {
     let score = 0
 
     for (const name of names) {
+
+        if (input === name) score += 100
+
         if (input.includes(name)) score += 50
-        if (name.includes(input)) score += 30
+        if (name.includes(input)) score += 40
 
         const inputWords = input.split(" ")
         const nameWords = name.split(" ")
 
         for (const word of inputWords) {
-            if (nameWords.includes(word)) score += 10
+            if (nameWords.includes(word)) score += 15
+        }
+
+        // 🔥 SYNONYMS BOOST
+        const syns = SYNONYMS[name] || []
+
+        for (const syn of syns) {
+            if (input.includes(syn)) score += 60
         }
     }
 
