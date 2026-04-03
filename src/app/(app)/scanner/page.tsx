@@ -137,12 +137,13 @@ export default function ScannerPage() {
             // ✅ Pour chaque composant :
             // - S'il a des suggestions BD → les afficher normalement
             // - S'il n'a aucun match BD → créer une suggestion "fromAI" avec les valeurs IA
-            const enriched = (json.data as ScanResultItem[]).flatMap(
-                (item): EnrichedSuggestion[] => {
+            const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[])
+                .flatMap((item): EnrichedSuggestion[] => {
+
                     const suggestions = item.suggestions ?? []
 
                     if (suggestions.length > 0) {
-                        return suggestions.map(suggestion => ({
+                        return suggestions.map((suggestion): EnrichedSuggestion => ({
                             ...suggestion,
                             portion_g: item.portion_g ?? 0,
                             calories_detected: item.calories_detected ?? 0,
@@ -172,8 +173,7 @@ export default function ScannerPage() {
                         detected: item.detected ?? "Inconnu",
                         fromAI: true,
                     }]
-                }
-            )
+                })
 
             console.log("✅ ENRICHED SUGGESTIONS:", enriched)
             setSuggestions(enriched)
@@ -313,6 +313,37 @@ export default function ScannerPage() {
         }
     }
 
+    // ✅ Sauvegarder un aliment IA dans food_items
+    const saveAIFoodToDB = async (food: EnrichedSuggestion, session: any) => {
+        const factor = food.portion_g > 0 ? 100 / food.portion_g : 1
+
+        try {
+            const res = await fetch('/api/foods', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    name_fr: food.name,
+                    category: 'plats_composes',
+                    calories_per_100g: Math.round(food.calories * factor),
+                    protein_per_100g: Math.round(food.protein_g * factor * 10) / 10,
+                    carbs_per_100g: Math.round(food.carbs_g * factor * 10) / 10,
+                    fat_per_100g: Math.round(food.fat_g * factor * 10) / 10,
+                    default_portion_g: food.portion_g,
+                    verified: false,
+                    origin_country: [],
+                })
+            })
+            const json = await res.json()
+            console.log(`✅ FOOD SAVED TO DB: ${food.name}`, json)
+        } catch (err) {
+            // On ne bloque pas le repas si la sauvegarde BD échoue
+            console.error(`❌ Impossible de sauvegarder ${food.name} en BD:`, err)
+        }
+    }
+
     const handleSaveMeal = async () => {
         if (selectedFoods.length === 0) return
         setIsSaving(true)
@@ -320,6 +351,13 @@ export default function ScannerPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
+
+            // ✅ Sauvegarder en BD tous les aliments fromAI sélectionnés
+            const aiFoods = selectedFoods.filter(f => f.fromAI)
+            if (aiFoods.length > 0) {
+                console.log(`📥 Sauvegarde de ${aiFoods.length} aliment(s) IA en BD...`)
+                await Promise.all(aiFoods.map(food => saveAIFoodToDB(food, session)))
+            }
 
             const totals = getTotals()
             const finalMealName = mealName || selectedFoods.map(f => f.name).join(', ')
