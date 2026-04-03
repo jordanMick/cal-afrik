@@ -75,22 +75,27 @@ export async function POST(req: NextRequest) {
     console.log("📥 BODY:", body)
     console.log("👤 USER:", user.id)
 
+    // 🔥 SAFE DATA (ANTI BUG)
+    const mealData = {
+        user_id: user.id,
+        food_item_id: body.food_item_id || null,
+        custom_name: body.custom_name || "Repas",
+        meal_type: body.meal_type || "repas",
+        portion_g: Number(body.portion_g || 0),
+        calories: Number(body.calories || 0),
+        protein_g: Number(body.protein_g || 0),
+        carbs_g: Number(body.carbs_g || 0),
+        fat_g: Number(body.fat_g || 0),
+        image_url: body.image_url || null,
+        ai_confidence: Number(body.ai_confidence || 0),
+        logged_at: new Date().toISOString()
+    }
+
+    console.log("🚀 FINAL DATA:", mealData)
+
     const { data, error } = await supabaseAdmin
         .from('meals')
-        .insert({
-            user_id: user.id,
-            food_item_id: body.food_item_id,
-            custom_name: body.custom_name,
-            meal_type: body.meal_type,
-            portion_g: body.portion_g,
-            calories: body.calories,
-            protein_g: body.protein_g,
-            carbs_g: body.carbs_g,
-            fat_g: body.fat_g,
-            image_url: body.image_url || null,
-            ai_confidence: body.ai_confidence || null,
-            logged_at: new Date().toISOString()
-        })
+        .insert(mealData)
         .select()
         .single()
 
