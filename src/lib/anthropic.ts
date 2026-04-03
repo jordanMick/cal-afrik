@@ -39,7 +39,7 @@ export async function scanMealFromImage(
 ): Promise<ScanResult> {
     try {
         const response = await anthropic.messages.create({
-            model: 'claude-3-haiku-20240307', // ✅ modèle stable
+            model: 'claude-haiku-4-5-20251001', // ✅ modèle stable
             max_tokens: 500, // ✅ optimisation coût
             system: SCAN_SYSTEM_PROMPT,
             messages: [
