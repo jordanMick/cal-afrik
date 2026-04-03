@@ -174,8 +174,8 @@ export default function ScannerPage() {
     }
 
     const handleSaveMeal = async () => {
-        const mealName = buildMealName(selectedFoods)
         console.log("🚀 SENDING MEAL:", selectedFoods)
+
         if (selectedFoods.length === 0) return
 
         setIsSaving(true)
@@ -184,27 +184,59 @@ export default function ScannerPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            for (const food of selectedFoods) {
-                console.log("📡 CALLING API /api/meals")
-                await fetch('/api/meals', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify({
-                        food_item_id: food.id,
-                        custom_name: mealName,
-                        portion_g: food.default_portion_g || 200,
-                        calories: food.calories_per_100g,
-                        protein_g: food.protein_per_100g,
-                        carbs_g: food.carbs_per_100g,
-                        fat_g: food.fat_per_100g,
-                        image_url: capturedImage,
-                        ai_confidence: food.score || 100
-                    }),
-                })
-            }
+            // 🔥 NOM DU PLAT
+            const mealName = buildMealName(selectedFoods)
+
+            // 🔥 CALCUL TOTAL
+            const totalCalories = selectedFoods.reduce((sum, food) => {
+                const portion = food.default_portion_g || 200
+                return sum + (food.calories_per_100g * portion) / 100
+            }, 0)
+
+            const totalProtein = selectedFoods.reduce((sum, food) => {
+                const portion = food.default_portion_g || 200
+                return sum + (food.protein_per_100g * portion) / 100
+            }, 0)
+
+            const totalCarbs = selectedFoods.reduce((sum, food) => {
+                const portion = food.default_portion_g || 200
+                return sum + (food.carbs_per_100g * portion) / 100
+            }, 0)
+
+            const totalFat = selectedFoods.reduce((sum, food) => {
+                const portion = food.default_portion_g || 200
+                return sum + (food.fat_per_100g * portion) / 100
+            }, 0)
+
+            const totalPortion = selectedFoods.reduce((sum, food) => {
+                return sum + (food.default_portion_g || 200)
+            }, 0)
+
+            console.log("🔥 TOTAL KCAL:", totalCalories)
+
+            // 🔥 UN SEUL INSERT
+            console.log("📡 CALLING API /api/meals")
+
+            const res = await fetch('/api/meals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    custom_name: mealName,
+                    portion_g: totalPortion,
+                    calories: Math.round(totalCalories),
+                    protein_g: Math.round(totalProtein),
+                    carbs_g: Math.round(totalCarbs),
+                    fat_g: Math.round(totalFat),
+                    image_url: capturedImage,
+                    ai_confidence: 100
+                }),
+            })
+
+            const json = await res.json()
+            console.log("🔥 RESPONSE:", json)
 
             router.push('/journal')
 
@@ -320,6 +352,7 @@ export default function ScannerPage() {
                     ))}
                 </div>
             )}
+
 
             {selectedFoods.length > 0 && (
                 <div style={{
