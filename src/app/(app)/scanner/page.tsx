@@ -93,6 +93,10 @@ export default function ScannerPage() {
             })
 
             const json = await res.json()
+            console.log("🧠 RAW AI DATA:", json.data)
+            json.data.forEach((item: any, index: number) => {
+                console.log(`🍽️ Item ${index}:`, item.detected, item.portion_g)
+            })
 
             if (!json.success || !json.data) {
                 simulateAI()
