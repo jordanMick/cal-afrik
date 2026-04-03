@@ -54,7 +54,7 @@ function getTopMatches(itemName: string, foods: any[]) {
     }))
 
     return scored
-        .filter(s => s.score > 10)
+        .filter(s => s.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 3)
 }
@@ -91,7 +91,9 @@ export async function POST(req: Request) {
     try {
         const { images } = await req.json()
 
-        // 🔥 1. IA
+        const image = images[0]
+
+        // 🔥 1. IA (FIX IMAGE)
         const response = await anthropic.messages.create({
             model: "claude-3-haiku-20240307",
             max_tokens: 300,
@@ -103,8 +105,8 @@ export async function POST(req: Request) {
                             type: "image",
                             source: {
                                 type: "base64",
-                                media_type: "image/jpeg",
-                                data: images[0],
+                                media_type: image.mimeType || "image/jpeg", // ✅ FIX
+                                data: image.data, // ✅ FIX
                             },
                         },
                         {
