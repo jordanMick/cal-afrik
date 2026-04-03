@@ -195,7 +195,6 @@ export default function ScannerPage() {
                     body: JSON.stringify({
                         food_item_id: food.id,
                         custom_name: mealName,
-                        meal_type: 'dejeuner',
                         portion_g: food.default_portion_g || 200,
                         calories: food.calories_per_100g,
                         protein_g: food.protein_per_100g,
