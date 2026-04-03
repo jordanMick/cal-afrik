@@ -4,6 +4,18 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
+import type { ScanResultItem, FoodSuggestion } from '@/types'
+
+// Suggestion enrichie avec la portion détectée par l'IA
+interface EnrichedSuggestion extends FoodSuggestion {
+    portion_g: number
+    calories_detected: number
+    protein_detected: number
+    carbs_detected: number
+    fat_detected: number
+    confidence: number
+    detected: string
+}
 
 export default function ScannerPage() {
     const router = useRouter()
@@ -13,11 +25,13 @@ export default function ScannerPage() {
 
     const [image, setImage] = useState<string | null>(null)
     const [foods, setFoods] = useState<any[]>([])
-    const [selectedFoods, setSelectedFoods] = useState<any[]>([])
+    const [selectedFoods, setSelectedFoods] = useState<EnrichedSuggestion[]>([])
     const [isSaving, setIsSaving] = useState(false)
     const [isAnalyzing, setIsAnalyzing] = useState(false)
-    const [suggestions, setSuggestions] = useState<any[]>([])
+    const [suggestions, setSuggestions] = useState<EnrichedSuggestion[]>([])
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
+    const [mealName, setMealName] = useState<string>('')
+    const [totalCaloriesAI, setTotalCaloriesAI] = useState<number>(0)
 
     useEffect(() => {
         loadFoods()
@@ -27,10 +41,7 @@ export default function ScannerPage() {
         try {
             const res = await fetch('/api/foods')
             const json = await res.json()
-
-            if (json.success) {
-                setFoods(json.data)
-            }
+            if (json.success) setFoods(json.data)
         } catch (err) {
             console.error(err)
         }
@@ -38,7 +49,6 @@ export default function ScannerPage() {
 
     useEffect(() => {
         const file = (window as any).tempImage
-
         if (file && foods.length > 0) {
             processImage(file)
                 ; (window as any).tempImage = null
@@ -55,6 +65,8 @@ export default function ScannerPage() {
 
     const processImage = async (file: File) => {
         setIsAnalyzing(true)
+        setSelectedFoods([])
+        setSuggestions([])
 
         try {
             const previewUrl = URL.createObjectURL(file)
@@ -79,41 +91,39 @@ export default function ScannerPage() {
                     Authorization: `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    images: [
-                        {
-                            data: base64Image,
-                            mimeType: file.type
-                        }
-                    ]
+                    images: [{ data: base64Image, mimeType: file.type }]
                 })
             })
 
             const json = await res.json()
-
-            // 🔥 DEBUG COMPLET
-            console.log("🧠 RAW AI DATA:", json.data)
-
-            if (json.data) {
-                console.table(
-                    json.data.map((i: any) => ({
-                        detected: i.detected,
-                        portion: i.portion_g,
-                        suggestions: i.suggestions?.length || 0
-                    }))
-                )
-            }
+            console.log("🧠 RAW AI RESPONSE:", json)
 
             if (!json.success || !json.data) {
                 simulateAI()
                 return
             }
 
-            // 🔥 FLATTEN (IMPORTANT POUR TOI)
-            const flatFoods = json.data.flatMap((item: any) => item.suggestions || [])
+            // ✅ Stocker le nom du repas et total calories IA
+            setMealName(json.meal_name || 'Repas détecté')
+            setTotalCaloriesAI(json.total_calories || 0)
 
-            console.log("🔥 FLATTEN FOODS:", flatFoods)
+            // ✅ Transformer chaque composant : prendre la meilleure suggestion (score le plus haut)
+            // et l'enrichir avec les valeurs de portion de l'IA
+            const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[]).flatMap(item => {
+                return (item.suggestions || []).map(suggestion => ({
+                    ...suggestion,
+                    portion_g: item.portion_g,
+                    calories_detected: item.calories_detected,
+                    protein_detected: item.protein_detected,
+                    carbs_detected: item.carbs_detected,
+                    fat_detected: item.fat_detected,
+                    confidence: item.confidence,
+                    detected: item.detected,
+                }))
+            })
 
-            setSuggestions(flatFoods)
+            console.log("✅ ENRICHED SUGGESTIONS:", enriched)
+            setSuggestions(enriched)
 
         } catch (err) {
             console.error(err)
@@ -125,25 +135,40 @@ export default function ScannerPage() {
 
     const simulateAI = () => {
         const fitnessKeywords = ["riz", "poulet", "oeuf", "thon", "plantain"]
-
         const filtered = foods.filter(food =>
             fitnessKeywords.some(keyword =>
                 food.name_fr.toLowerCase().includes(keyword)
             )
         )
-
-        setSuggestions(filtered.length > 0 ? filtered.slice(0, 5) : foods.slice(0, 5))
+        // Simuler le format enrichi
+        const simulated: EnrichedSuggestion[] = (filtered.length > 0 ? filtered.slice(0, 5) : foods.slice(0, 5))
+            .map(food => ({
+                id: food.id,
+                name: food.name_fr,
+                score: 50,
+                calories: Math.round((food.calories_per_100g * (food.default_portion_g || 200)) / 100),
+                protein_g: Math.round((food.protein_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
+                carbs_g: Math.round((food.carbs_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
+                fat_g: Math.round((food.fat_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
+                portion_g: food.default_portion_g || 200,
+                calories_detected: Math.round((food.calories_per_100g * (food.default_portion_g || 200)) / 100),
+                protein_detected: Math.round((food.protein_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
+                carbs_detected: Math.round((food.carbs_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
+                fat_detected: Math.round((food.fat_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
+                confidence: 50,
+                detected: food.name_fr,
+            }))
+        setSuggestions(simulated)
     }
 
     const handleImageCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-
         await processImage(file)
     }
 
-    // ✅ MULTI
-    const selectFood = (food: any) => {
+    // ✅ Toggle sélection
+    const selectFood = (food: EnrichedSuggestion) => {
         setSelectedFoods(prev =>
             prev.find(f => f.id === food.id)
                 ? prev.filter(f => f.id !== food.id)
@@ -151,71 +176,31 @@ export default function ScannerPage() {
         )
     }
 
-    function buildMealName(selectedFoods: any[]) {
-
-        if (selectedFoods.length === 0) return "Repas"
-
-        const base = selectedFoods.find(f =>
-            f.category?.toLowerCase().includes("glucide")
-        )
-
-        const baseName = base?.name || base?.name_fr
-
-        const others = selectedFoods.filter(f => f !== base)
-        const otherNames = others.map(f => f.name || f.name_fr)
-
-        if (!baseName) {
-            return selectedFoods.map(f => f.name || f.name_fr).join(", ")
-        }
-
-        if (otherNames.length === 0) return baseName
-
-        return `${baseName} avec ${otherNames.join(", ")}`
+    // ✅ Calcul des totaux depuis les portions détectées par l'IA
+    const getTotals = () => {
+        return selectedFoods.reduce((acc, food) => ({
+            calories: acc.calories + food.calories,
+            protein_g: acc.protein_g + food.protein_g,
+            carbs_g: acc.carbs_g + food.carbs_g,
+            fat_g: acc.fat_g + food.fat_g,
+            portion_g: acc.portion_g + food.portion_g,
+        }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
     }
 
     const handleSaveMeal = async () => {
-        console.log("🚀 SENDING MEAL:", selectedFoods)
-
         if (selectedFoods.length === 0) return
-
         setIsSaving(true)
 
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            // 🔥 NOM DU PLAT
-            const mealName = buildMealName(selectedFoods)
+            const totals = getTotals()
 
-            // 🔥 CALCUL TOTAL
-            const totalCalories = selectedFoods.reduce((sum, food) => {
-                const portion = food.default_portion_g || 200
-                return sum + (food.calories_per_100g * portion) / 100
-            }, 0)
+            // Nom du repas = nom du repas IA ou noms des aliments sélectionnés
+            const finalMealName = mealName || selectedFoods.map(f => f.name).join(', ')
 
-            const totalProtein = selectedFoods.reduce((sum, food) => {
-                const portion = food.default_portion_g || 200
-                return sum + (food.protein_per_100g * portion) / 100
-            }, 0)
-
-            const totalCarbs = selectedFoods.reduce((sum, food) => {
-                const portion = food.default_portion_g || 200
-                return sum + (food.carbs_per_100g * portion) / 100
-            }, 0)
-
-            const totalFat = selectedFoods.reduce((sum, food) => {
-                const portion = food.default_portion_g || 200
-                return sum + (food.fat_per_100g * portion) / 100
-            }, 0)
-
-            const totalPortion = selectedFoods.reduce((sum, food) => {
-                return sum + (food.default_portion_g || 200)
-            }, 0)
-
-            console.log("🔥 TOTAL KCAL:", totalCalories)
-
-            // 🔥 UN SEUL INSERT
-            console.log("📡 CALLING API /api/meals")
+            console.log("🚀 SAVING MEAL:", { finalMealName, totals })
 
             const res = await fetch('/api/meals', {
                 method: 'POST',
@@ -224,19 +209,21 @@ export default function ScannerPage() {
                     Authorization: `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    custom_name: mealName,
-                    portion_g: totalPortion,
-                    calories: Math.round(totalCalories),
-                    protein_g: Math.round(totalProtein),
-                    carbs_g: Math.round(totalCarbs),
-                    fat_g: Math.round(totalFat),
+                    custom_name: finalMealName,
+                    portion_g: Math.round(totals.portion_g),
+                    calories: Math.round(totals.calories),
+                    protein_g: Math.round(totals.protein_g * 10) / 10,
+                    carbs_g: Math.round(totals.carbs_g * 10) / 10,
+                    fat_g: Math.round(totals.fat_g * 10) / 10,
                     image_url: capturedImage,
-                    ai_confidence: 100
+                    ai_confidence: Math.round(
+                        selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length
+                    )
                 }),
             })
 
             const json = await res.json()
-            console.log("🔥 RESPONSE:", json)
+            console.log("✅ MEAL SAVED:", json)
 
             router.push('/journal')
 
@@ -264,6 +251,8 @@ export default function ScannerPage() {
         return data.publicUrl
     }
 
+    const totals = getTotals()
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -273,7 +262,6 @@ export default function ScannerPage() {
             padding: '24px',
             paddingBottom: '120px'
         }}>
-
             <h1 style={{
                 color: '#fff',
                 fontSize: '28px',
@@ -283,6 +271,7 @@ export default function ScannerPage() {
                 Scanner
             </h1>
 
+            {/* ─── IMAGE ─── */}
             {!image ? (
                 <>
                     <div
@@ -300,7 +289,6 @@ export default function ScannerPage() {
                     >
                         📷 Ajouter une photo
                     </div>
-
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -313,47 +301,98 @@ export default function ScannerPage() {
                 <img src={image} style={{ width: '100%', borderRadius: '16px' }} />
             )}
 
+            {/* ─── ANALYSE EN COURS ─── */}
             {isAnalyzing && (
                 <p style={{ color: '#aaa', marginTop: '15px' }}>
                     Analyse en cours...
                 </p>
             )}
 
-            {suggestions.length > 0 && (
-                <div style={{ marginTop: '20px' }}>
-                    <p style={{ color: '#777', marginBottom: '10px' }}>
-                        Suggestions
+            {/* ─── NOM DU REPAS DÉTECTÉ ─── */}
+            {mealName && !isAnalyzing && (
+                <div style={{ marginTop: '16px' }}>
+                    <p style={{ color: '#C4622D', fontWeight: '700', fontSize: '16px' }}>
+                        🍽️ {mealName}
                     </p>
-
-                    {suggestions.map((food) => (
-                        <div
-                            key={food.id}
-                            onClick={() => selectFood(food)}
-                            style={{
-                                padding: '14px',
-                                borderRadius: '12px',
-                                marginBottom: '10px',
-                                background: selectedFoods.find(f => f.id === food.id) ? '#C4622D' : '#1A1108',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            <p style={{ color: '#fff', fontWeight: '600' }}>
-                                {food.name || food.name_fr || "Plat inconnu"}
-                            </p>
-
-                            <p style={{ color: '#aaa', fontSize: '12px' }}>
-                                🔥 Score: {food.score ?? 0}
-                            </p>
-
-                            <p style={{ color: '#aaa', fontSize: '12px' }}>
-                                {food.calories_per_100g ?? 0} kcal / 100g
-                            </p>
-                        </div>
-                    ))}
+                    {totalCaloriesAI > 0 && (
+                        <p style={{ color: '#777', fontSize: '13px' }}>
+                            Estimation IA : ~{totalCaloriesAI} kcal au total
+                        </p>
+                    )}
                 </div>
             )}
 
+            {/* ─── SUGGESTIONS ─── */}
+            {suggestions.length > 0 && (
+                <div style={{ marginTop: '20px' }}>
+                    <p style={{ color: '#777', marginBottom: '10px' }}>
+                        Sélectionne les aliments présents
+                    </p>
 
+                    {suggestions.map((food) => {
+                        const isSelected = !!selectedFoods.find(f => f.id === food.id)
+                        return (
+                            <div
+                                key={`${food.id}-${food.detected}`}
+                                onClick={() => selectFood(food)}
+                                style={{
+                                    padding: '14px',
+                                    borderRadius: '12px',
+                                    marginBottom: '10px',
+                                    background: isSelected ? '#C4622D' : '#1A1108',
+                                    cursor: 'pointer',
+                                    border: isSelected ? '2px solid #E07040' : '2px solid transparent'
+                                }}
+                            >
+                                <p style={{ color: '#fff', fontWeight: '600' }}>
+                                    {food.name || "Plat inconnu"}
+                                </p>
+                                <p style={{ color: '#aaa', fontSize: '12px' }}>
+                                    📍 Détecté comme : {food.detected}
+                                </p>
+                                <p style={{ color: '#aaa', fontSize: '12px' }}>
+                                    ⚖️ Portion : {food.portion_g}g
+                                </p>
+                                <p style={{ color: isSelected ? '#fff' : '#C4622D', fontSize: '13px', fontWeight: '600', marginTop: '4px' }}>
+                                    🔥 {food.calories} kcal · {food.protein_g}g prot · {food.carbs_g}g glucides · {food.fat_g}g lip
+                                </p>
+                                <p style={{ color: '#555', fontSize: '11px' }}>
+                                    Score match : {food.score} · Confiance IA : {food.confidence}%
+                                </p>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+
+            {/* ─── RÉCAP SÉLECTION ─── */}
+            {selectedFoods.length > 0 && (
+                <div style={{
+                    marginTop: '20px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: '#1A1108',
+                    border: '1px solid #C4622D'
+                }}>
+                    <p style={{ color: '#fff', fontWeight: '700', marginBottom: '8px' }}>
+                        Récap sélection
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '13px' }}>
+                        🔥 {Math.round(totals.calories)} kcal
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '13px' }}>
+                        💪 {Math.round(totals.protein_g * 10) / 10}g protéines
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '13px' }}>
+                        🌾 {Math.round(totals.carbs_g * 10) / 10}g glucides
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: '13px' }}>
+                        🫒 {Math.round(totals.fat_g * 10) / 10}g lipides
+                    </p>
+                </div>
+            )}
+
+            {/* ─── BOUTON SAUVEGARDER ─── */}
             {selectedFoods.length > 0 && (
                 <div style={{
                     position: 'fixed',
@@ -375,10 +414,12 @@ export default function ScannerPage() {
                             color: '#fff',
                             border: 'none',
                             fontWeight: 'bold',
-                            opacity: isSaving ? 0.7 : 1
+                            fontSize: '16px',
+                            opacity: isSaving ? 0.7 : 1,
+                            cursor: isSaving ? 'not-allowed' : 'pointer'
                         }}
                     >
-                        {isSaving ? "Ajout..." : `Ajouter (${selectedFoods.length})`}
+                        {isSaving ? "Ajout..." : `Ajouter ${selectedFoods.length} aliment${selectedFoods.length > 1 ? 's' : ''} · ${Math.round(totals.calories)} kcal`}
                     </button>
                 </div>
             )}
