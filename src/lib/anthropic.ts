@@ -5,7 +5,7 @@ export const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY!,
 })
 
-const SCAN_SYSTEM_PROMPT = `Tu es un expert en nutrition spécialisé dans la cuisine africaine subsaharienne.
+const SCAN_SYSTEM_PROMPT = `Tu es un expert en nutrition spécialisé dans la cuisine africaine.
 
 Tu analyses des photos de plats africains et tu retournes UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après.
 
