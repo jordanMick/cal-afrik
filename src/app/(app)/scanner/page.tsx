@@ -71,46 +71,60 @@ export default function ScannerPage() {
 
             const base64Image = await toBase64(file)
 
+            console.log("📸 TYPE:", file.type)
+            console.log("📸 BASE64 SIZE:", base64Image.length)
+
             const { data: { session } } = await supabase.auth.getSession()
+
+            if (!session) {
+                console.log("❌ NO SESSION")
+                simulateAI()
+                return
+            }
 
             const res = await fetch("/api/analyze", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${session?.access_token}`
+                    Authorization: `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    images: [base64Image]
+                    images: [
+                        {
+                            data: base64Image,   // ✅ FIX
+                            mimeType: file.type // ✅ FIX
+                        }
+                    ]
                 })
             })
 
             const json = await res.json()
 
-            console.log("API RESPONSE:", json)
+            console.log("🔥 API RESPONSE:", json)
+
             if (!json.success || !json.data) {
+                console.log("❌ API FAIL → simulateAI")
                 simulateAI()
                 return
             }
 
-            // 🔥 NOUVEAU FORMAT BACKEND
             const detected = json.data
             const first = detected[0]
 
-            if (!first || !first.suggestions) {
+            if (!first) {
                 simulateAI()
                 return
             }
 
             setDetectedName(first.detected)
-            setSuggestions(first.suggestions)
+            setSuggestions(first.suggestions || [])
 
         } catch (err) {
-            console.error(err)
+            console.error("❌ ERROR FRONT:", err)
             simulateAI()
         } finally {
             setIsAnalyzing(false)
         }
-
     }
 
     // 🔥 FAKE AI (fallback)

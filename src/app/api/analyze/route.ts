@@ -91,9 +91,21 @@ export async function POST(req: Request) {
     try {
         const { images } = await req.json()
 
-        const image = images[0]
+        const image = images?.[0]
 
-        // 🔥 1. IA (FIX IMAGE)
+        // 🔥 VALIDATION ULTRA IMPORTANTE
+        if (!image || !image.data) {
+            console.error("❌ IMAGE INVALID:", image)
+            return NextResponse.json({
+                success: false,
+                error: "Image invalide ou vide"
+            })
+        }
+
+        console.log("📸 IMAGE TYPE:", image.mimeType)
+        console.log("📸 IMAGE SIZE:", image.data.length)
+
+        // 🔥 IA
         const response = await anthropic.messages.create({
             model: "claude-3-haiku-20240307",
             max_tokens: 300,
@@ -105,8 +117,8 @@ export async function POST(req: Request) {
                             type: "image",
                             source: {
                                 type: "base64",
-                                media_type: image.mimeType || "image/jpeg", // ✅ FIX
-                                data: image.data, // ✅ FIX
+                                media_type: image.mimeType || "image/jpeg",
+                                data: image.data,
                             },
                         },
                         {
@@ -149,14 +161,13 @@ export async function POST(req: Request) {
             ]
         }
 
-        // 🔥 2. DB
+        // 🔥 DB
         const { data: foodItems } = await supabase
             .from("food_items")
             .select("id, name_fr, name_local, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
 
         const results = []
 
-        // 🔥 3. TOP 3 MATCHING
         for (const item of items) {
             const topMatches = getTopMatches(item.name, foodItems || [])
 
