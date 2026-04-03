@@ -326,7 +326,7 @@ export default function JournalPage() {
                                         {meal.custom_name || 'Repas'}
                                     </p>
                                     <p style={{ color: '#555', fontSize: '12px', marginTop: '2px' }}>
-                                        {MEAL_TYPE_LABELS[meal.meal_type]} · {formatTime(meal.logged_at)}
+                                        {formatTime(meal.logged_at)}
                                     </p>
                                     <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>
                                         {meal.protein_g}g prot · {meal.carbs_g}g gluc · {meal.fat_g}g lip

@@ -294,7 +294,7 @@ export default function DashboardPage() {
                                     color: '#888',
                                     fontSize: '12px'
                                 }}>
-                                    {MEAL_TYPE_LABELS[meal.meal_type]} · {formatTime(meal.logged_at)}
+                                    {formatTime(meal.logged_at)}
                                 </p>
                             </div>
 
