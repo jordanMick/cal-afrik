@@ -13,14 +13,13 @@ export default function ScannerPage() {
 
     const [image, setImage] = useState<string | null>(null)
     const [foods, setFoods] = useState<any[]>([])
-    const [selectedFood, setSelectedFood] = useState<any | null>(null)
+    const [selectedFoods, setSelectedFoods] = useState<any[]>([]) // ✅ MULTI
     const [isSaving, setIsSaving] = useState(false)
     const [isAnalyzing, setIsAnalyzing] = useState(false)
     const [suggestions, setSuggestions] = useState<any[]>([])
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
     const [detectedName, setDetectedName] = useState<string | null>(null)
 
-    // 🔥 LOAD FOODS
     useEffect(() => {
         loadFoods()
     }, [])
@@ -38,7 +37,6 @@ export default function ScannerPage() {
         }
     }
 
-    // 🔥 AUTO PROCESS IMAGE
     useEffect(() => {
         const file = (window as any).tempImage
 
@@ -71,13 +69,9 @@ export default function ScannerPage() {
 
             const base64Image = await toBase64(file)
 
-            console.log("📸 TYPE:", file.type)
-            console.log("📸 BASE64 SIZE:", base64Image.length)
-
             const { data: { session } } = await supabase.auth.getSession()
 
             if (!session) {
-                console.log("❌ NO SESSION")
                 simulateAI()
                 return
             }
@@ -91,8 +85,8 @@ export default function ScannerPage() {
                 body: JSON.stringify({
                     images: [
                         {
-                            data: base64Image,   // ✅ FIX
-                            mimeType: file.type // ✅ FIX
+                            data: base64Image,
+                            mimeType: file.type
                         }
                     ]
                 })
@@ -100,10 +94,7 @@ export default function ScannerPage() {
 
             const json = await res.json()
 
-            console.log("🔥 API RESPONSE:", json)
-
             if (!json.success || !json.data) {
-                console.log("❌ API FAIL → simulateAI")
                 simulateAI()
                 return
             }
@@ -120,14 +111,13 @@ export default function ScannerPage() {
             setSuggestions(first.suggestions || [])
 
         } catch (err) {
-            console.error("❌ ERROR FRONT:", err)
+            console.error(err)
             simulateAI()
         } finally {
             setIsAnalyzing(false)
         }
     }
 
-    // 🔥 FAKE AI (fallback)
     const simulateAI = () => {
         const fitnessKeywords = ["riz", "poulet", "oeuf", "thon", "plantain"]
 
@@ -147,12 +137,17 @@ export default function ScannerPage() {
         await processImage(file)
     }
 
+    // ✅ MULTI TOGGLE
     const selectFood = (food: any) => {
-        setSelectedFood(food)
+        setSelectedFoods(prev =>
+            prev.find(f => f.id === food.id)
+                ? prev.filter(f => f.id !== food.id)
+                : [...prev, food]
+        )
     }
 
     const handleSaveMeal = async () => {
-        if (!selectedFood) return
+        if (selectedFoods.length === 0) return
 
         setIsSaving(true)
 
@@ -160,40 +155,29 @@ export default function ScannerPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            const res = await fetch('/api/meals', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    food_item_id: selectedFood.id,
-                    custom_name: selectedFood.name,
-                    meal_type: 'dejeuner',
-                    portion_g: selectedFood.default_portion_g || 200,
-                    calories: selectedFood.calories_per_100g,
-                    protein_g: selectedFood.protein_per_100g,
-                    carbs_g: selectedFood.carbs_per_100g,
-                    fat_g: selectedFood.fat_per_100g,
-                    image_url: capturedImage,
-                    ai_confidence: selectedFood.score || 100
-                }),
-            })
-
-            const json = await res.json()
-
-            if (json.success) {
-                addMeal(json.data)
-
-                // 🔥 FEEDBACK IA
-                await supabase.from("ai_feedback").insert({
-                    user_id: session.user.id,
-                    detected_name: detectedName,
-                    selected_food_id: selectedFood.id
+            for (const food of selectedFoods) {
+                await fetch('/api/meals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        food_item_id: food.id,
+                        custom_name: food.name,
+                        meal_type: 'dejeuner',
+                        portion_g: food.default_portion_g || 200,
+                        calories: food.calories_per_100g,
+                        protein_g: food.protein_per_100g,
+                        carbs_g: food.carbs_per_100g,
+                        fat_g: food.fat_per_100g,
+                        image_url: capturedImage,
+                        ai_confidence: food.score || 100
+                    }),
                 })
-                console.log("API RESPONSE:", json)
-                router.push('/journal')
             }
+
+            router.push('/journal')
 
         } catch (err) {
             console.error(err)
@@ -201,7 +185,6 @@ export default function ScannerPage() {
             setIsSaving(false)
         }
     }
-
 
     const uploadImage = async (file: File) => {
         const fileExt = file.name.split('.').pop()
@@ -217,11 +200,8 @@ export default function ScannerPage() {
             .from('meal-images')
             .getPublicUrl(fileName)
 
-
         return data.publicUrl
-
     }
-
 
     return (
         <div style={{
@@ -292,7 +272,7 @@ export default function ScannerPage() {
                                 padding: '14px',
                                 borderRadius: '12px',
                                 marginBottom: '10px',
-                                background: selectedFood?.id === food.id ? '#C4622D' : '#1A1108',
+                                background: selectedFoods.find(f => f.id === food.id) ? '#C4622D' : '#1A1108',
                                 cursor: 'pointer'
                             }}
                         >
@@ -312,7 +292,7 @@ export default function ScannerPage() {
                 </div>
             )}
 
-            {selectedFood && (
+            {selectedFoods.length > 0 && (
                 <div style={{
                     position: 'fixed',
                     bottom: '70px',
@@ -336,7 +316,7 @@ export default function ScannerPage() {
                             opacity: isSaving ? 0.7 : 1
                         }}
                     >
-                        {isSaving ? "Ajout..." : "Ajouter au journal"}
+                        {isSaving ? "Ajout..." : `Ajouter (${selectedFoods.length})`}
                     </button>
                 </div>
             )}
