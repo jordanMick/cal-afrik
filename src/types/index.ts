@@ -93,6 +93,9 @@ export interface WeightLog {
     logged_at: string
 }
 
+// ─── Scan IA ───────────────────────────────────────────────────
+
+// Ancien type gardé pour compatibilité si utilisé ailleurs
 export interface ScanResult {
     food_name: string
     food_name_fr: string
@@ -106,6 +109,59 @@ export interface ScanResult {
     alternatives: string[]
     notes?: string
 }
+
+// Nouveau type — un composant individuel détecté par l'IA
+export interface ScanComponent {
+    food_name: string
+    estimated_portion_g: number
+    calories: number
+    protein_g: number
+    carbs_g: number
+    fat_g: number
+    confidence: number
+}
+
+// Nouveau type — résultat complet de l'IA décomposé par aliment
+export interface ScanResultV2 {
+    meal_name: string
+    components: ScanComponent[]
+    total_calories: number
+    alternatives: string[]
+    notes?: string
+}
+
+// Suggestion BD pour un composant détecté
+export interface FoodSuggestion {
+    id: string
+    name: string
+    score: number
+    calories: number
+    protein_g: number
+    carbs_g: number
+    fat_g: number
+}
+
+// Résultat final retourné par l'API route au frontend
+export interface ScanResultItem {
+    detected: string
+    portion_g: number
+    calories_detected: number
+    protein_detected: number
+    carbs_detected: number
+    fat_detected: number
+    confidence: number
+    suggestions: FoodSuggestion[]
+}
+
+export interface ScanApiResponse {
+    success: boolean
+    meal_name: string
+    total_calories: number
+    data: ScanResultItem[]
+    error?: string
+}
+
+// ─── Stats ─────────────────────────────────────────────────────
 
 export interface WeekStats {
     days: DayStats[]

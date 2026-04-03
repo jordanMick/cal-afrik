@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import Anthropic from "@anthropic-ai/sdk"
+import type { ScanResultV2, ScanComponent, ScanApiResponse } from "@/types"
 
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -11,22 +12,27 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// 🔥 NORMALIZE
+// ─── NORMALIZE ────────────────────────────────────────────────
 function normalize(text: string) {
     return text
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
 }
+
 const SYNONYMS: Record<string, string[]> = {
     spaghetti: ["pasta", "noodles", "nouilles"],
     riz: ["rice"],
     poulet: ["chicken"],
     thon: ["tuna"],
     oeuf: ["egg"],
+    to: ["tô", "toh", "pate de mais"],
+    fufu: ["foufou", "foo foo"],
+    attieke: ["attiéké", "attieke"],
+    sauce: ["ragoût", "ragout", "bouillon"],
 }
 
-// 🔥 SCORE
+// ─── SCORE ────────────────────────────────────────────────────
 function scoreFood(itemName: string, food: any) {
     const input = normalize(itemName)
 
@@ -39,9 +45,7 @@ function scoreFood(itemName: string, food: any) {
     let score = 0
 
     for (const name of names) {
-
         if (input === name) score += 100
-
         if (input.includes(name)) score += 50
         if (name.includes(input)) score += 40
 
@@ -49,12 +53,10 @@ function scoreFood(itemName: string, food: any) {
         const nameWords = name.split(" ")
 
         for (const word of inputWords) {
-            if (nameWords.includes(word)) score += 15
+            if (word.length > 2 && nameWords.includes(word)) score += 15
         }
 
-        // 🔥 SYNONYMS BOOST
         const syns = SYNONYMS[name] || []
-
         for (const syn of syns) {
             if (input.includes(syn)) score += 60
         }
@@ -63,7 +65,7 @@ function scoreFood(itemName: string, food: any) {
     return score
 }
 
-// 🔥 TOP 3 MATCHES
+// ─── TOP 3 MATCHES ────────────────────────────────────────────
 function getTopMatches(itemName: string, foods: any[]) {
     const scored = foods.map(food => ({
         food,
@@ -76,36 +78,60 @@ function getTopMatches(itemName: string, foods: any[]) {
         .slice(0, 3)
 }
 
-// 🔥 PROMPT
+// ─── PROMPT ───────────────────────────────────────────────────
 const PROMPT = `
-Analyse cette image de nourriture.
+Tu es un expert en nutrition.
+
+Analyse la photo et DÉCOMPOSE chaque aliment visible séparément avec sa portion et ses calories propres.
 
 IMPORTANT :
-- Ne suppose PAS que c’est un plat africain
-- Identifie précisément les aliments visibles
-- Si ce sont des pâtes → dis "spaghetti" ou "pâtes"
-- Si ce sont du riz → dis "riz"
-- Si incertain → propose plusieurs aliments
+- Identifie EXACTEMENT les aliments visibles
+- Sépare l'accompagnement (tô, riz, fufu...) de la sauce ou du plat principal
+- Calcule les calories pour la portion estimée de chaque composant
+- Si incertain, propose des alternatives
 
-Retourne UNIQUEMENT un JSON :
-[
-  { "name": "nom exact", "portion_g": 200 }
-]
+Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après :
+{
+  "meal_name": "nom du repas complet",
+  "components": [
+    {
+      "food_name": "Tô de maïs",
+      "estimated_portion_g": 300,
+      "calories": 310,
+      "protein_g": 6.0,
+      "carbs_g": 68.0,
+      "fat_g": 1.5,
+      "confidence": 88
+    },
+    {
+      "food_name": "Sauce feuilles au poisson fumé",
+      "estimated_portion_g": 250,
+      "calories": 310,
+      "protein_g": 22.5,
+      "carbs_g": 8.0,
+      "fat_g": 20.5,
+      "confidence": 80
+    }
+  ],
+  "total_calories": 620,
+  "alternatives": ["Fufu avec sauce égusi", "Banku avec sauce feuilles"],
+  "notes": "observations utiles"
+}
 `
 
+// ─── ROUTE POST ───────────────────────────────────────────────
 export async function POST(req: Request) {
 
     console.log("🔑 KEY EXISTS:", !!process.env.ANTHROPIC_API_KEY)
     console.log("🔑 KEY LENGTH:", process.env.ANTHROPIC_API_KEY?.length)
 
+    // Auth
     const authHeader = req.headers.get('authorization')
-
     if (!authHeader) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
 
     const token = authHeader.replace('Bearer ', '')
-
     const { data: { user }, error } = await supabase.auth.getUser(token)
 
     if (!user || error) {
@@ -114,25 +140,20 @@ export async function POST(req: Request) {
 
     try {
         const { images } = await req.json()
-
         const image = images?.[0]
 
-        // 🔥 VALIDATION ULTRA IMPORTANTE
         if (!image || !image.data) {
             console.error("❌ IMAGE INVALID:", image)
-            return NextResponse.json({
-                success: false,
-                error: "Image invalide ou vide"
-            })
+            return NextResponse.json({ success: false, error: "Image invalide ou vide" })
         }
 
-        console.log("📸 IMAGE TYPE:", image.mimeType)
-        console.log("📸 IMAGE SIZE:", image.data.length)
+        console.log("📸 TYPE:", image.mimeType)
+        console.log("📸 BASE64 SIZE:", image.data.length)
 
-        // 🔥 IA
+        // ─── APPEL IA ─────────────────────────────────────────
         const response = await anthropic.messages.create({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: 300,
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 800,
             messages: [
                 {
                     role: "user",
@@ -154,73 +175,90 @@ export async function POST(req: Request) {
             ],
         })
 
-        let items: any[] = []
+        console.log("🔥 RAW RESPONSE:", JSON.stringify(response.content))
+
+        // ─── PARSE JSON ───────────────────────────────────────
+        let scanResult: ScanResultV2 | null = null
 
         try {
             const textBlock = response.content.find(
                 (block) => block.type === "text" && "text" in block
-            )
+            ) as { type: "text"; text: string } | undefined
 
-            if (!textBlock) {
-                throw new Error("Aucun texte retourné")
-            }
+            if (!textBlock) throw new Error("Aucun texte retourné par l'IA")
 
             const text = textBlock.text
-                .replace(/```json/g, "")
-                .replace(/```/g, "")
+                .replace(/```json\n?/g, "")
+                .replace(/```\n?/g, "")
                 .trim()
 
-            items = JSON.parse(text)
+            scanResult = JSON.parse(text) as ScanResultV2
 
         } catch (err) {
             console.error("❌ JSON Claude invalide:", err)
-            items = []
         }
 
-        // 🔥 fallback
-        if (!items.length) {
-            items = [
-                { name: "riz", portion_g: 200 },
-                { name: "poulet", portion_g: 150 }
+        // ─── FALLBACK si l'IA échoue ──────────────────────────
+        const components: ScanComponent[] = scanResult?.components?.length
+            ? scanResult.components
+            : [
+                { food_name: "riz", estimated_portion_g: 200, calories: 260, protein_g: 5, carbs_g: 57, fat_g: 0.5, confidence: 50 },
+                { food_name: "poulet", estimated_portion_g: 150, calories: 248, protein_g: 30, carbs_g: 0, fat_g: 14, confidence: 50 }
             ]
-        }
 
-        // 🔥 DB
+        // ─── MATCHING BD ──────────────────────────────────────
         const { data: foodItems } = await supabase
             .from("food_items")
             .select("id, name_fr, name_local, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
 
         const results = []
 
-        for (const item of items) {
-            const topMatches = getTopMatches(item.name, foodItems || [])
+        for (const component of components) {
+            const topMatches = getTopMatches(component.food_name, foodItems || [])
+            const portion = component.estimated_portion_g
 
             results.push({
-                detected: item.name,
-                portion_g: item.portion_g,
+                detected: component.food_name,
+                portion_g: portion,
+                // ✅ Valeurs calculées par l'IA pour cette portion spécifique
+                calories_detected: component.calories,
+                protein_detected: component.protein_g,
+                carbs_detected: component.carbs_g,
+                fat_detected: component.fat_g,
+                confidence: component.confidence,
+                // ✅ Suggestions depuis ta BD avec calories recalculées pour la même portion
                 suggestions: topMatches.map(m => ({
                     id: m.food.id,
                     name: m.food.name_fr,
                     score: m.score,
-                    calories_per_100g: m.food.calories_per_100g,
-                    protein_per_100g: m.food.protein_per_100g,
-                    carbs_per_100g: m.food.carbs_per_100g,
-                    fat_per_100g: m.food.fat_per_100g,
+                    calories: Math.round((m.food.calories_per_100g * portion) / 100),
+                    protein_g: Math.round((m.food.protein_per_100g * portion) / 100 * 10) / 10,
+                    carbs_g: Math.round((m.food.carbs_per_100g * portion) / 100 * 10) / 10,
+                    fat_g: Math.round((m.food.fat_per_100g * portion) / 100 * 10) / 10,
                 }))
             })
         }
 
+        const totalCalories = scanResult?.total_calories
+            || components.reduce((sum, c) => sum + c.calories, 0)
+
+        console.log("✅ RESULTS:", JSON.stringify(results))
+
         return NextResponse.json({
             success: true,
+            meal_name: scanResult?.meal_name || "Repas détecté",
+            total_calories: totalCalories,
             data: results
-        })
+        } satisfies ScanApiResponse)
 
     } catch (err: any) {
         console.error("❌ ERROR:", err)
-
         return NextResponse.json({
             success: false,
+            meal_name: "",
+            total_calories: 0,
+            data: [],
             error: err?.message || "Erreur serveur",
-        })
+        } satisfies ScanApiResponse)
     }
 }

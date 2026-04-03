@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { ScanResult } from '@/types'
+import type { ScanResultV2 } from '@/types'
 
 export const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -8,41 +8,51 @@ export const anthropic = new Anthropic({
 const SCAN_SYSTEM_PROMPT = `
 Tu es un expert en nutrition.
 
-Tu analyses des photos de nourriture.
+Analyse la photo et DÉCOMPOSE chaque aliment visible séparément avec sa portion et ses calories propres.
 
 IMPORTANT :
-- Ne suppose PAS que c’est un plat africain
 - Identifie EXACTEMENT les aliments visibles
-- Si ce sont des pâtes → dis "spaghetti" ou "pâtes"
-- Si ce sont du riz → dis "riz"
-- Si incertain → propose plusieurs options dans "alternatives"
-- Ne force JAMAIS une réponse
+- Sépare l'accompagnement (tô, riz, fufu...) de la sauce ou du plat principal
+- Calcule les calories pour la portion estimée de chaque composant
+- Si incertain, propose des alternatives
 
-Sois précis visuellement.
-
-Retourne UNIQUEMENT un objet JSON valide :
+Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après :
 {
-  "food_name": "nom exact",
-  "food_name_fr": "nom descriptif",
-  "estimated_portion_g": 300,
-  "calories": 520,
-  "protein_g": 18.5,
-  "carbs_g": 65.2,
-  "fat_g": 12.8,
-  "confidence": 87,
-  "alternatives": ["option 1", "option 2"],
-  "notes": "observations"
+  "meal_name": "nom du repas complet",
+  "components": [
+    {
+      "food_name": "Tô de maïs",
+      "estimated_portion_g": 300,
+      "calories": 310,
+      "protein_g": 6.0,
+      "carbs_g": 68.0,
+      "fat_g": 1.5,
+      "confidence": 88
+    },
+    {
+      "food_name": "Sauce feuilles au poisson fumé",
+      "estimated_portion_g": 250,
+      "calories": 310,
+      "protein_g": 22.5,
+      "carbs_g": 8.0,
+      "fat_g": 20.5,
+      "confidence": 80
+    }
+  ],
+  "total_calories": 620,
+  "alternatives": ["Fufu avec sauce égusi", "Banku avec sauce feuilles"],
+  "notes": "observations utiles"
 }
 `
 
 export async function scanMealFromImage(
     imageBase64: string,
     mimeType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg'
-): Promise<ScanResult> {
+): Promise<ScanResultV2> {
     try {
         const response = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001', // ✅ modèle stable
-            max_tokens: 500, // ✅ optimisation coût
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 800,
             system: SCAN_SYSTEM_PROMPT,
             messages: [
                 {
@@ -58,7 +68,7 @@ export async function scanMealFromImage(
                         },
                         {
                             type: 'text',
-                            text: 'Analyse ce plat africain et retourne le JSON nutritionnel.',
+                            text: 'Analyse ce plat et retourne le JSON nutritionnel décomposé par aliment.',
                         },
                     ],
                 },
@@ -76,7 +86,7 @@ export async function scanMealFromImage(
             .replace(/```\n?/g, '')
             .trim()
 
-        let parsed: ScanResult
+        let parsed: ScanResultV2
 
         try {
             parsed = JSON.parse(cleanJson)
@@ -85,18 +95,27 @@ export async function scanMealFromImage(
             throw new Error('Erreur parsing JSON IA')
         }
 
-        // ✅ Validation minimale
-        if (
-            !parsed.food_name ||
-            typeof parsed.calories !== 'number' ||
-            typeof parsed.protein_g !== 'number'
-        ) {
+        // Validation minimale
+        if (!parsed.meal_name || !Array.isArray(parsed.components) || parsed.components.length === 0) {
             throw new Error('Données IA incomplètes ou invalides')
         }
 
+        // Validation de chaque composant
+        for (const component of parsed.components) {
+            if (
+                !component.food_name ||
+                typeof component.calories !== 'number' ||
+                typeof component.protein_g !== 'number' ||
+                typeof component.estimated_portion_g !== 'number'
+            ) {
+                throw new Error(`Composant IA invalide : ${JSON.stringify(component)}`)
+            }
+        }
+
         return parsed
+
     } catch (error) {
         console.error('❌ Erreur scanMealFromImage:', error)
-        throw new Error('Impossible d’analyser le plat pour le moment')
+        throw new Error('Impossible d\'analyser le plat pour le moment')
     }
 }
