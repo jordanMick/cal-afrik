@@ -13,12 +13,11 @@ export default function ScannerPage() {
 
     const [image, setImage] = useState<string | null>(null)
     const [foods, setFoods] = useState<any[]>([])
-    const [selectedFoods, setSelectedFoods] = useState<any[]>([]) // ✅ MULTI
+    const [selectedFoods, setSelectedFoods] = useState<any[]>([])
     const [isSaving, setIsSaving] = useState(false)
     const [isAnalyzing, setIsAnalyzing] = useState(false)
     const [suggestions, setSuggestions] = useState<any[]>([])
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
-    const [detectedName, setDetectedName] = useState<string | null>(null)
 
     useEffect(() => {
         loadFoods()
@@ -58,9 +57,6 @@ export default function ScannerPage() {
         setIsAnalyzing(true)
 
         try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
             const previewUrl = URL.createObjectURL(file)
             setImage(previewUrl)
 
@@ -93,26 +89,31 @@ export default function ScannerPage() {
             })
 
             const json = await res.json()
+
+            // 🔥 DEBUG COMPLET
             console.log("🧠 RAW AI DATA:", json.data)
-            json.data.forEach((item: any, index: number) => {
-                console.log(`🍽️ Item ${index}:`, item.detected, item.portion_g)
-            })
+
+            if (json.data) {
+                console.table(
+                    json.data.map((i: any) => ({
+                        detected: i.detected,
+                        portion: i.portion_g,
+                        suggestions: i.suggestions?.length || 0
+                    }))
+                )
+            }
 
             if (!json.success || !json.data) {
                 simulateAI()
                 return
             }
 
-            const detected = json.data
-            const first = detected[0]
+            // 🔥 FLATTEN (IMPORTANT POUR TOI)
+            const flatFoods = json.data.flatMap((item: any) => item.suggestions || [])
 
-            if (!first) {
-                simulateAI()
-                return
-            }
+            console.log("🔥 FLATTEN FOODS:", flatFoods)
 
-            setDetectedName(first.detected)
-            setSuggestions(first.suggestions || [])
+            setSuggestions(flatFoods)
 
         } catch (err) {
             console.error(err)
@@ -141,7 +142,7 @@ export default function ScannerPage() {
         await processImage(file)
     }
 
-    // ✅ MULTI TOGGLE
+    // ✅ MULTI
     const selectFood = (food: any) => {
         setSelectedFoods(prev =>
             prev.find(f => f.id === food.id)
@@ -168,7 +169,7 @@ export default function ScannerPage() {
                     },
                     body: JSON.stringify({
                         food_item_id: food.id,
-                        custom_name: food.name,
+                        custom_name: food.name || food.name_fr,
                         meal_type: 'dejeuner',
                         portion_g: food.default_portion_g || 200,
                         calories: food.calories_per_100g,
@@ -285,7 +286,7 @@ export default function ScannerPage() {
                             </p>
 
                             <p style={{ color: '#aaa', fontSize: '12px' }}>
-                                🔥 Score IA: {food.score ?? 0}
+                                🔥 Score: {food.score ?? 0}
                             </p>
 
                             <p style={{ color: '#aaa', fontSize: '12px' }}>
