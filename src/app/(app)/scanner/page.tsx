@@ -175,6 +175,7 @@ export default function ScannerPage() {
 
     const handleSaveMeal = async () => {
         const mealName = buildMealName(selectedFoods)
+        console.log("🚀 SENDING MEAL:", selectedFoods)
         if (selectedFoods.length === 0) return
 
         setIsSaving(true)
@@ -184,25 +185,21 @@ export default function ScannerPage() {
             if (!session) return
 
             for (const food of selectedFoods) {
-                await fetch('/api/meals', {
+                console.log("📡 CALLING API /api/meals")
+                const res = await fetch('/api/meals', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${session.access_token}`
                     },
                     body: JSON.stringify({
-                        food_item_id: food.id,
-                        custom_name: mealName,
-                        meal_type: 'dejeuner',
-                        portion_g: food.default_portion_g || 200,
-                        calories: food.calories_per_100g,
-                        protein_g: food.protein_per_100g,
-                        carbs_g: food.carbs_per_100g,
-                        fat_g: food.fat_per_100g,
-                        image_url: capturedImage,
-                        ai_confidence: food.score || 100
+                        custom_name: "test meal",
+                        calories: 100
                     }),
                 })
+
+                const json = await res.json()
+                console.log("🔥 RESPONSE:", json)
             }
 
             router.push('/journal')
