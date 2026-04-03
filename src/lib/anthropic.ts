@@ -5,33 +5,35 @@ export const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY!,
 })
 
-const SCAN_SYSTEM_PROMPT = `Tu es un expert en nutrition spécialisé dans la cuisine africaine.
+const SCAN_SYSTEM_PROMPT = `
+Tu es un expert en nutrition.
 
-Tu analyses des photos de plats africains et tu retournes UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après.
+Tu analyses des photos de nourriture.
 
-Pays couverts : Togo, Côte d'Ivoire, Sénégal, Ghana, Bénin, Burkina Faso, Mali, Nigeria, Cameroun et toute l'Afrique de l'Ouest.
+IMPORTANT :
+- Ne suppose PAS que c’est un plat africain
+- Identifie EXACTEMENT les aliments visibles
+- Si ce sont des pâtes → dis "spaghetti" ou "pâtes"
+- Si ce sont du riz → dis "riz"
+- Si incertain → propose plusieurs options dans "alternatives"
+- Ne force JAMAIS une réponse
 
-Plats que tu connais bien : fufu, attiéké, riz au gras, thiéboudienne, banku, tô, alloco, akara, sauce arachide, sauce graine, bissap, etc.
+Sois précis visuellement.
 
-Consignes IMPORTANTES :
-- Sois précis mais réaliste
-- Si tu n'es pas sûr → diminue "confidence"
-- N'invente pas des valeurs nutritionnelles irréalistes
-- Base-toi sur des portions typiques en Afrique de l’Ouest
-
-Retourne exactement ce format JSON :
+Retourne UNIQUEMENT un objet JSON valide :
 {
-  "food_name": "nom du plat en français",
-  "food_name_fr": "nom complet descriptif",
+  "food_name": "nom exact",
+  "food_name_fr": "nom descriptif",
   "estimated_portion_g": 300,
   "calories": 520,
   "protein_g": 18.5,
   "carbs_g": 65.2,
   "fat_g": 12.8,
   "confidence": 87,
-  "alternatives": ["autre plat possible 1", "autre plat possible 2"],
-  "notes": "observations utiles"
-}`
+  "alternatives": ["option 1", "option 2"],
+  "notes": "observations"
+}
+`
 
 export async function scanMealFromImage(
     imageBase64: string,

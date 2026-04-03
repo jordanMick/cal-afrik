@@ -78,11 +78,18 @@ function getTopMatches(itemName: string, foods: any[]) {
 
 // 🔥 PROMPT
 const PROMPT = `
-Analyse ce plat africain.
+Analyse cette image de nourriture.
+
+IMPORTANT :
+- Ne suppose PAS que c’est un plat africain
+- Identifie précisément les aliments visibles
+- Si ce sont des pâtes → dis "spaghetti" ou "pâtes"
+- Si ce sont du riz → dis "riz"
+- Si incertain → propose plusieurs aliments
 
 Retourne UNIQUEMENT un JSON :
 [
-  { "name": "riz", "portion_g": 200 }
+  { "name": "nom exact", "portion_g": 200 }
 ]
 `
 
