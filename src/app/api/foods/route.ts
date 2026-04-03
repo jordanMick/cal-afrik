@@ -74,7 +74,6 @@ export async function POST(req: NextRequest) {
                 carbs_per_100g: carbs_per_100g ?? 0,
                 fat_per_100g: fat_per_100g ?? 0,
                 default_portion_g: default_portion_g ?? 200,
-                origin_country: origin_country ?? [],
                 verified: verified ?? false,
             })
             .select()
