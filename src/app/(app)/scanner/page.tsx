@@ -51,7 +51,7 @@ function getMealTargetByHour(dailyTarget: number) {
 
 export default function ScannerPage() {
     const router = useRouter()
-    const { addMeal, profile, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useAppStore()
+    const { addMeal, profile, dailyCalories, dailyProtein, dailyCarbs, dailyFat, setLastCoachMessage } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const [image, setImage] = useState<string | null>(null)
@@ -275,7 +275,9 @@ export default function ScannerPage() {
             })
 
             const json = await res.json()
-            setCoachMessage(json.success ? json.message : 'Bon repas ! Continue comme ça 💪')
+            const msg = json.success ? json.message : 'Bon repas ! Continue comme ça 💪'
+            setCoachMessage(msg)
+            setLastCoachMessage(msg)
 
         } catch (err) {
             console.error(err)

@@ -20,13 +20,14 @@ const MEAL_TYPE_EMOJIS: Record<string, string> = {
 }
 
 export default function JournalPage() {
-    const { profile } = useAppStore()
+    const { profile, lastCoachMessage } = useAppStore()
     const [selectedDate, setSelectedDate] = useState(
         new Date().toISOString().split('T')[0]
     )
     const [meals, setMeals] = useState<Meal[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
+    const [showCoach, setShowCoach] = useState(false)
 
     const calorieTarget = profile?.calorie_target || 2000
     const totalCalories = meals.reduce((acc, m) => acc + m.calories, 0)
@@ -462,6 +463,23 @@ export default function JournalPage() {
                                 }}>
                                     <p style={{ color: '#777', fontSize: '12px', marginBottom: '4px' }}>Notes</p>
                                     <p style={{ color: '#aaa', fontSize: '13px' }}>{selectedMeal.notes}</p>
+                                </div>
+                            )}
+
+                            {/* ─── CONSEIL COACH ─── */}
+                            {lastCoachMessage && (
+                                <div style={{ marginBottom: '16px' }}>
+                                    <button
+                                        onClick={() => setShowCoach(!showCoach)}
+                                        style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? '#2A1F00' : 'transparent', border: '1px solid #F5A623', color: '#F5A623', fontWeight: '600', fontSize: '14px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}
+                                    >
+                                        {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
+                                    </button>
+                                    {showCoach && (
+                                        <div style={{ background: '#2A1F00', borderRadius: '12px', padding: '16px', border: '1px solid #3A2F00' }}>
+                                            <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>{lastCoachMessage}</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

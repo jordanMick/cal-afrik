@@ -18,6 +18,10 @@ interface AppState {
     isScanning: boolean
     setIsScanning: (v: boolean) => void
 
+    // ✅ Dernier conseil du coach
+    lastCoachMessage: string | null
+    setLastCoachMessage: (msg: string) => void
+
     // Totaux du jour
     dailyCalories: number
     dailyProtein: number
@@ -68,6 +72,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     setScanResult: (result) => set({ scanResult: result }),
     isScanning: false,
     setIsScanning: (v) => set({ isScanning: v }),
+
+    lastCoachMessage: null,
+    setLastCoachMessage: (msg) => set({ lastCoachMessage: msg }),
 
     dailyCalories: 0,
     dailyProtein: 0,
