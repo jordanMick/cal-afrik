@@ -11,7 +11,6 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
     try {
-        // Auth
         const authHeader = req.headers.get('authorization')
         if (!authHeader) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
@@ -22,38 +21,38 @@ export async function POST(req: NextRequest) {
         const {
             selectedFoods,
             totals,
-            mealSlot,
             mealCalTarget,
-            mealProtTarget,
-            mealCarbsTarget,
-            mealFatTarget,
+            remainingMealCalories,
             dailyCalories,
             calorieTarget,
+            remainingProtein,
+            remainingCarbs,
+            remainingFat
         } = await req.json()
 
-        const diffCal = mealCalTarget - totals.calories
-        const diffProt = mealProtTarget - totals.protein_g
-        const diffCarbs = mealCarbsTarget - totals.carbs_g
-        const diffFat = mealFatTarget - totals.fat_g
+        const prompt = `Tu es un coach nutritionnel expert en cuisine africaine subsaharienne.
 
-        const prompt = `Tu es un coach nutritionnel expert en cuisine africaine subsaharienne (Togo, Côte d'Ivoire, Sénégal, Ghana, Bénin, Nigeria).
-
-L'utilisateur vient de scanner son ${mealSlot.label.toLowerCase()} composé de : ${selectedFoods.join(', ')}.
+L'utilisateur vient de manger : ${selectedFoods.join(', ')}.
 
 Valeurs de ce repas :
-- Calories : ${Math.round(totals.calories)} kcal (cible pour ce repas : ${mealCalTarget} kcal, écart : ${diffCal > 0 ? '+' : ''}${Math.round(diffCal)} kcal)
-- Protéines : ${totals.protein_g}g (cible : ${mealProtTarget}g, écart : ${diffProt > 0 ? '+' : ''}${Math.round(diffProt)}g)
-- Glucides : ${totals.carbs_g}g (cible : ${mealCarbsTarget}g, écart : ${diffCarbs > 0 ? '+' : ''}${Math.round(diffCarbs)}g)
-- Lipides : ${totals.fat_g}g (cible : ${mealFatTarget}g, écart : ${diffFat > 0 ? '+' : ''}${Math.round(diffFat)}g)
+- Calories : ${Math.round(totals.calories)} kcal
+- Objectif pour ce repas : ${mealCalTarget} kcal
+- Calories restantes pour ce repas : ${remainingMealCalories} kcal
 
-Déjà consommé aujourd'hui : ${Math.round(dailyCalories)} kcal sur ${calorieTarget} kcal.
+Progression journée :
+- ${Math.round(dailyCalories)} / ${calorieTarget} kcal
 
-Donne un conseil court (3-4 phrases max) en français :
-1. Évalue ce repas par rapport à la cible de ce moment de la journée
-2. Si des macros manquent, propose 1-2 aliments africains concrets à ajouter
-3. Termine avec une phrase d'encouragement courte
+Macros restantes :
+- Protéines : ${remainingProtein}g
+- Glucides : ${remainingCarbs}g
+- Lipides : ${remainingFat}g
 
-Réponds directement sans introduction, de façon naturelle et bienveillante.`
+Donne un conseil court (3-4 phrases max) :
+1. Évalue rapidement le repas
+2. Propose 1-2 aliments africains si nécessaire
+3. Encourage l'utilisateur
+
+Réponds directement, naturel et motivant.`
 
         const response = await anthropic.messages.create({
             model: 'claude-haiku-4-5-20251001',
