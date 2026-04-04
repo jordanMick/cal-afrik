@@ -70,6 +70,7 @@ export interface Meal {
     ai_confidence?: number
     logged_at: string
     notes?: string
+    coach_message?: string | null
 }
 
 export type MealType = 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation'

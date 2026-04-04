@@ -1,7 +1,13 @@
 import { create } from 'zustand'
 import type { UserProfile, Meal, ScanResult } from '@/types'
 
-type MealKey = 'breakfast' | 'lunch' | 'dinner' | 'snack'
+type MealKey = 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation'
+const calculateInitialTargets = (calories: number): Record<MealKey, number> => ({
+    petit_dejeuner: Math.round(calories * 0.25),
+    dejeuner: Math.round(calories * 0.35),
+    diner: Math.round(calories * 0.30),
+    collation: Math.round(calories * 0.10),
+})
 
 interface AppState {
     profile: UserProfile | null
@@ -26,12 +32,7 @@ interface AppState {
     dailyFat: number
     updateDailyTotals: () => void
 
-    mealTargets: {
-        breakfast: number
-        lunch: number
-        dinner: number
-        snack: number
-    }
+    mealTargets: Record<MealKey, number>
 
     recalculateMealTargets: () => void
 }
@@ -58,14 +59,21 @@ export const useAppStore = create<AppState>((set, get) => ({
         country: 'TG',
     },
 
-    setProfile: (profile) => set({ profile }),
+    setProfile: (profile) => {
+        if (!profile) return set({ profile })
+
+        set({
+            profile,
+            mealTargets: calculateInitialTargets(profile.calorie_target)
+        })
+    },
 
     todayMeals: [],
 
     setTodayMeals: (meals) => {
         set({ todayMeals: meals })
         get().updateDailyTotals()
-        get().recalculateMealTargets()
+        get().recalculateMealTargets() // 🔥 AJOUT ICI
     },
 
     addMeal: (meal) => {
@@ -74,7 +82,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }))
 
         get().updateDailyTotals()
-        get().recalculateMealTargets() // 🔥 IMPORTANT
+        get().recalculateMealTargets() // 🔥 AJOUT ICI
     },
 
     removeMeal: (mealId) => {
@@ -117,12 +125,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     },
 
     // 🔥 INITIAL TARGETS
-    mealTargets: {
-        breakfast: 500,
-        lunch: 700,
-        dinner: 600,
-        snack: 200,
-    },
+    mealTargets: calculateInitialTargets(2000), // fallback temporaire
 
     // 🔥 CŒUR DU SYSTEME
     recalculateMealTargets: () => {
@@ -130,54 +133,34 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         if (!profile) return
 
-        const totalGoal = profile.calorie_target
+        const now = new Date().getHours()
+
+        // 🔥 repas passés selon l'heure
+        const completedMeals: Record<MealKey, boolean> = {
+            petit_dejeuner: now >= 10,
+            dejeuner: now >= 14,
+            collation: now >= 17,
+            diner: false
+        }
 
         // 🔥 total consommé
-        const totalConsumed = todayMeals.reduce((sum, m) => sum + m.calories, 0)
+        const consumedCalories = todayMeals.reduce((sum, m) => sum + m.calories, 0)
 
-        const remainingCalories = Math.max(0, totalGoal - totalConsumed)
-
-        // 🔥 repas déjà faits (on suppose meal.type existe)
-        const completedMeals: Record<MealKey, boolean> = {
-            breakfast: false,
-            lunch: false,
-            dinner: false,
-            snack: false
-        }
-
-        todayMeals.forEach((meal) => {
-            const type = meal.meal_type as MealKey
-            if (type && completedMeals[type] !== undefined) {
-                completedMeals[type] = true
-            }
-        })
+        const remainingCalories = Math.max(0, profile.calorie_target - consumedCalories)
 
         // 🔥 repas restants
-        const remainingMealKeys = Object.keys(completedMeals).filter(
-            (k) => !completedMeals[k as keyof typeof completedMeals]
-        )
+        const remainingMeals = Object.keys(completedMeals)
+            .filter(key => !completedMeals[key as MealKey]) as MealKey[]
 
-        // 🔥 si tout est consommé → reset à 0
-        if (remainingMealKeys.length === 0) {
-            set({
-                mealTargets: {
-                    breakfast: 0,
-                    lunch: 0,
-                    dinner: 0,
-                    snack: 0,
-                }
-            })
-            return
-        }
+        if (remainingMeals.length === 0) return
 
-        // 🔥 redistribution intelligente
-        const newTarget = Math.round(remainingCalories / remainingMealKeys.length)
+        const newTarget = Math.round(remainingCalories / remainingMeals.length)
 
-        const newTargets = {
-            breakfast: completedMeals.breakfast ? 0 : newTarget,
-            lunch: completedMeals.lunch ? 0 : newTarget,
-            dinner: completedMeals.dinner ? 0 : newTarget,
-            snack: completedMeals.snack ? 0 : newTarget,
+        const newTargets: Record<MealKey, number> = {
+            petit_dejeuner: completedMeals.petit_dejeuner ? 0 : newTarget,
+            dejeuner: completedMeals.dejeuner ? 0 : newTarget,
+            collation: completedMeals.collation ? 0 : newTarget,
+            diner: completedMeals.diner ? 0 : newTarget,
         }
 
         set({ mealTargets: newTargets })

@@ -87,7 +87,12 @@ export async function POST(req: NextRequest) {
         fat_g: Number(body.fat_g || 0),
         image_url: body.image_url || null,
         ai_confidence: Number(body.ai_confidence || 0),
-        logged_at: new Date().toISOString()
+
+        // 🔥 AJOUT IMPORTANT
+        meal_type: body.meal_type || null,
+        coach_message: body.coach_message || null,
+
+        logged_at: new Date().toISOString(),
     }
 
     console.log("🚀 FINAL DATA:", mealData)

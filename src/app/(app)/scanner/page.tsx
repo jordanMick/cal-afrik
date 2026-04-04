@@ -265,10 +265,10 @@ export default function ScannerPage() {
             const mealSlot = getMealTargetByHour(calorieTarget)
 
             const currentMealKey =
-                mealSlot.label === "Petit-déjeuner" ? "breakfast" :
-                    mealSlot.label === "Déjeuner" ? "lunch" :
-                        mealSlot.label === "Collation" ? "snack" :
-                            "dinner"
+                mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
+                    mealSlot.label === "Déjeuner" ? "dejeuner" :
+                        mealSlot.label === "Collation" ? "collation" :
+                            "diner"
 
             // ✅ NOUVEAU : target dynamique du créneau
             const mealCalTarget = mealTargets?.[currentMealKey] || 0
@@ -411,7 +411,16 @@ export default function ScannerPage() {
                     carbs_g: Math.round(totals.carbs_g * 10) / 10,
                     fat_g: Math.round(totals.fat_g * 10) / 10,
                     image_url: capturedImage,
-                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length)
+                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length),
+
+                    // 🔥 AJOUTS CRITIQUES
+                    meal_type:
+                        mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
+                            mealSlot.label === "Déjeuner" ? "dejeuner" :
+                                mealSlot.label === "Collation" ? "collation" :
+                                    "diner",
+
+                    coach_message: coachMessage
                 }),
             })
             const json = await res.json()
@@ -422,10 +431,10 @@ export default function ScannerPage() {
                 addMeal({
                     ...json.data,
                     meal_type:
-                        mealSlot.label === "Petit-déjeuner" ? "breakfast" :
-                            mealSlot.label === "Déjeuner" ? "lunch" :
-                                mealSlot.label === "Collation" ? "snack" :
-                                    "dinner"
+                        mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
+                            mealSlot.label === "Déjeuner" ? "dejeuner" :
+                                mealSlot.label === "Collation" ? "collation" :
+                                    "diner"
                 })
             }
 
@@ -456,10 +465,10 @@ export default function ScannerPage() {
     }
 
     const currentMealKey =
-        mealSlot.label === "Petit-déjeuner" ? "breakfast" :
-            mealSlot.label === "Déjeuner" ? "lunch" :
-                mealSlot.label === "Collation" ? "snack" :
-                    "dinner"
+        mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
+            mealSlot.label === "Déjeuner" ? "dejeuner" :
+                mealSlot.label === "Collation" ? "collation" :
+                    "diner"
 
     const mealTarget = mealTargets?.[currentMealKey] || 0
 

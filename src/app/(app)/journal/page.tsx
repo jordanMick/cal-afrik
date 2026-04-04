@@ -20,7 +20,7 @@ const MEAL_TYPE_EMOJIS: Record<string, string> = {
 }
 
 export default function JournalPage() {
-    const { profile, lastCoachMessage } = useAppStore()
+    const { profile } = useAppStore()
     const [selectedDate, setSelectedDate] = useState(
         new Date().toISOString().split('T')[0]
     )
@@ -467,7 +467,7 @@ export default function JournalPage() {
                             )}
 
                             {/* ─── CONSEIL COACH ─── */}
-                            {lastCoachMessage && (
+                            {selectedMeal?.coach_message && (
                                 <div style={{ marginBottom: '16px' }}>
                                     <button
                                         onClick={() => setShowCoach(!showCoach)}
@@ -477,7 +477,7 @@ export default function JournalPage() {
                                     </button>
                                     {showCoach && (
                                         <div style={{ background: '#2A1F00', borderRadius: '12px', padding: '16px', border: '1px solid #3A2F00' }}>
-                                            <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>{lastCoachMessage}</p>
+                                            <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>{selectedMeal.coach_message}</p>
                                         </div>
                                     )}
                                 </div>
