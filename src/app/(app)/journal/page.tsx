@@ -361,7 +361,7 @@ export default function JournalPage() {
                         borderRadius: '24px 24px 0 0',
                         border: '1px solid #2A1F14',
                         zIndex: 50,
-                        padding: '0 0 40px 0',
+                        padding: '0 0 100px 0',
                         maxHeight: '90vh',
                         overflowY: 'auto',
                     }}>
