@@ -159,7 +159,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         const completedMeals: Record<MealKey, boolean> = {
             petit_dejeuner: now >= 10,
-            dejeuner: now >= 14,
+            dejeuner: now >= 16,
             collation: now >= 17,
             diner: false
         }

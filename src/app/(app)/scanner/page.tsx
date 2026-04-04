@@ -469,10 +469,22 @@ export default function ScannerPage() {
 
     const currentMealKey = getCurrentMealKey()
 
-    const mealTarget =
+    let mealTarget =
         lockedMealTargets?.[currentMealKey] ??
         mealTargets?.[currentMealKey] ??
         0
+
+    // 🔥 fallback intelligent si 0 (bug fréquent)
+    if (mealTarget === 0 && profile) {
+        const fallbackTargets = {
+            petit_dejeuner: Math.round(profile.calorie_target * 0.25),
+            dejeuner: Math.round(profile.calorie_target * 0.35),
+            diner: Math.round(profile.calorie_target * 0.30),
+            collation: Math.round(profile.calorie_target * 0.10),
+        }
+
+        mealTarget = fallbackTargets[currentMealKey]
+    }
 
     // 🔥 calories déjà consommées dans ce créneau
     const consumedInThisMeal = todayMeals
