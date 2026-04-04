@@ -380,10 +380,9 @@ export default function ScannerPage() {
             const json = await res.json()
             console.log("✅ MEAL SAVED:", json)
 
-            // ✅ Mettre à jour les totaux du jour dans le store
+            // ✅ Mettre à jour les totaux du jour dans le store immédiatement
             if (json.success && json.data) {
-                const { addMeal: storAddMeal, updateDailyTotals } = useAppStore.getState()
-                storAddMeal(json.data)
+                addMeal(json.data)
             }
 
             router.push('/journal')
