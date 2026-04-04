@@ -6,7 +6,6 @@ import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
 
-// Suggestion enrichie avec la portion détectée par l'IA
 interface EnrichedSuggestion extends FoodSuggestion {
     portion_g: number
     calories_detected: number
@@ -15,7 +14,7 @@ interface EnrichedSuggestion extends FoodSuggestion {
     fat_detected: number
     confidence: number
     detected: string
-    fromAI?: boolean // true si aucun match BD → suggestion vient directement de l'IA
+    fromAI?: boolean
 }
 
 interface ManualFood {
@@ -41,9 +40,18 @@ const CATEGORIES = [
     { value: 'plats_composes', label: '🍽️ Plats composés' },
 ]
 
+// ─── Calcul de la cible calorique selon l'heure ───────────────
+function getMealTargetByHour(dailyTarget: number) {
+    const hour = new Date().getHours()
+    if (hour >= 5 && hour < 10) return { label: 'Petit-déjeuner', pct: 0.25 }
+    if (hour >= 10 && hour < 14) return { label: 'Déjeuner', pct: 0.35 }
+    if (hour >= 14 && hour < 17) return { label: 'Collation', pct: 0.10 }
+    return { label: 'Dîner', pct: 0.30 }
+}
+
 export default function ScannerPage() {
     const router = useRouter()
-    const { addMeal } = useAppStore()
+    const { addMeal, profile, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const [image, setImage] = useState<string | null>(null)
@@ -57,14 +65,16 @@ export default function ScannerPage() {
     const [totalCaloriesAI, setTotalCaloriesAI] = useState<number>(0)
     const [showManualForm, setShowManualForm] = useState(false)
     const [isSavingManual, setIsSavingManual] = useState(false)
+
+    // ─── Popup récap ──────────────────────────────────────────
+    const [showRecap, setShowRecap] = useState(false)
+    const [showCoach, setShowCoach] = useState(false)
+    const [coachMessage, setCoachMessage] = useState<string>('')
+    const [isLoadingCoach, setIsLoadingCoach] = useState(false)
+
     const [manualFood, setManualFood] = useState<ManualFood>({
-        name_fr: '',
-        portion_g: 200,
-        calories: 0,
-        protein_g: 0,
-        carbs_g: 0,
-        fat_g: 0,
-        category: 'plats_composes',
+        name_fr: '', portion_g: 200, calories: 0,
+        protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes',
     })
 
     useEffect(() => { loadFoods() }, [])
@@ -74,9 +84,7 @@ export default function ScannerPage() {
             const res = await fetch('/api/foods')
             const json = await res.json()
             if (json.success) setFoods(json.data)
-        } catch (err) {
-            console.error(err)
-        }
+        } catch (err) { console.error(err) }
     }
 
     useEffect(() => {
@@ -102,6 +110,7 @@ export default function ScannerPage() {
         setMealName('')
         setTotalCaloriesAI(0)
         setShowManualForm(false)
+        setShowRecap(false)
 
         try {
             const previewUrl = URL.createObjectURL(file)
@@ -112,58 +121,25 @@ export default function ScannerPage() {
 
             const base64Image = await toBase64(file)
             const { data: { session } } = await supabase.auth.getSession()
-
             if (!session) { simulateAI(); return }
 
             const res = await fetch("/api/analyze", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    images: [{ data: base64Image, mimeType: file.type }]
-                })
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({ images: [{ data: base64Image, mimeType: file.type }] })
             })
 
             const json = await res.json()
-            console.log("🧠 RAW AI RESPONSE:", json)
-
             if (!json.success || !json.data) { simulateAI(); return }
 
             setMealName(json.meal_name || 'Repas détecté')
             setTotalCaloriesAI(json.total_calories || 0)
 
-            // ✅ Pour chaque composant :
-            // - S'il a des suggestions BD → les afficher normalement
-            // - S'il n'a aucun match BD → créer une suggestion "fromAI" avec les valeurs IA
-            const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[])
-                .flatMap((item): EnrichedSuggestion[] => {
-
-                    const suggestions = item.suggestions ?? []
-
-                    if (suggestions.length > 0) {
-                        return suggestions.map((suggestion): EnrichedSuggestion => ({
-                            ...suggestion,
-                            portion_g: item.portion_g ?? 0,
-                            calories_detected: item.calories_detected ?? 0,
-                            protein_detected: item.protein_detected ?? 0,
-                            carbs_detected: item.carbs_detected ?? 0,
-                            fat_detected: item.fat_detected ?? 0,
-                            confidence: item.confidence ?? 0,
-                            detected: item.detected ?? "Inconnu",
-                            fromAI: false,
-                        }))
-                    }
-
-                    return [{
-                        id: `ai-${item.detected ?? 'unknown'}`,
-                        name: item.detected ?? "Aliment inconnu",
-                        score: 0,
-                        calories: item.calories_detected ?? 0,
-                        protein_g: item.protein_detected ?? 0,
-                        carbs_g: item.carbs_detected ?? 0,
-                        fat_g: item.fat_detected ?? 0,
+            const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[]).flatMap((item): EnrichedSuggestion[] => {
+                const suggs = item.suggestions ?? []
+                if (suggs.length > 0) {
+                    return suggs.map((s): EnrichedSuggestion => ({
+                        ...s,
                         portion_g: item.portion_g ?? 0,
                         calories_detected: item.calories_detected ?? 0,
                         protein_detected: item.protein_detected ?? 0,
@@ -171,14 +147,30 @@ export default function ScannerPage() {
                         fat_detected: item.fat_detected ?? 0,
                         confidence: item.confidence ?? 0,
                         detected: item.detected ?? "Inconnu",
-                        fromAI: true,
-                    }]
-                })
+                        fromAI: false,
+                    }))
+                }
+                return [{
+                    id: `ai-${item.detected ?? 'unknown'}`,
+                    name: item.detected ?? "Aliment inconnu",
+                    score: 0,
+                    calories: item.calories_detected ?? 0,
+                    protein_g: item.protein_detected ?? 0,
+                    carbs_g: item.carbs_detected ?? 0,
+                    fat_g: item.fat_detected ?? 0,
+                    portion_g: item.portion_g ?? 0,
+                    calories_detected: item.calories_detected ?? 0,
+                    protein_detected: item.protein_detected ?? 0,
+                    carbs_detected: item.carbs_detected ?? 0,
+                    fat_detected: item.fat_detected ?? 0,
+                    confidence: item.confidence ?? 0,
+                    detected: item.detected ?? "Inconnu",
+                    fromAI: true,
+                }]
+            })
 
-            console.log("✅ ENRICHED SUGGESTIONS:", enriched)
             setSuggestions(enriched)
 
-            // Pré-remplir le formulaire manuel avec les valeurs IA
             if (json.data[0]) {
                 const first = json.data[0] as ScanResultItem
                 setManualFood({
@@ -191,7 +183,6 @@ export default function ScannerPage() {
                     category: 'plats_composes',
                 })
             }
-
         } catch (err) {
             console.error(err)
             simulateAI()
@@ -202,26 +193,17 @@ export default function ScannerPage() {
 
     const simulateAI = () => {
         const fitnessKeywords = ["riz", "poulet", "oeuf", "thon", "plantain"]
-        const filtered = foods.filter(food =>
-            fitnessKeywords.some(kw => food.name_fr.toLowerCase().includes(kw))
-        )
+        const filtered = foods.filter(food => fitnessKeywords.some(kw => food.name_fr.toLowerCase().includes(kw)))
         const simulated: EnrichedSuggestion[] = (filtered.length > 0 ? filtered.slice(0, 5) : foods.slice(0, 5))
             .map(food => ({
-                id: food.id,
-                name: food.name_fr,
-                score: 50,
+                id: food.id, name: food.name_fr, score: 50,
                 calories: Math.round((food.calories_per_100g * (food.default_portion_g || 200)) / 100),
                 protein_g: Math.round((food.protein_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
                 carbs_g: Math.round((food.carbs_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
                 fat_g: Math.round((food.fat_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10,
                 portion_g: food.default_portion_g || 200,
-                calories_detected: 0,
-                protein_detected: 0,
-                carbs_detected: 0,
-                fat_detected: 0,
-                confidence: 50,
-                detected: food.name_fr,
-                fromAI: false,
+                calories_detected: 0, protein_detected: 0, carbs_detected: 0, fat_detected: 0,
+                confidence: 50, detected: food.name_fr, fromAI: false,
             }))
         setSuggestions(simulated)
     }
@@ -234,140 +216,154 @@ export default function ScannerPage() {
 
     const selectFood = (food: EnrichedSuggestion) => {
         setSelectedFoods(prev =>
-            prev.find(f => f.id === food.id)
-                ? prev.filter(f => f.id !== food.id)
-                : [...prev, food]
+            prev.find(f => f.id === food.id) ? prev.filter(f => f.id !== food.id) : [...prev, food]
         )
     }
 
-    const getTotals = () => {
-        return selectedFoods.reduce((acc, food) => ({
-            calories: acc.calories + food.calories,
-            protein_g: acc.protein_g + food.protein_g,
-            carbs_g: acc.carbs_g + food.carbs_g,
-            fat_g: acc.fat_g + food.fat_g,
-            portion_g: acc.portion_g + food.portion_g,
-        }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
+    const getTotals = () => selectedFoods.reduce((acc, food) => ({
+        calories: acc.calories + food.calories,
+        protein_g: acc.protein_g + food.protein_g,
+        carbs_g: acc.carbs_g + food.carbs_g,
+        fat_g: acc.fat_g + food.fat_g,
+        portion_g: acc.portion_g + food.portion_g,
+    }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
+
+    // ─── Générer le conseil IA ────────────────────────────────
+    const loadCoachMessage = async () => {
+        if (coachMessage) { setShowCoach(true); return }
+        setIsLoadingCoach(true)
+        setShowCoach(true)
+
+        try {
+            const totals = getTotals()
+            const calorieTarget = profile?.calorie_target || 2000
+            const proteinTarget = profile?.protein_target_g || 100
+            const carbsTarget = profile?.carbs_target_g || 250
+            const fatTarget = profile?.fat_target_g || 65
+
+            const mealSlot = getMealTargetByHour(calorieTarget)
+            const mealCalTarget = Math.round(calorieTarget * mealSlot.pct)
+            const mealProtTarget = Math.round(proteinTarget * mealSlot.pct)
+            const mealCarbsTarget = Math.round(carbsTarget * mealSlot.pct)
+            const mealFatTarget = Math.round(fatTarget * mealSlot.pct)
+
+            const diffCal = mealCalTarget - totals.calories
+            const diffProt = mealProtTarget - totals.protein_g
+            const diffCarbs = mealCarbsTarget - totals.carbs_g
+            const diffFat = mealFatTarget - totals.fat_g
+
+            const prompt = `Tu es un coach nutritionnel expert en cuisine africaine subsaharienne (Togo, Côte d'Ivoire, Sénégal, Ghana, Bénin, Nigeria).
+
+L'utilisateur vient de scanner son ${mealSlot.label.toLowerCase()} composé de : ${selectedFoods.map(f => f.name).join(', ')}.
+
+Valeurs de ce repas :
+- Calories : ${Math.round(totals.calories)} kcal (cible pour ce repas : ${mealCalTarget} kcal, écart : ${diffCal > 0 ? '+' : ''}${Math.round(diffCal)} kcal)
+- Protéines : ${totals.protein_g}g (cible : ${mealProtTarget}g, écart : ${diffProt > 0 ? '+' : ''}${Math.round(diffProt)}g)
+- Glucides : ${totals.carbs_g}g (cible : ${mealCarbsTarget}g, écart : ${diffCarbs > 0 ? '+' : ''}${Math.round(diffCarbs)}g)
+- Lipides : ${totals.fat_g}g (cible : ${mealFatTarget}g, écart : ${diffFat > 0 ? '+' : ''}${Math.round(diffFat)}g)
+
+Déjà consommé aujourd'hui : ${Math.round(dailyCalories)} kcal sur ${calorieTarget} kcal.
+
+Donne un conseil court (3-4 phrases max) en français :
+1. Évalue ce repas par rapport à la cible de ce moment de la journée
+2. Si des macros manquent, propose 1-2 aliments africains concrets à ajouter
+3. Termine avec une phrase d'encouragement courte
+
+Réponds directement sans introduction, de façon naturelle et bienveillante.`
+
+            const response = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: "claude-haiku-3-5-20241022",
+                    max_tokens: 300,
+                    messages: [{ role: "user", content: prompt }]
+                })
+            })
+
+            const data = await response.json()
+            const text = data.content?.[0]?.text || "Bon repas ! Continue comme ça 💪"
+            setCoachMessage(text)
+
+        } catch (err) {
+            console.error(err)
+            setCoachMessage("Bon repas ! Continue à bien manger 💪")
+        } finally {
+            setIsLoadingCoach(false)
+        }
     }
 
-    // ✅ Sauvegarder l'aliment manuel dans Supabase food_items puis l'ajouter au repas
     const handleSaveManualFood = async () => {
         if (!manualFood.name_fr || manualFood.calories <= 0) return
         setIsSavingManual(true)
-
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-
-            // Convertir les valeurs de la portion vers pour 100g
             const factor = manualFood.portion_g > 0 ? 100 / manualFood.portion_g : 1
-
             const res = await fetch('/api/foods', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session.access_token}`
-                },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                 body: JSON.stringify({
-                    name_fr: manualFood.name_fr,
-                    category: manualFood.category,
+                    name_fr: manualFood.name_fr, category: manualFood.category,
                     calories_per_100g: Math.round(manualFood.calories * factor),
                     protein_per_100g: Math.round(manualFood.protein_g * factor * 10) / 10,
                     carbs_per_100g: Math.round(manualFood.carbs_g * factor * 10) / 10,
                     fat_per_100g: Math.round(manualFood.fat_g * factor * 10) / 10,
-                    default_portion_g: manualFood.portion_g,
-                    verified: false,
-                    origin_country: [],
+                    default_portion_g: manualFood.portion_g, verified: false, origin_country: [],
                 })
             })
-
             const json = await res.json()
-            console.log("✅ FOOD SAVED TO DB:", json)
-
             if (json.success && json.data) {
                 const newFood: EnrichedSuggestion = {
-                    id: json.data.id,
-                    name: manualFood.name_fr,
-                    score: 100,
-                    calories: manualFood.calories,
-                    protein_g: manualFood.protein_g,
-                    carbs_g: manualFood.carbs_g,
-                    fat_g: manualFood.fat_g,
+                    id: json.data.id, name: manualFood.name_fr, score: 100,
+                    calories: manualFood.calories, protein_g: manualFood.protein_g,
+                    carbs_g: manualFood.carbs_g, fat_g: manualFood.fat_g,
                     portion_g: manualFood.portion_g,
-                    calories_detected: manualFood.calories,
-                    protein_detected: manualFood.protein_g,
-                    carbs_detected: manualFood.carbs_g,
-                    fat_detected: manualFood.fat_g,
-                    confidence: 100,
-                    detected: manualFood.name_fr,
-                    fromAI: false,
+                    calories_detected: manualFood.calories, protein_detected: manualFood.protein_g,
+                    carbs_detected: manualFood.carbs_g, fat_detected: manualFood.fat_g,
+                    confidence: 100, detected: manualFood.name_fr, fromAI: false,
                 }
                 setSelectedFoods(prev => [...prev, newFood])
                 setShowManualForm(false)
             }
-
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setIsSavingManual(false)
-        }
+        } catch (err) { console.error(err) }
+        finally { setIsSavingManual(false) }
     }
 
-    // ✅ Sauvegarder un aliment IA dans food_items
     const saveAIFoodToDB = async (food: EnrichedSuggestion, session: any) => {
         const factor = food.portion_g > 0 ? 100 / food.portion_g : 1
-
         try {
-            const res = await fetch('/api/foods', {
+            await fetch('/api/foods', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session.access_token}`
-                },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                 body: JSON.stringify({
-                    name_fr: food.name,
-                    category: 'plats_composes',
+                    name_fr: food.name, category: 'plats_composes',
                     calories_per_100g: Math.round(food.calories * factor),
                     protein_per_100g: Math.round(food.protein_g * factor * 10) / 10,
                     carbs_per_100g: Math.round(food.carbs_g * factor * 10) / 10,
                     fat_per_100g: Math.round(food.fat_g * factor * 10) / 10,
-                    default_portion_g: food.portion_g,
-                    verified: false,
-                    origin_country: [],
+                    default_portion_g: food.portion_g, verified: false, origin_country: [],
                 })
             })
-            const json = await res.json()
-            console.log(`✅ FOOD SAVED TO DB: ${food.name}`, json)
-        } catch (err) {
-            // On ne bloque pas le repas si la sauvegarde BD échoue
-            console.error(`❌ Impossible de sauvegarder ${food.name} en BD:`, err)
-        }
+        } catch (err) { console.error(`❌ Impossible de sauvegarder ${food.name}:`, err) }
     }
 
     const handleSaveMeal = async () => {
         if (selectedFoods.length === 0) return
         setIsSaving(true)
-
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            // ✅ Sauvegarder en BD tous les aliments fromAI sélectionnés
             const aiFoods = selectedFoods.filter(f => f.fromAI)
-            if (aiFoods.length > 0) {
-                console.log(`📥 Sauvegarde de ${aiFoods.length} aliment(s) IA en BD...`)
-                await Promise.all(aiFoods.map(food => saveAIFoodToDB(food, session)))
-            }
+            if (aiFoods.length > 0) await Promise.all(aiFoods.map(food => saveAIFoodToDB(food, session)))
 
             const totals = getTotals()
             const finalMealName = mealName || selectedFoods.map(f => f.name).join(', ')
 
             const res = await fetch('/api/meals', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session.access_token}`
-                },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                 body: JSON.stringify({
                     custom_name: finalMealName,
                     portion_g: Math.round(totals.portion_g),
@@ -376,21 +372,14 @@ export default function ScannerPage() {
                     carbs_g: Math.round(totals.carbs_g * 10) / 10,
                     fat_g: Math.round(totals.fat_g * 10) / 10,
                     image_url: capturedImage,
-                    ai_confidence: Math.round(
-                        selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length
-                    )
+                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length)
                 }),
             })
-
             const json = await res.json()
             console.log("✅ MEAL SAVED:", json)
             router.push('/journal')
-
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setIsSaving(false)
-        }
+        } catch (err) { console.error(err) }
+        finally { setIsSaving(false) }
     }
 
     const uploadImage = async (file: File) => {
@@ -403,358 +392,206 @@ export default function ScannerPage() {
     }
 
     const totals = getTotals()
+    const mealSlot = getMealTargetByHour(profile?.calorie_target || 2000)
 
     const inputStyle: React.CSSProperties = {
-        width: '100%',
-        padding: '10px 12px',
-        borderRadius: '8px',
-        background: '#0F0A06',
-        border: '1px solid #333',
-        color: '#fff',
-        fontSize: '14px',
-        boxSizing: 'border-box',
+        width: '100%', padding: '10px 12px', borderRadius: '8px',
+        background: '#0F0A06', border: '1px solid #333', color: '#fff',
+        fontSize: '14px', boxSizing: 'border-box',
     }
-
     const labelStyle: React.CSSProperties = {
-        color: '#aaa',
-        fontSize: '12px',
-        marginBottom: '4px',
-        display: 'block',
+        color: '#aaa', fontSize: '12px', marginBottom: '4px', display: 'block',
     }
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: '#0F0A06',
-            maxWidth: '480px',
-            margin: '0 auto',
-            padding: '24px',
-            paddingBottom: '140px'
-        }}>
-            <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: '800', marginBottom: '20px' }}>
-                Scanner
-            </h1>
+        <div style={{ minHeight: '100vh', background: '#0F0A06', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px' }}>
+            <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: '800', marginBottom: '20px' }}>Scanner</h1>
 
             {/* ─── IMAGE ─── */}
             {!image ? (
                 <>
-                    <div
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                            height: '180px',
-                            borderRadius: '16px',
-                            background: '#1A1108',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#aaa',
-                            cursor: 'pointer'
-                        }}
-                    >
+                    <div onClick={() => fileInputRef.current?.click()} style={{ height: '180px', borderRadius: '16px', background: '#1A1108', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', cursor: 'pointer' }}>
                         📷 Ajouter une photo
                     </div>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageCapture}
-                        style={{ display: 'none' }}
-                    />
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageCapture} style={{ display: 'none' }} />
                 </>
             ) : (
                 <div style={{ position: 'relative' }}>
                     <img src={image} style={{ width: '100%', borderRadius: '16px' }} />
-                    <button
-                        onClick={() => {
-                            setImage(null)
-                            setSuggestions([])
-                            setSelectedFoods([])
-                            setMealName('')
-                            setShowManualForm(false)
-                        }}
-                        style={{
-                            position: 'absolute', top: '8px', right: '8px',
-                            background: 'rgba(0,0,0,0.6)', border: 'none',
-                            borderRadius: '50%', width: '32px', height: '32px',
-                            color: '#fff', cursor: 'pointer', fontSize: '16px'
-                        }}
-                    >✕</button>
+                    <button onClick={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName(''); setShowManualForm(false) }}
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', cursor: 'pointer', fontSize: '16px' }}>✕</button>
                 </div>
             )}
 
-            {/* ─── ANALYSE EN COURS ─── */}
-            {isAnalyzing && (
-                <p style={{ color: '#aaa', marginTop: '15px', textAlign: 'center' }}>
-                    🔍 Analyse en cours...
-                </p>
-            )}
+            {isAnalyzing && <p style={{ color: '#aaa', marginTop: '15px', textAlign: 'center' }}>🔍 Analyse en cours...</p>}
 
-            {/* ─── NOM DU REPAS ─── */}
             {mealName && !isAnalyzing && (
                 <div style={{ marginTop: '16px' }}>
-                    <p style={{ color: '#C4622D', fontWeight: '700', fontSize: '16px' }}>
-                        🍽️ {mealName}
-                    </p>
-                    {totalCaloriesAI > 0 && (
-                        <p style={{ color: '#777', fontSize: '13px' }}>
-                            Estimation IA : ~{totalCaloriesAI} kcal au total
-                        </p>
-                    )}
+                    <p style={{ color: '#C4622D', fontWeight: '700', fontSize: '16px' }}>🍽️ {mealName}</p>
+                    {totalCaloriesAI > 0 && <p style={{ color: '#777', fontSize: '13px' }}>Estimation IA : ~{totalCaloriesAI} kcal au total</p>}
                 </div>
             )}
 
             {/* ─── SUGGESTIONS ─── */}
             {suggestions.length > 0 && !isAnalyzing && (
                 <div style={{ marginTop: '20px' }}>
-                    <p style={{ color: '#777', marginBottom: '10px' }}>
-                        Sélectionne les aliments présents
-                    </p>
-
+                    <p style={{ color: '#777', marginBottom: '10px' }}>Sélectionne les aliments présents</p>
                     {suggestions.map((food) => {
                         const isSelected = !!selectedFoods.find(f => f.id === food.id)
                         return (
-                            <div
-                                key={`${food.id}-${food.detected}`}
-                                onClick={() => selectFood(food)}
-                                style={{
-                                    padding: '14px',
-                                    borderRadius: '12px',
-                                    marginBottom: '10px',
-                                    background: isSelected ? '#C4622D' : '#1A1108',
-                                    cursor: 'pointer',
-                                    border: isSelected ? '2px solid #E07040' : '2px solid transparent'
-                                }}
-                            >
+                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)}
+                                style={{ padding: '14px', borderRadius: '12px', marginBottom: '10px', background: isSelected ? '#C4622D' : '#1A1108', cursor: 'pointer', border: isSelected ? '2px solid #E07040' : '2px solid transparent' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <p style={{ color: '#fff', fontWeight: '600', margin: 0 }}>
-                                        {food.name || "Plat inconnu"}
-                                    </p>
-                                    {food.fromAI && (
-                                        <span style={{
-                                            background: '#2A1F00', color: '#F5A623',
-                                            fontSize: '10px', fontWeight: '700',
-                                            padding: '2px 8px', borderRadius: '20px',
-                                            border: '1px solid #F5A623'
-                                        }}>
-                                            Suggestion IA
-                                        </span>
-                                    )}
+                                    <p style={{ color: '#fff', fontWeight: '600', margin: 0 }}>{food.name || "Plat inconnu"}</p>
+                                    {food.fromAI && <span style={{ background: '#2A1F00', color: '#F5A623', fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px', border: '1px solid #F5A623' }}>Suggestion IA</span>}
                                 </div>
-
-                                {food.fromAI && (
-                                    <p style={{ color: '#F5A623', fontSize: '11px', marginTop: '4px' }}>
-                                        ⚠️ Non trouvé dans la base — valeurs estimées par l'IA
-                                    </p>
-                                )}
-
-                                <p style={{ color: '#aaa', fontSize: '12px', marginTop: '4px' }}>
-                                    ⚖️ Portion : {food.portion_g}g
-                                </p>
+                                {food.fromAI && <p style={{ color: '#F5A623', fontSize: '11px', marginTop: '4px' }}>⚠️ Non trouvé dans la base — valeurs estimées par l'IA</p>}
+                                <p style={{ color: '#aaa', fontSize: '12px', marginTop: '4px' }}>⚖️ Portion : {food.portion_g}g</p>
                                 <p style={{ color: isSelected ? '#fff' : '#C4622D', fontSize: '13px', fontWeight: '600', marginTop: '4px' }}>
                                     🔥 {food.calories} kcal · {food.protein_g}g prot · {food.carbs_g}g glucides · {food.fat_g}g lip
                                 </p>
-                                {!food.fromAI && (
-                                    <p style={{ color: '#555', fontSize: '11px' }}>
-                                        Score match : {food.score} · Confiance IA : {food.confidence}%
-                                    </p>
-                                )}
                             </div>
                         )
                     })}
                 </div>
             )}
 
-            {/* ─── BOUTON AJOUT MANUEL ─── */}
+            {/* ─── AJOUT MANUEL ─── */}
             {!isAnalyzing && image && (
-                <button
-                    onClick={() => setShowManualForm(!showManualForm)}
-                    style={{
-                        width: '100%',
-                        padding: '12px',
-                        borderRadius: '12px',
-                        background: 'transparent',
-                        border: '1px solid #333',
-                        color: '#aaa',
-                        cursor: 'pointer',
-                        marginTop: '12px',
-                        fontSize: '14px'
-                    }}
-                >
+                <button onClick={() => setShowManualForm(!showManualForm)}
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid #333', color: '#aaa', cursor: 'pointer', marginTop: '12px', fontSize: '14px' }}>
                     {showManualForm ? '✕ Fermer le formulaire' : '✏️ Ajouter manuellement'}
                 </button>
             )}
 
-            {/* ─── FORMULAIRE AJOUT MANUEL ─── */}
             {showManualForm && (
-                <div style={{
-                    marginTop: '16px',
-                    padding: '20px',
-                    borderRadius: '16px',
-                    background: '#1A1108',
-                    border: '1px solid #333'
-                }}>
-                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '16px', marginBottom: '4px' }}>
-                        ✏️ Ajouter un aliment
-                    </p>
-                    <p style={{ color: '#777', fontSize: '12px', marginBottom: '16px' }}>
-                        Valeurs pré-remplies par l'IA — corrige si nécessaire.
-                    </p>
-
-                    {/* Nom */}
+                <div style={{ marginTop: '16px', padding: '20px', borderRadius: '16px', background: '#1A1108', border: '1px solid #333' }}>
+                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '16px', marginBottom: '4px' }}>✏️ Ajouter un aliment</p>
+                    <p style={{ color: '#777', fontSize: '12px', marginBottom: '16px' }}>Valeurs pré-remplies par l'IA — corrige si nécessaire.</p>
                     <div style={{ marginBottom: '12px' }}>
                         <label style={labelStyle}>Nom de l'aliment *</label>
-                        <input
-                            style={inputStyle}
-                            value={manualFood.name_fr}
-                            onChange={e => setManualFood(p => ({ ...p, name_fr: e.target.value }))}
-                            placeholder="ex: Rôti de porc"
-                        />
+                        <input style={inputStyle} value={manualFood.name_fr} onChange={e => setManualFood(p => ({ ...p, name_fr: e.target.value }))} placeholder="ex: Rôti de porc" />
                     </div>
-
-                    {/* Catégorie */}
                     <div style={{ marginBottom: '12px' }}>
                         <label style={labelStyle}>Catégorie *</label>
-                        <select
-                            style={inputStyle}
-                            value={manualFood.category}
-                            onChange={e => setManualFood(p => ({ ...p, category: e.target.value }))}
-                        >
-                            {CATEGORIES.map(c => (
-                                <option key={c.value} value={c.value}>{c.label}</option>
-                            ))}
+                        <select style={inputStyle} value={manualFood.category} onChange={e => setManualFood(p => ({ ...p, category: e.target.value }))}>
+                            {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                         </select>
                     </div>
-
-                    {/* Portion */}
                     <div style={{ marginBottom: '4px' }}>
                         <label style={labelStyle}>Portion (g) *</label>
-                        <input
-                            style={inputStyle}
-                            type="number"
-                            value={manualFood.portion_g}
-                            onChange={e => setManualFood(p => ({ ...p, portion_g: Number(e.target.value) }))}
-                            placeholder="200"
-                        />
+                        <input style={inputStyle} type="number" value={manualFood.portion_g} onChange={e => setManualFood(p => ({ ...p, portion_g: Number(e.target.value) }))} />
                     </div>
-                    <p style={{ color: '#555', fontSize: '11px', marginBottom: '12px' }}>
-                        Les macros ci-dessous sont pour cette portion ({manualFood.portion_g}g)
-                    </p>
-
-                    {/* Calories */}
+                    <p style={{ color: '#555', fontSize: '11px', marginBottom: '12px' }}>Les macros ci-dessous sont pour cette portion ({manualFood.portion_g}g)</p>
                     <div style={{ marginBottom: '12px' }}>
                         <label style={labelStyle}>Calories (kcal) *</label>
-                        <input
-                            style={inputStyle}
-                            type="number"
-                            value={manualFood.calories}
-                            onChange={e => setManualFood(p => ({ ...p, calories: Number(e.target.value) }))}
-                            placeholder="0"
-                        />
+                        <input style={inputStyle} type="number" value={manualFood.calories} onChange={e => setManualFood(p => ({ ...p, calories: Number(e.target.value) }))} />
                     </div>
-
-                    {/* Macros */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-                        <div>
-                            <label style={labelStyle}>Protéines (g)</label>
-                            <input
-                                style={inputStyle}
-                                type="number"
-                                value={manualFood.protein_g}
-                                onChange={e => setManualFood(p => ({ ...p, protein_g: Number(e.target.value) }))}
-                                placeholder="0"
-                            />
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Glucides (g)</label>
-                            <input
-                                style={inputStyle}
-                                type="number"
-                                value={manualFood.carbs_g}
-                                onChange={e => setManualFood(p => ({ ...p, carbs_g: Number(e.target.value) }))}
-                                placeholder="0"
-                            />
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Lipides (g)</label>
-                            <input
-                                style={inputStyle}
-                                type="number"
-                                value={manualFood.fat_g}
-                                onChange={e => setManualFood(p => ({ ...p, fat_g: Number(e.target.value) }))}
-                                placeholder="0"
-                            />
-                        </div>
+                        {[
+                            { key: 'protein_g', label: 'Protéines (g)' },
+                            { key: 'carbs_g', label: 'Glucides (g)' },
+                            { key: 'fat_g', label: 'Lipides (g)' },
+                        ].map(f => (
+                            <div key={f.key}>
+                                <label style={labelStyle}>{f.label}</label>
+                                <input style={inputStyle} type="number" value={(manualFood as any)[f.key]} onChange={e => setManualFood(p => ({ ...p, [f.key]: Number(e.target.value) }))} placeholder="0" />
+                            </div>
+                        ))}
                     </div>
-
-                    <button
-                        onClick={handleSaveManualFood}
-                        disabled={isSavingManual || !manualFood.name_fr || manualFood.calories <= 0}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            borderRadius: '10px',
-                            background: (!manualFood.name_fr || manualFood.calories <= 0) ? '#333' : '#C4622D',
-                            color: '#fff',
-                            border: 'none',
-                            fontWeight: 'bold',
-                            cursor: (!manualFood.name_fr || manualFood.calories <= 0) ? 'not-allowed' : 'pointer',
-                            opacity: isSavingManual ? 0.7 : 1,
-                            fontSize: '14px'
-                        }}
-                    >
+                    <button onClick={handleSaveManualFood} disabled={isSavingManual || !manualFood.name_fr || manualFood.calories <= 0}
+                        style={{ width: '100%', padding: '12px', borderRadius: '10px', background: (!manualFood.name_fr || manualFood.calories <= 0) ? '#333' : '#C4622D', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
                         {isSavingManual ? "Sauvegarde..." : "✅ Sauvegarder et ajouter au repas"}
                     </button>
                 </div>
             )}
 
-            {/* ─── RÉCAP SÉLECTION ─── */}
+            {/* ─── BOUTON RÉCAP ─── */}
             {selectedFoods.length > 0 && (
-                <div style={{
-                    marginTop: '20px',
-                    padding: '16px',
-                    borderRadius: '12px',
-                    background: '#1A1108',
-                    border: '1px solid #C4622D'
-                }}>
-                    <p style={{ color: '#fff', fontWeight: '700', marginBottom: '8px' }}>
-                        Récap · {selectedFoods.length} aliment{selectedFoods.length > 1 ? 's' : ''}
-                    </p>
-                    <p style={{ color: '#aaa', fontSize: '13px' }}>🔥 {Math.round(totals.calories)} kcal</p>
-                    <p style={{ color: '#aaa', fontSize: '13px' }}>💪 {Math.round(totals.protein_g * 10) / 10}g protéines</p>
-                    <p style={{ color: '#aaa', fontSize: '13px' }}>🌾 {Math.round(totals.carbs_g * 10) / 10}g glucides</p>
-                    <p style={{ color: '#aaa', fontSize: '13px' }}>🫒 {Math.round(totals.fat_g * 10) / 10}g lipides</p>
+                <div style={{ position: 'fixed', bottom: '70px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '0 24px' }}>
+                    <button onClick={() => { setShowRecap(true); setShowCoach(false); setCoachMessage('') }}
+                        style={{ width: '100%', padding: '14px', borderRadius: '12px', background: '#C4622D', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+                        Voir le récap · {Math.round(totals.calories)} kcal
+                    </button>
                 </div>
             )}
 
-            {/* ─── BOUTON SAUVEGARDER ─── */}
-            {selectedFoods.length > 0 && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: '70px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '100%',
-                    maxWidth: '480px',
-                    padding: '0 24px'
-                }}>
-                    <button
-                        onClick={handleSaveMeal}
-                        disabled={isSaving}
-                        style={{
-                            width: '100%',
-                            padding: '14px',
-                            borderRadius: '12px',
-                            background: '#C4622D',
-                            color: '#fff',
-                            border: 'none',
-                            fontWeight: 'bold',
-                            fontSize: '16px',
-                            opacity: isSaving ? 0.7 : 1,
-                            cursor: isSaving ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                        {isSaving ? "Ajout..." : `Ajouter ${selectedFoods.length} aliment${selectedFoods.length > 1 ? 's' : ''} · ${Math.round(totals.calories)} kcal`}
-                    </button>
+            {/* ─── OVERLAY ─── */}
+            {showRecap && <div onClick={() => setShowRecap(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 40 }} />}
+
+            {/* ─── POPUP RÉCAP ─── */}
+            {showRecap && (
+                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: '#1A1108', borderRadius: '24px 24px 0 0', border: '1px solid #2A1F14', zIndex: 50, padding: '0 0 100px 0', maxHeight: '90vh', overflowY: 'auto' }}>
+
+                    {/* Handle */}
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+                        <div style={{ width: '40px', height: '4px', background: '#333', borderRadius: '2px' }} />
+                    </div>
+
+                    <div style={{ padding: '20px 24px' }}>
+
+                        {/* Titre + moment */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>Récap de ton repas</h2>
+                            <span style={{ color: '#C4622D', fontSize: '12px', fontWeight: '700', background: 'rgba(196,98,45,0.15)', padding: '4px 10px', borderRadius: '20px' }}>
+                                {mealSlot.label}
+                            </span>
+                        </div>
+                        <p style={{ color: '#555', fontSize: '13px', marginBottom: '20px' }}>
+                            {selectedFoods.map(f => f.name).join(' · ')}
+                        </p>
+
+                        {/* Calories */}
+                        <div style={{ background: '#0F0A06', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '16px' }}>
+                            <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
+                            <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
+                            <p style={{ color: '#444', fontSize: '12px', marginTop: '4px' }}>
+                                Cible {mealSlot.label.toLowerCase()} : {Math.round((profile?.calorie_target || 2000) * mealSlot.pct)} kcal
+                            </p>
+                        </div>
+
+                        {/* Macros */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+                            {[
+                                { label: 'Protéines', value: totals.protein_g, color: '#52B788' },
+                                { label: 'Glucides', value: totals.carbs_g, color: '#E9C46A' },
+                                { label: 'Lipides', value: totals.fat_g, color: '#E07040' },
+                            ].map(m => (
+                                <div key={m.label} style={{ background: '#0F0A06', borderRadius: '14px', padding: '14px 10px', textAlign: 'center' }}>
+                                    <p style={{ color: m.color, fontSize: '22px', fontWeight: '800' }}>{Math.round(m.value * 10) / 10}g</p>
+                                    <p style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{m.label}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* ─── CONSEIL COACH ─── */}
+                        <button onClick={loadCoachMessage}
+                            style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? '#2A1F00' : 'transparent', border: '1px solid #F5A623', color: '#F5A623', fontWeight: '600', fontSize: '14px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
+                            {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
+                        </button>
+
+                        {showCoach && (
+                            <div style={{ background: '#2A1F00', borderRadius: '12px', padding: '16px', marginBottom: '16px', border: '1px solid #3A2F00' }}>
+                                {isLoadingCoach ? (
+                                    <p style={{ color: '#F5A623', fontSize: '13px' }}>⏳ Analyse en cours...</p>
+                                ) : (
+                                    <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>{coachMessage}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Boutons */}
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={() => setShowRecap(false)}
+                                style={{ flex: 1, padding: '14px', borderRadius: '12px', background: '#2A1F14', border: '1px solid #333', color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>
+                                ← Modifier
+                            </button>
+                            <button onClick={handleSaveMeal} disabled={isSaving}
+                                style={{ flex: 2, padding: '14px', borderRadius: '12px', background: '#C4622D', color: '#fff', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', opacity: isSaving ? 0.7 : 1 }}>
+                                {isSaving ? "Ajout..." : "✅ Ajouter au journal"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
