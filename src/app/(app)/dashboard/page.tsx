@@ -43,78 +43,45 @@ export default function DashboardPage() {
         fetchMeals()
     }, [])
 
-
-
     const fetchMeals = async () => {
         try {
-            // 🔥 récupérer session utilisateur
             const { data: { session } } = await supabase.auth.getSession()
-
-            if (!session) {
-                console.error("❌ Pas de session")
-                return
-            }
+            if (!session) { console.error("❌ Pas de session"); return }
 
             const today = new Date().toISOString().split('T')[0]
-
             const res = await fetch(`/api/meals?date=${today}`, {
-                headers: {
-                    Authorization: `Bearer ${session.access_token}` // ✅ IMPORTANT
-                }
+                headers: { Authorization: `Bearer ${session.access_token}` }
             })
-
             const json = await res.json()
-
             console.log("🔥 DASHBOARD MEALS:", json)
-
-            if (json.success) {
-                setTodayMeals(json.data)
-            } else {
-                console.error("❌ API ERROR:", json.error)
-            }
-
+            if (json.success) setTodayMeals(json.data)
+            else console.error("❌ API ERROR:", json.error)
         } catch (err) {
             console.error("❌ FETCH ERROR:", err)
         } finally {
             setIsLoading(false)
         }
-
     }
-
 
     const handleDeleteMeal = async (mealId: string) => {
         try {
             const { data: { session } } = await supabase.auth.getSession()
-
             if (!session) return
 
             const res = await fetch(`/api/meals?id=${mealId}`, {
                 method: 'DELETE',
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`
-                }
+                headers: { Authorization: `Bearer ${session.access_token}` }
             })
-
             const json = await res.json()
-
             console.log("🔥 DELETE:", json)
-
-            if (json.success) {
-                // 🔥 update UI instant
-                setTodayMeals(todayMeals.filter(m => m.id !== mealId))
-            }
-
+            if (json.success) setTodayMeals(todayMeals.filter(m => m.id !== mealId))
         } catch (err) {
             console.error(err)
         }
-
     }
 
     const formatTime = (iso: string) =>
-        new Date(iso).toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit',
-        })
+        new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
     return (
         <div style={{
@@ -135,36 +102,31 @@ export default function DashboardPage() {
                 alignItems: 'center',
                 marginBottom: '30px'
             }}>
-                <h1 style={{
-                    fontSize: '22px',
-                    fontWeight: '900'
-                }}>
+                <h1 style={{ fontSize: '22px', fontWeight: '900' }}>
                     Cal Afrik
                 </h1>
 
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <div style={{
-                        width: '38px',
-                        height: '38px',
+                        width: '38px', height: '38px',
                         borderRadius: '12px',
                         background: 'rgba(255,255,255,0.05)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
                         🔥
                     </div>
 
-                    <div style={{
-                        width: '38px',
-                        height: '38px',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg,#C4622D,#E9C46A)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: '800'
-                    }}>
+                    {/* ✅ Clic → page stats */}
+                    <div
+                        onClick={() => router.push('/profil')}
+                        style={{
+                            width: '38px', height: '38px',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg,#C4622D,#E9C46A)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontWeight: '800',
+                            cursor: 'pointer'
+                        }}>
                         {profile?.name?.[0] || 'U'}
                     </div>
                 </div>
@@ -179,32 +141,13 @@ export default function DashboardPage() {
                 border: '1px solid rgba(255,255,255,0.05)',
                 marginBottom: '25px'
             }}>
-                <p style={{ color: '#aaa', fontSize: '12px' }}>
-                    Calories restantes
-                </p>
-
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <h2 style={{
-                        fontSize: '36px',
-                        fontWeight: '900'
-                    }}>
-                        {remaining}
-                    </h2>
-
+                <p style={{ color: '#aaa', fontSize: '12px' }}>Calories restantes</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ fontSize: '36px', fontWeight: '900' }}>{remaining}</h2>
                     <svg width="90" height="90">
+                        <circle cx="45" cy="45" r={radius} stroke="#222" strokeWidth="8" fill="none" />
                         <circle cx="45" cy="45" r={radius}
-                            stroke="#222"
-                            strokeWidth="8"
-                            fill="none"
-                        />
-                        <circle cx="45" cy="45" r={radius}
-                            stroke="#C4622D"
-                            strokeWidth="8"
-                            fill="none"
+                            stroke="#C4622D" strokeWidth="8" fill="none"
                             strokeDasharray={circumference}
                             strokeDashoffset={strokeDashoffset}
                             strokeLinecap="round"
@@ -215,11 +158,7 @@ export default function DashboardPage() {
             </div>
 
             {/* MACROS */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '30px'
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                 {[
                     { label: 'Protéines', val: dailyProtein, color: '#C4622D' },
                     { label: 'Glucides', val: dailyCarbs, color: '#E9C46A' },
@@ -227,37 +166,21 @@ export default function DashboardPage() {
                 ].map((m, i) => (
                     <div key={i} style={{ textAlign: 'center' }}>
                         <div style={{
-                            width: '70px',
-                            height: '70px',
-                            borderRadius: '50%',
+                            width: '70px', height: '70px', borderRadius: '50%',
                             border: `3px solid ${m.color}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontWeight: '800'
                         }}>
                             {Math.round(m.val)}g
                         </div>
-                        <p style={{
-                            color: '#888',
-                            fontSize: '12px',
-                            marginTop: '6px'
-                        }}>
-                            {m.label}
-                        </p>
+                        <p style={{ color: '#888', fontSize: '12px', marginTop: '6px' }}>{m.label}</p>
                     </div>
                 ))}
             </div>
 
             {/* MEALS */}
             <div>
-                <h2 style={{
-                    fontSize: '18px',
-                    fontWeight: '800',
-                    marginBottom: '15px'
-                }}>
-                    Repas
-                </h2>
+                <h2 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '15px' }}>Repas</h2>
 
                 {isLoading ? (
                     <p style={{ color: '#666' }}>Chargement...</p>
@@ -270,78 +193,45 @@ export default function DashboardPage() {
                             backdropFilter: 'blur(10px)',
                             borderRadius: '18px',
                             padding: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
+                            display: 'flex', alignItems: 'center', gap: '12px',
                             marginBottom: '12px'
                         }}>
-
                             <img
                                 src={meal.image_url || 'https://via.placeholder.com/60'}
-                                style={{
-                                    width: '60px',
-                                    height: '60px',
-                                    borderRadius: '14px',
-                                    objectFit: 'cover'
-                                }}
+                                style={{ width: '60px', height: '60px', borderRadius: '14px', objectFit: 'cover' }}
                             />
-
                             <div style={{ flex: 1 }}>
-                                <p style={{ fontWeight: '700' }}>
-                                    {meal.custom_name || 'Repas'}
-                                </p>
-                                <p style={{
-                                    color: '#888',
-                                    fontSize: '12px'
-                                }}>
-                                    {formatTime(meal.logged_at)}
-                                </p>
+                                <p style={{ fontWeight: '700' }}>{meal.custom_name || 'Repas'}</p>
+                                <p style={{ color: '#888', fontSize: '12px' }}>{formatTime(meal.logged_at)}</p>
                             </div>
-
-                            <p style={{
-                                color: '#C4622D',
-                                fontWeight: '800'
-                            }}>
-                                {Math.round(meal.calories)} kcal
-                            </p>
-
-                            <button onClick={() => {
-                                if (confirm("Supprimer ce repas ?")) {
-                                    handleDeleteMeal(meal.id)
-                                }
-                            }} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '8px', padding: '6px 10px', color: '#ff6b6b', cursor: 'pointer' }} > ✕ </button>
+                            <p style={{ color: '#C4622D', fontWeight: '800' }}>{Math.round(meal.calories)} kcal</p>
+                            <button
+                                onClick={() => { if (confirm("Supprimer ce repas ?")) handleDeleteMeal(meal.id) }}
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)', border: 'none',
+                                    borderRadius: '8px', padding: '6px 10px',
+                                    color: '#ff6b6b', cursor: 'pointer'
+                                }}
+                            >✕</button>
                         </div>
                     ))
                 )}
             </div>
 
             {/* FLOAT BUTTON */}
-
-
-
             <>
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     style={{
-                        position: 'fixed',
-                        bottom: '80px',
-                        right: '25px',
-                        width: '65px',
-                        height: '65px',
-                        borderRadius: '50%',
+                        position: 'fixed', bottom: '80px', right: '25px',
+                        width: '65px', height: '65px', borderRadius: '50%',
                         background: 'linear-gradient(135deg,#C4622D,#E9C46A)',
-                        border: 'none',
-                        fontSize: '28px',
-                        fontWeight: '800',
+                        border: 'none', fontSize: '28px', fontWeight: '800',
                         boxShadow: '0 10px 40px rgba(196,98,45,0.5)',
-                        cursor: 'pointer',
-                        zIndex: 1000
+                        cursor: 'pointer', zIndex: 1000
                     }}
-                >
-                    +
-                </button>
+                >+</button>
 
-                {/* 🔥 INPUT CAMÉRA */}
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -351,18 +241,12 @@ export default function DashboardPage() {
                     onChange={(e) => {
                         const file = e.target.files?.[0]
                         if (!file) return
-
                         console.log("Image capturée :", file)
-
-                            // 🔥 STOCKAGE TEMPORAIRE (SOLUTION FIABLE)
                             ; (window as any).tempImage = file
-
                         router.push('/scanner')
                     }}
                 />
             </>
-
-        </div >
+        </div>
     )
-
 }
