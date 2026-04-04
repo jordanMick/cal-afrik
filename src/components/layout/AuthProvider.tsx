@@ -6,66 +6,59 @@ import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { setProfile } = useAppStore()
+    const { setProfile, setTodayMeals } = useAppStore()
     const router = useRouter()
     const pathname = usePathname()
 
     useEffect(() => {
         initAuth()
 
-        // 🔥 écoute les changements auth (important)
         const { data: listener } = supabase.auth.onAuthStateChange(() => {
             initAuth()
         })
 
-        return () => {
-            listener.subscription.unsubscribe()
-        }
-
+        return () => { listener.subscription.unsubscribe() }
     }, [])
 
     const initAuth = async () => {
         try {
             const { data, error } = await supabase.auth.getSession()
-
-            if (error) {
-                console.error('Erreur session:', error)
-                return
-            }
+            if (error) { console.error('Erreur session:', error); return }
 
             const session = data.session
 
-            // ❌ pas connecté
             if (!session) {
-                if (
-                    !pathname.startsWith('/login') &&
-                    !pathname.startsWith('/onboarding')
-                ) {
+                if (!pathname.startsWith('/login') && !pathname.startsWith('/onboarding')) {
                     router.push('/login')
                 }
                 return
             }
 
-            // ✅ connecté → récupérer profile
+            // ✅ Charger le profil
             const { data: profile, error: profileError } = await supabase
                 .from('user_profiles')
                 .select('*')
                 .eq('user_id', session.user.id)
                 .single()
 
-            // 🔥 si pas de profile → onboarding
             if (profileError || !profile) {
                 router.push('/onboarding')
                 return
             }
 
-            // ✅ stocker dans Zustand
             setProfile(profile)
+
+            // ✅ Charger les repas du jour une seule fois pour toutes les pages
+            const today = new Date().toISOString().split('T')[0]
+            const res = await fetch(`/api/meals?date=${today}`, {
+                headers: { Authorization: `Bearer ${session.access_token}` }
+            })
+            const json = await res.json()
+            if (json.success) setTodayMeals(json.data)
 
         } catch (err) {
             console.error('Erreur AuthProvider:', err)
         }
-
     }
 
     return <>{children}</>
