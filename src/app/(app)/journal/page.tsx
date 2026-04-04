@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import type { Meal } from '@/types'
 import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+
+const router = useRouter()
 
 const MEAL_TYPE_LABELS: Record<string, string> = {
     petit_dejeuner: 'Petit-déjeuner',
@@ -459,28 +462,49 @@ export default function JournalPage() {
                                     <p style={{ color: '#aaa', fontSize: '13px' }}>{selectedMeal.notes}</p>
                                 </div>
                             )}
+                            <div style={{
+                                display: 'flex',
+                                gap: '10px',
+                                marginTop: '20px'
+                            }}>
 
-                            {/* Bouton supprimer */}
-                            <button
-                                onClick={() => {
-                                    if (confirm("Supprimer ce repas ?")) {
-                                        handleDeleteMeal(selectedMeal.id)
-                                    }
-                                }}
-                                style={{
-                                    width: '100%',
-                                    padding: '14px',
-                                    borderRadius: '12px',
-                                    background: 'transparent',
-                                    border: '1px solid #ff6b6b',
-                                    color: '#ff6b6b',
-                                    fontWeight: '600',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                🗑️ Supprimer ce repas
-                            </button>
+                                <button
+                                    onClick={() => router.push('/journal')}
+                                    style={{
+                                        flex: 1,
+                                        height: '50px',
+                                        background: '#1A1108',
+                                        border: '1px solid #2A1F14',
+                                        borderRadius: '14px',
+                                        color: '#fff',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    Retour
+                                </button>
+
+                                {/* Bouton supprimer */}
+                                <button
+                                    onClick={() => {
+                                        if (confirm("Supprimer ce repas ?")) {
+                                            handleDeleteMeal(selectedMeal.id)
+                                        }
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        height: '50px',
+                                        borderRadius: '14px',
+                                        background: 'transparent',
+                                        border: '1px solid #ff6b6b',
+                                        color: '#ff6b6b',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    🗑️ Supprimer ce repas
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )
