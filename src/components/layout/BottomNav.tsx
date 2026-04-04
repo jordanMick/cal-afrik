@@ -36,18 +36,33 @@ export default function BottomNav() {
             // Seuil minimum de 60px pour déclencher la navigation
             if (Math.abs(deltaX) < 60) return
 
+            // ✅ Ignorer si le swipe commence sur un élément scrollable horizontalement
+            const target = e.target as HTMLElement
+            const scrollableParent = target.closest('[data-swipe-ignore]') ||
+                target.closest('input') ||
+                target.closest('select') ||
+                (() => {
+                    let el: HTMLElement | null = target
+                    while (el) {
+                        const style = window.getComputedStyle(el)
+                        const overflowX = style.overflowX
+                        if (
+                            (overflowX === 'auto' || overflowX === 'scroll') &&
+                            el.scrollWidth > el.clientWidth
+                        ) return el
+                        el = el.parentElement
+                    }
+                    return null
+                })()
+
+            if (scrollableParent) return
+
             if (deltaX < 0) {
-                // Swipe gauche → page suivante
                 const nextIndex = currentIndex + 1
-                if (nextIndex < navItems.length) {
-                    router.push(navItems[nextIndex].path)
-                }
+                if (nextIndex < navItems.length) router.push(navItems[nextIndex].path)
             } else {
-                // Swipe droite → page précédente
                 const prevIndex = currentIndex - 1
-                if (prevIndex >= 0) {
-                    router.push(navItems[prevIndex].path)
-                }
+                if (prevIndex >= 0) router.push(navItems[prevIndex].path)
             }
 
             touchStartX.current = null
