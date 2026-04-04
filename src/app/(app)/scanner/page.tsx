@@ -5,7 +5,19 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
+import type { MealType } from '@/types'
 
+
+
+function getCurrentMealKey(): MealType {
+    const hour = new Date().getHours()
+
+    if (hour < 10) return 'petit_dejeuner'
+    if (hour < 14) return 'dejeuner'
+    if (hour < 17) return 'dejeuner'
+    if (hour < 20) return 'collation'
+    return 'diner'
+}
 interface EnrichedSuggestion extends FoodSuggestion {
     portion_g: number
     calories_detected: number
@@ -41,13 +53,7 @@ const CATEGORIES = [
 ]
 
 // ─── Calcul de la cible calorique selon l'heure ───────────────
-function getMealTargetByHour(dailyTarget: number) {
-    const hour = new Date().getHours()
-    if (hour >= 5 && hour < 10) return { label: 'Petit-déjeuner', pct: 0.25 }
-    if (hour >= 10 && hour < 14) return { label: 'Déjeuner', pct: 0.35 }
-    if (hour >= 14 && hour < 17) return { label: 'Collation', pct: 0.10 }
-    return { label: 'Dîner', pct: 0.30 }
-}
+
 
 export default function ScannerPage() {
     const router = useRouter()
@@ -265,13 +271,8 @@ export default function ScannerPage() {
             const fatTarget = profile?.fat_target_g || 65
 
             // 🔥 détecter le créneau actuel
-            const mealSlot = getMealTargetByHour(calorieTarget)
 
-            const currentMealKey =
-                mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
-                    mealSlot.label === "Déjeuner" ? "dejeuner" :
-                        mealSlot.label === "Collation" ? "collation" :
-                            "diner"
+            const currentMealKey = getCurrentMealKey()
 
             // ✅ NOUVEAU : target dynamique du créneau
             const mealCalTarget =
@@ -311,8 +312,7 @@ export default function ScannerPage() {
                         fat_g: Math.round(totals.fat_g * 10) / 10,
                     },
 
-                    // 🔥 NOUVEAU SYSTEME
-                    mealSlot,
+                    // 🔥 NOUVEAU SYST
                     mealCalTarget,
                     remainingMealCalories,
 
@@ -426,11 +426,7 @@ export default function ScannerPage() {
                     ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length),
 
                     // 🔥 AJOUTS CRITIQUES
-                    meal_type:
-                        mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
-                            mealSlot.label === "Déjeuner" ? "dejeuner" :
-                                mealSlot.label === "Collation" ? "collation" :
-                                    "diner",
+                    meal_type: getCurrentMealKey(),
 
                     coach_message: coachMessage
                 }),
@@ -442,11 +438,7 @@ export default function ScannerPage() {
             if (json.success && json.data) {
                 addMeal({
                     ...json.data,
-                    meal_type:
-                        mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
-                            mealSlot.label === "Déjeuner" ? "dejeuner" :
-                                mealSlot.label === "Collation" ? "collation" :
-                                    "diner"
+                    meal_type: getCurrentMealKey()
                 })
             }
 
@@ -465,7 +457,6 @@ export default function ScannerPage() {
     }
 
     const totals = getTotals()
-    const mealSlot = getMealTargetByHour(profile?.calorie_target || 2000)
 
     const inputStyle: React.CSSProperties = {
         width: '100%', padding: '10px 12px', borderRadius: '8px',
@@ -476,11 +467,7 @@ export default function ScannerPage() {
         color: '#aaa', fontSize: '12px', marginBottom: '4px', display: 'block',
     }
 
-    const currentMealKey =
-        mealSlot.label === "Petit-déjeuner" ? "petit_dejeuner" :
-            mealSlot.label === "Déjeuner" ? "dejeuner" :
-                mealSlot.label === "Collation" ? "collation" :
-                    "diner"
+    const currentMealKey = getCurrentMealKey()
 
     const mealTarget =
         lockedMealTargets?.[currentMealKey] ??
@@ -629,7 +616,10 @@ export default function ScannerPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>Récap de ton repas</h2>
                             <span style={{ color: '#C4622D', fontSize: '12px', fontWeight: '700', background: 'rgba(196,98,45,0.15)', padding: '4px 10px', borderRadius: '20px' }}>
-                                {mealSlot.label}
+                                {currentMealKey === 'petit_dejeuner' ? 'Petit-déjeuner' :
+                                    currentMealKey === 'dejeuner' ? 'Déjeuner' :
+                                        currentMealKey === 'collation' ? 'Collation' :
+                                            'Dîner'}
                             </span>
                         </div>
                         <p style={{ color: '#555', fontSize: '13px', marginBottom: '20px' }}>
