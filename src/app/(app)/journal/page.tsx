@@ -112,223 +112,226 @@ export default function JournalPage() {
     }
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: '#0F0A06',
-            fontFamily: 'system-ui, sans-serif',
-            maxWidth: '480px',
-            margin: '0 auto',
-            paddingBottom: '100px',
-        }}>
-
-            {/* ─── Header ─── */}
+        <>
             <div style={{
-                padding: '52px 24px 24px',
-                borderBottom: '1px solid #2A1F14',
+                minHeight: '100vh',
+                background: '#0F0A06',
+                fontFamily: 'system-ui, sans-serif',
+                maxWidth: '480px',
+                margin: '0 auto',
+                paddingBottom: '100px',
             }}>
-                <h1 style={{
-                    color: '#fff', fontSize: '28px',
-                    fontWeight: '800', letterSpacing: '-0.5px',
-                    marginBottom: '20px',
-                }}>
-                    Journal
-                </h1>
 
-                {/* Sélecteur 7 jours */}
-                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                    {last7Days.map((date) => {
-                        const isSelected = date === selectedDate
-                        return (
-                            <button
-                                key={date}
-                                onClick={() => setSelectedDate(date)}
-                                style={{
-                                    flexShrink: 0,
-                                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                                    padding: '10px 14px',
-                                    background: isSelected ? '#C4622D' : '#1A1108',
-                                    border: `1px solid ${isSelected ? '#C4622D' : '#2A1F14'}`,
-                                    borderRadius: '14px',
-                                    cursor: 'pointer',
-                                    minWidth: '52px',
-                                    transition: 'all 0.2s',
-                                }}
-                            >
-                                <span style={{
-                                    color: isSelected ? 'rgba(255,255,255,0.8)' : '#555',
-                                    fontSize: '11px', marginBottom: '4px',
-                                }}>
-                                    {formatDayLabel(date)}
-                                </span>
-                                <span style={{
-                                    color: isSelected ? '#fff' : '#999',
-                                    fontSize: '18px', fontWeight: '800',
-                                }}>
-                                    {new Date(date).getDate()}
-                                </span>
-                            </button>
-                        )
-                    })}
-                </div>
-            </div>
-
-            <div style={{ padding: '24px', position: 'relative', zIndex: 1 }}>
-
-                {/* Date */}
-                <p style={{
-                    color: '#555', fontSize: '13px', textTransform: 'capitalize',
-                    marginBottom: '16px',
-                }}>
-                    {formatFullDate(selectedDate)}
-                </p>
-
-                {/* Résumé */}
+                {/* ─── Header ─── */}
                 <div style={{
-                    background: '#1A1108',
-                    border: '1px solid #2A1F14',
-                    borderRadius: '20px',
-                    padding: '20px',
-                    marginBottom: '24px',
+                    padding: '52px 24px 24px',
+                    borderBottom: '1px solid #2A1F14',
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
-                        <span style={{ color: '#fff', fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>
-                            {Math.round(totalCalories)}
-                            <span style={{ color: '#555', fontSize: '14px', fontWeight: '400', marginLeft: '4px' }}>kcal</span>
-                        </span>
-                        <span style={{ color: '#555', fontSize: '13px' }}>
-                            / {calorieTarget} kcal
-                        </span>
-                    </div>
+                    <h1 style={{
+                        color: '#fff', fontSize: '28px',
+                        fontWeight: '800', letterSpacing: '-0.5px',
+                        marginBottom: '20px',
+                    }}>
+                        Journal
+                    </h1>
 
-                    <div style={{
-                        width: '100%', height: '6px',
-                        background: '#2A1F14', borderRadius: '3px',
+                    {/* Sélecteur 7 jours */}
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                        {last7Days.map((date) => {
+                            const isSelected = date === selectedDate
+                            return (
+                                <button
+                                    key={date}
+                                    onClick={() => setSelectedDate(date)}
+                                    style={{
+                                        flexShrink: 0,
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                        padding: '10px 14px',
+                                        background: isSelected ? '#C4622D' : '#1A1108',
+                                        border: `1px solid ${isSelected ? '#C4622D' : '#2A1F14'}`,
+                                        borderRadius: '14px',
+                                        cursor: 'pointer',
+                                        minWidth: '52px',
+                                        transition: 'all 0.2s',
+                                    }}
+                                >
+                                    <span style={{
+                                        color: isSelected ? 'rgba(255,255,255,0.8)' : '#555',
+                                        fontSize: '11px', marginBottom: '4px',
+                                    }}>
+                                        {formatDayLabel(date)}
+                                    </span>
+                                    <span style={{
+                                        color: isSelected ? '#fff' : '#999',
+                                        fontSize: '18px', fontWeight: '800',
+                                    }}>
+                                        {new Date(date).getDate()}
+                                    </span>
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                <div style={{ padding: '24px', position: 'relative', zIndex: 1 }}>
+
+                    {/* Date */}
+                    <p style={{
+                        color: '#555', fontSize: '13px', textTransform: 'capitalize',
                         marginBottom: '16px',
                     }}>
-                        <div style={{
-                            height: '100%', borderRadius: '3px',
-                            width: `${progressWidth}%`,
-                            background: totalCalories > calorieTarget ? '#E24B4A' : '#C4622D',
-                            transition: 'width 0.6s ease',
-                        }} />
-                    </div>
+                        {formatFullDate(selectedDate)}
+                    </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                        {[
-                            { label: 'Protéines', value: Math.round(totalProtein), color: '#52B788' },
-                            { label: 'Glucides', value: Math.round(totalCarbs), color: '#E9C46A' },
-                            { label: 'Lipides', value: Math.round(totalFat), color: '#888' },
-                        ].map((m) => (
-                            <div key={m.label} style={{
-                                background: '#0F0A06',
-                                borderRadius: '12px',
-                                padding: '12px',
-                                textAlign: 'center',
-                            }}>
-                                <p style={{ color: m.color, fontSize: '18px', fontWeight: '800' }}>
-                                    {m.value}g
-                                </p>
-                                <p style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{m.label}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Liste repas */}
-                <p style={{
-                    color: '#555', fontSize: '12px', fontWeight: '700',
-                    letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px'
-                }}>
-                    Repas
-                </p>
-
-                {isLoading ? (
-                    <div style={{ textAlign: 'center', padding: '48px', color: '#444' }}>
-                        Chargement...
-                    </div>
-                ) : meals.length === 0 ? (
+                    {/* Résumé */}
                     <div style={{
                         background: '#1A1108',
                         border: '1px solid #2A1F14',
                         borderRadius: '20px',
-                        padding: '48px 24px',
-                        textAlign: 'center',
+                        padding: '20px',
+                        marginBottom: '24px',
                     }}>
-                        <div style={{ fontSize: '36px', marginBottom: '12px' }}>📋</div>
-                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '700' }}>
-                            Aucun repas ce jour
-                        </p>
-                        <p style={{ color: '#555', fontSize: '13px', marginTop: '6px' }}>
-                            Scannez vos plats pour les voir ici
-                        </p>
-                    </div>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {meals.map((meal) => (
-                            <div
-                                key={meal.id}
-                                onClick={() => setSelectedMeal(meal)}
-                                style={{
-                                    background: '#1A1108',
-                                    border: '1px solid #2A1F14',
-                                    borderRadius: '16px',
-                                    padding: '16px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '14px',
-                                    cursor: 'pointer',
-                                    transition: 'border-color 0.2s',
-                                }}
-                            >
-                                <div style={{
-                                    width: '44px', height: '44px',
-                                    borderRadius: '12px', overflow: 'hidden',
-                                    background: '#2A1F14', flexShrink: 0,
-                                }}>
-                                    {meal.image_url ? (
-                                        <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <div style={{
-                                            width: '100%', height: '100%',
-                                            display: 'flex', alignItems: 'center',
-                                            justifyContent: 'center', fontSize: '20px',
-                                        }}>
-                                            {MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}
-                                        </div>
-                                    )}
-                                </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
+                            <span style={{ color: '#fff', fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>
+                                {Math.round(totalCalories)}
+                                <span style={{ color: '#555', fontSize: '14px', fontWeight: '400', marginLeft: '4px' }}>kcal</span>
+                            </span>
+                            <span style={{ color: '#555', fontSize: '13px' }}>
+                                / {calorieTarget} kcal
+                            </span>
+                        </div>
 
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{
-                                        color: '#fff', fontSize: '14px', fontWeight: '600',
-                                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        <div style={{
+                            width: '100%', height: '6px',
+                            background: '#2A1F14', borderRadius: '3px',
+                            marginBottom: '16px',
+                        }}>
+                            <div style={{
+                                height: '100%', borderRadius: '3px',
+                                width: `${progressWidth}%`,
+                                background: totalCalories > calorieTarget ? '#E24B4A' : '#C4622D',
+                                transition: 'width 0.6s ease',
+                            }} />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                            {[
+                                { label: 'Protéines', value: Math.round(totalProtein), color: '#52B788' },
+                                { label: 'Glucides', value: Math.round(totalCarbs), color: '#E9C46A' },
+                                { label: 'Lipides', value: Math.round(totalFat), color: '#888' },
+                            ].map((m) => (
+                                <div key={m.label} style={{
+                                    background: '#0F0A06',
+                                    borderRadius: '12px',
+                                    padding: '12px',
+                                    textAlign: 'center',
+                                }}>
+                                    <p style={{ color: m.color, fontSize: '18px', fontWeight: '800' }}>
+                                        {m.value}g
+                                    </p>
+                                    <p style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{m.label}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Liste repas */}
+                    <p style={{
+                        color: '#555', fontSize: '12px', fontWeight: '700',
+                        letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px'
+                    }}>
+                        Repas
+                    </p>
+
+                    {isLoading ? (
+                        <div style={{ textAlign: 'center', padding: '48px', color: '#444' }}>
+                            Chargement...
+                        </div>
+                    ) : meals.length === 0 ? (
+                        <div style={{
+                            background: '#1A1108',
+                            border: '1px solid #2A1F14',
+                            borderRadius: '20px',
+                            padding: '48px 24px',
+                            textAlign: 'center',
+                        }}>
+                            <div style={{ fontSize: '36px', marginBottom: '12px' }}>📋</div>
+                            <p style={{ color: '#fff', fontSize: '16px', fontWeight: '700' }}>
+                                Aucun repas ce jour
+                            </p>
+                            <p style={{ color: '#555', fontSize: '13px', marginTop: '6px' }}>
+                                Scannez vos plats pour les voir ici
+                            </p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {meals.map((meal) => (
+                                <div
+                                    key={meal.id}
+                                    onClick={() => setSelectedMeal(meal)}
+                                    style={{
+                                        background: '#1A1108',
+                                        border: '1px solid #2A1F14',
+                                        borderRadius: '16px',
+                                        padding: '16px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '14px',
+                                        cursor: 'pointer',
+                                        transition: 'border-color 0.2s',
+                                    }}
+                                >
+                                    <div style={{
+                                        width: '44px', height: '44px',
+                                        borderRadius: '12px', overflow: 'hidden',
+                                        background: '#2A1F14', flexShrink: 0,
                                     }}>
-                                        {meal.custom_name || 'Repas'}
-                                    </p>
-                                    <p style={{ color: '#555', fontSize: '12px', marginTop: '2px' }}>
-                                        {formatTime(meal.logged_at)}
-                                    </p>
-                                    <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>
-                                        {meal.protein_g}g prot · {meal.carbs_g}g gluc · {meal.fat_g}g lip
-                                    </p>
-                                </div>
+                                        {meal.image_url ? (
+                                            <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <div style={{
+                                                width: '100%', height: '100%',
+                                                display: 'flex', alignItems: 'center',
+                                                justifyContent: 'center', fontSize: '20px',
+                                            }}>
+                                                {MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                <div style={{
-                                    textAlign: 'right', flexShrink: 0,
-                                    display: 'flex', flexDirection: 'column',
-                                    alignItems: 'flex-end', gap: '6px'
-                                }}>
-                                    <p style={{ color: '#C4622D', fontSize: '16px', fontWeight: '800' }}>
-                                        {Math.round(meal.calories)}
-                                        <span style={{ color: '#555', fontSize: '11px' }}> kcal</span>
-                                    </p>
-                                    <span style={{ color: '#444', fontSize: '16px' }}>›</span>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{
+                                            color: '#fff', fontSize: '14px', fontWeight: '600',
+                                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                        }}>
+                                            {meal.custom_name || 'Repas'}
+                                        </p>
+                                        <p style={{ color: '#555', fontSize: '12px', marginTop: '2px' }}>
+                                            {formatTime(meal.logged_at)}
+                                        </p>
+                                        <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>
+                                            {meal.protein_g}g prot · {meal.carbs_g}g gluc · {meal.fat_g}g lip
+                                        </p>
+                                    </div>
+
+                                    <div style={{
+                                        textAlign: 'right', flexShrink: 0,
+                                        display: 'flex', flexDirection: 'column',
+                                        alignItems: 'flex-end', gap: '6px'
+                                    }}>
+                                        <p style={{ color: '#C4622D', fontSize: '16px', fontWeight: '800' }}>
+                                            {Math.round(meal.calories)}
+                                            <span style={{ color: '#555', fontSize: '11px' }}> kcal</span>
+                                        </p>
+                                        <span style={{ color: '#444', fontSize: '16px' }}>›</span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+            </div> {/* fin du div principal */}
 
             {/* ─── OVERLAY FOND ─── */}
             {selectedMeal && (
@@ -348,9 +351,12 @@ export default function JournalPage() {
                 return (
                     <div style={{
                         position: 'fixed',
-                        bottom: 0, left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: '100%', maxWidth: '480px',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        margin: '0 auto',
+                        width: '100%',
+                        maxWidth: '480px',
                         background: '#1A1108',
                         borderRadius: '24px 24px 0 0',
                         border: '1px solid #2A1F14',
@@ -479,6 +485,6 @@ export default function JournalPage() {
                     </div>
                 )
             })()}
-        </div>
+        </>
     )
 }
