@@ -82,9 +82,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }))
 
         get().updateDailyTotals()
-        get().recalculateMealTargets() // 🔥 AJOUT ICI
     },
-
     removeMeal: (mealId) => {
         set((state) => ({
             todayMeals: state.todayMeals.filter((m) => m.id !== mealId),
