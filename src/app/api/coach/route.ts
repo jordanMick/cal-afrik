@@ -56,7 +56,7 @@ Donne un conseil court (3-4 phrases max) en français :
 Réponds directement sans introduction, de façon naturelle et bienveillante.`
 
         const response = await anthropic.messages.create({
-            model: 'claude-haiku-3-5-20241022',
+            model: 'claude-haiku-4-5-20251001',
             max_tokens: 300,
             messages: [{ role: 'user', content: prompt }]
         })
