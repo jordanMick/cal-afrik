@@ -243,17 +243,23 @@ export default function ScannerPage() {
 
             const mealSlot = getMealTargetByHour(calorieTarget)
 
-            // ✅ Calories restantes après ce qui a déjà été mangé
-            const remainingCalories = Math.max(0, calorieTarget - dailyCalories)
-            const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
-            const remainingCarbs = Math.max(0, carbsTarget - dailyCarbs)
-            const remainingFat = Math.max(0, fatTarget - dailyFat)
+            // ✅ Lire directement depuis le store pour éviter la closure stale
+            const currentStore = useAppStore.getState()
+            const currentDailyCalories = currentStore.dailyCalories
+            const currentDailyProtein = currentStore.dailyProtein
+            const currentDailyCarbs = currentStore.dailyCarbs
+            const currentDailyFat = currentStore.dailyFat
 
-            // ✅ Cible de CE repas = portion des calories restantes
-            const mealCalTarget = Math.round(remainingCalories * mealSlot.pct)
-            const mealProtTarget = Math.round(remainingProtein * mealSlot.pct)
-            const mealCarbsTarget = Math.round(remainingCarbs * mealSlot.pct)
-            const mealFatTarget = Math.round(remainingFat * mealSlot.pct)
+            const remainingCalories = Math.max(0, calorieTarget - currentDailyCalories)
+            const remainingProtein = Math.max(0, proteinTarget - currentDailyProtein)
+            const remainingCarbs = Math.max(0, carbsTarget - currentDailyCarbs)
+            const remainingFat = Math.max(0, fatTarget - currentDailyFat)
+
+            // Cible = calories restantes sur la journée (le pct sert au coach pour contextualiser)
+            const mealCalTarget = remainingCalories
+            const mealProtTarget = Math.round(remainingProtein)
+            const mealCarbsTarget = Math.round(remainingCarbs)
+            const mealFatTarget = Math.round(remainingFat)
 
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
@@ -277,7 +283,7 @@ export default function ScannerPage() {
                     mealProtTarget,
                     mealCarbsTarget,
                     mealFatTarget,
-                    dailyCalories: Math.round(dailyCalories),
+                    dailyCalories: Math.round(currentDailyCalories),
                     calorieTarget,
                 })
             })
@@ -554,7 +560,7 @@ export default function ScannerPage() {
                             <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
                             <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
                             <p style={{ color: '#444', fontSize: '12px', marginTop: '4px' }}>
-                                Cible {mealSlot.label.toLowerCase()} : {Math.round(Math.max(0, (profile?.calorie_target || 2000) - dailyCalories) * mealSlot.pct)} kcal restantes
+                                Cible {mealSlot.label.toLowerCase()} : {Math.max(0, Math.round((profile?.calorie_target || 2000) - useAppStore.getState().dailyCalories))} kcal restantes
                             </p>
                         </div>
 
