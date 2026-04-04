@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import type { Meal } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
-
-const router = useRouter()
 
 const MEAL_TYPE_LABELS: Record<string, string> = {
     petit_dejeuner: 'Petit-déjeuner',
@@ -462,29 +459,25 @@ export default function JournalPage() {
                                     <p style={{ color: '#aaa', fontSize: '13px' }}>{selectedMeal.notes}</p>
                                 </div>
                             )}
-                            <div style={{
-                                display: 'flex',
-                                gap: '10px',
-                                marginTop: '20px'
-                            }}>
 
+                            {/* Boutons retour + supprimer */}
+                            <div style={{ display: 'flex', gap: '10px' }}>
                                 <button
-                                    onClick={() => router.push('/journal')}
+                                    onClick={() => setSelectedMeal(null)}
                                     style={{
                                         flex: 1,
-                                        height: '50px',
-                                        background: '#1A1108',
-                                        border: '1px solid #2A1F14',
-                                        borderRadius: '14px',
+                                        padding: '14px',
+                                        borderRadius: '12px',
+                                        background: '#2A1F14',
+                                        border: '1px solid #333',
                                         color: '#fff',
-                                        fontWeight: '700',
+                                        fontWeight: '600',
+                                        fontSize: '14px',
                                         cursor: 'pointer',
                                     }}
                                 >
-                                    Retour
+                                    ← Retour
                                 </button>
-
-                                {/* Bouton supprimer */}
                                 <button
                                     onClick={() => {
                                         if (confirm("Supprimer ce repas ?")) {
@@ -493,16 +486,17 @@ export default function JournalPage() {
                                     }}
                                     style={{
                                         flex: 1,
-                                        height: '50px',
-                                        borderRadius: '14px',
+                                        padding: '14px',
+                                        borderRadius: '12px',
                                         background: 'transparent',
                                         border: '1px solid #ff6b6b',
                                         color: '#ff6b6b',
-                                        fontWeight: '700',
+                                        fontWeight: '600',
+                                        fontSize: '14px',
                                         cursor: 'pointer',
                                     }}
                                 >
-                                    🗑️ Supprimer ce repas
+                                    🗑️ Supprimer
                                 </button>
                             </div>
                         </div>
