@@ -247,47 +247,39 @@ export default function ScannerPage() {
             const mealCarbsTarget = Math.round(carbsTarget * mealSlot.pct)
             const mealFatTarget = Math.round(fatTarget * mealSlot.pct)
 
-            const diffCal = mealCalTarget - totals.calories
-            const diffProt = mealProtTarget - totals.protein_g
-            const diffCarbs = mealCarbsTarget - totals.carbs_g
-            const diffFat = mealFatTarget - totals.fat_g
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
 
-            const prompt = `Tu es un coach nutritionnel expert en cuisine africaine subsaharienne (Togo, Côte d'Ivoire, Sénégal, Ghana, Bénin, Nigeria).
-
-L'utilisateur vient de scanner son ${mealSlot.label.toLowerCase()} composé de : ${selectedFoods.map(f => f.name).join(', ')}.
-
-Valeurs de ce repas :
-- Calories : ${Math.round(totals.calories)} kcal (cible pour ce repas : ${mealCalTarget} kcal, écart : ${diffCal > 0 ? '+' : ''}${Math.round(diffCal)} kcal)
-- Protéines : ${totals.protein_g}g (cible : ${mealProtTarget}g, écart : ${diffProt > 0 ? '+' : ''}${Math.round(diffProt)}g)
-- Glucides : ${totals.carbs_g}g (cible : ${mealCarbsTarget}g, écart : ${diffCarbs > 0 ? '+' : ''}${Math.round(diffCarbs)}g)
-- Lipides : ${totals.fat_g}g (cible : ${mealFatTarget}g, écart : ${diffFat > 0 ? '+' : ''}${Math.round(diffFat)}g)
-
-Déjà consommé aujourd'hui : ${Math.round(dailyCalories)} kcal sur ${calorieTarget} kcal.
-
-Donne un conseil court (3-4 phrases max) en français :
-1. Évalue ce repas par rapport à la cible de ce moment de la journée
-2. Si des macros manquent, propose 1-2 aliments africains concrets à ajouter
-3. Termine avec une phrase d'encouragement courte
-
-Réponds directement sans introduction, de façon naturelle et bienveillante.`
-
-            const response = await fetch("https://api.anthropic.com/v1/messages", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const res = await fetch('/api/coach', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({
-                    model: "claude-haiku-3-5-20241022",
-                    max_tokens: 300,
-                    messages: [{ role: "user", content: prompt }]
+                    selectedFoods: selectedFoods.map(f => f.name),
+                    totals: {
+                        calories: Math.round(totals.calories),
+                        protein_g: Math.round(totals.protein_g * 10) / 10,
+                        carbs_g: Math.round(totals.carbs_g * 10) / 10,
+                        fat_g: Math.round(totals.fat_g * 10) / 10,
+                    },
+                    mealSlot,
+                    mealCalTarget,
+                    mealProtTarget,
+                    mealCarbsTarget,
+                    mealFatTarget,
+                    dailyCalories: Math.round(dailyCalories),
+                    calorieTarget,
                 })
             })
 
-            const data = await response.json()
-            const text = data.content?.[0]?.text || "Bon repas ! Continue comme ça 💪"
-            setCoachMessage(text)
+            const json = await res.json()
+            setCoachMessage(json.success ? json.message : 'Bon repas ! Continue comme ça 💪')
 
         } catch (err) {
             console.error(err)
-            setCoachMessage("Bon repas ! Continue à bien manger 💪")
+            setCoachMessage('Bon repas ! Continue à bien manger 💪')
         } finally {
             setIsLoadingCoach(false)
         }
