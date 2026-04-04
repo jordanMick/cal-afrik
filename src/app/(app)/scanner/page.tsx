@@ -60,7 +60,8 @@ export default function ScannerPage() {
         dailyFat,
         setLastCoachMessage,
         mealTargets,
-        lockedMealTargets // 🔥 AJOUT
+        lockedMealTargets,
+        todayMeals // 🔥 AJOUT ICI
     } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -278,7 +279,13 @@ export default function ScannerPage() {
                 mealTargets?.[currentMealKey] ??
                 0
 
-            const remainingMealCalories = Math.max(0, mealCalTarget - totals.calories)
+            const consumedInThisMeal = currentStore.todayMeals
+                .filter(m => m.meal_type === currentMealKey)
+                .reduce((sum, m) => sum + m.calories, 0)
+
+            const totalForThisMeal = consumedInThisMeal + totals.calories
+
+            const remainingMealCalories = Math.max(0, mealCalTarget - totalForThisMeal)
 
             // 🔥 macros journalières restantes (toujours utiles)
             const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
@@ -480,7 +487,16 @@ export default function ScannerPage() {
         mealTargets?.[currentMealKey] ??
         0
 
-    const remainingMealCalories = Math.max(0, mealTarget - totals.calories)
+    // 🔥 calories déjà consommées dans ce créneau
+    const consumedInThisMeal = todayMeals
+        .filter(m => m.meal_type === currentMealKey)
+        .reduce((sum, m) => sum + m.calories, 0)
+
+    // 🔥 total réel (ancien + nouveau scan)
+    const totalForThisMeal = consumedInThisMeal + totals.calories
+
+    // 🔥 vrai calcul
+    const remainingMealCalories = Math.max(0, mealTarget - totalForThisMeal)
 
     return (
         <div style={{ minHeight: '100vh', background: '#0F0A06', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px' }}>
