@@ -29,7 +29,7 @@ export default function JournalPage() {
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
     const [showCoach, setShowCoach] = useState(false)
 
-    const calorieTarget = profile?.calorie_target || 2000
+    const calorieTarget = profile?.calorie_target ?? 0
     const totalCalories = meals.reduce((acc, m) => acc + m.calories, 0)
     const totalProtein = meals.reduce((acc, m) => acc + m.protein_g, 0)
     const totalCarbs = meals.reduce((acc, m) => acc + m.carbs_g, 0)
@@ -394,13 +394,7 @@ export default function JournalPage() {
                             </div>
 
                             <p style={{ color: '#555', fontSize: '13px', marginBottom: '20px' }}>
-                                {(() => {
-                                    const hour = new Date(selectedMeal.logged_at).getHours()
-                                    if (hour >= 5 && hour < 10) return '🌅 Petit-déjeuner'
-                                    if (hour >= 10 && hour < 14) return '☀️ Déjeuner'
-                                    if (hour >= 14 && hour < 17) return '🥜 Collation'
-                                    return '🌙 Dîner'
-                                })()} · {selectedMeal.portion_g}g
+                                {MEAL_TYPE_EMOJIS[selectedMeal.meal_type]} {MEAL_TYPE_LABELS[selectedMeal.meal_type]} · {selectedMeal.portion_g}g
                             </p>
 
                             {/* Calories grandes */}
