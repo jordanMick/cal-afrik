@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 
 const navItems = [
     { path: '/dashboard', emoji: '🏠', label: 'Accueil' },
@@ -12,6 +13,55 @@ const navItems = [
 export default function BottomNav() {
     const router = useRouter()
     const pathname = usePathname()
+    const touchStartX = useRef<number | null>(null)
+    const touchStartY = useRef<number | null>(null)
+
+    const currentIndex = navItems.findIndex(item => item.path === pathname)
+
+    useEffect(() => {
+        const handleTouchStart = (e: TouchEvent) => {
+            touchStartX.current = e.touches[0].clientX
+            touchStartY.current = e.touches[0].clientY
+        }
+
+        const handleTouchEnd = (e: TouchEvent) => {
+            if (touchStartX.current === null || touchStartY.current === null) return
+
+            const deltaX = e.changedTouches[0].clientX - touchStartX.current
+            const deltaY = e.changedTouches[0].clientY - touchStartY.current
+
+            // Ignorer si c'est plus un scroll vertical qu'un swipe horizontal
+            if (Math.abs(deltaY) > Math.abs(deltaX)) return
+
+            // Seuil minimum de 60px pour déclencher la navigation
+            if (Math.abs(deltaX) < 60) return
+
+            if (deltaX < 0) {
+                // Swipe gauche → page suivante
+                const nextIndex = currentIndex + 1
+                if (nextIndex < navItems.length) {
+                    router.push(navItems[nextIndex].path)
+                }
+            } else {
+                // Swipe droite → page précédente
+                const prevIndex = currentIndex - 1
+                if (prevIndex >= 0) {
+                    router.push(navItems[prevIndex].path)
+                }
+            }
+
+            touchStartX.current = null
+            touchStartY.current = null
+        }
+
+        document.addEventListener('touchstart', handleTouchStart, { passive: true })
+        document.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+        return () => {
+            document.removeEventListener('touchstart', handleTouchStart)
+            document.removeEventListener('touchend', handleTouchEnd)
+        }
+    }, [currentIndex, router])
 
     return (
         <div style={{
@@ -46,16 +96,16 @@ export default function BottomNav() {
                             border: 'none',
                             cursor: 'pointer',
                             padding: '8px 12px',
+                            // ✅ Fix clic lent sur mobile
+                            touchAction: 'manipulation',
+                            WebkitTapHighlightColor: 'transparent',
                         }}
                     >
-                        {/* ICON */}
                         <div style={{
                             width: '36px',
                             height: '36px',
                             borderRadius: '10px',
-                            background: isActive
-                                ? 'rgba(196, 98, 45, 0.15)'
-                                : 'transparent',
+                            background: isActive ? 'rgba(196, 98, 45, 0.15)' : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -66,7 +116,6 @@ export default function BottomNav() {
                             {item.emoji}
                         </div>
 
-                        {/* LABEL */}
                         <span style={{
                             fontSize: '10px',
                             fontWeight: '600',
@@ -75,7 +124,6 @@ export default function BottomNav() {
                             {item.label}
                         </span>
 
-                        {/* DOT ACTIVE */}
                         {isActive && (
                             <div style={{
                                 width: '4px',
@@ -89,5 +137,4 @@ export default function BottomNav() {
             })}
         </div>
     )
-
 }
