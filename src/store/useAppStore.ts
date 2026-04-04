@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { UserProfile, Meal, ScanResult } from '@/types'
 
 type MealKey = 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation'
+
 const calculateInitialTargets = (calories: number): Record<MealKey, number> => ({
     petit_dejeuner: Math.round(calories * 0.25),
     dejeuner: Math.round(calories * 0.35),
@@ -34,6 +35,9 @@ interface AppState {
 
     mealTargets: Record<MealKey, number>
 
+    // 🔥 NOUVEAU
+    lockedMealTargets: Partial<Record<MealKey, number>>
+
     recalculateMealTargets: () => void
 }
 
@@ -64,7 +68,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         set({
             profile,
-            mealTargets: calculateInitialTargets(profile.calorie_target)
+            mealTargets: calculateInitialTargets(profile.calorie_target),
+            lockedMealTargets: {} // reset
         })
     },
 
@@ -73,16 +78,32 @@ export const useAppStore = create<AppState>((set, get) => ({
     setTodayMeals: (meals) => {
         set({ todayMeals: meals })
         get().updateDailyTotals()
-        get().recalculateMealTargets() // 🔥 AJOUT ICI
+        get().recalculateMealTargets()
     },
 
     addMeal: (meal) => {
+        const state = get()
+
+        const mealType = meal.meal_type as MealKey
+
+        // 🔒 LOCK DU REPAS
+        if (!state.lockedMealTargets[mealType]) {
+            set({
+                lockedMealTargets: {
+                    ...state.lockedMealTargets,
+                    [mealType]: state.mealTargets[mealType]
+                }
+            })
+        }
+
         set((state) => ({
             todayMeals: [...state.todayMeals, meal]
         }))
 
         get().updateDailyTotals()
+        // ❌ PAS de recalcul ici
     },
+
     removeMeal: (mealId) => {
         set((state) => ({
             todayMeals: state.todayMeals.filter((m) => m.id !== mealId),
@@ -123,17 +144,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     },
 
     // 🔥 INITIAL TARGETS
-    mealTargets: calculateInitialTargets(2000), // fallback temporaire
+    mealTargets: calculateInitialTargets(2000),
+
+    // 🔥 LOCK INIT
+    lockedMealTargets: {},
 
     // 🔥 CŒUR DU SYSTEME
     recalculateMealTargets: () => {
-        const { todayMeals, profile } = get()
+        const { todayMeals, profile, lockedMealTargets } = get()
 
         if (!profile) return
 
         const now = new Date().getHours()
 
-        // 🔥 repas passés selon l'heure
         const completedMeals: Record<MealKey, boolean> = {
             petit_dejeuner: now >= 10,
             dejeuner: now >= 14,
@@ -141,24 +164,21 @@ export const useAppStore = create<AppState>((set, get) => ({
             diner: false
         }
 
-        // 🔥 total consommé
         const consumedCalories = todayMeals.reduce((sum, m) => sum + m.calories, 0)
-
         const remainingCalories = Math.max(0, profile.calorie_target - consumedCalories)
 
-        // 🔥 repas restants
-        const remainingMeals = Object.keys(completedMeals)
-            .filter(key => !completedMeals[key as MealKey]) as MealKey[]
+        const remainingMeals = (Object.keys(completedMeals) as MealKey[])
+            .filter(key => !completedMeals[key] && !lockedMealTargets[key])
 
         if (remainingMeals.length === 0) return
 
         const newTarget = Math.round(remainingCalories / remainingMeals.length)
 
         const newTargets: Record<MealKey, number> = {
-            petit_dejeuner: completedMeals.petit_dejeuner ? 0 : newTarget,
-            dejeuner: completedMeals.dejeuner ? 0 : newTarget,
-            collation: completedMeals.collation ? 0 : newTarget,
-            diner: completedMeals.diner ? 0 : newTarget,
+            petit_dejeuner: lockedMealTargets.petit_dejeuner ?? (completedMeals.petit_dejeuner ? 0 : newTarget),
+            dejeuner: lockedMealTargets.dejeuner ?? (completedMeals.dejeuner ? 0 : newTarget),
+            collation: lockedMealTargets.collation ?? (completedMeals.collation ? 0 : newTarget),
+            diner: lockedMealTargets.diner ?? (completedMeals.diner ? 0 : newTarget),
         }
 
         set({ mealTargets: newTargets })
