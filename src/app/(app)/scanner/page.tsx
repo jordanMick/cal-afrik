@@ -51,7 +51,16 @@ function getMealTargetByHour(dailyTarget: number) {
 
 export default function ScannerPage() {
     const router = useRouter()
-    const { addMeal, profile, dailyCalories, dailyProtein, dailyCarbs, dailyFat, setLastCoachMessage } = useAppStore()
+    const {
+        addMeal,
+        profile,
+        dailyCalories,
+        dailyProtein,
+        dailyCarbs,
+        dailyFat,
+        setLastCoachMessage,
+        mealTargets
+    } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const [image, setImage] = useState<string | null>(null)
@@ -236,30 +245,40 @@ export default function ScannerPage() {
 
         try {
             const totals = getTotals()
+
+            const currentStore = useAppStore.getState()
+
+            const {
+                dailyCalories,
+                dailyProtein,
+                dailyCarbs,
+                dailyFat,
+                mealTargets // 👈 IMPORTANT (à ajouter dans ton store)
+            } = currentStore
+
             const calorieTarget = profile?.calorie_target || 2000
             const proteinTarget = profile?.protein_target_g || 100
             const carbsTarget = profile?.carbs_target_g || 250
             const fatTarget = profile?.fat_target_g || 65
 
+            // 🔥 détecter le créneau actuel
             const mealSlot = getMealTargetByHour(calorieTarget)
 
-            // ✅ Lire directement depuis le store pour éviter la closure stale
-            const currentStore = useAppStore.getState()
-            const currentDailyCalories = currentStore.dailyCalories
-            const currentDailyProtein = currentStore.dailyProtein
-            const currentDailyCarbs = currentStore.dailyCarbs
-            const currentDailyFat = currentStore.dailyFat
+            const currentMealKey =
+                mealSlot.label === "Petit-déjeuner" ? "breakfast" :
+                    mealSlot.label === "Déjeuner" ? "lunch" :
+                        mealSlot.label === "Collation" ? "snack" :
+                            "dinner"
 
-            const remainingCalories = Math.max(0, calorieTarget - currentDailyCalories)
-            const remainingProtein = Math.max(0, proteinTarget - currentDailyProtein)
-            const remainingCarbs = Math.max(0, carbsTarget - currentDailyCarbs)
-            const remainingFat = Math.max(0, fatTarget - currentDailyFat)
+            // ✅ NOUVEAU : target dynamique du créneau
+            const mealCalTarget = mealTargets?.[currentMealKey] || 0
 
-            // Cible = calories restantes sur la journée (le pct sert au coach pour contextualiser)
-            const mealCalTarget = remainingCalories
-            const mealProtTarget = Math.round(remainingProtein)
-            const mealCarbsTarget = Math.round(remainingCarbs)
-            const mealFatTarget = Math.round(remainingFat)
+            const remainingMealCalories = Math.max(0, mealCalTarget - totals.calories)
+
+            // 🔥 macros journalières restantes (toujours utiles)
+            const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
+            const remainingCarbs = Math.max(0, carbsTarget - dailyCarbs)
+            const remainingFat = Math.max(0, fatTarget - dailyFat)
 
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
@@ -272,30 +291,42 @@ export default function ScannerPage() {
                 },
                 body: JSON.stringify({
                     selectedFoods: selectedFoods.map(f => f.name),
+
                     totals: {
                         calories: Math.round(totals.calories),
                         protein_g: Math.round(totals.protein_g * 10) / 10,
                         carbs_g: Math.round(totals.carbs_g * 10) / 10,
                         fat_g: Math.round(totals.fat_g * 10) / 10,
                     },
+
+                    // 🔥 NOUVEAU SYSTEME
                     mealSlot,
                     mealCalTarget,
-                    mealProtTarget,
-                    mealCarbsTarget,
-                    mealFatTarget,
-                    dailyCalories: Math.round(currentDailyCalories),
+                    remainingMealCalories,
+
+                    // 📊 journal
+                    dailyCalories: Math.round(dailyCalories),
                     calorieTarget,
+
+                    // macros restantes
+                    remainingProtein,
+                    remainingCarbs,
+                    remainingFat,
                 })
             })
 
             const json = await res.json()
-            const msg = json.success ? json.message : 'Bon repas ! Continue comme ça 💪'
+
+            const msg = json.success
+                ? json.message
+                : "Bon repas ! Continue comme ça 💪"
+
             setCoachMessage(msg)
             setLastCoachMessage(msg)
 
         } catch (err) {
             console.error(err)
-            setCoachMessage('Bon repas ! Continue à bien manger 💪')
+            setCoachMessage("Bon repas ! Continue à bien manger 💪")
         } finally {
             setIsLoadingCoach(false)
         }
@@ -388,7 +419,14 @@ export default function ScannerPage() {
 
             // ✅ Mettre à jour les totaux du jour dans le store immédiatement
             if (json.success && json.data) {
-                addMeal(json.data)
+                addMeal({
+                    ...json.data,
+                    meal_type:
+                        mealSlot.label === "Petit-déjeuner" ? "breakfast" :
+                            mealSlot.label === "Déjeuner" ? "lunch" :
+                                mealSlot.label === "Collation" ? "snack" :
+                                    "dinner"
+                })
             }
 
             router.push('/journal')
@@ -416,6 +454,16 @@ export default function ScannerPage() {
     const labelStyle: React.CSSProperties = {
         color: '#aaa', fontSize: '12px', marginBottom: '4px', display: 'block',
     }
+
+    const currentMealKey =
+        mealSlot.label === "Petit-déjeuner" ? "breakfast" :
+            mealSlot.label === "Déjeuner" ? "lunch" :
+                mealSlot.label === "Collation" ? "snack" :
+                    "dinner"
+
+    const mealTarget = mealTargets?.[currentMealKey] || 0
+
+    const remainingMealCalories = Math.max(0, mealTarget - totals.calories)
 
     return (
         <div style={{ minHeight: '100vh', background: '#0F0A06', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px' }}>
@@ -560,7 +608,10 @@ export default function ScannerPage() {
                             <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
                             <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
                             <p style={{ color: '#444', fontSize: '12px', marginTop: '4px' }}>
-                                Cible {mealSlot.label.toLowerCase()} : {Math.max(0, Math.round((profile?.calorie_target || 2000) - useAppStore.getState().dailyCalories))} kcal restantes
+                                {totals.calories > mealTarget
+                                    ? "Tu as dépassé ce repas, on ajuste le reste 👀"
+                                    : `Il te reste ${remainingMealCalories} kcal pour ce repas`
+                                }
                             </p>
                         </div>
 
