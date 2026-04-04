@@ -59,7 +59,8 @@ export default function ScannerPage() {
         dailyCarbs,
         dailyFat,
         setLastCoachMessage,
-        mealTargets
+        mealTargets,
+        lockedMealTargets // 🔥 AJOUT
     } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -253,7 +254,8 @@ export default function ScannerPage() {
                 dailyProtein,
                 dailyCarbs,
                 dailyFat,
-                mealTargets // 👈 IMPORTANT (à ajouter dans ton store)
+                mealTargets,
+                lockedMealTargets // 🔥 AJOUT
             } = currentStore
 
             const calorieTarget = profile?.calorie_target || 2000
@@ -271,7 +273,10 @@ export default function ScannerPage() {
                             "diner"
 
             // ✅ NOUVEAU : target dynamique du créneau
-            const mealCalTarget = mealTargets?.[currentMealKey] || 0
+            const mealCalTarget =
+                lockedMealTargets?.[currentMealKey] ??
+                mealTargets?.[currentMealKey] ??
+                0
 
             const remainingMealCalories = Math.max(0, mealCalTarget - totals.calories)
 
@@ -470,7 +475,10 @@ export default function ScannerPage() {
                 mealSlot.label === "Collation" ? "collation" :
                     "diner"
 
-    const mealTarget = mealTargets?.[currentMealKey] || 0
+    const mealTarget =
+        lockedMealTargets?.[currentMealKey] ??
+        mealTargets?.[currentMealKey] ??
+        0
 
     const remainingMealCalories = Math.max(0, mealTarget - totals.calories)
 
