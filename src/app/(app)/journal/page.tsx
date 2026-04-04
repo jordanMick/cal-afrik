@@ -393,8 +393,13 @@ export default function JournalPage() {
                             </div>
 
                             <p style={{ color: '#555', fontSize: '13px', marginBottom: '20px' }}>
-                                {MEAL_TYPE_LABELS[selectedMeal.meal_type] || 'Repas'} · {selectedMeal.portion_g}g
-                                {selectedMeal.ai_confidence && ` · IA ${selectedMeal.ai_confidence}%`}
+                                {(() => {
+                                    const hour = new Date(selectedMeal.logged_at).getHours()
+                                    if (hour >= 5 && hour < 10) return '🌅 Petit-déjeuner'
+                                    if (hour >= 10 && hour < 14) return '☀️ Déjeuner'
+                                    if (hour >= 14 && hour < 17) return '🥜 Collation'
+                                    return '🌙 Dîner'
+                                })()} · {selectedMeal.portion_g}g
                             </p>
 
                             {/* Calories grandes */}
