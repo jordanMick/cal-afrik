@@ -26,6 +26,7 @@ export default function JournalPage() {
     )
     const [meals, setMeals] = useState<Meal[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
 
     const calorieTarget = profile?.calorie_target || 2000
     const totalCalories = meals.reduce((acc, m) => acc + m.calories, 0)
@@ -35,68 +36,43 @@ export default function JournalPage() {
 
     useEffect(() => { fetchMeals(selectedDate) }, [selectedDate])
 
-
-
     const fetchMeals = async (date: string) => {
         setIsLoading(true)
-
         try {
-            // 🔥 récupérer session
             const { data: { session } } = await supabase.auth.getSession()
-
-            if (!session) {
-                console.error("❌ Pas de session")
-                return
-            }
+            if (!session) { console.error("❌ Pas de session"); return }
 
             const res = await fetch(`/api/meals?date=${date}`, {
-                headers: {
-                    Authorization: `Bearer ${session.access_token}` // ✅ IMPORTANT
-                }
+                headers: { Authorization: `Bearer ${session.access_token}` }
             })
-
             const json = await res.json()
-
             console.log("🔥 MEALS:", json)
-
-            if (json.success) {
-                setMeals(json.data)
-            } else {
-                console.error("❌ API ERROR:", json.error)
-            }
-
+            if (json.success) setMeals(json.data)
+            else console.error("❌ API ERROR:", json.error)
         } catch (err) {
             console.error("❌ FETCH ERROR:", err)
         } finally {
             setIsLoading(false)
         }
-
     }
 
     const handleDeleteMeal = async (mealId: string) => {
         try {
             const { data: { session } } = await supabase.auth.getSession()
-
             if (!session) return
 
             const res = await fetch(`/api/meals?id=${mealId}`, {
                 method: 'DELETE',
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`
-                }
+                headers: { Authorization: `Bearer ${session.access_token}` }
             })
-
             const json = await res.json()
-
             if (json.success) {
-                // 🔥 supprime direct dans l’UI
                 setMeals(prev => prev.filter(m => m.id !== mealId))
+                setSelectedMeal(null)
             }
-
         } catch (err) {
             console.error(err)
         }
-
     }
 
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -124,6 +100,17 @@ export default function JournalPage() {
 
     const progressWidth = Math.min(100, (totalCalories / calorieTarget) * 100)
 
+    // ─── Calcul macros en % pour le détail ───────────────────
+    const getMacroPercent = (meal: Meal) => {
+        const totalKcal = (meal.protein_g * 4) + (meal.carbs_g * 4) + (meal.fat_g * 9)
+        if (totalKcal === 0) return { protein: 0, carbs: 0, fat: 0 }
+        return {
+            protein: Math.round((meal.protein_g * 4 / totalKcal) * 100),
+            carbs: Math.round((meal.carbs_g * 4 / totalKcal) * 100),
+            fat: Math.round((meal.fat_g * 9 / totalKcal) * 100),
+        }
+    }
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -134,7 +121,7 @@ export default function JournalPage() {
             paddingBottom: '100px',
         }}>
 
-            {/* Header */}
+            {/* ─── Header ─── */}
             <div style={{
                 padding: '52px 24px 24px',
                 borderBottom: '1px solid #2A1F14',
@@ -278,40 +265,33 @@ export default function JournalPage() {
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {meals.map((meal) => (
-                            <div key={meal.id} style={{
-                                background: '#1A1108',
-                                border: '1px solid #2A1F14',
-                                borderRadius: '16px',
-                                padding: '16px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '14px',
-                            }}>
+                            <div
+                                key={meal.id}
+                                onClick={() => setSelectedMeal(meal)}
+                                style={{
+                                    background: '#1A1108',
+                                    border: '1px solid #2A1F14',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '14px',
+                                    cursor: 'pointer',
+                                    transition: 'border-color 0.2s',
+                                }}
+                            >
                                 <div style={{
-                                    width: '44px',
-                                    height: '44px',
-                                    borderRadius: '12px',
-                                    overflow: 'hidden',
-                                    background: '#2A1F14',
-                                    flexShrink: 0,
+                                    width: '44px', height: '44px',
+                                    borderRadius: '12px', overflow: 'hidden',
+                                    background: '#2A1F14', flexShrink: 0,
                                 }}>
                                     {meal.image_url ? (
-                                        <img
-                                            src={meal.image_url}
-                                            style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                objectFit: 'cover'
-                                            }}
-                                        />
+                                        <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     ) : (
                                         <div style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontSize: '20px',
+                                            width: '100%', height: '100%',
+                                            display: 'flex', alignItems: 'center',
+                                            justifyContent: 'center', fontSize: '20px',
                                         }}>
                                             {MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}
                                         </div>
@@ -334,41 +314,171 @@ export default function JournalPage() {
                                 </div>
 
                                 <div style={{
-                                    textAlign: 'right',
-                                    flexShrink: 0,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'flex-end',
-                                    gap: '6px'
+                                    textAlign: 'right', flexShrink: 0,
+                                    display: 'flex', flexDirection: 'column',
+                                    alignItems: 'flex-end', gap: '6px'
                                 }}>
                                     <p style={{ color: '#C4622D', fontSize: '16px', fontWeight: '800' }}>
                                         {Math.round(meal.calories)}
                                         <span style={{ color: '#555', fontSize: '11px' }}> kcal</span>
                                     </p>
-
-                                    <button
-                                        onClick={() => {
-                                            if (confirm("Supprimer ce repas ?")) {
-                                                handleDeleteMeal(meal.id)
-                                            }
-                                        }}
-                                        style={{
-                                            background: 'rgba(255,255,255,0.05)',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            padding: '4px 8px',
-                                            color: '#ff6b6b',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        ✕
-                                    </button>
+                                    <span style={{ color: '#444', fontSize: '16px' }}>›</span>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* ─── OVERLAY FOND ─── */}
+            {selectedMeal && (
+                <div
+                    onClick={() => setSelectedMeal(null)}
+                    style={{
+                        position: 'fixed', inset: 0,
+                        background: 'rgba(0,0,0,0.7)',
+                        zIndex: 40,
+                    }}
+                />
+            )}
+
+            {/* ─── PANEL DÉTAIL REPAS ─── */}
+            {selectedMeal && (() => {
+                const macros = getMacroPercent(selectedMeal)
+                return (
+                    <div style={{
+                        position: 'fixed',
+                        bottom: 0, left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '100%', maxWidth: '480px',
+                        background: '#1A1108',
+                        borderRadius: '24px 24px 0 0',
+                        border: '1px solid #2A1F14',
+                        zIndex: 50,
+                        padding: '0 0 40px 0',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                    }}>
+                        {/* Handle */}
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+                            <div style={{ width: '40px', height: '4px', background: '#333', borderRadius: '2px' }} />
+                        </div>
+
+                        {/* Image */}
+                        {selectedMeal.image_url && (
+                            <div style={{ width: '100%', height: '200px', overflow: 'hidden' }}>
+                                <img
+                                    src={selectedMeal.image_url}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            </div>
+                        )}
+
+                        <div style={{ padding: '20px 24px' }}>
+
+                            {/* Nom + heure */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', flex: 1, marginRight: '12px' }}>
+                                    {selectedMeal.custom_name || 'Repas'}
+                                </h2>
+                                <span style={{ color: '#555', fontSize: '13px', flexShrink: 0, marginTop: '4px' }}>
+                                    {formatTime(selectedMeal.logged_at)}
+                                </span>
+                            </div>
+
+                            <p style={{ color: '#555', fontSize: '13px', marginBottom: '20px' }}>
+                                {MEAL_TYPE_LABELS[selectedMeal.meal_type] || 'Repas'} · {selectedMeal.portion_g}g
+                                {selectedMeal.ai_confidence && ` · IA ${selectedMeal.ai_confidence}%`}
+                            </p>
+
+                            {/* Calories grandes */}
+                            <div style={{
+                                background: '#0F0A06',
+                                borderRadius: '16px',
+                                padding: '20px',
+                                textAlign: 'center',
+                                marginBottom: '16px',
+                            }}>
+                                <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>
+                                    {Math.round(selectedMeal.calories)}
+                                </p>
+                                <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
+                            </div>
+
+                            {/* Macros détaillées */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '20px' }}>
+                                {[
+                                    { label: 'Protéines', value: selectedMeal.protein_g, unit: 'g', color: '#52B788', pct: macros.protein },
+                                    { label: 'Glucides', value: selectedMeal.carbs_g, unit: 'g', color: '#E9C46A', pct: macros.carbs },
+                                    { label: 'Lipides', value: selectedMeal.fat_g, unit: 'g', color: '#E07040', pct: macros.fat },
+                                ].map(m => (
+                                    <div key={m.label} style={{
+                                        background: '#0F0A06',
+                                        borderRadius: '14px',
+                                        padding: '14px 10px',
+                                        textAlign: 'center',
+                                    }}>
+                                        <p style={{ color: m.color, fontSize: '22px', fontWeight: '800' }}>
+                                            {m.value}{m.unit}
+                                        </p>
+                                        <p style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{m.label}</p>
+                                        <p style={{ color: '#333', fontSize: '10px', marginTop: '2px' }}>{m.pct}%</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Barre macros visuelle */}
+                            <div style={{ marginBottom: '24px' }}>
+                                <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', gap: '2px' }}>
+                                    <div style={{ width: `${macros.protein}%`, background: '#52B788', borderRadius: '4px 0 0 4px' }} />
+                                    <div style={{ width: `${macros.carbs}%`, background: '#E9C46A' }} />
+                                    <div style={{ width: `${macros.fat}%`, background: '#E07040', borderRadius: '0 4px 4px 0' }} />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                                    <span style={{ color: '#52B788', fontSize: '10px' }}>Prot. {macros.protein}%</span>
+                                    <span style={{ color: '#E9C46A', fontSize: '10px' }}>Gluc. {macros.carbs}%</span>
+                                    <span style={{ color: '#E07040', fontSize: '10px' }}>Lip. {macros.fat}%</span>
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            {selectedMeal.notes && (
+                                <div style={{
+                                    background: '#0F0A06',
+                                    borderRadius: '12px',
+                                    padding: '14px',
+                                    marginBottom: '20px',
+                                }}>
+                                    <p style={{ color: '#777', fontSize: '12px', marginBottom: '4px' }}>Notes</p>
+                                    <p style={{ color: '#aaa', fontSize: '13px' }}>{selectedMeal.notes}</p>
+                                </div>
+                            )}
+
+                            {/* Bouton supprimer */}
+                            <button
+                                onClick={() => {
+                                    if (confirm("Supprimer ce repas ?")) {
+                                        handleDeleteMeal(selectedMeal.id)
+                                    }
+                                }}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    borderRadius: '12px',
+                                    background: 'transparent',
+                                    border: '1px solid #ff6b6b',
+                                    color: '#ff6b6b',
+                                    fontWeight: '600',
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                🗑️ Supprimer ce repas
+                            </button>
+                        </div>
+                    </div>
+                )
+            })()}
         </div>
     )
 }
