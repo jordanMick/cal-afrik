@@ -27,6 +27,10 @@ interface AppState {
     lastCoachMessage: string | null
     setLastCoachMessage: (msg: string) => void
 
+    // ✅ Bilan fin de journée
+    bilanSeenDate: string | null
+    setBilanSeenDate: (date: string) => void
+
     dailyCalories: number
     dailyProtein: number
     dailyCarbs: number
@@ -34,10 +38,7 @@ interface AppState {
     updateDailyTotals: () => void
 
     mealTargets: Record<MealKey, number>
-
-    // 🔥 NOUVEAU
     lockedMealTargets: Partial<Record<MealKey, number>>
-
     recalculateMealTargets: () => void
 }
 
@@ -65,11 +66,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     setProfile: (profile) => {
         if (!profile) return set({ profile })
-
         set({
             profile,
             mealTargets: calculateInitialTargets(profile.calorie_target),
-            lockedMealTargets: {} // reset
+            lockedMealTargets: {}
         })
     },
 
@@ -83,10 +83,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     addMeal: (meal) => {
         const state = get()
-
         const mealType = meal.meal_type as MealKey
 
-        // 🔒 LOCK DU REPAS
         if (!state.lockedMealTargets[mealType]) {
             set({
                 lockedMealTargets: {
@@ -96,31 +94,28 @@ export const useAppStore = create<AppState>((set, get) => ({
             })
         }
 
-        set((state) => ({
-            todayMeals: [...state.todayMeals, meal]
-        }))
-
+        set((state) => ({ todayMeals: [...state.todayMeals, meal] }))
         get().updateDailyTotals()
-        // ❌ PAS de recalcul ici
     },
 
     removeMeal: (mealId) => {
         set((state) => ({
             todayMeals: state.todayMeals.filter((m) => m.id !== mealId),
         }))
-
         get().updateDailyTotals()
         get().recalculateMealTargets()
     },
 
     scanResult: null,
     setScanResult: (result) => set({ scanResult: result }),
-
     isScanning: false,
     setIsScanning: (v) => set({ isScanning: v }),
 
     lastCoachMessage: null,
     setLastCoachMessage: (msg) => set({ lastCoachMessage: msg }),
+
+    bilanSeenDate: null,
+    setBilanSeenDate: (date) => set({ bilanSeenDate: date }),
 
     dailyCalories: 0,
     dailyProtein: 0,
@@ -129,7 +124,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     updateDailyTotals: () => {
         const meals = get().todayMeals
-
         const totals = meals.reduce(
             (acc, m) => ({
                 dailyCalories: acc.dailyCalories + m.calories,
@@ -139,20 +133,14 @@ export const useAppStore = create<AppState>((set, get) => ({
             }),
             { dailyCalories: 0, dailyProtein: 0, dailyCarbs: 0, dailyFat: 0 }
         )
-
         set(totals)
     },
 
-    // 🔥 INITIAL TARGETS
     mealTargets: calculateInitialTargets(2000),
-
-    // 🔥 LOCK INIT
     lockedMealTargets: {},
 
-    // 🔥 CŒUR DU SYSTEME
     recalculateMealTargets: () => {
         const { todayMeals, profile, lockedMealTargets } = get()
-
         if (!profile) return
 
         const now = new Date().getHours()
