@@ -8,7 +8,7 @@ const navItems = [
     { path: '/dashboard', emoji: '🏠', label: 'Accueil' },
     { path: '/journal', emoji: '📋', label: 'Rapport' },
     { path: '/scanner', emoji: '📷', label: 'Scanner' },
-    { path: '/profil', emoji: '📊', label: 'Profil' },
+    { path: '/profil', emoji: '👤', label: 'Profil' },
 ]
 
 export default function BottomNav() {
