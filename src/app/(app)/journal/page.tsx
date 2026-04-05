@@ -322,18 +322,35 @@ export default function RapportPage() {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session || !profile) return
 
-        await fetch('/api/user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-            body: JSON.stringify({ ...profile, weight_kg: newWeight })
-        })
+        try {
+            // ✅ Route dédiée — met à jour UNIQUEMENT weight_kg en base
+            const res = await fetch('/api/user/weight', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ weight_kg: newWeight }),
+            })
 
-        setProfile({ ...profile, weight_kg: newWeight })
-        setWeightEntries(prev => {
-            const exists = prev.find(e => e.date === todayStr)
-            if (exists) return prev.map(e => e.date === todayStr ? { ...e, weight: newWeight } : e)
-            return [...prev, { date: todayStr, weight: newWeight }]
-        })
+            const json = await res.json()
+            if (!json.success) {
+                console.error('❌ Erreur mise à jour poids:', json.error)
+                return
+            }
+
+            // ✅ Mettre à jour le store local avec le profil retourné par la base
+            setProfile({ ...profile, weight_kg: newWeight })
+
+            // ✅ Mettre à jour le graphique
+            setWeightEntries(prev => {
+                const exists = prev.find(e => e.date === todayStr)
+                if (exists) return prev.map(e => e.date === todayStr ? { ...e, weight: newWeight } : e)
+                return [...prev, { date: todayStr, weight: newWeight }]
+            })
+        } catch (err) {
+            console.error('❌ handleSaveWeight error:', err)
+        }
     }
 
     // ─── Stats 7 jours ────────────────────────────────────────
@@ -532,7 +549,7 @@ export default function RapportPage() {
                                         <p style={{ color: '#C4622D', fontSize: '15px', fontWeight: '800' }}>
                                             {Math.round(meal.calories)}<span style={{ color: '#444', fontSize: '10px' }}> kcal</span>
                                         </p>
-                                        {meal.coach_message && <span style={{ fontSize: '12px' }}></span>}
+                                        {meal.coach_message && <span style={{ fontSize: '12px' }}>🤖</span>}
                                     </div>
                                 </div>
                             ))}
