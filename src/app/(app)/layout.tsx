@@ -4,8 +4,14 @@ import BottomNav from '@/components/layout/BottomNav'
 import AuthProvider from '@/components/layout/AuthProvider'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useSlotWatcher } from '@/hooks/useSlotWatcher'
 
 const navPaths = ['/dashboard', '/journal', '/scanner', '/profil']
+
+function SlotWatcherInit() {
+    useSlotWatcher()
+    return null
+}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
@@ -13,14 +19,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div style={{
-            maxWidth: '480px',
-            margin: '0 auto',
-            minHeight: '100vh',
-            position: 'relative',
-            background: '#0a0603',
-            overflow: 'hidden',
+            maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
+            position: 'relative', background: '#0a0603', overflow: 'hidden',
         }}>
             <AuthProvider>
+                {/* ✅ Surveille les changements de créneau */}
+                <SlotWatcherInit />
+
                 <AnimatePresence mode="popLayout" initial={false} custom={currentIndex}>
                     <motion.div
                         key={pathname}
@@ -28,11 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         initial={{ x: '100%', opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: '-100%', opacity: 0 }}
-                        transition={{
-                            type: 'tween',
-                            ease: [0.25, 0.46, 0.45, 0.94],
-                            duration: 0.25,
-                        }}
+                        transition={{ type: 'tween', ease: [0.25, 0.46, 0.45, 0.94], duration: 0.25 }}
                         style={{ minHeight: '100vh' }}
                     >
                         {children}

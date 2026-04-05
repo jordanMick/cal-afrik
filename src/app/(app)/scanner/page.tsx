@@ -2,22 +2,10 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, getMealSlot, SLOT_LABELS, SLOT_PCT } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
-import type { MealType } from '@/types'
 
-
-
-function getCurrentMealKey(): MealType {
-    const hour = new Date().getHours()
-
-    if (hour < 10) return 'petit_dejeuner'
-    if (hour < 14) return 'dejeuner'
-    if (hour < 17) return 'dejeuner'
-    if (hour < 20) return 'collation'
-    return 'diner'
-}
 interface EnrichedSuggestion extends FoodSuggestion {
     portion_g: number
     calories_detected: number
@@ -52,23 +40,9 @@ const CATEGORIES = [
     { value: 'plats_composes', label: '🍽️ Plats composés' },
 ]
 
-// ─── Calcul de la cible calorique selon l'heure ───────────────
-
-
 export default function ScannerPage() {
     const router = useRouter()
-    const {
-        addMeal,
-        profile,
-        dailyCalories,
-        dailyProtein,
-        dailyCarbs,
-        dailyFat,
-        setLastCoachMessage,
-        mealTargets,
-        lockedMealTargets,
-        todayMeals // 🔥 AJOUT ICI
-    } = useAppStore()
+    const { addMeal, profile, slots, dailyCalories, setLastCoachMessage } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const [image, setImage] = useState<string | null>(null)
@@ -82,8 +56,6 @@ export default function ScannerPage() {
     const [totalCaloriesAI, setTotalCaloriesAI] = useState<number>(0)
     const [showManualForm, setShowManualForm] = useState(false)
     const [isSavingManual, setIsSavingManual] = useState(false)
-
-    // ─── Popup récap ──────────────────────────────────────────
     const [showRecap, setShowRecap] = useState(false)
     const [showCoach, setShowCoach] = useState(false)
     const [coachMessage, setCoachMessage] = useState<string>('')
@@ -93,6 +65,12 @@ export default function ScannerPage() {
         name_fr: '', portion_g: 200, calories: 0,
         protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes',
     })
+
+    // ─── Créneau actuel ───────────────────────────────────────
+    const currentHour = new Date().getHours()
+    const currentSlotKey = getMealSlot(currentHour)
+    const currentSlot = slots[currentSlotKey]
+    const slotLabel = SLOT_LABELS[currentSlotKey]
 
     useEffect(() => { loadFoods() }, [])
 
@@ -128,6 +106,7 @@ export default function ScannerPage() {
         setTotalCaloriesAI(0)
         setShowManualForm(false)
         setShowRecap(false)
+        setCoachMessage('')
 
         try {
             const previewUrl = URL.createObjectURL(file)
@@ -245,7 +224,7 @@ export default function ScannerPage() {
         portion_g: acc.portion_g + food.portion_g,
     }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
 
-    // ─── Générer le conseil IA ────────────────────────────────
+    // ─── Conseil IA basé sur le slot ─────────────────────────
     const loadCoachMessage = async () => {
         if (coachMessage) { setShowCoach(true); return }
         setIsLoadingCoach(true)
@@ -253,92 +232,41 @@ export default function ScannerPage() {
 
         try {
             const totals = getTotals()
-
-            const currentStore = useAppStore.getState()
-
-            const {
-                dailyCalories,
-                dailyProtein,
-                dailyCarbs,
-                dailyFat,
-                mealTargets,
-                lockedMealTargets // 🔥 AJOUT
-            } = currentStore
-
-            const calorieTarget = profile?.calorie_target || 2000
-            const proteinTarget = profile?.protein_target_g || 100
-            const carbsTarget = profile?.carbs_target_g || 250
-            const fatTarget = profile?.fat_target_g || 65
-
-            // 🔥 détecter le créneau actuel
-
-            const currentMealKey = getCurrentMealKey()
-
-            // ✅ NOUVEAU : target dynamique du créneau
-            const mealCalTarget =
-                lockedMealTargets?.[currentMealKey] ??
-                mealTargets?.[currentMealKey] ??
-                0
-
-            const consumedInThisMeal = currentStore.todayMeals
-                .filter(m => m.meal_type === currentMealKey)
-                .reduce((sum, m) => sum + m.calories, 0)
-
-            const totalForThisMeal = consumedInThisMeal + totals.calories
-
-            const remainingMealCalories = Math.max(0, mealCalTarget - totalForThisMeal)
-
-            // 🔥 macros journalières restantes (toujours utiles)
-            const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
-            const remainingCarbs = Math.max(0, carbsTarget - dailyCarbs)
-            const remainingFat = Math.max(0, fatTarget - dailyFat)
-
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
+            // Lire les valeurs fraîches du store
+            const storeState = useAppStore.getState()
+            const freshSlot = storeState.slots[currentSlotKey]
+
             const res = await fetch('/api/coach', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session.access_token}`
-                },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                 body: JSON.stringify({
                     selectedFoods: selectedFoods.map(f => f.name),
-
                     totals: {
                         calories: Math.round(totals.calories),
                         protein_g: Math.round(totals.protein_g * 10) / 10,
                         carbs_g: Math.round(totals.carbs_g * 10) / 10,
                         fat_g: Math.round(totals.fat_g * 10) / 10,
                     },
-
-                    // 🔥 NOUVEAU SYST
-                    mealCalTarget,
-                    remainingMealCalories,
-
-                    // 📊 journal
-                    dailyCalories: Math.round(dailyCalories),
-                    calorieTarget,
-
-                    // macros restantes
-                    remainingProtein,
-                    remainingCarbs,
-                    remainingFat,
+                    slotLabel,
+                    slotTarget: freshSlot.target,
+                    slotConsumed: freshSlot.consumed,
+                    slotRemaining: freshSlot.remaining,
+                    dailyCalories: storeState.dailyCalories,
+                    calorieTarget: profile?.calorie_target || 2000,
                 })
             })
 
             const json = await res.json()
-
-            const msg = json.success
-                ? json.message
-                : "Bon repas ! Continue comme ça 💪"
-
+            const msg = json.success ? json.message : 'Bon repas ! Continue comme ça 💪'
             setCoachMessage(msg)
             setLastCoachMessage(msg)
 
         } catch (err) {
             console.error(err)
-            setCoachMessage("Bon repas ! Continue à bien manger 💪")
+            setCoachMessage('Bon repas ! Continue à bien manger 💪')
         } finally {
             setIsLoadingCoach(false)
         }
@@ -423,25 +351,11 @@ export default function ScannerPage() {
                     carbs_g: Math.round(totals.carbs_g * 10) / 10,
                     fat_g: Math.round(totals.fat_g * 10) / 10,
                     image_url: capturedImage,
-                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length),
-
-                    // 🔥 AJOUTS CRITIQUES
-                    meal_type: getCurrentMealKey(),
-
-                    coach_message: coachMessage
+                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length)
                 }),
             })
             const json = await res.json()
-            console.log("✅ MEAL SAVED:", json)
-
-            // ✅ Mettre à jour les totaux du jour dans le store immédiatement
-            if (json.success && json.data) {
-                addMeal({
-                    ...json.data,
-                    meal_type: getCurrentMealKey()
-                })
-            }
-
+            if (json.success && json.data) addMeal(json.data)
             router.push('/journal')
         } catch (err) { console.error(err) }
         finally { setIsSaving(false) }
@@ -467,39 +381,27 @@ export default function ScannerPage() {
         color: '#aaa', fontSize: '12px', marginBottom: '4px', display: 'block',
     }
 
-    const currentMealKey = getCurrentMealKey()
-
-    let mealTarget =
-        lockedMealTargets?.[currentMealKey] ??
-        mealTargets?.[currentMealKey] ??
-        0
-
-    // 🔥 fallback intelligent si 0 (bug fréquent)
-    if (mealTarget === 0 && profile) {
-        const fallbackTargets = {
-            petit_dejeuner: Math.round(profile.calorie_target * 0.25),
-            dejeuner: Math.round(profile.calorie_target * 0.35),
-            diner: Math.round(profile.calorie_target * 0.30),
-            collation: Math.round(profile.calorie_target * 0.10),
-        }
-
-        mealTarget = fallbackTargets[currentMealKey]
-    }
-
-    // 🔥 calories déjà consommées dans ce créneau
-    const consumedInThisMeal = todayMeals
-        .filter(m => m.meal_type === currentMealKey)
-        .reduce((sum, m) => sum + m.calories, 0)
-
-    // 🔥 total réel (ancien + nouveau scan)
-    const totalForThisMeal = consumedInThisMeal + totals.calories
-
-    // 🔥 vrai calcul
-    const remainingMealCalories = Math.max(0, mealTarget - totalForThisMeal)
+    // Calories restantes du créneau après ajout de ce repas
+    const slotRemainingAfter = currentSlot.target - currentSlot.consumed - totals.calories
+    const slotExceeded = slotRemainingAfter < 0
 
     return (
         <div style={{ minHeight: '100vh', background: '#0F0A06', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px' }}>
             <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: '800', marginBottom: '20px' }}>Scanner</h1>
+
+            {/* ─── CRÉNEAU ACTUEL ─── */}
+            <div style={{ background: '#1A1108', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <p style={{ color: '#777', fontSize: '11px' }}>Créneau actuel</p>
+                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '14px' }}>{slotLabel}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                    <p style={{ color: '#777', fontSize: '11px' }}>Restant</p>
+                    <p style={{ color: currentSlot.remaining <= 0 ? '#E24B4A' : '#C4622D', fontWeight: '700', fontSize: '14px' }}>
+                        {Math.max(0, currentSlot.remaining)} kcal
+                    </p>
+                </div>
+            </div>
 
             {/* ─── IMAGE ─── */}
             {!image ? (
@@ -522,7 +424,7 @@ export default function ScannerPage() {
             {mealName && !isAnalyzing && (
                 <div style={{ marginTop: '16px' }}>
                     <p style={{ color: '#C4622D', fontWeight: '700', fontSize: '16px' }}>🍽️ {mealName}</p>
-                    {totalCaloriesAI > 0 && <p style={{ color: '#777', fontSize: '13px' }}>Estimation IA : ~{totalCaloriesAI} kcal au total</p>}
+                    {totalCaloriesAI > 0 && <p style={{ color: '#777', fontSize: '13px' }}>Estimation IA : ~{totalCaloriesAI} kcal</p>}
                 </div>
             )}
 
@@ -582,11 +484,7 @@ export default function ScannerPage() {
                         <input style={inputStyle} type="number" value={manualFood.calories} onChange={e => setManualFood(p => ({ ...p, calories: Number(e.target.value) }))} />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-                        {[
-                            { key: 'protein_g', label: 'Protéines (g)' },
-                            { key: 'carbs_g', label: 'Glucides (g)' },
-                            { key: 'fat_g', label: 'Lipides (g)' },
-                        ].map(f => (
+                        {[{ key: 'protein_g', label: 'Protéines (g)' }, { key: 'carbs_g', label: 'Glucides (g)' }, { key: 'fat_g', label: 'Lipides (g)' }].map(f => (
                             <div key={f.key}>
                                 <label style={labelStyle}>{f.label}</label>
                                 <input style={inputStyle} type="number" value={(manualFood as any)[f.key]} onChange={e => setManualFood(p => ({ ...p, [f.key]: Number(e.target.value) }))} placeholder="0" />
@@ -616,22 +514,15 @@ export default function ScannerPage() {
             {/* ─── POPUP RÉCAP ─── */}
             {showRecap && (
                 <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: '#1A1108', borderRadius: '24px 24px 0 0', border: '1px solid #2A1F14', zIndex: 50, padding: '0 0 100px 0', maxHeight: '90vh', overflowY: 'auto' }}>
-
-                    {/* Handle */}
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
                         <div style={{ width: '40px', height: '4px', background: '#333', borderRadius: '2px' }} />
                     </div>
 
                     <div style={{ padding: '20px 24px' }}>
-
-                        {/* Titre + moment */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>Récap de ton repas</h2>
                             <span style={{ color: '#C4622D', fontSize: '12px', fontWeight: '700', background: 'rgba(196,98,45,0.15)', padding: '4px 10px', borderRadius: '20px' }}>
-                                {currentMealKey === 'petit_dejeuner' ? 'Petit-déjeuner' :
-                                    currentMealKey === 'dejeuner' ? 'Déjeuner' :
-                                        currentMealKey === 'collation' ? 'Collation' :
-                                            'Dîner'}
+                                {slotLabel}
                             </span>
                         </div>
                         <p style={{ color: '#555', fontSize: '13px', marginBottom: '20px' }}>
@@ -642,10 +533,10 @@ export default function ScannerPage() {
                         <div style={{ background: '#0F0A06', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '16px' }}>
                             <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
                             <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
-                            <p style={{ color: '#444', fontSize: '12px', marginTop: '4px' }}>
-                                {totals.calories > mealTarget
-                                    ? "Tu as dépassé ce repas, on ajuste le reste 👀"
-                                    : `Il te reste ${remainingMealCalories} kcal pour ce repas`
+                            <p style={{ color: slotExceeded ? '#E24B4A' : '#444', fontSize: '12px', marginTop: '4px', fontWeight: slotExceeded ? '700' : '400' }}>
+                                {slotExceeded
+                                    ? `⚠️ Dépassement de ${Math.abs(Math.round(slotRemainingAfter))} kcal sur le ${slotLabel.toLowerCase()}`
+                                    : `Restant ${slotLabel.toLowerCase()} : ${Math.round(slotRemainingAfter)} kcal`
                                 }
                             </p>
                         </div>
@@ -664,7 +555,7 @@ export default function ScannerPage() {
                             ))}
                         </div>
 
-                        {/* ─── CONSEIL COACH ─── */}
+                        {/* Conseil coach */}
                         <button onClick={loadCoachMessage}
                             style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? '#2A1F00' : 'transparent', border: '1px solid #F5A623', color: '#F5A623', fontWeight: '600', fontSize: '14px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
                             {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
@@ -672,11 +563,10 @@ export default function ScannerPage() {
 
                         {showCoach && (
                             <div style={{ background: '#2A1F00', borderRadius: '12px', padding: '16px', marginBottom: '16px', border: '1px solid #3A2F00' }}>
-                                {isLoadingCoach ? (
-                                    <p style={{ color: '#F5A623', fontSize: '13px' }}>⏳ Analyse en cours...</p>
-                                ) : (
-                                    <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>{coachMessage}</p>
-                                )}
+                                {isLoadingCoach
+                                    ? <p style={{ color: '#F5A623', fontSize: '13px' }}>⏳ Analyse en cours...</p>
+                                    : <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>{coachMessage}</p>
+                                }
                             </div>
                         )}
 
