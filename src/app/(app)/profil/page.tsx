@@ -45,12 +45,11 @@ export default function ProfilPage() {
     const [exceeded, setExceeded] = useState(false)
 
     useEffect(() => {
-        if (hasBilan) {
+        if (hasBilan && dailyCalories > 0) {
             setShowBilan(true)
             loadBilan()
-            // ✅ Marquer comme vu après le chargement, pas avant
         }
-    }, [])
+    }, [dailyCalories])
 
     const loadBilan = async () => {
         setBilanStatus('loading')
