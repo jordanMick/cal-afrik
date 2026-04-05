@@ -106,6 +106,7 @@ export default function ProfilPage() {
         await supabase.auth.signOut()
         router.push('/login')
     }
+    console.log('showBilan:', showBilan, 'hour:', hour, 'bilanSeenDate:', bilanSeenDate, 'today:', today)
 
     return (
         <div style={{ minHeight: '100vh', background: '#0F0A06', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px' }}>
