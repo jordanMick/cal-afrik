@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, getMealSlot, SLOT_LABELS } from '@/store/useAppStore'
 import type { Meal } from '@/types'
 import { supabase } from '@/lib/supabase'
 
@@ -20,7 +20,8 @@ const MEAL_TYPE_EMOJIS: Record<string, string> = {
 }
 
 export default function JournalPage() {
-    const { profile } = useAppStore()
+    // ✅ On récupère aussi les slots du store
+    const { profile, slots } = useAppStore()
     const [selectedDate, setSelectedDate] = useState(
         new Date().toISOString().split('T')[0]
     )
@@ -37,6 +38,9 @@ export default function JournalPage() {
 
     useEffect(() => { fetchMeals(selectedDate) }, [selectedDate])
 
+    // ✅ Reset showCoach quand on change de repas sélectionné
+    useEffect(() => { setShowCoach(false) }, [selectedMeal])
+
     const fetchMeals = async (date: string) => {
         setIsLoading(true)
         try {
@@ -47,7 +51,6 @@ export default function JournalPage() {
                 headers: { Authorization: `Bearer ${session.access_token}` }
             })
             const json = await res.json()
-            console.log("🔥 MEALS:", json)
             if (json.success) setMeals(json.data)
             else console.error("❌ API ERROR:", json.error)
         } catch (err) {
@@ -110,6 +113,17 @@ export default function JournalPage() {
             carbs: Math.round((meal.carbs_g * 4 / totalKcal) * 100),
             fat: Math.round((meal.fat_g * 9 / totalKcal) * 100),
         }
+    }
+
+    // ─── Calories restantes du créneau d'un repas ────────────
+    const getSlotInfoForMeal = (meal: Meal) => {
+        const mealHour = new Date(meal.logged_at).getHours()
+        const slotKey = getMealSlot(mealHour)
+        const slot = slots[slotKey]
+        const label = SLOT_LABELS[slotKey]
+        const remaining = slot.target - slot.consumed
+        const exceeded = remaining < 0
+        return { label, remaining, exceeded, target: slot.target, consumed: slot.consumed }
     }
 
     return (
@@ -324,6 +338,10 @@ export default function JournalPage() {
                                             {Math.round(meal.calories)}
                                             <span style={{ color: '#555', fontSize: '11px' }}> kcal</span>
                                         </p>
+                                        {/* ✅ Petite pastille coach si message disponible */}
+                                        {meal.coach_message && (
+                                            <span style={{ fontSize: '14px' }}>🤖</span>
+                                        )}
                                         <span style={{ color: '#444', fontSize: '16px' }}>›</span>
                                     </div>
                                 </div>
@@ -332,7 +350,7 @@ export default function JournalPage() {
                     )}
                 </div>
 
-            </div> {/* fin du div principal */}
+            </div>
 
             {/* ─── OVERLAY FOND ─── */}
             {selectedMeal && (
@@ -349,6 +367,8 @@ export default function JournalPage() {
             {/* ─── PANEL DÉTAIL REPAS ─── */}
             {selectedMeal && (() => {
                 const macros = getMacroPercent(selectedMeal)
+                const slotInfo = getSlotInfoForMeal(selectedMeal)
+
                 return (
                     <div style={{
                         position: 'fixed',
@@ -403,12 +423,47 @@ export default function JournalPage() {
                                 borderRadius: '16px',
                                 padding: '20px',
                                 textAlign: 'center',
-                                marginBottom: '16px',
+                                marginBottom: '12px',
                             }}>
                                 <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>
                                     {Math.round(selectedMeal.calories)}
                                 </p>
                                 <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
+                            </div>
+
+                            {/* ✅ Calories restantes du créneau concerné par ce repas */}
+                            <div style={{
+                                background: slotInfo.exceeded ? 'rgba(226,75,74,0.08)' : 'rgba(196,98,45,0.08)',
+                                border: `1px solid ${slotInfo.exceeded ? '#3A1010' : '#2A1F14'}`,
+                                borderRadius: '12px',
+                                padding: '12px 16px',
+                                marginBottom: '16px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                            }}>
+                                <div>
+                                    <p style={{ color: '#555', fontSize: '11px' }}>Créneau</p>
+                                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '13px' }}>{slotInfo.label}</p>
+                                    <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>
+                                        {Math.round(slotInfo.consumed)} / {slotInfo.target} kcal consommés
+                                    </p>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: '#555', fontSize: '11px' }}>
+                                        {slotInfo.exceeded ? '⚠️ Dépassement' : 'Restant'}
+                                    </p>
+                                    <p style={{
+                                        color: slotInfo.exceeded ? '#E24B4A' : '#C4622D',
+                                        fontWeight: '800',
+                                        fontSize: '20px',
+                                    }}>
+                                        {slotInfo.exceeded
+                                            ? `+${Math.abs(Math.round(slotInfo.remaining))} kcal`
+                                            : `${Math.round(slotInfo.remaining)} kcal`
+                                        }
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Macros détaillées */}
@@ -460,18 +515,37 @@ export default function JournalPage() {
                                 </div>
                             )}
 
-                            {/* ─── CONSEIL COACH ─── */}
+                            {/* ✅ CONSEIL COACH — affiché seulement si coach_message existe */}
                             {selectedMeal?.coach_message && (
                                 <div style={{ marginBottom: '16px' }}>
                                     <button
                                         onClick={() => setShowCoach(!showCoach)}
-                                        style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? '#2A1F00' : 'transparent', border: '1px solid #F5A623', color: '#F5A623', fontWeight: '600', fontSize: '14px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            background: showCoach ? '#2A1F00' : 'transparent',
+                                            border: '1px solid #F5A623',
+                                            color: '#F5A623',
+                                            fontWeight: '600',
+                                            fontSize: '14px',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            marginBottom: showCoach ? '8px' : '0',
+                                        }}
                                     >
                                         {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
                                     </button>
                                     {showCoach && (
-                                        <div style={{ background: '#2A1F00', borderRadius: '12px', padding: '16px', border: '1px solid #3A2F00' }}>
-                                            <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>{selectedMeal.coach_message}</p>
+                                        <div style={{
+                                            background: '#2A1F00',
+                                            borderRadius: '12px',
+                                            padding: '16px',
+                                            border: '1px solid #3A2F00',
+                                        }}>
+                                            <p style={{ color: '#FFD88A', fontSize: '13px', lineHeight: '1.6' }}>
+                                                {selectedMeal.coach_message}
+                                            </p>
                                         </div>
                                     )}
                                 </div>

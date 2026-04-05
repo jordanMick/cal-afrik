@@ -235,7 +235,6 @@ export default function ScannerPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            // Lire les valeurs fraîches du store
             const storeState = useAppStore.getState()
             const freshSlot = storeState.slots[currentSlotKey]
 
@@ -351,7 +350,9 @@ export default function ScannerPage() {
                     carbs_g: Math.round(totals.carbs_g * 10) / 10,
                     fat_g: Math.round(totals.fat_g * 10) / 10,
                     image_url: capturedImage,
-                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length)
+                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length),
+                    // ✅ On sauvegarde le message coach s'il a été généré
+                    coach_message: coachMessage || null,
                 }),
             })
             const json = await res.json()
@@ -530,15 +531,43 @@ export default function ScannerPage() {
                         </p>
 
                         {/* Calories */}
-                        <div style={{ background: '#0F0A06', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '16px' }}>
+                        <div style={{ background: '#0F0A06', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '12px' }}>
                             <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
                             <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
-                            <p style={{ color: slotExceeded ? '#E24B4A' : '#444', fontSize: '12px', marginTop: '4px', fontWeight: slotExceeded ? '700' : '400' }}>
-                                {slotExceeded
-                                    ? `⚠️ Dépassement de ${Math.abs(Math.round(slotRemainingAfter))} kcal sur le ${slotLabel.toLowerCase()}`
-                                    : `Restant ${slotLabel.toLowerCase()} : ${Math.round(slotRemainingAfter)} kcal`
-                                }
-                            </p>
+                        </div>
+
+                        {/* ✅ Calories restantes du créneau après ajout */}
+                        <div style={{
+                            background: slotExceeded ? 'rgba(226,75,74,0.08)' : 'rgba(196,98,45,0.08)',
+                            border: `1px solid ${slotExceeded ? '#3A1010' : '#2A1F14'}`,
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            marginBottom: '16px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                        }}>
+                            <div>
+                                <p style={{ color: '#555', fontSize: '11px' }}>Créneau {slotLabel}</p>
+                                <p style={{ color: '#777', fontSize: '12px', marginTop: '2px' }}>
+                                    {Math.round(currentSlot.consumed)} + {Math.round(totals.calories)} kcal
+                                </p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: '#555', fontSize: '11px' }}>
+                                    {slotExceeded ? '⚠️ Dépassement' : 'Restant après repas'}
+                                </p>
+                                <p style={{
+                                    color: slotExceeded ? '#E24B4A' : '#C4622D',
+                                    fontWeight: '800',
+                                    fontSize: '18px',
+                                }}>
+                                    {slotExceeded
+                                        ? `+${Math.abs(Math.round(slotRemainingAfter))} kcal`
+                                        : `${Math.round(slotRemainingAfter)} kcal`
+                                    }
+                                </p>
+                            </div>
                         </div>
 
                         {/* Macros */}
