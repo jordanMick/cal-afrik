@@ -7,13 +7,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRef } from 'react'
 
-const MEAL_TYPE_LABELS: Record<string, string> = {
-    petit_dejeuner: 'Petit-déjeuner',
-    dejeuner: 'Déjeuner',
-    diner: 'Dîner',
-    collation: 'Collation',
-}
-
 export default function DashboardPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -26,18 +19,72 @@ export default function DashboardPage() {
         dailyProtein,
         dailyCarbs,
         dailyFat,
-        removeMeal,
     } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
 
     const calorieTarget = profile?.calorie_target || 2000
+    const proteinTarget = profile?.protein_target_g || 100
+    const carbsTarget = profile?.carbs_target_g || 250
+    const fatTarget = profile?.fat_target_g || 65
     const remaining = Math.max(0, calorieTarget - dailyCalories)
+    const exceeded = dailyCalories > calorieTarget
 
     const radius = 40
     const circumference = 2 * Math.PI * radius
     const percent = getProgressPercent(dailyCalories, calorieTarget)
     const strokeDashoffset = circumference - (percent / 100) * circumference
+
+    // ─── Message coach statique ───────────────────────────────
+    const getCoachMessage = () => {
+        const hour = new Date().getHours()
+        const pctDone = dailyCalories / calorieTarget
+
+        // Objectif dépassé
+        if (exceeded) {
+            const over = Math.round(dailyCalories - calorieTarget)
+            return {
+                emoji: '⚠️',
+                color: '#E24B4A',
+                text: `Tu as dépassé ton objectif de ${over} kcal. Essaie de rester léger pour le reste de la journée.`
+            }
+        }
+
+        // Rien mangé
+        if (dailyCalories === 0) {
+            if (hour >= 5 && hour < 10) return { emoji: '🌅', color: '#E9C46A', text: `Bonne journée ! Commence par un bon petit-déjeuner pour bien démarrer.` }
+            if (hour >= 10 && hour < 14) return { emoji: '☀️', color: '#E9C46A', text: `Il est l'heure de déjeuner ! Tu n'as encore rien mangé aujourd'hui.` }
+            if (hour >= 14 && hour < 17) return { emoji: '🥜', color: '#E9C46A', text: `L'après-midi est bien entamé. Pense à manger quelque chose.` }
+            return { emoji: '🌙', color: '#E9C46A', text: `Tu n'as rien mangé de la journée. Prends un bon dîner ce soir.` }
+        }
+
+        // Moins de 25% atteint
+        if (pctDone < 0.25) {
+            return { emoji: '💪', color: '#52B788', text: `Bon début ! Il te reste ${Math.round(remaining)} kcal. Continue à bien manger.` }
+        }
+
+        // Entre 25% et 60%
+        if (pctDone < 0.60) {
+            const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
+            if (remainingProtein > proteinTarget * 0.5) {
+                return { emoji: '🥩', color: '#C4622D', text: `Pense aux protéines ! Il t'en manque encore ${Math.round(remainingProtein)}g. Ajoute du poisson ou de la viande.` }
+            }
+            return { emoji: '✅', color: '#52B788', text: `Tu es sur la bonne voie. Il te reste ${Math.round(remaining)} kcal pour la journée.` }
+        }
+
+        // Entre 60% et 90%
+        if (pctDone < 0.90) {
+            if (hour >= 17) {
+                return { emoji: '🌙', color: '#C4622D', text: `Il te reste ${Math.round(remaining)} kcal pour le dîner. Reste équilibré !` }
+            }
+            return { emoji: '👍', color: '#52B788', text: `Excellent suivi ! ${Math.round(remaining)} kcal restantes. Tu gères bien ta journée.` }
+        }
+
+        // Plus de 90% atteint
+        return { emoji: '🎯', color: '#52B788', text: `Presque au bout ! Il ne te reste que ${Math.round(remaining)} kcal. Un petit snack léger suffira.` }
+    }
+
+    const coachMsg = getCoachMessage()
 
     useEffect(() => {
         fetchMeals()
@@ -53,7 +100,6 @@ export default function DashboardPage() {
                 headers: { Authorization: `Bearer ${session.access_token}` }
             })
             const json = await res.json()
-            console.log("🔥 DASHBOARD MEALS:", json)
             if (json.success) setTodayMeals(json.data)
             else console.error("❌ API ERROR:", json.error)
         } catch (err) {
@@ -73,7 +119,6 @@ export default function DashboardPage() {
                 headers: { Authorization: `Bearer ${session.access_token}` }
             })
             const json = await res.json()
-            console.log("🔥 DELETE:", json)
             if (json.success) setTodayMeals(todayMeals.filter(m => m.id !== mealId))
         } catch (err) {
             console.error(err)
@@ -96,58 +141,28 @@ export default function DashboardPage() {
         }}>
 
             {/* HEADER */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '30px'
-            }}>
-                <h1 style={{ fontSize: '22px', fontWeight: '900' }}>
-                    Cal Afrik
-                </h1>
-
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <h1 style={{ fontSize: '22px', fontWeight: '900' }}>Cal Afrik</h1>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <div style={{
-                        width: '38px', height: '38px',
-                        borderRadius: '12px',
-                        background: 'rgba(255,255,255,0.05)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         🔥
                     </div>
-
-                    {/* ✅ Clic → page stats */}
-                    <div
-                        onClick={() => router.push('/profil')}
-                        style={{
-                            width: '38px', height: '38px',
-                            borderRadius: '12px',
-                            background: 'linear-gradient(135deg,#C4622D,#E9C46A)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontWeight: '800',
-                            cursor: 'pointer'
-                        }}>
+                    <div onClick={() => router.push('/profil')} style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'linear-gradient(135deg,#C4622D,#E9C46A)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', cursor: 'pointer' }}>
                         {profile?.name?.[0] || 'U'}
                     </div>
                 </div>
             </div>
 
             {/* CALORIES */}
-            <div style={{
-                background: 'rgba(255,255,255,0.04)',
-                backdropFilter: 'blur(12px)',
-                borderRadius: '22px',
-                padding: '22px',
-                border: '1px solid rgba(255,255,255,0.05)',
-                marginBottom: '25px'
-            }}>
+            <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(12px)', borderRadius: '22px', padding: '22px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '16px' }}>
                 <p style={{ color: '#aaa', fontSize: '12px' }}>Calories restantes</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '36px', fontWeight: '900' }}>{remaining}</h2>
+                    <h2 style={{ fontSize: '36px', fontWeight: '900', color: exceeded ? '#E24B4A' : '#fff' }}>{remaining}</h2>
                     <svg width="90" height="90">
                         <circle cx="45" cy="45" r={radius} stroke="#222" strokeWidth="8" fill="none" />
                         <circle cx="45" cy="45" r={radius}
-                            stroke="#C4622D" strokeWidth="8" fill="none"
+                            stroke={exceeded ? '#E24B4A' : '#C4622D'}
+                            strokeWidth="8" fill="none"
                             strokeDasharray={circumference}
                             strokeDashoffset={strokeDashoffset}
                             strokeLinecap="round"
@@ -155,6 +170,23 @@ export default function DashboardPage() {
                         />
                     </svg>
                 </div>
+            </div>
+
+            {/* ─── MESSAGE COACH ─── */}
+            <div style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: `1px solid ${coachMsg.color}33`,
+                borderRadius: '16px',
+                padding: '14px 16px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+            }}>
+                <span style={{ fontSize: '20px', flexShrink: 0 }}>{coachMsg.emoji}</span>
+                <p style={{ color: '#ccc', fontSize: '13px', lineHeight: '1.5' }}>
+                    {coachMsg.text}
+                </p>
             </div>
 
             {/* MACROS */}
@@ -165,12 +197,7 @@ export default function DashboardPage() {
                     { label: 'Lipides', val: dailyFat, color: '#52B788' },
                 ].map((m, i) => (
                     <div key={i} style={{ textAlign: 'center' }}>
-                        <div style={{
-                            width: '70px', height: '70px', borderRadius: '50%',
-                            border: `3px solid ${m.color}`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontWeight: '800'
-                        }}>
+                        <div style={{ width: '70px', height: '70px', borderRadius: '50%', border: `3px solid ${m.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800' }}>
                             {Math.round(m.val)}g
                         </div>
                         <p style={{ color: '#888', fontSize: '12px', marginTop: '6px' }}>{m.label}</p>
@@ -188,31 +215,17 @@ export default function DashboardPage() {
                     <p style={{ color: '#666' }}>Aucun repas</p>
                 ) : (
                     todayMeals.map((meal) => (
-                        <div key={meal.id} style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            backdropFilter: 'blur(10px)',
-                            borderRadius: '18px',
-                            padding: '14px',
-                            display: 'flex', alignItems: 'center', gap: '12px',
-                            marginBottom: '12px'
-                        }}>
-                            <img
-                                src={meal.image_url || 'https://via.placeholder.com/60'}
-                                style={{ width: '60px', height: '60px', borderRadius: '14px', objectFit: 'cover' }}
-                            />
+                        <div key={meal.id} style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(10px)', borderRadius: '18px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                            <img src={meal.image_url || 'https://via.placeholder.com/60'} style={{ width: '60px', height: '60px', borderRadius: '14px', objectFit: 'cover' }} />
                             <div style={{ flex: 1 }}>
                                 <p style={{ fontWeight: '700' }}>{meal.custom_name || 'Repas'}</p>
                                 <p style={{ color: '#888', fontSize: '12px' }}>{formatTime(meal.logged_at)}</p>
                             </div>
                             <p style={{ color: '#C4622D', fontWeight: '800' }}>{Math.round(meal.calories)} kcal</p>
-                            <button
-                                onClick={() => { if (confirm("Supprimer ce repas ?")) handleDeleteMeal(meal.id) }}
-                                style={{
-                                    background: 'rgba(255,255,255,0.05)', border: 'none',
-                                    borderRadius: '8px', padding: '6px 10px',
-                                    color: '#ff6b6b', cursor: 'pointer'
-                                }}
-                            >✕</button>
+                            <button onClick={() => { if (confirm("Supprimer ce repas ?")) handleDeleteMeal(meal.id) }}
+                                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '8px', padding: '6px 10px', color: '#ff6b6b', cursor: 'pointer' }}>
+                                ✕
+                            </button>
                         </div>
                     ))
                 )}
@@ -220,28 +233,14 @@ export default function DashboardPage() {
 
             {/* FLOAT BUTTON */}
             <>
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{
-                        position: 'fixed', bottom: '80px', right: '25px',
-                        width: '65px', height: '65px', borderRadius: '50%',
-                        background: 'linear-gradient(135deg,#C4622D,#E9C46A)',
-                        border: 'none', fontSize: '28px', fontWeight: '800',
-                        boxShadow: '0 10px 40px rgba(196,98,45,0.5)',
-                        cursor: 'pointer', zIndex: 1000
-                    }}
-                >+</button>
-
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    style={{ display: 'none' }}
+                <button onClick={() => fileInputRef.current?.click()}
+                    style={{ position: 'fixed', bottom: '80px', right: '25px', width: '65px', height: '65px', borderRadius: '50%', background: 'linear-gradient(135deg,#C4622D,#E9C46A)', border: 'none', fontSize: '28px', fontWeight: '800', boxShadow: '0 10px 40px rgba(196,98,45,0.5)', cursor: 'pointer', zIndex: 1000 }}>
+                    +
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
                     onChange={(e) => {
                         const file = e.target.files?.[0]
                         if (!file) return
-                        console.log("Image capturée :", file)
                             ; (window as any).tempImage = file
                         router.push('/scanner')
                     }}
