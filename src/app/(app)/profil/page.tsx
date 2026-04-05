@@ -34,7 +34,10 @@ export default function ProfilPage() {
 
     const today = new Date().toISOString().split('T')[0]
     const hour = new Date().getHours()
-    const showBilan = hour >= 22 && bilanSeenDate !== today
+    const hasBilan = hour >= 22 && bilanSeenDate !== today
+
+    // ✅ État local pour garder le bilan visible même après setBilanSeenDate
+    const [showBilan, setShowBilan] = useState(hasBilan)
 
     const [bilanMessage, setBilanMessage] = useState<string>('')
     const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | null>(null)
@@ -42,9 +45,10 @@ export default function ProfilPage() {
     const [exceeded, setExceeded] = useState(false)
 
     useEffect(() => {
-        if (showBilan) {
-            setBilanSeenDate(today)
+        if (hasBilan) {
+            setShowBilan(true)
             loadBilan()
+            // ✅ Marquer comme vu après le chargement, pas avant
         }
     }, [])
 
@@ -87,6 +91,7 @@ export default function ProfilPage() {
             setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
         } finally {
             setBilanStatus('done')
+            setBilanSeenDate(today) // ✅ Marquer comme vu seulement après chargement
         }
     }
 
@@ -106,7 +111,6 @@ export default function ProfilPage() {
         await supabase.auth.signOut()
         router.push('/login')
     }
-    console.log('showBilan:', showBilan, 'hour:', hour, 'bilanSeenDate:', bilanSeenDate, 'today:', today)
 
     return (
         <div style={{ minHeight: '100vh', background: '#0F0A06', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px' }}>
