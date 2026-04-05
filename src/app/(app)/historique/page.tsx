@@ -400,7 +400,7 @@ export default function HistoriquePage() {
                                             <p style={{ color: '#C4622D', fontSize: '15px', fontWeight: '800' }}>
                                                 {Math.round(meal.calories)}<span style={{ color: '#444', fontSize: '10px' }}> kcal</span>
                                             </p>
-                                            {meal.coach_message && <span style={{ fontSize: '12px' }}>🤖</span>}
+                                            {meal.coach_message && <span style={{ fontSize: '12px' }}></span>}
                                             <span style={{ color: '#444', fontSize: '16px' }}> ›</span>
                                         </div>
                                     </div>
