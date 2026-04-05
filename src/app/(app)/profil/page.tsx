@@ -25,6 +25,9 @@ export default function ProfilPage() {
     const {
         profile, dailyCalories, dailyProtein, dailyCarbs, dailyFat,
         todayMeals, bilanSeenDate, setBilanSeenDate,
+        bilanMessage, setBilanMessage,
+        bilanGoalReached, setBilanGoalReached,
+        bilanExceeded, setBilanExceeded,
     } = useAppStore()
 
     const calorieTarget = profile?.calorie_target || 2000
@@ -32,26 +35,40 @@ export default function ProfilPage() {
     const carbsTarget = profile?.carbs_target_g || 250
     const fatTarget = profile?.fat_target_g || 65
 
-    const today = new Date().toISOString().split('T')[0]
-    const hour = new Date().getHours()
-    const hasBilan = hour >= 22 && bilanSeenDate !== today
+    const now = new Date()
+    const hour = now.getHours()
+    const today = now.toISOString().split('T')[0]
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
-    // ✅ État local pour garder le bilan visible même après setBilanSeenDate
-    const [showBilan, setShowBilan] = useState(hasBilan)
+    // Bilan visible entre 23h et 8h
+    const isAfter23 = hour >= 23
+    const isBefore8 = hour < 8
+    const bilanDate = isBefore8 ? yesterday : today
+    const hasBilan = (isAfter23 || isBefore8) && bilanSeenDate !== bilanDate
 
-    const [bilanMessage, setBilanMessage] = useState<string>('')
-    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | null>(null)
-    const [goalReached, setGoalReached] = useState(false)
-    const [exceeded, setExceeded] = useState(false)
+    const [showBilan, setShowBilan] = useState(hasBilan || (bilanSeenDate === bilanDate && !!bilanMessage && (isAfter23 || isBefore8)))
+    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | null>(bilanMessage ? 'done' : null)
 
     useEffect(() => {
-        if (hasBilan && dailyCalories > 0) {
+        // Si le bilan doit s'afficher et n'a pas encore été généré pour cette date
+        if (hasBilan) {
             setShowBilan(true)
             loadBilan()
         }
-    }, [dailyCalories])
+        // Si le bilan a déjà été généré pour cette date, juste l'afficher sans rappeler l'IA
+        else if (bilanSeenDate === bilanDate && bilanMessage && (isAfter23 || isBefore8)) {
+            setShowBilan(true)
+            setBilanStatus('done')
+        }
+    }, [])
 
     const loadBilan = async () => {
+        // Si un message existe déjà pour cette date, ne pas rappeler l'IA
+        if (bilanSeenDate === bilanDate && bilanMessage) {
+            setBilanStatus('done')
+            return
+        }
+
         setBilanStatus('loading')
         try {
             const { data: { session } } = await supabase.auth.getSession()
@@ -80,23 +97,27 @@ export default function ProfilPage() {
             const json = await res.json()
             if (json.success) {
                 setBilanMessage(json.message)
-                setGoalReached(json.goalReached)
-                setExceeded(json.exceeded)
+                setBilanGoalReached(json.goalReached)
+                setBilanExceeded(json.exceeded)
             } else {
                 setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
+                setBilanGoalReached(false)
+                setBilanExceeded(false)
             }
         } catch (err) {
             console.error(err)
             setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
+            setBilanGoalReached(false)
+            setBilanExceeded(false)
         } finally {
             setBilanStatus('done')
-            setBilanSeenDate(today) // ✅ Marquer comme vu seulement après chargement
+            setBilanSeenDate(bilanDate)
         }
     }
 
-    const bilanColor = goalReached ? '#52B788' : exceeded ? '#E24B4A' : '#E9C46A'
-    const bilanEmoji = goalReached ? '🎉' : exceeded ? '⚠️' : '📊'
-    const bilanTitle = goalReached ? 'Objectif atteint !' : exceeded ? 'Objectif dépassé' : 'Journée incomplète'
+    const bilanColor = bilanGoalReached ? '#52B788' : bilanExceeded ? '#E24B4A' : '#E9C46A'
+    const bilanEmoji = bilanGoalReached ? '🎉' : bilanExceeded ? '⚠️' : '📊'
+    const bilanTitle = bilanGoalReached ? 'Objectif atteint !' : bilanExceeded ? 'Objectif dépassé' : 'Journée incomplète'
 
     const cardStyle = {
         background: '#1A1108',
@@ -140,7 +161,7 @@ export default function ProfilPage() {
                         {bilanStatus === 'loading' && (
                             <p style={{ color: '#777', fontSize: '13px', fontStyle: 'italic' }}>⏳ Génération du bilan...</p>
                         )}
-                        {bilanStatus === 'done' && (
+                        {bilanStatus === 'done' && bilanMessage && (
                             <p style={{ color: '#ccc', fontSize: '13px', lineHeight: '1.6', marginBottom: '16px' }}>
                                 {bilanMessage}
                             </p>
