@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 const createUserClient = (req: NextRequest) => {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // ✅ IMPORTANT
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             global: {
                 headers: {
@@ -22,11 +22,9 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-
 // 🔥 GET
 export async function GET(req: NextRequest) {
     const supabase = createUserClient(req)
-
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -34,7 +32,9 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url)
-    const date = searchParams.get('date')
+    const date = searchParams.get('date')           // un jour précis
+    const dateFrom = searchParams.get('date_from')  // plage de dates début
+    const dateTo = searchParams.get('date_to')      // plage de dates fin
 
     let query = supabaseAdmin
         .from('meals')
@@ -42,9 +42,14 @@ export async function GET(req: NextRequest) {
         .eq('user_id', user.id)
 
     if (date) {
+        // Jour précis
         const start = `${date}T00:00:00.000Z`
         const end = `${date}T23:59:59.999Z`
-
+        query = query.gte('logged_at', start).lte('logged_at', end)
+    } else if (dateFrom && dateTo) {
+        // Plage de dates (pour le rapport 7 jours et l'historique mois)
+        const start = `${dateFrom}T00:00:00.000Z`
+        const end = `${dateTo}T23:59:59.999Z`
         query = query.gte('logged_at', start).lte('logged_at', end)
     }
 
@@ -58,11 +63,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data })
 }
 
-
 // 🔥 POST
 export async function POST(req: NextRequest) {
     const supabase = createUserClient(req)
-
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -72,10 +75,6 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
 
-    console.log("📥 BODY:", body)
-    console.log("👤 USER:", user.id)
-
-    // 🔥 SAFE DATA (ANTI BUG)
     const mealData = {
         user_id: user.id,
         food_item_id: body.food_item_id || null,
@@ -87,24 +86,16 @@ export async function POST(req: NextRequest) {
         fat_g: Number(body.fat_g || 0),
         image_url: body.image_url || null,
         ai_confidence: Number(body.ai_confidence || 0),
-
-        // 🔥 AJOUT IMPORTANT
         meal_type: body.meal_type || null,
         coach_message: body.coach_message || null,
-
         logged_at: new Date().toISOString(),
     }
-
-    console.log("🚀 FINAL DATA:", mealData)
 
     const { data, error } = await supabaseAdmin
         .from('meals')
         .insert(mealData)
         .select()
         .single()
-
-    console.log("🧾 INSERT DATA:", data)
-    console.log("❌ INSERT ERROR:", error)
 
     if (error) {
         return NextResponse.json({ success: false, error: error.message })
@@ -113,11 +104,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data })
 }
 
-
 // 🔥 DELETE
 export async function DELETE(req: NextRequest) {
     const supabase = createUserClient(req)
-
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
