@@ -1,23 +1,77 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+declare global {
+    interface Window {
+        FedaPay: any;
+    }
+}
 
 const plans = {
-    mensuel: {
-        pro: { price: '4 900', period: 'FCFA/mois' },
-        premium: { price: '9 900', period: 'FCFA/mois' },
-    },
-    annuel: {
-        pro: { price: '3 234', period: 'FCFA/mois' },
-        premium: { price: '6 534', period: 'FCFA/mois' },
-    },
+    pro: { price: '4 900', period: 'FCFA/mois', value: 'pro' },
+    premium: { price: '9 900', period: 'FCFA/mois', value: 'premium' },
 }
 
 export default function PricingPage() {
     const router = useRouter()
-    const [isAnnuel, setIsAnnuel] = useState(false)
-    const current = isAnnuel ? plans.annuel : plans.mensuel
+    const [loading, setLoading] = useState<string | null>(null)
+
+    // Chargement du script FedaPay Checkout
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.fedapay.com/checkout.js?v=1.1.7';
+        script.async = true;
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
+
+    const handleSubscribe = async (tier: 'pro' | 'premium') => {
+        setLoading(tier);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push('/login');
+                return;
+            }
+
+            // 1. Créer la transaction sur notre serveur
+            const res = await fetch('/api/payments/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ tier })
+            });
+
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+
+            // 2. Ouvrir le widget FedaPay avec le token reçu
+            window.FedaPay.init({
+                public_key: process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY,
+                transaction: {
+                    token: data.token,
+                },
+                container: '#fedapay-container', // On peut aussi utiliser l'URL directe data.url
+            });
+
+            // Alternative : Redirection directe si le token ne suffit pas
+            window.location.href = data.url;
+
+        } catch (error) {
+            console.error('Erreur de paiement:', error);
+            alert('Une erreur est survenue lors de l\'initialisation du paiement.');
+        } finally {
+            setLoading(null);
+        }
+    }
 
     return (
         <div style={{
@@ -41,42 +95,11 @@ export default function PricingPage() {
                 </div>
 
                 {/* TITRE */}
-                <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '48px' }}>
                     <h1 style={{ fontSize: '36px', fontWeight: '800', color: '#fff', marginBottom: '10px', letterSpacing: '-0.5px' }}>
                         Choisissez votre plan
                     </h1>
                     <p style={{ color: '#555', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
-                </div>
-
-                {/* TOGGLE MENSUEL / ANNUEL */}
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
-                    <span style={{ color: !isAnnuel ? '#fff' : '#555', fontSize: '14px', fontWeight: '500' }}>Mensuel</span>
-                    <div
-                        onClick={() => setIsAnnuel(!isAnnuel)}
-                        style={{
-                            width: '48px', height: '26px', borderRadius: '13px',
-                            background: isAnnuel ? '#6366f1' : '#2a2a2a',
-                            border: '0.5px solid #333',
-                            cursor: 'pointer', position: 'relative',
-                            transition: 'background 0.3s ease',
-                        }}
-                    >
-                        <div style={{
-                            position: 'absolute', top: '3px',
-                            left: isAnnuel ? '25px' : '3px',
-                            width: '18px', height: '18px', borderRadius: '50%',
-                            background: '#fff',
-                            transition: 'left 0.3s ease',
-                            boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-                        }} />
-                    </div>
-                    <span style={{ color: isAnnuel ? '#fff' : '#555', fontSize: '14px', fontWeight: '500' }}>Annuel</span>
-                    <div style={{
-                        padding: '4px 10px', borderRadius: '20px',
-                        background: 'rgba(16,185,129,0.15)',
-                        border: '0.5px solid rgba(16,185,129,0.4)',
-                        color: '#10b981', fontSize: '12px', fontWeight: '600',
-                    }}>−34%</div>
                 </div>
 
                 {/* CARDS */}
@@ -103,7 +126,6 @@ export default function PricingPage() {
                                 { text: '100 plats africains', active: true },
                                 { text: 'Journal calorique simple', active: true },
                                 { text: 'Suivi du poids', active: true },
-                                { text: 'Recalcul auto objectifs', active: false },
                                 { text: 'Coach Kofi IA', active: false },
                             ].map((f, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -122,7 +144,7 @@ export default function PricingPage() {
                                 color: '#fff', fontSize: '14px', fontWeight: '600',
                                 cursor: 'pointer',
                             }}>
-                            Commencer →
+                            Plan actuel
                         </button>
                     </div>
 
@@ -147,11 +169,10 @@ export default function PricingPage() {
 
                         <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
                         <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                            <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{current.pro.price}</span>
-                            <span style={{ color: '#555', fontSize: '13px' }}>{current.pro.period}</span>
+                            <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{plans.pro.price}</span>
+                            <span style={{ color: '#555', fontSize: '13px' }}>{plans.pro.period}</span>
                         </div>
-                        <p style={{ color: '#444', fontSize: '12px', marginBottom: '24px', opacity: 0 }}>—</p>
-                        <div style={{ height: '0.5px', background: '#2a2a2a', marginBottom: '20px' }} />
+                        <div style={{ height: '0.5px', background: '#2a2a2a', margin: '20px 0' }} />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                             {[
                                 'Scanner IA illimité',
@@ -160,23 +181,26 @@ export default function PricingPage() {
                                 'Graphique de progression',
                                 'Historique 6 mois',
                                 'Sync cloud',
-                                'Coach Kofi personnalisé',
                             ].map((f, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: i < 6 ? '#6366f1' : '#333', flexShrink: 0 }} />
-                                    <span style={{ color: i < 6 ? '#ccc' : '#444', fontSize: '13px', textDecoration: i < 6 ? 'none' : 'line-through' }}>{f}</span>
+                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1', flexShrink: 0 }} />
+                                    <span style={{ color: '#ccc', fontSize: '13px' }}>{f}</span>
                                 </div>
                             ))}
                         </div>
-                        <button style={{
-                            width: '100%', height: '48px',
-                            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-                            border: 'none', borderRadius: '12px',
-                            color: '#fff', fontSize: '14px', fontWeight: '600',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 20px rgba(99,102,241,0.35)',
-                        }}>
-                            Passer au Pro →
+                        <button 
+                            disabled={loading !== null}
+                            onClick={() => handleSubscribe('pro')}
+                            style={{
+                                width: '100%', height: '48px',
+                                background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+                                border: 'none', borderRadius: '12px',
+                                color: '#fff', fontSize: '14px', fontWeight: '600',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                boxShadow: '0 4px 20px rgba(99,102,241,0.35)',
+                                opacity: loading && loading !== 'pro' ? 0.5 : 1
+                            }}>
+                            {loading === 'pro' ? 'Initialisation...' : 'Passer au Pro →'}
                         </button>
                     </div>
 
@@ -197,15 +221,14 @@ export default function PricingPage() {
                             background: 'linear-gradient(135deg, #10b981, #34d399)',
                             color: '#fff', fontSize: '12px', fontWeight: '600',
                             whiteSpace: 'nowrap',
-                        }}>Premium</div>
+                        }}>Elite</div>
 
                         <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
                         <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                            <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{current.premium.price}</span>
-                            <span style={{ color: '#555', fontSize: '13px' }}>{current.premium.period}</span>
+                            <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{plans.premium.price}</span>
+                            <span style={{ color: '#555', fontSize: '13px' }}>{plans.premium.period}</span>
                         </div>
-                        <p style={{ color: '#444', fontSize: '12px', marginBottom: '24px', opacity: 0 }}>—</p>
-                        <div style={{ height: '0.5px', background: '#1a2e24', marginBottom: '20px' }} />
+                        <div style={{ height: '0.5px', background: '#1a2e24', margin: '20px 0' }} />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                             {[
                                 'Tout le plan Pro',
@@ -221,32 +244,42 @@ export default function PricingPage() {
                                 </div>
                             ))}
                         </div>
-                        <button style={{
-                            width: '100%', height: '48px',
-                            background: 'linear-gradient(135deg, #10b981, #34d399)',
-                            border: 'none', borderRadius: '12px',
-                            color: '#fff', fontSize: '14px', fontWeight: '600',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 20px rgba(16,185,129,0.3)',
-                        }}>
-                            Accéder au Premium →
+                        <button 
+                            disabled={loading !== null}
+                            onClick={() => handleSubscribe('premium')}
+                            style={{
+                                width: '100%', height: '48px',
+                                background: 'linear-gradient(135deg, #10b981, #34d399)',
+                                border: 'none', borderRadius: '12px',
+                                color: '#fff', fontSize: '14px', fontWeight: '600',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                boxShadow: '0 4px 20px rgba(16,185,129,0.3)',
+                                opacity: loading && loading !== 'premium' ? 0.5 : 1
+                            }}>
+                            {loading === 'premium' ? 'Initialisation...' : 'Accéder au Premium →'}
                         </button>
                     </div>
                 </div>
 
                 {/* MOYENS DE PAIEMENT */}
-                <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '40px' }}>
-                    {['MTN Mobile Money', 'Orange Money', 'Wave', 'Carte bancaire'].map((p) => (
-                        <div key={p} style={{
-                            padding: '8px 16px',
-                            background: '#111', border: '0.5px solid #2a2a2a',
-                            borderRadius: '20px', color: '#555', fontSize: '12px', fontWeight: '500',
-                        }}>{p}</div>
-                    ))}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', marginTop: '60px' }}>
+                    <p style={{ color: '#444', fontSize: '13px', fontWeight: '500' }}>Paiement sécurisé via FedaPay</p>
+                    <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                        {['MTN', 'Orange', 'Moov', 'Wave', 'Visa', 'Mastercard'].map((p) => (
+                            <div key={p} style={{
+                                padding: '8px 20px',
+                                background: '#111', border: '0.5px solid #222',
+                                borderRadius: '14px', color: '#666', fontSize: '12px', fontWeight: '600',
+                            }}>{p}</div>
+                        ))}
+                    </div>
                 </div>
 
+                {/* ID de transaction container pour le script FedaPay */}
+                <div id="fedapay-container"></div>
+
                 {/* FOOTER */}
-                <p style={{ textAlign: 'center', color: '#333', fontSize: '12px', marginTop: '32px' }}>
+                <p style={{ textAlign: 'center', color: '#333', fontSize: '12px', marginTop: '48px' }}>
                     Cal Afrik · Fait avec ❤️ pour l'Afrique
                 </p>
             </div>
