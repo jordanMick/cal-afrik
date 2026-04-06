@@ -148,6 +148,7 @@ export default function ScannerPage() {
     const getTotals = () => selectedFoods.reduce((acc, food) => ({ calories: acc.calories + food.calories, protein_g: acc.protein_g + food.protein_g, carbs_g: acc.carbs_g + food.carbs_g, fat_g: acc.fat_g + food.fat_g, portion_g: acc.portion_g + food.portion_g }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
 
     const loadCoachMessage = async () => {
+        if (!checkPermission(profile, 'hasCoachKofi')) return
         if (coachMessage) { setShowCoach(true); return }
         setIsLoadingCoach(true); setShowCoach(true)
         try {

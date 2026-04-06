@@ -18,6 +18,21 @@ export async function POST(req: NextRequest) {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token)
         if (!user || authError) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
+        // ─── VÉRIFICATION ABONNEMENT ──────────────────────────
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('subscription_tier')
+            .eq('user_id', user.id)
+            .single()
+
+        if (!profile || profile.subscription_tier !== 'premium') {
+            return NextResponse.json({ 
+                success: false, 
+                error: 'Accès réservé aux membres Premium', 
+                code: 'PREMIUM_REQUIRED' 
+            }, { status: 403 })
+        }
+
         const {
             selectedFoods,       // noms des aliments sélectionnés
             totals,              // { calories, protein_g, carbs_g, fat_g } du repas

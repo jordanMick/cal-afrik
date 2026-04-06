@@ -45,6 +45,26 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: true, empty: true })
         }
 
+        // ─── VÉRIFICATION ABONNEMENT ──────────────────────────
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('subscription_tier')
+            .eq('user_id', user.id)
+            .single()
+
+        const isPremium = profile?.subscription_tier === 'premium'
+
+        if (!isPremium) {
+            return NextResponse.json({
+                success: true,
+                message: type === 'creneau' 
+                    ? "Bon repas ! Continue tes efforts. 💪" 
+                    : "Belle journée terminée ! Repose-toi bien. 🌙",
+                goalReached: type === 'creneau' ? (Math.round((slotConsumed / slotTarget) * 100) >= 80) : true,
+                exceeded: false
+            })
+        }
+
         const goalLabels: Record<string, string> = {
             perdre: 'perdre du poids',
             maintenir: 'maintenir le poids',
@@ -83,7 +103,7 @@ ${nextSlotLabel ? `Le prochain créneau est : ${nextSlotLabel}.` : ''}
 Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
 
             const response = await anthropic.messages.create({
-                model: 'claude-opus-4-5',
+                model: 'claude-3-5-sonnet-20240620',
                 max_tokens: 200,
                 messages: [{ role: 'user', content: prompt }]
             })
@@ -133,7 +153,7 @@ Résumé nutritionnel :
 Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
 
             const response = await anthropic.messages.create({
-                model: 'claude-opus-4-5',
+                model: 'claude-3-5-sonnet-20240620',
                 max_tokens: 250,
                 messages: [{ role: 'user', content: prompt }]
             })
