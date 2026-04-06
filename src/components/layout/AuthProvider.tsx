@@ -33,12 +33,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             const session = data.session
 
             if (!session) {
-                if (!pathname.startsWith('/login') && !pathname.startsWith('/onboarding')) {
+                if (
+                    !pathname.startsWith('/login') &&
+                    !pathname.startsWith('/onboarding') &&
+                    !pathname.startsWith('/reset-password')
+                ) {
                     router.push('/login')
                 }
                 return
             }
-
             // ✅ Charger le profil
             const { data: profile, error: profileError } = await supabase
                 .from('user_profiles')
