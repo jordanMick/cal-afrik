@@ -103,10 +103,12 @@ export default function OnboardingPage() {
 
             const { data: profile, error } = await supabase
                 .from('user_profiles')
-                .upsert({ user_id: session.user.id, ...profileData })
+                .upsert(
+                    { user_id: session.user.id, ...profileData },
+                    { onConflict: 'user_id' }
+                )
                 .select()
                 .single()
-
             if (error) { alert('Erreur: ' + error.message); return }
 
             setProfile(profile)
