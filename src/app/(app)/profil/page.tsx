@@ -45,7 +45,6 @@ export default function ProfilPage() {
     const bilanDinerDate = isBefore8 ? yesterday : today
 
     const activeSlot = getActiveBilanSlot(hour)
-    const nextSlotInfo = getNextSlotInfo(hour)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
     const existingBilan = activeSlot ? slotBilans[activeSlot] : null
     const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh
@@ -174,18 +173,30 @@ export default function ProfilPage() {
                     )}
                 </div>
             ) : (
-                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(99,102,241,0.12)', border: '0.5px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>📊</div>
+                <div style={{
+                    background: '#141414', border: '0.5px solid #222',
+                    borderRadius: '16px', padding: '16px',
+                    margin: '0 20px 20px',
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                }}>
+                    <div style={{
+                        width: '36px', height: '36px', borderRadius: '10px',
+                        background: 'rgba(99,102,241,0.12)',
+                        border: '0.5px solid rgba(99,102,241,0.3)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '16px', flexShrink: 0,
+                    }}>⏰</div>
                     <div>
                         <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600' }}>
-                            Bilan {nextSlotInfo.label}
+                            Bilan {getNextSlotInfo(hour).label}
                         </p>
                         <p style={{ color: '#555', fontSize: '12px', marginTop: '3px' }}>
-                            Disponible à partir de {nextSlotInfo.time}
+                            Disponible à partir de {getNextSlotInfo(hour).time}
                         </p>
                     </div>
                 </div>
             )}
+
 
 
             <div style={{ padding: '0 20px' }}>
@@ -211,15 +222,18 @@ export default function ProfilPage() {
 
                 <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', marginBottom: '16px', overflow: 'hidden' }}>
                     {[
-                        { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—' },
-                        { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—' },
-                        { label: 'Taille', value: profile?.height_cm ? `${profile.height_cm} cm` : '—' },
-                        { label: 'Activité', value: profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—' },
-                        { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—' },
-                        { label: 'Pays', value: profile?.country || '—' },
+                        { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—', icon: '👤' },
+                        { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—', icon: '⚖️' },
+                        { label: 'Taille', value: profile?.height_cm ? `${profile.height_cm} cm` : '—', icon: '📏' },
+                        { label: 'Activité', value: profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—', icon: '⚡' },
+                        { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '🎯' },
+                        { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
                     ].map((item, i, arr) => (
                         <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
-                            <span style={{ color: '#444', fontSize: '13px' }}>{item.label}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '14px' }}>{item.icon}</span>
+                                <span style={{ color: '#444', fontSize: '13px' }}>{item.label}</span>
+                            </div>
                             <span style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>{item.value}</span>
                         </div>
                     ))}
