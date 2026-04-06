@@ -227,10 +227,23 @@ export default function RapportPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const res = await fetch(`/api/meals?date_from=${last7[0]}&date_to=${todayStr}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
-            const json = await res.json()
-            if (json.success) setMeals7days(json.data)
-            if (profile?.weight_kg) {
+            // 1. Récupérer les repas (existant)
+            const resMeals = await fetch(`/api/meals?date_from=${last7[0]}&date_to=${todayStr}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+            const jsonMeals = await resMeals.json()
+            if (jsonMeals.success) setMeals7days(jsonMeals.data)
+
+            // 2. Récupérer l'historique de poids depuis la nouvelle table weight_logs
+            const resWeight = await fetch('/api/user/weight_logs', { headers: { Authorization: `Bearer ${session.access_token}` } })
+            const jsonWeight = await resWeight.json()
+            if (jsonWeight.success && jsonWeight.data.length > 0) {
+                // On transforme les logs en format {date, weight} pour le graphique
+                const history = jsonWeight.data.map((log: any) => ({
+                    date: log.logged_at.split('T')[0],
+                    weight: parseFloat(log.weight_kg)
+                }))
+                setWeightEntries(history)
+            } else if (profile?.weight_kg) {
+                // Fallback si l'historique est vide
                 const lastDate = localStorage.getItem('lastWeightDate') || todayStr
                 setWeightEntries([{ date: lastDate, weight: profile.weight_kg }])
             }
@@ -249,12 +262,26 @@ export default function RapportPage() {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session || !profile) return
         try {
-            const res = await fetch('/api/user/weight', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ weight_kg: newWeight }) })
-            const json = await res.json()
-            if (!json.success) return
+            // 1. Mettre à jour le poids actuel du profil
+            const resProfile = await fetch('/api/user/weight', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ weight_kg: newWeight }) })
+            const jsonProfile = await resProfile.json()
+            
+            // 2. Ajouter l'entrée dans l'historique (weight_logs)
+            const resLog = await fetch('/api/user/weight_logs', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ weight_kg: newWeight }) })
+            const jsonLog = await resLog.json()
+
+            if (!jsonProfile.success || !jsonLog.success) return
+
             setProfile({ ...profile, weight_kg: newWeight })
             localStorage.setItem('lastWeightDate', todayStr)
-            setWeightEntries(prev => { const exists = prev.find(e => e.date === todayStr); if (exists) return prev.map(e => e.date === todayStr ? { ...e, weight: newWeight } : e); return [...prev, { date: todayStr, weight: newWeight }] })
+            
+            // Mettre à jour l'état local pour le graphique immédiatement
+            const newEntry = { date: todayStr, weight: newWeight }
+            setWeightEntries(prev => {
+                const exists = prev.find(e => e.date === todayStr)
+                if (exists) return prev.map(e => e.date === todayStr ? newEntry : e)
+                return [...prev, newEntry].sort((a, b) => a.date.localeCompare(b.date))
+            })
         } catch (err) { console.error(err) }
     }
 
