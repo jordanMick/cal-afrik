@@ -22,8 +22,8 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] max-w-[400px] z-[999]">
-      <div className="glass-panel h-20 rounded-[32px] grid grid-cols-4 items-center px-2 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t border-white/10">
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] max-w-[400px] z-[999] pointer-events-none">
+      <div className="glass-panel h-20 rounded-[32px] grid grid-cols-4 items-center w-full px-2 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-t border-white/10 pointer-events-auto">
         
         {TABS.map((tab) => {
           const isActive = pathname === tab.path
@@ -34,13 +34,13 @@ export default function BottomNav() {
             <button
               key={tab.id}
               onClick={() => router.push(tab.path)}
-              className="relative flex flex-col items-center justify-center h-full group"
+              className="relative flex flex-col items-center justify-center h-full group bg-transparent border-none p-0 outline-none appearance-none cursor-pointer"
             >
               {/* Effet Glow pour l'onglet actif */}
               {isActive && !isScanner && (
                 <motion.div
                   layoutId="navGlow"
-                  className="absolute inset-0 bg-white/5 blur-xl rounded-full"
+                  className="absolute inset-0 bg-white/5 blur-xl rounded-full pointer-events-none"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 />
@@ -58,11 +58,11 @@ export default function BottomNav() {
                   whileTap={{ scale: 0.85 }}
                   whileHover={{ y: -2 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                  className="flex items-center justify-center"
                 >
                   <Icon className={cn("w-5 h-5", isScanner && "w-6 h-6")} />
                 </motion.div>
                 
-                {/* Indicateur minimaliste */}
                 {isActive && !isScanner && (
                   <motion.div 
                     layoutId="navIndicator"
@@ -73,7 +73,7 @@ export default function BottomNav() {
               
               <span className={cn(
                 "text-[8px] font-black uppercase tracking-[0.1em] transition-all duration-300 mt-1",
-                isActive ? "text-white opacity-100" : "text-zinc-600 opacity-0 group-hover:opacity-60"
+                isActive ? "text-white opacity-100" : "text-zinc-600 opacity-60 group-hover:opacity-80"
               )}>
                 {tab.label}
               </span>
