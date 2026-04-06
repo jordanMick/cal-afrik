@@ -5,6 +5,7 @@ import { useAppStore, MealSlotKey, SLOT_LABELS, NEXT_SLOT } from '@/store/useApp
 import { useRouter } from 'next/navigation'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
+import { checkPermission } from '@/lib/subscription'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -181,10 +182,10 @@ export default function ProfilPage() {
                 )}
             </div>
 
-            {/* BILAN CRÉNEAU */}
-            {activeSlot ? (
-                <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'empty' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
-                    {bilanStatus !== 'empty' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
+            {/* BILAN CRÉNEAU - AFFICHAGE CONDITIONNEL */}
+            {activeSlot && (bilanStatus === 'loading' || (bilanStatus === 'done' && bilanMessage)) ? (
+                <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
+                    {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -192,25 +193,21 @@ export default function ProfilPage() {
                             <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>Génération du bilan...</p>
                         </div>
                     )}
-                    {bilanStatus === 'empty' && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '22px' }}>🍽️</span>
-                            <div>
-                                <p style={{ color: '#fff', fontWeight: '600', fontSize: '14px' }}>Aucun repas — {SLOT_LABELS[activeSlot]}</p>
-                                <p style={{ color: '#444', fontSize: '12px', marginTop: '4px' }}>Scanne tes repas pour un bilan personnalisé</p>
-                            </div>
-                        </div>
-                    )}
-                    {bilanStatus === 'done' && bilanMessage && (
+                    {bilanStatus === 'done' && (
                         <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
-                                <div>
-                                    <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
-                                    <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Bilan du jour' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
-                                </div>
-                            </div>
-                            <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '14px' }}>{bilanMessage}</p>
+                            {/* AFFICHAGE DU COACH UNIQUEMENT POUR PREMIUM */}
+                            {checkPermission(profile, 'hasCoachKofi') && bilanMessage && (
+                                <>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
+                                        <div>
+                                            <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
+                                            <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Bilan du jour' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
+                                        </div>
+                                    </div>
+                                    <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '14px' }}>{bilanMessage}</p>
+                                </>
+                            )}
 
                             {activeSlot === 'diner' ? (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
