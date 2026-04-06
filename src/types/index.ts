@@ -25,6 +25,7 @@ export interface UserProfile {
     dietary_restrictions: string[]
     language: 'fr' | 'en'
     country: string
+    goal_weight_kg?: number
 }
 
 export interface FoodItem {
