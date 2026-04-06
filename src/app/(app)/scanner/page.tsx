@@ -80,7 +80,7 @@ export default function ScannerPage() {
             const { data: { session } } = await supabase.auth.getSession()
             const headers: any = {}
             if (session) headers.Authorization = `Bearer ${session.access_token}`
-            
+
             const res = await fetch('/api/foods', { headers })
             const json = await res.json()
             if (json.success) setFoods(json.data)
@@ -110,10 +110,10 @@ export default function ScannerPage() {
             const base64Image = await toBase64(file)
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) { simulateAI(); return }
-            const res = await fetch('/api/analyze', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
-                body: JSON.stringify({ images: [{ data: base64Image, mimeType: file.type }] }) 
+            const res = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({ images: [{ data: base64Image, mimeType: file.type }] })
             })
             const json = await res.json()
 
@@ -416,9 +416,13 @@ export default function ScannerPage() {
                                             }}>
                                             <div style={{ fontSize: '32px' }}>🔒</div>
                                             <div>
-                                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>Contenu Premium</p>
+                                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>
+                                                    {profile?.subscription_tier === 'pro' ? 'Kofi t\'attend au Premium' : 'Analyse terminée !'}
+                                                </p>
                                                 <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.4' }}>
-                                                    Le Coach Kofi a analysé ton repas ! Passe au plan Premium pour lire ses conseils personnalisés.
+                                                    {profile?.subscription_tier === 'pro' 
+                                                        ? 'Le Coach Kofi a déjà analysé ton repas ! Passe au plan Premium pour lire tes conseils exclusifs.'
+                                                        : 'Le Coach Kofi a fini son analyse ! Passe au plan Premium pour débloquer tes conseils personnalisés.'}
                                                 </p>
                                             </div>
                                             <div style={{ 
@@ -430,7 +434,7 @@ export default function ScannerPage() {
                                                 fontSize: '13px', 
                                                 fontWeight: '700' 
                                             }}>
-                                                Débloquer Coach Kofi →
+                                                Voir mes conseils →
                                             </div>
                                         </div>
                                     )

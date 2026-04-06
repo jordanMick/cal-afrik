@@ -145,15 +145,17 @@ export default function ProfilPage() {
                     </div>
                 </div>
 
-                {/* BANNIÈRE UPGRADE SI FREE */}
-                {(!profile?.subscription_tier || profile?.subscription_tier === 'free') && (
+                {/* BANNIÈRE UPGRADE DYNAMIQUE */}
+                {profile?.subscription_tier !== 'premium' && (
                     <div
                         onClick={() => router.push('/upgrade')}
                         style={{
                             marginBottom: '28px',
                             padding: '18px',
                             borderRadius: '24px',
-                            background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                            background: profile?.subscription_tier === 'pro' 
+                                ? 'linear-gradient(135deg, #f59e0b, #6366f1)' 
+                                : 'linear-gradient(135deg, #6366f1, #10b981)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
@@ -162,10 +164,16 @@ export default function ProfilPage() {
                             transition: 'all 0.2s ease',
                         }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🚀</div>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                                {profile?.subscription_tier === 'pro' ? '⭐' : '🚀'}
+                            </div>
                             <div>
-                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800' }}>Passez à Cal-Afrik Pro</p>
-                                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '500' }}>Plus de scans, plus de graphiques</p>
+                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800' }}>
+                                    {profile?.subscription_tier === 'pro' ? 'Passez au Premium' : 'Passez au Pro'}
+                                </p>
+                                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '500' }}>
+                                    {profile?.subscription_tier === 'pro' ? 'Débloquez Coach Kofi' : 'Scans illimités & Graphiques'}
+                                </p>
                             </div>
                         </div>
                         <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>→</div>
