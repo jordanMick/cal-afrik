@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import { calculateCalorieTarget } from '@/lib/nutrition'
+import { checkPermission } from '@/lib/subscription'
 import type { Meal } from '@/types'
 
 const getLast7Days = () => Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return d.toISOString().split('T')[0] }).reverse()
@@ -217,7 +218,7 @@ export default function RapportPage() {
     const [showWeightModal, setShowWeightModal] = useState(false)
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [targetUpdate, setTargetUpdate] = useState<{ old: number, new: number } | null>(null)
+    const [targetUpdate, setTargetUpdate] = useState<{ old: number, new: number, isLocked: boolean } | null>(null)
 
     const last7 = getLast7Days()
     const todayStr = today()
@@ -276,19 +277,22 @@ export default function RapportPage() {
 
             const hasChanged = Math.abs(newWeight - (profile.weight_kg || 0)) > 0.1
             const oldTarget = profile.calorie_target
+            const canAutoRecalculate = checkPermission(profile, 'hasAutomaticRecalculation')
 
-            // 1. Mettre à jour le poids actuel du profil ET les nouveaux objectifs
+            // 1. Mettre à jour le profil (poids, et objectifs si autorisé)
+            const updateBody: any = { weight_kg: newWeight }
+            if (canAutoRecalculate) {
+                Object.assign(updateBody, newTargets)
+            }
+
             const resProfile = await fetch('/api/user/weight', { 
                 method: 'PATCH', 
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
-                body: JSON.stringify({ 
-                    weight_kg: newWeight,
-                    ...newTargets
-                }) 
+                body: JSON.stringify(updateBody)
             })
             const jsonProfile = await resProfile.json()
             
-            // 2. Ajouter l'entrée dans l'historique (weight_logs)
+            // 2. Ajouter l'entrée dans l'historique
             const resLog = await fetch('/api/user/weight_logs', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
@@ -298,13 +302,24 @@ export default function RapportPage() {
 
             if (!jsonProfile.success || !jsonLog.success) return
 
-            setProfile({ ...profile, weight_kg: newWeight, ...newTargets })
+            // Mise à jour locale du profile (si pas Pro, on ne change que le poids)
+            if (canAutoRecalculate) {
+                setProfile({ ...profile, weight_kg: newWeight, ...newTargets })
+            } else {
+                setProfile({ ...profile, weight_kg: newWeight })
+            }
+
             localStorage.setItem('lastWeightDate', todayStr)
             
-            // Afficher la notification si l'objectif calorique a changé
+            // Notification : On affiche toujours le changement pour "l'effet wow", 
+            // mais on précise si c'est bloqué ou appliqué.
             if (hasChanged && oldTarget !== newTargets.calorie_target) {
-                setTargetUpdate({ old: oldTarget, new: newTargets.calorie_target })
-                setTimeout(() => setTargetUpdate(null), 5000)
+                setTargetUpdate({ 
+                    old: oldTarget, 
+                    new: newTargets.calorie_target,
+                    isLocked: !canAutoRecalculate
+                })
+                setTimeout(() => setTargetUpdate(null), 6000)
             }
 
             // Mettre à jour l'état local pour le graphique immédiatement
@@ -474,7 +489,30 @@ export default function RapportPage() {
 
                     {weightEntries.length > 0 ? (
                         <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '12px', border: '0.5px solid rgba(99,102,241,0.1)' }}>
-                            <WeightChart entries={weightEntries} />
+                            {/* GRAPHIQUE OU PAYWALL */}
+            {checkPermission(profile, 'hasGraph') ? (
+                <WeightChart entries={weightEntries} />
+            ) : (
+                <div 
+                    onClick={() => router.push('/upgrade')}
+                    style={{
+                        margin: '0 20px 20px',
+                        height: '140px',
+                        background: '#141414',
+                        borderRadius: '24px',
+                        border: '1px dashed #333',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer'
+                    }}>
+                    <span style={{ fontSize: '24px' }}>📈</span>
+                    <p style={{ color: '#666', fontSize: '13px', fontWeight: '500' }}>Activez le graphique avec le plan Pro</p>
+                    <span style={{ color: '#6366f1', fontSize: '11px', fontWeight: 'bold' }}>DÉCOUVRIR →</span>
+                </div>
+            )}
                         </div>
                     ) : (
                         <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
@@ -529,10 +567,31 @@ export default function RapportPage() {
                     `}</style>
                     <div style={{ fontSize: '24px' }}>⚡</div>
                     <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: '700', fontSize: '14px' }}>Objectifs mis à jour !</p>
-                        <p style={{ fontSize: '12px', opacity: 0.9 }}>
-                            Suite à votre pesée, votre cible passe de <span style={{ fontWeight: '700' }}>{targetUpdate.old}</span> à <span style={{ fontWeight: '700' }}>{targetUpdate.new} kcal</span>.
+                        <p style={{ fontWeight: '700', fontSize: '14px' }}>
+                            {targetUpdate.isLocked ? "💡 Fonction Pro" : "Objectifs mis à jour !"}
                         </p>
+                        <p style={{ fontSize: '12px', opacity: 0.9 }}>
+                            {targetUpdate.isLocked 
+                                ? `Votre nouvelle cible serait de ${targetUpdate.new} kcal. Passez Pro pour l'activer.`
+                                : `Suite à votre pesée, votre cible passe de ${targetUpdate.old} à ${targetUpdate.new} kcal.`}
+                        </p>
+                        {targetUpdate.isLocked && (
+                            <button 
+                                onClick={() => router.push('/upgrade')}
+                                style={{
+                                    marginTop: '8px',
+                                    padding: '6px 12px',
+                                    background: '#fff',
+                                    color: '#10b981',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer'
+                                }}>
+                                DEVENIR PRO →
+                            </button>
+                        )}
                     </div>
                     <button onClick={() => setTargetUpdate(null)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '20px', cursor: 'pointer', padding: '4px' }}>×</button>
                 </div>

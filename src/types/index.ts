@@ -26,6 +26,7 @@ export interface UserProfile {
     language: 'fr' | 'en'
     country: string
     goal_weight_kg?: number
+    subscription_tier: 'free' | 'pro' | 'premium'
 }
 
 export interface WeightLog {

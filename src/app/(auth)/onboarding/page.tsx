@@ -90,6 +90,7 @@ export default function OnboardingPage() {
                 preferred_cuisines: form.preferred_cuisines,
                 dietary_restrictions: form.dietary_restrictions,
                 language: 'fr',
+                subscription_tier: 'free',
                 ...targets,
             }
 

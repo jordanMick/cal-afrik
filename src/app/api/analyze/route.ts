@@ -138,6 +138,34 @@ export async function POST(req: Request) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
 
+    // ─── VÉRIFICATION ABONNEMENT ──────────────────────────────
+    const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('subscription_tier')
+        .eq('user_id', user.id)
+        .single()
+    
+    const tier = profile?.subscription_tier || 'free'
+
+    if (tier === 'free') {
+        const today = new Date().toISOString().split('T')[0]
+        const { count, error: countError } = await supabase
+            .from('meals')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .gte('logged_at', `${today}T00:00:00.000Z`)
+            .lte('logged_at', `${today}T23:59:59.999Z`)
+            .gt('ai_confidence', 0)
+
+        if (count !== null && count >= 1) {
+            return new Response(JSON.stringify({ 
+                success: false, 
+                error: "Limite de scan atteinte", 
+                code: "LIMIT_REACHED" 
+            }), { status: 403 })
+        }
+    }
+
     try {
         const { images } = await req.json()
         const image = images?.[0]
