@@ -28,6 +28,13 @@ export interface UserProfile {
     goal_weight_kg?: number
 }
 
+export interface WeightLog {
+    id: string
+    user_id: string
+    weight_kg: number
+    logged_at: string
+}
+
 export interface FoodItem {
     id: string
     name_fr: string
