@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore, getMealSlot, SLOT_LABELS } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
+import { checkPermission } from '@/lib/subscription'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
 
 interface EnrichedSuggestion extends FoodSuggestion {
