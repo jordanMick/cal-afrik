@@ -21,10 +21,8 @@ export default function LoginPage() {
         e.preventDefault()
         setIsLoading(true)
         setError('')
-
         try {
             const supabase = getSupabase()
-
             if (isRegister) {
                 const { error } = await supabase.auth.signUp({ email, password })
                 if (error) { setError(error.message); return }
@@ -45,91 +43,124 @@ export default function LoginPage() {
 
     return (
         <div style={{
-            minHeight: '100vh', background: '#0F0A06',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            padding: '24px', fontFamily: 'system-ui, sans-serif',
+            minHeight: '100vh',
+            background: '#0a0a0a',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            fontFamily: 'system-ui, sans-serif',
             position: 'relative',
+            overflow: 'hidden',
         }}>
+
+            {/* Halos colorés d'ambiance */}
             <div style={{
-                position: 'fixed', top: '-80px', right: '-80px',
-                width: '300px', height: '300px', borderRadius: '50%',
-                background: 'radial-gradient(circle, #C4622D33, transparent 70%)',
-                pointerEvents: 'none', zIndex: 0,
+                position: 'fixed', top: '-100px', right: '-100px',
+                width: '350px', height: '350px', borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)',
+                pointerEvents: 'none',
             }} />
             <div style={{
-                position: 'fixed', bottom: '-60px', left: '-60px',
-                width: '240px', height: '240px', borderRadius: '50%',
-                background: 'radial-gradient(circle, #E9C46A22, transparent 70%)',
-                pointerEvents: 'none', zIndex: 0,
+                position: 'fixed', bottom: '-80px', left: '-60px',
+                width: '280px', height: '280px', borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)',
+                pointerEvents: 'none',
+            }} />
+            <div style={{
+                position: 'fixed', top: '50%', left: '-40px',
+                width: '180px', height: '180px', borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%)',
+                pointerEvents: 'none',
             }} />
 
-            <div style={{ textAlign: 'center', marginBottom: '40px', position: 'relative', zIndex: 1 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            {/* LOGO */}
+            <div style={{ textAlign: 'center', marginBottom: '36px', position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
                     <div style={{
-                        width: '40px', height: '40px', borderRadius: '12px',
-                        background: '#C4622D', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center', fontSize: '20px',
+                        width: '44px', height: '44px', borderRadius: '14px',
+                        background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '22px',
                     }}>🌍</div>
-                    <span style={{ fontSize: '28px', fontWeight: '800', color: '#FFFFFF', letterSpacing: '-0.5px' }}>
+                    <span style={{ fontSize: '26px', fontWeight: '700', color: '#fff', letterSpacing: '-0.5px' }}>
                         Cal Afrik
                     </span>
                 </div>
-                <p style={{ color: '#555', fontSize: '14px' }}>Suivez vos calories, mangez africain</p>
+                <p style={{ color: '#555', fontSize: '14px' }}>Suivez vos calories, mangez bien</p>
             </div>
 
+            {/* CARD */}
             <div style={{
                 width: '100%', maxWidth: '400px',
-                background: '#1A1108', borderRadius: '24px',
-                padding: '32px', border: '1px solid #2A1F14',
+                background: '#141414',
+                borderRadius: '24px',
+                padding: '28px',
+                border: '0.5px solid #222',
                 position: 'relative', zIndex: 1,
             }}>
+
+                {/* Ligne déco en haut de la card */}
                 <div style={{
-                    display: 'flex', gap: '4px', background: '#0F0A06',
-                    borderRadius: '14px', padding: '4px', marginBottom: '28px',
+                    position: 'absolute', top: 0, left: '10%', right: '10%', height: '2px',
+                    background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)',
+                    borderRadius: '0 0 4px 4px',
+                }} />
+
+                {/* TABS */}
+                <div style={{
+                    display: 'flex', gap: '4px',
+                    background: '#0a0a0a',
+                    borderRadius: '12px', padding: '4px', marginBottom: '24px',
                 }}>
                     {['Se connecter', "S'inscrire"].map((tab, i) => (
                         <button key={tab}
                             onClick={() => { setIsRegister(i === 1); setError('') }}
                             style={{
-                                flex: 1, padding: '10px', borderRadius: '10px', border: 'none',
-                                cursor: 'pointer', fontSize: '14px', fontWeight: '600',
-                                background: isRegister === (i === 1) ? '#C4622D' : 'transparent',
+                                flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
+                                cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+                                background: isRegister === (i === 1)
+                                    ? 'linear-gradient(135deg, #6366f1, #818cf8)'
+                                    : 'transparent',
                                 color: isRegister === (i === 1) ? '#fff' : '#555',
-                                position: 'relative', zIndex: 2,
+                                transition: 'all 0.2s',
                             }}
                         >{tab}</button>
                     ))}
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
                     <div>
-                        <label style={{ display: 'block', color: '#999', fontSize: '13px', marginBottom: '8px' }}>
+                        <label style={{ display: 'block', color: '#666', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>
                             Adresse email
                         </label>
-                        <input type="email" value={email}
+                        <input
+                            type="email" value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="vous@email.com" required
                             style={{
-                                width: '100%', height: '48px', padding: '0 16px',
-                                background: '#0F0A06', border: '1px solid #2A1F14',
-                                borderRadius: '12px', color: '#fff', fontSize: '14px',
+                                width: '100%', height: '46px', padding: '0 14px',
+                                background: '#0a0a0a', border: '0.5px solid #2a2a2a',
+                                borderRadius: '10px', color: '#fff', fontSize: '14px',
                                 outline: 'none', boxSizing: 'border-box',
                             }}
                         />
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', color: '#999', fontSize: '13px', marginBottom: '8px' }}>
+                        <label style={{ display: 'block', color: '#666', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>
                             Mot de passe
                         </label>
-                        <input type="password" value={password}
+                        <input
+                            type="password" value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••" required
                             style={{
-                                width: '100%', height: '48px', padding: '0 16px',
-                                background: '#0F0A06', border: '1px solid #2A1F14',
-                                borderRadius: '12px', color: '#fff', fontSize: '14px',
+                                width: '100%', height: '46px', padding: '0 14px',
+                                background: '#0a0a0a', border: '0.5px solid #2a2a2a',
+                                borderRadius: '10px', color: '#fff', fontSize: '14px',
                                 outline: 'none', boxSizing: 'border-box',
                             }}
                         />
@@ -137,20 +168,26 @@ export default function LoginPage() {
 
                     {error && (
                         <div style={{
-                            padding: '12px 16px', background: '#2D1010',
-                            border: '1px solid #5A2020', borderRadius: '10px',
-                            color: '#FF6B6B', fontSize: '13px',
+                            padding: '11px 14px',
+                            background: 'rgba(239,68,68,0.08)',
+                            border: '0.5px solid rgba(239,68,68,0.3)',
+                            borderRadius: '10px', color: '#f87171', fontSize: '13px',
                         }}>{error}</div>
                     )}
 
-                    <button type="submit" disabled={isLoading}
+                    <button
+                        type="submit" disabled={isLoading}
                         style={{
-                            width: '100%', height: '50px',
-                            background: isLoading ? '#5A3520' : '#C4622D',
+                            width: '100%', height: '48px',
+                            background: isLoading
+                                ? '#1e1e1e'
+                                : 'linear-gradient(135deg, #6366f1, #10b981)',
                             border: 'none', borderRadius: '12px',
-                            color: '#fff', fontSize: '15px', fontWeight: '700',
+                            color: isLoading ? '#444' : '#fff',
+                            fontSize: '14px', fontWeight: '600',
                             cursor: isLoading ? 'not-allowed' : 'pointer',
-                            marginTop: '4px', position: 'relative', zIndex: 2,
+                            marginTop: '4px',
+                            letterSpacing: '0.01em',
                         }}
                     >
                         {isLoading ? 'Chargement...' : isRegister ? 'Créer mon compte →' : 'Se connecter →'}
@@ -158,13 +195,36 @@ export default function LoginPage() {
                 </form>
 
                 {isRegister && (
-                    <p style={{ color: '#444', fontSize: '12px', textAlign: 'center', marginTop: '16px' }}>
+                    <p style={{ color: '#333', fontSize: '12px', textAlign: 'center', marginTop: '14px' }}>
                         Minimum 6 caractères pour le mot de passe
                     </p>
                 )}
             </div>
 
-            <p style={{ color: '#333', fontSize: '12px', marginTop: '24px', position: 'relative', zIndex: 1 }}>
+            {/* Features rapides */}
+            <div style={{
+                display: 'flex', gap: '16px', marginTop: '28px',
+                position: 'relative', zIndex: 1,
+            }}>
+                {[
+                    { icon: '📷', label: 'Scan IA', color: '#6366f1' },
+                    { icon: '📊', label: 'Suivi', color: '#10b981' },
+                    { icon: '🎯', label: 'Objectifs', color: '#f59e0b' },
+                ].map(f => (
+                    <div key={f.label} style={{ textAlign: 'center' }}>
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '12px',
+                            background: `${f.color}18`,
+                            border: `0.5px solid ${f.color}40`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '18px', margin: '0 auto 4px',
+                        }}>{f.icon}</div>
+                        <p style={{ color: '#444', fontSize: '11px' }}>{f.label}</p>
+                    </div>
+                ))}
+            </div>
+
+            <p style={{ color: '#2a2a2a', fontSize: '12px', marginTop: '24px', position: 'relative', zIndex: 1 }}>
                 Cal Afrik • Fait avec ❤️ pour l'Afrique
             </p>
         </div>
