@@ -10,14 +10,23 @@
 }
 
 :root {
-  --earth: #C4622D;
-  --earth-light: #F0A060;
-  --earth-pale: #FAF0E6;
-  --forest: #2D6A4F;
-  --forest-light: #52B788;
-  --gold: #E9C46A;
-  --dark: #1A1108;
-  --text-muted: #7A6355;
+  /* Palette Silicon Valley (Zinc/Neutre) */
+  --background: #09090b;
+  --foreground: #fafafa;
+  
+  /* Surfaces */
+  --card: #121214;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --input: #18181b;
+  
+  /* Accents */
+  --accent: #ffffff;
+  --accent-muted: #a1a1aa;
+  
+  /* Status */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
 }
 
 html {
@@ -26,9 +35,29 @@ html {
 
 body {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
-  color: var(--dark);
-  background: var(--earth-pale);
+  color: var(--foreground);
+  background: var(--background);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Utilitaires Design Pro */
+.glass-panel {
+  background: rgba(18, 18, 20, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+}
+
+.subtle-border {
+  border: 1px solid var(--card-border);
+}
+
+.text-gradient {
+  background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 ::-webkit-scrollbar {
@@ -40,7 +69,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E0CFC5;
+  background: #27272a;
   border-radius: 2px;
 }
 

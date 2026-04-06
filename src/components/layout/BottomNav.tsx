@@ -1,200 +1,100 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import { LayoutDashboard, ReceiptText, User, ScanLine } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+const TABS = [
+  { id: 'accueil', label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { id: 'journal', label: 'Journal', path: '/journal', icon: ReceiptText },
+  { id: 'profil', label: 'Profil', path: '/profil', icon: User },
+]
 
 export default function BottomNav() {
-    const router = useRouter()
-    const pathname = usePathname()
+  const router = useRouter()
+  const pathname = usePathname()
 
-    const tabs = [
-        {
-            id: 'accueil',
-            label: 'Accueil',
-            path: '/dashboard',
-            color: '#6366f1',
-            icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 9L12 2L21 9V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V9Z"
-                        fill="currentColor" />
-                </svg>
-            ),
-        },
-        {
-            id: 'rapport',
-            label: 'Rapport',
-            path: '/journal',
-            color: '#10b981',
-            icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M7 12H17M7 8H17M7 16H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-            ),
-        },
-        {
-            id: 'profil',
-            label: 'Profil',
-            path: '/profil',
-            color: '#ec4899',
-            icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M4 20C4 17.7909 7.58172 16 12 16C16.4183 16 20 17.7909 20 20"
-                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-            ),
-        },
-    ]
+  return (
+    <div className="fixed bottom-6 left-0 right-0 max-w-[480px] mx-auto px-6 z-[999] pointer-events-none">
+      <div className="glass-panel h-20 rounded-[28px] flex items-center justify-around px-4 pointer-events-auto shadow-2xl shadow-black/80">
+        
+        {/* Dashboard Link */}
+        <NavItem 
+          active={pathname === TABS[0].path} 
+          onClick={() => router.push(TABS[0].path)}
+          tab={TABS[0]}
+        />
 
-    return (
-        <>
-            <div style={{
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: '#0d0d0d',
-                borderTop: '0.5px solid #222',
-                display: 'flex',
-                justifyContent: 'space-around',
-                alignItems: 'flex-end',
-                padding: '10px 0 20px',
-                zIndex: 999,
-                maxWidth: '480px',
-                margin: '0 auto',
-            }}>
+        {/* Journal Link */}
+        <NavItem 
+          active={pathname === TABS[1].path} 
+          onClick={() => router.push(TABS[1].path)}
+          tab={TABS[1]}
+        />
 
-                {/* Tabs gauche : Accueil + Rapport */}
-                {tabs.slice(0, 2).map((tab) => {
-                    const isActive = pathname === tab.path
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => router.push(tab.path)}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '4px',
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                minWidth: '72px',
-                                padding: 0,
-                            }}
-                        >
-                            <div style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '12px',
-                                background: isActive ? `rgba(${hexToRgbStr(tab.color)}, 0.15)` : 'transparent',
-                                border: isActive ? `0.5px solid rgba(${hexToRgbStr(tab.color)}, 0.3)` : '0.5px solid transparent',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isActive ? tab.color : '#444',
-                                transition: 'all 0.2s',
-                            }}>
-                                {tab.icon}
-                            </div>
-                            <span style={{
-                                fontSize: '10px',
-                                color: isActive ? tab.color : '#444',
-                                fontWeight: isActive ? '500' : '400',
-                                transition: 'color 0.2s',
-                            }}>
-                                {tab.label}
-                            </span>
-                        </button>
-                    )
-                })}
+        {/* Central Scanner FAB */}
+        <div className="relative -mt-12">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => router.push('/scanner')}
+              className={cn(
+                "w-16 h-16 rounded-full flex items-center justify-center text-black shadow-xl transition-all",
+                pathname === '/scanner' 
+                  ? "bg-white ring-4 ring-zinc-950" 
+                  : "bg-white hover:bg-zinc-100 ring-4 ring-zinc-950"
+              )}
+            >
+              <ScanLine className="w-7 h-7" />
+            </motion.button>
+            <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Scan</span>
+        </div>
 
-                {/* Scanner FAB central */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '4px',
-                    minWidth: '72px',
-                    marginTop: '-20px',
-                }}>
-                    <button
-                        onClick={() => router.push('/scanner')}
-                        style={{
-                            width: '52px',
-                            height: '52px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #6366f1, #10b981)',
-                            border: '3px solid #0d0d0d',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 6px 20px rgba(99,102,241,0.4)',
-                            cursor: 'pointer',
-                        }}
-                    >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                            <path d="M4 4H8M16 4H20M4 20H8M16 20H20M4 8V4H8M20 8V4H16M4 16V20H8M20 16V20H16"
-                                stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-                            <rect x="9" y="9" width="6" height="6" rx="1" fill="#fff" />
-                        </svg>
-                    </button>
-                    <span style={{ fontSize: '10px', color: '#555' }}>Scanner</span>
-                </div>
+        {/* Profile Link (using index 2) */}
+        <NavItem 
+          active={pathname === TABS[2].path} 
+          onClick={() => router.push(TABS[2].path)}
+          tab={TABS[2]}
+        />
+        
+        {/* Placeholder for symmetry if needed, or we just use 3 tabs + 1 center */}
+        <div className="w-14" /> 
 
-                {/* Tab droite : Profil */}
-                {tabs.slice(2).map((tab) => {
-                    const isActive = pathname === tab.path
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => router.push(tab.path)}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '4px',
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                minWidth: '72px',
-                                padding: 0,
-                            }}
-                        >
-                            <div style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '12px',
-                                background: isActive ? `rgba(${hexToRgbStr(tab.color)}, 0.15)` : 'transparent',
-                                border: isActive ? `0.5px solid rgba(${hexToRgbStr(tab.color)}, 0.3)` : '0.5px solid transparent',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isActive ? tab.color : '#444',
-                                transition: 'all 0.2s',
-                            }}>
-                                {tab.icon}
-                            </div>
-                            <span style={{
-                                fontSize: '10px',
-                                color: isActive ? tab.color : '#444',
-                                fontWeight: isActive ? '500' : '400',
-                                transition: 'color 0.2s',
-                            }}>
-                                {tab.label}
-                            </span>
-                        </button>
-                    )
-                })}
-            </div>
-
-        </>
-    )
+      </div>
+    </div>
+  )
 }
 
-function hexToRgbStr(hex: string): string {
-    const r = parseInt(hex.slice(1, 3), 16)
-    const g = parseInt(hex.slice(3, 5), 16)
-    const b = parseInt(hex.slice(5, 7), 16)
-    return `${r},${g},${b}`
-}
+function NavItem({ active, onClick, tab }: { active: boolean, onClick: () => void, tab: any }) {
+  const Icon = tab.icon
+  return (
+    <button
+      onClick={onClick}
+      className="relative flex flex-col items-center justify-center w-14 h-full gap-1 transition-all"
+    >
+      <div className={cn(
+        "transition-all duration-300",
+        active ? "text-white scale-110" : "text-zinc-600 hover:text-zinc-400"
+      )}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <span className={cn(
+        "text-[9px] font-bold uppercase tracking-widest transition-all",
+        active ? "text-white opacity-100" : "text-zinc-600 opacity-0"
+      )}>
+        {tab.label}
+      </span>
+      {active && (
+        <motion.div 
+          layoutId="activeTab"
+          className="absolute -bottom-1 w-1 h-1 rounded-full bg-white"
+        />
+      )}
+    </button>
+  )
+}

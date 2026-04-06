@@ -142,6 +142,17 @@ export interface FoodSuggestion {
     fat_g: number
 }
 
+export interface EnrichedSuggestion extends FoodSuggestion {
+    portion_g: number
+    calories_detected: number
+    protein_detected: number
+    carbs_detected: number
+    fat_detected: number
+    confidence: number
+    detected: string
+    fromAI: boolean
+}
+
 // Résultat final retourné par l'API route au frontend
 export interface ScanResultItem {
     detected: string
