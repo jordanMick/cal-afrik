@@ -4,7 +4,6 @@ import type { UserProfile, Meal, ScanResult } from '@/types'
 
 export type MealSlotKey = 'petit_dejeuner' | 'dejeuner' | 'collation' | 'diner'
 
-// ─── Déterminer le créneau selon l'heure ─────────────────────
 export function getMealSlot(hour: number): MealSlotKey {
     if (hour >= 0 && hour < 12) return 'petit_dejeuner'
     if (hour >= 12 && hour < 16) return 'dejeuner'
@@ -26,7 +25,6 @@ export const SLOT_PCT: Record<MealSlotKey, number> = {
     diner: 0.30,
 }
 
-// Ordre des créneaux dans la journée
 const SLOT_ORDER: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
 
 interface SlotState {
@@ -53,6 +51,7 @@ interface AppState {
     lastCoachMessage: string | null
     setLastCoachMessage: (msg: string) => void
 
+    // ─── Bilan ───────────────────────────────────────────────
     bilanSeenDate: string | null
     setBilanSeenDate: (date: string) => void
 
@@ -65,6 +64,10 @@ interface AppState {
     bilanExceeded: boolean
     setBilanExceeded: (v: boolean) => void
 
+    // true = repas ajouté/supprimé depuis le dernier bilan → régénérer au prochain affichage
+    bilanNeedsRefresh: boolean
+    setBilanNeedsRefresh: (v: boolean) => void
+
     // ─── Slots nutritionnels ─────────────────────────────────
     slots: Record<MealSlotKey, SlotState>
     initSlots: (calorieTarget: number) => void
@@ -72,7 +75,6 @@ interface AppState {
     updateSlotOnRemove: (slot: MealSlotKey, calories: number) => void
     redistributeAfterSlot: (finishedSlot: MealSlotKey) => void
 
-    // Totaux du jour
     dailyCalories: number
     dailyProtein: number
     dailyCarbs: number
@@ -93,10 +95,7 @@ export const useAppStore = create<AppState>()(
             profile: null,
             setProfile: (profile) => {
                 if (!profile) return set({ profile })
-                set({
-                    profile,
-                    slots: buildInitialSlots(profile.calorie_target),
-                })
+                set({ profile, slots: buildInitialSlots(profile.calorie_target) })
             },
 
             todayMeals: [],
@@ -109,7 +108,6 @@ export const useAppStore = create<AppState>()(
                 if (!profile) return
 
                 const slots = buildInitialSlots(profile.calorie_target)
-
                 for (const meal of meals) {
                     const hour = new Date(meal.logged_at).getHours()
                     const slot = getMealSlot(hour)
@@ -120,7 +118,6 @@ export const useAppStore = create<AppState>()(
                 const currentHour = new Date().getHours()
                 const currentSlot = getMealSlot(currentHour)
                 const currentIndex = SLOT_ORDER.indexOf(currentSlot)
-
                 for (let i = 0; i < currentIndex; i++) {
                     slots[SLOT_ORDER[i]].locked = true
                 }
@@ -135,6 +132,9 @@ export const useAppStore = create<AppState>()(
                 const hour = new Date(meal.logged_at).getHours()
                 const slot = getMealSlot(hour)
                 get().updateSlotOnAdd(slot, meal.calories)
+
+                // Marquer le bilan comme à régénérer après ce changement
+                set({ bilanNeedsRefresh: true })
             },
 
             removeMeal: (mealId) => {
@@ -149,21 +149,19 @@ export const useAppStore = create<AppState>()(
                     const slot = getMealSlot(hour)
                     get().updateSlotOnRemove(slot, meal.calories)
                 }
+
+                // Marquer le bilan comme à régénérer après ce changement
+                set({ bilanNeedsRefresh: true })
             },
 
             updateSlotOnAdd: (slot, calories) => {
                 set((state) => {
                     const current = state.slots[slot]
                     const newConsumed = current.consumed + calories
-                    const newRemaining = current.target - newConsumed
                     return {
                         slots: {
                             ...state.slots,
-                            [slot]: {
-                                ...current,
-                                consumed: newConsumed,
-                                remaining: newRemaining,
-                            }
+                            [slot]: { ...current, consumed: newConsumed, remaining: current.target - newConsumed }
                         }
                     }
                 })
@@ -173,15 +171,10 @@ export const useAppStore = create<AppState>()(
                 set((state) => {
                     const current = state.slots[slot]
                     const newConsumed = Math.max(0, current.consumed - calories)
-                    const newRemaining = current.target - newConsumed
                     return {
                         slots: {
                             ...state.slots,
-                            [slot]: {
-                                ...current,
-                                consumed: newConsumed,
-                                remaining: newRemaining,
-                            }
+                            [slot]: { ...current, consumed: newConsumed, remaining: current.target - newConsumed }
                         }
                     }
                 })
@@ -194,7 +187,6 @@ export const useAppStore = create<AppState>()(
                 const calorieTarget = profile.calorie_target
                 const finishedIndex = SLOT_ORDER.indexOf(finishedSlot)
                 const remainingSlots = SLOT_ORDER.slice(finishedIndex + 1)
-
                 if (remainingSlots.length === 0) return
 
                 const remainingCalories = Math.max(0, calorieTarget - dailyCalories)
@@ -236,6 +228,9 @@ export const useAppStore = create<AppState>()(
             bilanExceeded: false,
             setBilanExceeded: (v) => set({ bilanExceeded: v }),
 
+            bilanNeedsRefresh: false,
+            setBilanNeedsRefresh: (v) => set({ bilanNeedsRefresh: v }),
+
             dailyCalories: 0,
             dailyProtein: 0,
             dailyCarbs: 0,
@@ -268,6 +263,7 @@ export const useAppStore = create<AppState>()(
                 bilanMessage: state.bilanMessage,
                 bilanGoalReached: state.bilanGoalReached,
                 bilanExceeded: state.bilanExceeded,
+                bilanNeedsRefresh: state.bilanNeedsRefresh,
             }),
         }
     )

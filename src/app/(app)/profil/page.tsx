@@ -37,6 +37,7 @@ export default function ProfilPage() {
         bilanMessage, setBilanMessage,
         bilanGoalReached, setBilanGoalReached,
         bilanExceeded, setBilanExceeded,
+        bilanNeedsRefresh, setBilanNeedsRefresh,
     } = useAppStore()
 
     const calorieTarget = profile?.calorie_target || 2000
@@ -52,62 +53,75 @@ export default function ProfilPage() {
     const isAfter23 = hour >= 23
     const isBefore8 = hour < 8
     const bilanDate = isBefore8 ? yesterday : today
-    const hasBilan = (isAfter23 || isBefore8) && bilanSeenDate !== bilanDate
 
-    const [showBilan, setShowBilan] = useState(
-        hasBilan || (bilanSeenDate === bilanDate && !!bilanMessage && (isAfter23 || isBefore8))
-    )
+    // Le bilan doit s'afficher si :
+    // 1. On est dans la fenêtre horaire (23h-8h)
+    // 2. ET soit c'est la première fois (bilanSeenDate !== bilanDate)
+    //    soit un repas a changé depuis (bilanNeedsRefresh)
+    const inBilanWindow = isAfter23 || isBefore8
+    const shouldGenerate = inBilanWindow && (bilanSeenDate !== bilanDate || bilanNeedsRefresh)
+    const shouldShowExisting = inBilanWindow && bilanSeenDate === bilanDate && !!bilanMessage && !bilanNeedsRefresh
+
+    const [showBilan, setShowBilan] = useState(shouldGenerate || shouldShowExisting)
     const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(
-        bilanMessage ? 'done' : null
+        shouldShowExisting ? 'done' : null
     )
-    const [realDailyCalories, setRealDailyCalories] = useState(0)
-    const [realDailyProtein, setRealDailyProtein] = useState(0)
-    const [realDailyCarbs, setRealDailyCarbs] = useState(0)
-    const [realDailyFat, setRealDailyFat] = useState(0)
 
     useEffect(() => {
-        if (hasBilan) {
+        if (shouldGenerate) {
             setShowBilan(true)
             loadBilan()
-        } else if (bilanSeenDate === bilanDate && bilanMessage && (isAfter23 || isBefore8)) {
+        } else if (shouldShowExisting) {
             setShowBilan(true)
             setBilanStatus('done')
         }
     }, [])
 
     const loadBilan = async () => {
-        if (bilanSeenDate === bilanDate && bilanMessage) { setBilanStatus('done'); return }
         setBilanStatus('loading')
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
+
             const res = await fetch('/api/bilan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                 body: JSON.stringify({ calorieTarget, proteinTarget, carbsTarget, fatTarget, goal: profile?.goal || 'maintenir' })
             })
+
             const json = await res.json()
+
             if (!json.success) {
                 setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
-                setBilanGoalReached(false); setBilanExceeded(false)
-                setBilanStatus('done'); setBilanSeenDate(bilanDate)
+                setBilanGoalReached(false)
+                setBilanExceeded(false)
+                setBilanStatus('done')
+                setBilanSeenDate(bilanDate)
+                setBilanNeedsRefresh(false)
                 return
             }
-            if (json.empty) { setBilanStatus('empty'); setBilanSeenDate(bilanDate); return }
-            setRealDailyCalories(json.dailyCalories ?? 0)
-            setRealDailyProtein(json.dailyProtein ?? 0)
-            setRealDailyCarbs(json.dailyCarbs ?? 0)
-            setRealDailyFat(json.dailyFat ?? 0)
+
+            if (json.empty) {
+                setBilanStatus('empty')
+                setBilanSeenDate(bilanDate)
+                setBilanNeedsRefresh(false)
+                return
+            }
+
             setBilanMessage(json.message)
             setBilanGoalReached(json.goalReached)
             setBilanExceeded(json.exceeded)
             setBilanStatus('done')
             setBilanSeenDate(bilanDate)
+            setBilanNeedsRefresh(false) // ✅ Réinitialiser après génération
         } catch (err) {
             console.error(err)
             setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
-            setBilanGoalReached(false); setBilanExceeded(false)
-            setBilanStatus('done'); setBilanSeenDate(bilanDate)
+            setBilanGoalReached(false)
+            setBilanExceeded(false)
+            setBilanStatus('done')
+            setBilanSeenDate(bilanDate)
+            setBilanNeedsRefresh(false)
         }
     }
 
@@ -124,6 +138,7 @@ export default function ProfilPage() {
 
             <div style={{ padding: '52px 20px 24px' }}>
                 <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '500', marginBottom: '20px' }}>Mon profil</h1>
+
                 {/* AVATAR */}
                 <div style={{ ...card, display: 'flex', alignItems: 'center', gap: '14px' }}>
                     <div style={{
@@ -151,6 +166,7 @@ export default function ProfilPage() {
                     borderRadius: '16px',
                     padding: '16px',
                     marginBottom: '20px',
+                    margin: '0 20px 20px',
                 }}>
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -188,7 +204,7 @@ export default function ProfilPage() {
                                 ].map(stat => (
                                     <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px' }}>
                                         <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
-                                            {stat.current}
+                                            {Math.round(stat.current)}
                                             <span style={{ color: '#444', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
                                         </p>
                                         <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '6px 0 4px' }}>
@@ -206,8 +222,6 @@ export default function ProfilPage() {
                     )}
                 </div>
             )}
-
-
 
             <div style={{ padding: '0 20px' }}>
 

@@ -22,6 +22,8 @@ export default function DashboardPage() {
     } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
+    // Heure mise à jour à chaque rendu de la page (navigation incluse)
+    const [currentHour, setCurrentHour] = useState(new Date().getHours())
 
     const calorieTarget = profile?.calorie_target || 2000
     const proteinTarget = profile?.protein_target_g || 100
@@ -35,8 +37,13 @@ export default function DashboardPage() {
     const percent = getProgressPercent(dailyCalories, calorieTarget)
     const strokeDashoffset = circumference - (percent / 100) * circumference
 
+    // Mettre à jour l'heure à chaque fois qu'on arrive sur la page
+    useEffect(() => {
+        setCurrentHour(new Date().getHours())
+    }, [])
+
     const getCoachMessage = () => {
-        const hour = new Date().getHours()
+        const hour = currentHour
         const pctDone = dailyCalories / calorieTarget
 
         if (exceeded) {
@@ -46,12 +53,18 @@ export default function DashboardPage() {
                 text: `Tu as dépassé ton objectif de ${over} kcal. Essaie de rester léger pour le reste de la journée.`
             }
         }
+
         if (dailyCalories === 0) {
+            // Après minuit et avant 10h → c'est le matin d'un nouveau jour
+            if (hour >= 0 && hour < 5) return { emoji: '🌙', text: `C'est une nouvelle journée ! Repose-toi bien et pense à un bon petit-déjeuner ce matin.` }
             if (hour >= 5 && hour < 10) return { emoji: '🌅', text: `Bonne journée ! Commence par un bon petit-déjeuner pour bien démarrer.` }
             if (hour >= 10 && hour < 14) return { emoji: '☀️', text: `Il est l'heure de déjeuner ! Tu n'as encore rien mangé aujourd'hui.` }
             if (hour >= 14 && hour < 17) return { emoji: '🥜', text: `L'après-midi est bien entamé. Pense à manger quelque chose.` }
-            return { emoji: '🌙', text: `Tu n'as rien mangé de la journée. Prends un bon dîner ce soir.` }
+            if (hour >= 17 && hour < 23) return { emoji: '🌙', text: `Tu n'as rien mangé de la journée. Prends un bon dîner ce soir.` }
+            // 23h → fenêtre bilan, rare d'avoir 0 repas mais géré
+            return { emoji: '🌙', text: `Nouvelle journée qui commence. Pense à bien manger demain matin !` }
         }
+
         if (pctDone < 0.25) return { emoji: '💪', text: `Bon début ! Il te reste ${Math.round(remaining)} kcal. Continue à bien manger.` }
         if (pctDone < 0.60) {
             const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
