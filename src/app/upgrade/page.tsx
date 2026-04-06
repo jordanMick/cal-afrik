@@ -51,23 +51,28 @@ export default function PricingPage() {
             });
 
             const data = await res.json();
-            if (!data.success) throw new Error(data.error);
+            if (!res.ok || !data.success) {
+                const errorMsg = data.error || 'Erreur inconnue';
+                throw new Error(errorMsg);
+            }
 
             // 2. Ouvrir le widget FedaPay avec le token reçu
-            window.FedaPay.init({
-                public_key: process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY,
-                transaction: {
-                    token: data.token,
-                },
-                container: '#fedapay-container', // On peut aussi utiliser l'URL directe data.url
-            });
+            if (window.FedaPay) {
+                window.FedaPay.init({
+                    public_key: process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY,
+                    transaction: {
+                        token: data.token,
+                    },
+                    container: '#fedapay-container',
+                });
+            }
 
-            // Alternative : Redirection directe si le token ne suffit pas
+            // Redirection directe vers l'URL sécurisée de FedaPay (recommandé pour mobile)
             window.location.href = data.url;
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erreur de paiement:', error);
-            alert('Une erreur est survenue lors de l\'initialisation du paiement.');
+            alert(`Erreur: ${error.message}`);
         } finally {
             setLoading(null);
         }
