@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const { setProfile, setTodayMeals } = useAppStore()
@@ -25,23 +26,39 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return () => { listener.subscription.unsubscribe() }
     }, [])
 
+    const [loading, setLoading] = useState(true)
     const initAuth = async () => {
         try {
             const { data, error } = await supabase.auth.getSession()
-            if (error) { console.error('Erreur session:', error); return }
+
+            if (error) {
+                console.error(error)
+                setLoading(false)
+                return
+            }
 
             const session = data.session
 
+            // 🔥 IMPORTANT
             if (!session) {
+                // 👉 attendre un peu si on est sur reset-password
+                if (pathname.startsWith('/reset-password')) {
+                    setLoading(false)
+                    return
+                }
+
                 if (
                     !pathname.startsWith('/login') &&
-                    !pathname.startsWith('/onboarding') &&
-                    !pathname.startsWith('/reset-password')
+                    !pathname.startsWith('/onboarding')
                 ) {
                     router.push('/login')
                 }
+
+                setLoading(false)
                 return
             }
+
+            // reste de ton code...
             // ✅ Charger le profil
             const { data: profile, error: profileError } = await supabase
                 .from('user_profiles')
@@ -74,6 +91,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             console.error('Erreur AuthProvider:', err)
         }
     }
+    if (loading) return null
 
     return <>{children}</>
 }
