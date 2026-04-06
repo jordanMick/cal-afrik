@@ -195,18 +195,18 @@ export default function ProfilPage() {
                     )}
                     {bilanStatus === 'done' && (
                         <>
-                            {/* AFFICHAGE DU COACH UNIQUEMENT POUR PREMIUM */}
+                            {/* TITRE ET ÉMOJI VISIBLE PAR TOUS */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
+                                <div>
+                                    <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
+                                    <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Résumé de la journée' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
+                                </div>
+                            </div>
+
+                            {/* MESSAGE DU COACH RÉSERVÉ PREMIUM */}
                             {checkPermission(profile, 'hasCoachKofi') && bilanMessage && (
-                                <>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
-                                        <div>
-                                            <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
-                                            <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Bilan du jour' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
-                                        </div>
-                                    </div>
-                                    <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '14px' }}>{bilanMessage}</p>
-                                </>
+                                <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px', borderLeft: `2px solid ${bilanColor}40`, paddingLeft: '12px' }}>{bilanMessage}</p>
                             )}
 
                             {activeSlot === 'diner' ? (
