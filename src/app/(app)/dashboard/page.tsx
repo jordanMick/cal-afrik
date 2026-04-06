@@ -6,14 +6,16 @@ import { getProgressPercent } from '@/lib/nutrition'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRef } from 'react'
+import { getEffectiveTier } from '@/lib/subscription'
 
 export default function DashboardPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-    const { profile, todayMeals, setTodayMeals, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useAppStore()
+    const { profile, todayMeals, setTodayMeals, removeMeal, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
+    // Mis à jour à chaque arrivée sur la page pour refléter l'heure réelle
     const [currentHour, setCurrentHour] = useState(new Date().getHours())
 
     const calorieTarget = profile?.calorie_target || 2000
@@ -23,12 +25,20 @@ export default function DashboardPage() {
     const remaining = Math.max(0, calorieTarget - dailyCalories)
     const exceeded = dailyCalories > calorieTarget
 
+    // Logique d'expiration
+    const effectiveTier = getEffectiveTier(profile)
+    const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
+    const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
+    const isExpiringSoon = effectiveTier !== 'free' && daysLeft !== null && daysLeft <= 7 && daysLeft >= 0
+
     const radius = 40
     const circumference = 2 * Math.PI * radius
     const percent = getProgressPercent(dailyCalories, calorieTarget)
     const strokeDashoffset = circumference - (percent / 100) * circumference
 
-    useEffect(() => { setCurrentHour(new Date().getHours()) }, [])
+    useEffect(() => {
+        setCurrentHour(new Date().getHours())
+    }, [])
 
     const getCoachMessage = () => {
         const hour = currentHour
@@ -38,12 +48,16 @@ export default function DashboardPage() {
             const over = Math.round(dailyCalories - calorieTarget)
             return { emoji: '⚠️', text: `Tu as dépassé ton objectif de ${over} kcal. Essaie de rester léger pour le reste de la journée.` }
         }
+
         if (dailyCalories === 0) {
+            if (hour >= 0 && hour < 5) return { emoji: '🌙', text: `C'est une nouvelle journée ! Repose-toi bien et pense à un bon petit-déjeuner ce matin.` }
             if (hour >= 5 && hour < 10) return { emoji: '🌅', text: `Bonne journée ! Commence par un bon petit-déjeuner pour bien démarrer.` }
             if (hour >= 10 && hour < 14) return { emoji: '☀️', text: `Il est l'heure de déjeuner ! Tu n'as encore rien mangé aujourd'hui.` }
             if (hour >= 14 && hour < 17) return { emoji: '🥜', text: `L'après-midi est bien entamé. Pense à manger quelque chose.` }
-            return { emoji: '🌙', text: `Tu n'as rien mangé de la journée. Prends un bon dîner ce soir.` }
+            if (hour >= 17 && hour < 23) return { emoji: '🌙', text: `Tu n'as rien mangé de la journée. Prends un bon dîner ce soir.` }
+            return { emoji: '🌙', text: `Nouvelle journée qui commence. Pense à bien manger demain matin !` }
         }
+
         if (pctDone < 0.25) return { emoji: '💪', text: `Bon début ! Il te reste ${Math.round(remaining)} kcal. Continue à bien manger.` }
         if (pctDone < 0.60) {
             const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
@@ -80,7 +94,8 @@ export default function DashboardPage() {
             if (!session) return
             const res = await fetch(`/api/meals?id=${mealId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
-            if (json.success) setTodayMeals(todayMeals.filter(m => m.id !== mealId))
+            // ✅ removeMeal au lieu de setTodayMeals pour déclencher markSlotNeedsRefresh
+            if (json.success) removeMeal(mealId)
         } catch (err) { console.error(err) }
     }
 
@@ -124,9 +139,35 @@ export default function DashboardPage() {
                 </div>
             </div>
 
+            {/* ALERTE EXPIRATION */}
+            {isExpiringSoon && (
+                <div 
+                    onClick={() => router.push('/upgrade')}
+                    style={{
+                        background: 'rgba(239,68,68,0.1)',
+                        border: '1.5px solid rgba(239,68,68,0.3)',
+                        borderRadius: '16px',
+                        padding: '14px 16px',
+                        marginBottom: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        animation: 'pulse 2s infinite'
+                    }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '20px' }}>⏳</span>
+                        <div>
+                            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '800' }}>Abonnement {effectiveTier.toUpperCase()} expire bientôt</p>
+                            <p style={{ color: 'rgba(239,68,68,0.7)', fontSize: '11px' }}>Il ne vous reste que {daysLeft} jours d'accès Coach Kofi.</p>
+                        </div>
+                    </div>
+                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>→</span>
+                </div>
+            )}
+
             {/* CARTE CALORIES */}
             <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', border: '0.5px solid #222', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
-                {/* ligne déco */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: exceeded ? 'linear-gradient(90deg, #ef4444, #f97316)' : 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)' }} />
                 <p style={{ color: '#555', fontSize: '12px', marginBottom: '8px' }}>Calories restantes</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
