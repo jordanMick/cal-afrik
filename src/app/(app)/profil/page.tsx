@@ -199,10 +199,10 @@ export default function ProfilPage() {
                             </div>
                             <div>
                                 <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800' }}>
-                                    {profile?.subscription_tier === 'pro' ? 'Passez au Premium' : 'Passez au Pro'}
+                                    {profile?.subscription_tier === 'pro' ? 'Passez au Premium' : 'Débloquez vos bilans'}
                                 </p>
                                 <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '500' }}>
-                                    {profile?.subscription_tier === 'pro' ? 'Débloquez Coach Kofi' : 'Scans illimités & Graphiques'}
+                                    {profile?.subscription_tier === 'pro' ? 'Débloquez Coach Kofi' : 'Scans illimités & Bilans →'}
                                 </p>
                             </div>
                         </div>
@@ -211,8 +211,8 @@ export default function ProfilPage() {
                 )}
             </div>
 
-            {/* BILAN CRÉNEAU - AFFICHAGE CONDITIONNEL */}
-            {activeSlot && (bilanStatus === 'loading' || (bilanStatus === 'done' && bilanMessage)) ? (
+            {/* BILAN CRÉNEAU - RÉSERVÉ PRO/PREMIUM */}
+            {activeSlot && profile?.subscription_tier !== 'free' && (bilanStatus === 'loading' || (bilanStatus === 'done' && (bilanMessage || true))) ? (
                 <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
                     {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
