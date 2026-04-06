@@ -381,54 +381,57 @@ export default function ScannerPage() {
 
                         {showCoach && (
                             <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
-                                {isLoadingCoach ? <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Analyse en cours...</p> : (
-                                    /* CONSEIL DU COACH - RÉSERVÉ PREMIUM */
-                                    coachMessage && (
-                                        <div style={{ marginTop: '20px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                                                <span style={{ fontSize: '18px' }}>🤖</span>
-                                                <span style={{ color: '#f59e0b', fontSize: '14px', fontWeight: '600' }}>Conseil du coach</span>
-                                            </div>
-                                            
-                                            {checkPermission(profile, 'hasCoachKofi') ? (
+                                {isLoadingCoach ? (
+                                    <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Analyse en cours...</p>
+                                ) : (
+                                    /* CONSEIL DU COACH - LOGIQUE ACCÈS */
+                                    checkPermission(profile, 'hasCoachKofi') ? (
+                                        coachMessage && (
+                                            <div style={{ marginTop: '20px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                    <span style={{ fontSize: '18px' }}>🤖</span>
+                                                    <span style={{ color: '#f59e0b', fontSize: '14px', fontWeight: '600' }}>Conseil du coach</span>
+                                                </div>
                                                 <div style={{ background: 'rgba(245,158,11,0.05)', border: '0.5px solid rgba(245,158,11,0.2)', borderRadius: '14px', padding: '16px' }}>
                                                     <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
                                                 </div>
-                                            ) : (
-                                                <div 
-                                                    onClick={() => router.push('/upgrade')}
-                                                    style={{ 
-                                                        background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.1))', 
-                                                        border: '1px solid rgba(245,158,11,0.3)', 
-                                                        borderRadius: '16px', 
-                                                        padding: '24px 16px',
-                                                        cursor: 'pointer',
-                                                        textAlign: 'center',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        gap: '12px'
-                                                    }}>
-                                                    <div style={{ fontSize: '32px' }}>🔒</div>
-                                                    <div>
-                                                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>Contenu Premium</p>
-                                                        <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.4' }}>
-                                                            Le Coach Kofi a analysé ton repas ! Passe au plan Premium pour lire ses conseils personnalisés.
-                                                        </p>
-                                                    </div>
-                                                    <div style={{ 
-                                                        marginTop: '8px',
-                                                        padding: '8px 24px', 
-                                                        borderRadius: '10px', 
-                                                        background: '#f59e0b', 
-                                                        color: '#000', 
-                                                        fontSize: '13px', 
-                                                        fontWeight: '700' 
-                                                    }}>
-                                                        Débloquer Coach Kofi →
-                                                    </div>
-                                                </div>
-                                            )}
+                                            </div>
+                                        )
+                                    ) : (
+                                        /* BANDEAU UPGRADE VISIBLE IMMÉDIATEMENT SI NON PREMIUM */
+                                        <div 
+                                            onClick={() => router.push('/upgrade')}
+                                            style={{ 
+                                                background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.1))', 
+                                                border: '1px solid rgba(245,158,11,0.3)', 
+                                                borderRadius: '16px', 
+                                                padding: '24px 16px',
+                                                cursor: 'pointer',
+                                                textAlign: 'center',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                marginTop: '10px'
+                                            }}>
+                                            <div style={{ fontSize: '32px' }}>🔒</div>
+                                            <div>
+                                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>Contenu Premium</p>
+                                                <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.4' }}>
+                                                    Le Coach Kofi a analysé ton repas ! Passe au plan Premium pour lire ses conseils personnalisés.
+                                                </p>
+                                            </div>
+                                            <div style={{ 
+                                                marginTop: '8px',
+                                                padding: '8px 24px', 
+                                                borderRadius: '10px', 
+                                                background: '#f59e0b', 
+                                                color: '#000', 
+                                                fontSize: '13px', 
+                                                fontWeight: '700' 
+                                            }}>
+                                                Débloquer Coach Kofi →
+                                            </div>
                                         </div>
                                     )
                                 )}
