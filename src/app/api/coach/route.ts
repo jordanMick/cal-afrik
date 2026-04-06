@@ -44,6 +44,22 @@ export async function POST(req: NextRequest) {
             calorieTarget,       // objectif journalier
         } = await req.json()
 
+        // ─── MODE SIMULATION (POUR ÉCONOMISER LES TOKENS EN TEST) ───
+        const MOCK_MODE = true 
+
+        if (MOCK_MODE) {
+            const newSlotConsumed = slotConsumed + totals.calories
+            const remainingAfter = Math.max(0, slotTarget - newSlotConsumed)
+            const exceeded = newSlotConsumed > slotTarget
+
+            return NextResponse.json({ 
+                success: true, 
+                message: "[Mode TEST] Superbe choix ! Vos macros sont bien équilibrées. Pensez à boire beaucoup d'eau avec ce repas consistant. 💪", 
+                exceeded, 
+                remainingAfter 
+            })
+        }
+
         const newSlotConsumed = slotConsumed + totals.calories
         const exceeded = newSlotConsumed > slotTarget
         const exceedAmount = Math.round(newSlotConsumed - slotTarget)

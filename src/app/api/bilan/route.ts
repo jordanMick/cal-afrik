@@ -6,6 +6,9 @@ import { createClient } from '@supabase/supabase-js'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(req: NextRequest) {
+    // ─── MODE SIMULATION (POUR ÉCONOMISER LES TOKENS EN TEST) ───
+    const MOCK_MODE = true 
+
     try {
         const authHeader = req.headers.get('Authorization')
         if (!authHeader) return NextResponse.json({ success: false }, { status: 401 })
@@ -39,6 +42,18 @@ export async function POST(req: NextRequest) {
             goal,
             meals,
         } = body
+
+        if (MOCK_MODE) {
+            console.log("🛠️ MOCK MODE: Simulation d'un bilan Coach")
+            return NextResponse.json({
+                success: true,
+                message: type === 'creneau' 
+                    ? `[Mode TEST] Excellent choix pour votre ${slotLabel}. L'équilibre entre protéines et glucides est idéal pour votre objectif de ${goal}. Continuez sur cette lancée !`
+                    : `[Mode TEST] Bilan de la journée : Vous avez atteint 95% de vos objectifs. Votre apport en protéines est parfait. Une légère marche de 15 minutes ce soir optimisera votre digestion.`,
+                goalReached: true,
+                exceeded: false
+            })
+        }
 
         // Pas de repas et ce n'est pas le bilan de fin de journée
         if (type === 'creneau' && (!meals || meals.length === 0)) {
