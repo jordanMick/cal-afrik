@@ -1,9 +1,6 @@
-@import "tailwindcss";
-
-body {
-  background-color: black;
-  color: white;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 * {
   box-sizing: border-box;
@@ -20,16 +17,16 @@ body {
   /* Palette Cal AI Elite (Noir pur / Vert vibrant) */
   --background: #000000;
   --foreground: #ffffff;
-  
+
   /* Surfaces */
   --card: #0a0a0a;
   --card-border: rgba(255, 255, 255, 0.05);
   --input: #111111;
-  
+
   /* Accents Cal AI */
   --accent: #22c55e;
   --accent-muted: #14532d;
-  
+
   /* Status */
   --success: #22c55e;
   --warning: #f59e0b;
@@ -62,7 +59,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(180deg, #ffffff 30%, rgba(255,255,255,0.4) 100%);
+  background: linear-gradient(180deg, #ffffff 30%, rgba(255, 255, 255, 0.4) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

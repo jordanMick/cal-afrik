@@ -1,16 +1,11 @@
-import { useEffect, useState, useRef } from 'react'
+'use client'
+
+import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { getProgressPercent } from '@/lib/nutrition'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { motion } from 'framer-motion'
-import { Card } from '@/components/ui/Card'
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
-}
+import { useRef } from 'react'
 
 export default function DashboardPage() {
     const router = useRouter()
@@ -107,172 +102,154 @@ export default function DashboardPage() {
     ]
 
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white p-6 pb-32 relative overflow-hidden">
-            {/* Halos Cal AI */}
-            <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
-            <div className="absolute top-[20%] left-[-10%] w-[200px] h-[200px] rounded-full bg-green-500/5 blur-[100px] pointer-events-none" />
+        <div style={{
+            minHeight: '100vh',
+            background: '#0a0a0a',
+            fontFamily: 'system-ui, sans-serif',
+            maxWidth: '480px',
+            margin: '0 auto',
+            padding: '30px 20px 120px',
+            color: '#fff',
+            position: 'relative',
+            overflow: 'hidden',
+        }}>
 
-            {/* HEADER ÉLITE */}
-            <div className="flex justify-between items-center mb-10">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        🌍
-                    </div>
-                    <span className="text-xl font-black tracking-tight">Cal Afrik</span>
+            {/* Halos d'ambiance */}
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+            {/* HEADER */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px' }}>🌍</div>
+                    <h1 style={{ fontSize: '18px', fontWeight: '600', color: '#fff' }}>Cal Afrik</h1>
                 </div>
-                <button 
-                  onClick={() => router.push('/profil')}
-                  className="w-10 h-10 rounded-full border border-white/10 bg-zinc-900 flex items-center justify-center font-bold text-xs ring-2 ring-white/5 transition-transform active:scale-90"
-                >
-                    {profile?.name?.[0] || 'U'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#141414', border: '0.5px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🔥</div>
+                    <div onClick={() => router.push('/profil')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '14px', color: '#fff', cursor: 'pointer' }}>
+                        {profile?.name?.[0] || 'U'}
+                    </div>
+                </div>
             </div>
 
-            {/* FOCUS CALORIES (Style Cal AI) */}
-            <div className="text-center space-y-2 mb-12">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Calories Restantes</span>
-                <div className="relative inline-block">
-                    <h2 className={cn(
-                        "text-8xl font-black tracking-tighter tabular-nums",
-                        exceeded ? "text-red-500" : "text-white"
-                    )}>
-                        {remaining}
-                    </h2>
-                    {exceeded && (
-                        <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center animate-pulse">
-                            <span className="text-black text-lg">⚠️</span>
-                        </div>
-                    )}
-                </div>
-                <div className="flex flex-col items-center gap-2 pt-2">
-                    <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                        Objectif : {calorieTarget} kcal
+            {/* CARTE CALORIES */}
+            <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', border: '0.5px solid #222', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: exceeded ? 'linear-gradient(90deg, #ef4444, #f97316)' : 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)' }} />
+                <p style={{ color: '#555', fontSize: '12px', marginBottom: '8px' }}>Calories restantes</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h2 style={{ fontSize: '40px', fontWeight: '700', color: exceeded ? '#ef4444' : '#fff', letterSpacing: '-1.5px' }}>{remaining}</h2>
+                        <p style={{ color: '#444', fontSize: '12px', marginTop: '2px' }}>/ {calorieTarget} kcal · <span style={{ color: exceeded ? '#ef4444' : '#6366f1' }}>{Math.round(percent)}% atteint</span></p>
                     </div>
-                    <div className="w-32 h-1 bg-white/5 rounded-full overflow-hidden mt-2">
-                        <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${percent}%` }}
-                            className={cn(
-                                "h-full rounded-full transition-all duration-1000",
-                                exceeded ? "bg-red-500 shadow-[0_0_10px_#ef4444]" : "bg-green-500 shadow-[0_0_10px_#22c55e]"
-                            )}
+                    <svg width="90" height="90">
+                        <circle cx="45" cy="45" r={radius} stroke="#1e1e1e" strokeWidth="6" fill="none" />
+                        <circle cx="45" cy="45" r={radius}
+                            stroke={exceeded ? '#ef4444' : 'url(#ringGrad)'}
+                            strokeWidth="6" fill="none"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            transform="rotate(-90 45 45)"
                         />
-                    </div>
+                        <defs>
+                            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#6366f1" />
+                                <stop offset="100%" stopColor="#10b981" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
                 </div>
             </div>
 
-            {/* MESSAGE COACH MINI */}
-            <Card className="mb-10 bg-zinc-950 border-white/5 p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-xl shrink-0">
+            {/* MESSAGE COACH */}
+            <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px 14px', marginBottom: '18px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', border: '0.5px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
                     {coachMsg.emoji}
                 </div>
-                <p className="text-[11px] font-bold leading-relaxed text-white/50 italic tracking-tight">
-                    "{coachMsg.text}"
-                </p>
-            </Card>
+                <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>{coachMsg.text}</p>
+            </div>
 
-            {/* MACROS - PILL STYLE */}
-            <div className="grid grid-cols-3 gap-3 mb-12">
+            {/* MACROS */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '28px', gap: '8px' }}>
                 {macros.map((m) => {
                     const pct = Math.min(100, Math.round((m.val / m.target) * 100))
                     return (
-                        <div key={m.label} className="flex flex-col gap-2">
-                            <div className="glass-panel p-3 rounded-[1.8rem] flex flex-col items-center gap-1 border-white/5">
-                                <span className="text-[12px] font-black text-white">{Math.round(m.val)}g</span>
-                                <span className="text-[8px] font-black uppercase tracking-widest text-white/20">{m.label}</span>
+                        <div key={m.label} style={{ flex: 1, background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px 10px', textAlign: 'center' }}>
+                            <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: `2px solid ${m.color}`, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: '12px', fontWeight: '600', color: m.color }}>
+                                {Math.round(m.val)}g
                             </div>
-                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden px-[2px] py-[1px]">
-                                <motion.div 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${pct}%` }}
-                                    className="h-full rounded-full" 
-                                    style={{ backgroundColor: m.color }}
-                                />
+                            <p style={{ color: '#555', fontSize: '10px' }}>{m.label}</p>
+                            <div style={{ height: '2px', background: '#222', borderRadius: '1px', marginTop: '6px' }}>
+                                <div style={{ height: '100%', width: `${pct}%`, background: m.color, borderRadius: '1px' }} />
                             </div>
                         </div>
                     )
                 })}
             </div>
 
-            {/* MEALS LIST */}
-            <div className="space-y-6">
-                <div className="flex items-center justify-between px-1">
-                    <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-white/30">Repas d'aujourd'hui</h3>
-                    <div className="h-px bg-white/5 flex-1 ml-4" />
-                </div>
+            {/* REPAS */}
+            <div>
+                <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#fff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ display: 'inline-block', width: '3px', height: '14px', background: 'linear-gradient(#6366f1, #10b981)', borderRadius: '2px' }} />
+                    Repas du jour
+                </h2>
 
                 {isLoading ? (
-                    <div className="flex justify-center py-10">
-                        <div className="w-8 h-8 rounded-full border-2 border-white/5 border-t-white/30 animate-spin" />
-                    </div>
+                    <p style={{ color: '#333', fontSize: '13px' }}>Chargement...</p>
                 ) : todayMeals.length === 0 ? (
-                    <div className="text-center py-12 space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-2xl mx-auto opacity-20">🍽️</div>
-                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.15em]">Aucun repas enregistré</p>
+                    <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '32px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '28px', marginBottom: '8px' }}>🍽️</p>
+                        <p style={{ color: '#333', fontSize: '13px' }}>Aucun repas enregistré aujourd'hui</p>
+                        <p style={{ color: '#222', fontSize: '12px', marginTop: '4px' }}>Appuie sur + pour scanner ton repas</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {todayMeals.map((meal, idx) => {
-                            const colors = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6']
-                            const color = colors[idx % colors.length]
-                            return (
-                                <motion.div 
-                                    initial={{ x: -10, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    key={meal.id} 
-                                    className="glass-panel p-3 rounded-[2rem] border-white/5 flex items-center gap-4 hover:border-white/10 transition-colors"
-                                >
-                                    <div className="relative shrink-0">
-                                        <img 
-                                          src={meal.image_url || '/placeholder.png'} 
-                                          className="w-14 h-14 rounded-full object-cover ring-2 ring-white/5" 
-                                        />
-                                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-black border-2 border-white/5 flex items-center justify-center">
-                                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-black tracking-tight text-white truncate">{meal.custom_name || 'Repas Sans Nom'}</p>
-                                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">{formatTime(meal.logged_at)}</p>
-                                    </div>
-                                    <div className="text-right flex flex-col items-end gap-1">
-                                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5">
-                                            <span className="text-xs font-black text-white">{Math.round(meal.calories)} </span>
-                                            <span className="text-[8px] font-black text-white/20 uppercase">KCAL</span>
-                                        </div>
-                                        <button 
-                                          onClick={() => { if (confirm('Supprimer ?')) handleDeleteMeal(meal.id) }}
-                                          className="text-[9px] font-bold text-red-500/40 hover:text-red-500 uppercase tracking-tighter transition-colors px-2"
-                                        >
-                                            EFFACER
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )
-                        })}
-                    </div>
+                    todayMeals.map((meal, idx) => {
+                        const dotColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
+                        const dotColor = dotColors[idx % dotColors.length]
+                        return (
+                            <div key={meal.id} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                    <img src={meal.image_url || 'https://via.placeholder.com/48'} style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }} />
+                                    <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', borderRadius: '50%', background: dotColor, border: '1.5px solid #0a0a0a' }} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <p style={{ fontWeight: '500', fontSize: '13px', color: '#fff' }}>{meal.custom_name || 'Repas'}</p>
+                                    <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>{formatTime(meal.logged_at)}</p>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ color: dotColor, fontWeight: '600', fontSize: '13px' }}>{Math.round(meal.calories)}</p>
+                                    <p style={{ color: '#333', fontSize: '10px' }}>kcal</p>
+                                </div>
+                                <button onClick={() => { if (confirm('Supprimer ce repas ?')) handleDeleteMeal(meal.id) }}
+                                    style={{ background: '#1e1e1e', border: '0.5px solid #2a2a2a', borderRadius: '8px', padding: '6px 9px', color: '#444', cursor: 'pointer', fontSize: '11px' }}>
+                                    ✕
+                                </button>
+                            </div>
+                        )
+                    })
                 )}
             </div>
 
-            {/* FAB ÉLITE */}
-            <motion.button 
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => fileInputRef.current?.click()} 
-                className="fixed bottom-32 right-6 w-16 h-16 rounded-full bg-white text-black shadow-2xl shadow-white/20 flex items-center justify-center z-[100] ring-4 ring-black"
-            >
-                <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-10 pointer-events-none" />
-                <span className="text-3xl font-light">+</span>
-            </motion.button>
-
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden"
-                onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    ; (window as any).tempImage = file
-                    router.push('/scanner')
-                }}
-            />
+            {/* FAB */}
+            <>
+                <button onClick={() => fileInputRef.current?.click()} style={{
+                    position: 'fixed', bottom: '80px', right: '24px',
+                    width: '58px', height: '58px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                    border: 'none', fontSize: '26px', color: '#fff',
+                    boxShadow: '0 8px 28px rgba(99,102,241,0.4)',
+                    cursor: 'pointer', zIndex: 1000,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>+</button>
+                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                    onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                            ; (window as any).tempImage = file
+                        router.push('/scanner')
+                    }}
+                />
+            </>
         </div>
     )
 }
