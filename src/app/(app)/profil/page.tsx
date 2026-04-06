@@ -61,11 +61,19 @@ export default function ProfilPage() {
     const shouldGenerate = !!activeSlot && !bilanIsValid
     const shouldShowExisting = !!activeSlot && bilanIsValid
 
-    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(shouldShowExisting ? 'done' : null)
+    // Déterminer le statut initial si on a déjà un bilan
+    const initialStatus = shouldShowExisting 
+        ? ((existingBilan?.message === "" && activeSlot !== 'diner') ? 'empty' : 'done')
+        : null
+
+    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(initialStatus)
 
     useEffect(() => { 
-        if (shouldGenerate) loadBilan(activeSlot!); 
-        else if (shouldShowExisting) setBilanStatus('done') 
+        if (shouldGenerate) {
+            loadBilan(activeSlot!); 
+        } else if (shouldShowExisting) {
+            setBilanStatus(initialStatus)
+        }
     }, [activeSlot, profile?.subscription_tier, bilanDate])
 
     const loadBilan = async (slot: MealSlotKey) => {
