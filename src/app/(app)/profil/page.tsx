@@ -1,50 +1,27 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAppStore, MealSlotKey, SLOT_LABELS, SLOT_BILAN_HOUR, NEXT_SLOT } from '@/store/useAppStore'
+import { useAppStore, MealSlotKey, SLOT_LABELS, NEXT_SLOT } from '@/store/useAppStore'
 import { useRouter } from 'next/navigation'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 
-const GOAL_LABELS: Record<string, string> = {
-    perdre: 'Perdre du poids',
-    maintenir: 'Maintenir le poids',
-    prendre: 'Prendre du poids',
-}
+const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
+const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
 
-const ACTIVITY_LABELS: Record<string, string> = {
-    sedentaire: 'Sédentaire',
-    leger: 'Légèrement actif',
-    modere: 'Modérément actif',
-    actif: 'Très actif',
-    tres_actif: 'Extrêmement actif',
-}
-
-const card: React.CSSProperties = {
-    background: '#161616',
-    border: '0.5px solid #2a2a2a',
-    borderRadius: '14px',
-    padding: '14px',
-    marginBottom: '10px',
-}
-
-// Détermine quel créneau doit afficher son bilan en ce moment
 function getActiveBilanSlot(hour: number): MealSlotKey | null {
-    if (hour >= 23 || hour < 8) return 'diner'      // bilan de nuit (23h → 8h)
-    if (hour >= 19 && hour < 23) return 'collation'  // bilan collation (19h → 23h)
-    if (hour >= 16 && hour < 19) return 'dejeuner'   // bilan déjeuner (16h → 19h)
-    if (hour >= 12 && hour < 16) return 'petit_dejeuner' // bilan petit-déj (12h → 16h)
+    if (hour >= 23 || hour < 8) return 'diner'
+    if (hour >= 19 && hour < 23) return 'collation'
+    if (hour >= 16 && hour < 19) return 'dejeuner'
+    if (hour >= 12 && hour < 16) return 'petit_dejeuner'
     return null
 }
 
+const STAT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
+
 export default function ProfilPage() {
     const router = useRouter()
-    const {
-        profile,
-        dailyCalories, dailyProtein, dailyCarbs, dailyFat,
-        slots, slotBilans, setSlotBilan,
-        todayMeals,
-    } = useAppStore()
+    const { profile, dailyCalories, dailyProtein, dailyCarbs, dailyFat, slots, slotBilans, setSlotBilan, todayMeals } = useAppStore()
 
     const calorieTarget = profile?.calorie_target || 2000
     const proteinTarget = profile?.protein_target_g || 100
@@ -55,222 +32,131 @@ export default function ProfilPage() {
     const hour = now.getHours()
     const today = now.toISOString().split('T')[0]
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-
-    // Pour le bilan diner (23h→8h), la date de référence est hier si on est avant 8h
     const isBefore8 = hour < 8
     const bilanDinerDate = isBefore8 ? yesterday : today
 
     const activeSlot = getActiveBilanSlot(hour)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
-
     const existingBilan = activeSlot ? slotBilans[activeSlot] : null
     const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh
     const shouldGenerate = !!activeSlot && !bilanIsValid
     const shouldShowExisting = !!activeSlot && bilanIsValid
 
-    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(
-        shouldShowExisting ? 'done' : null
-    )
+    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(shouldShowExisting ? 'done' : null)
 
-    useEffect(() => {
-        if (shouldGenerate) {
-            loadBilan(activeSlot!)
-        } else if (shouldShowExisting) {
-            setBilanStatus('done')
-        }
-    }, [])
+    useEffect(() => { if (shouldGenerate) loadBilan(activeSlot!); else if (shouldShowExisting) setBilanStatus('done') }, [])
 
     const loadBilan = async (slot: MealSlotKey) => {
-        // Si aucun repas dans ce créneau et ce n'est pas le bilan de fin de journée
         const slotMeals = slot !== 'diner'
-            ? todayMeals.filter(m => {
-                const h = new Date(m.logged_at).getHours()
-                if (slot === 'petit_dejeuner') return h >= 0 && h < 12
-                if (slot === 'dejeuner') return h >= 12 && h < 16
-                if (slot === 'collation') return h >= 16 && h < 19
-                return false
-            })
+            ? todayMeals.filter(m => { const h = new Date(m.logged_at).getHours(); if (slot === 'petit_dejeuner') return h >= 0 && h < 12; if (slot === 'dejeuner') return h >= 12 && h < 16; if (slot === 'collation') return h >= 16 && h < 19; return false })
             : todayMeals
 
-        if (slot !== 'diner' && slotMeals.length === 0) {
-            setBilanStatus('empty')
-            setSlotBilan(slot, { message: '', goalReached: false, exceeded: false, date: bilanDate, needsRefresh: false })
-            return
-        }
-
+        if (slot !== 'diner' && slotMeals.length === 0) { setBilanStatus('empty'); setSlotBilan(slot, { message: '', goalReached: false, exceeded: false, date: bilanDate, needsRefresh: false }); return }
         setBilanStatus('loading')
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-
             const slotData = slots[slot]
             const nextSlot = NEXT_SLOT[slot]
-
-            const res = await fetch('/api/bilan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                body: JSON.stringify({
-                    type: slot === 'diner' ? 'journee' : 'creneau',
-                    slot,
-                    slotLabel: SLOT_LABELS[slot],
-                    nextSlotLabel: nextSlot ? SLOT_LABELS[nextSlot] : null,
-                    // Données du créneau
-                    slotConsumed: slotData.consumed,
-                    slotTarget: slotData.target,
-                    // Données globales (pour le bilan diner)
-                    dailyCalories,
-                    dailyProtein,
-                    dailyCarbs,
-                    dailyFat,
-                    calorieTarget,
-                    proteinTarget,
-                    carbsTarget,
-                    fatTarget,
-                    goal: profile?.goal || 'maintenir',
-                    meals: slotMeals.map(m => ({ name: m.custom_name || 'Repas', calories: m.calories })),
-                })
-            })
-
+            const res = await fetch('/api/bilan', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ type: slot === 'diner' ? 'journee' : 'creneau', slot, slotLabel: SLOT_LABELS[slot], nextSlotLabel: nextSlot ? SLOT_LABELS[nextSlot] : null, slotConsumed: slotData.consumed, slotTarget: slotData.target, dailyCalories, dailyProtein, dailyCarbs, dailyFat, calorieTarget, proteinTarget, carbsTarget, fatTarget, goal: profile?.goal || 'maintenir', meals: slotMeals.map(m => ({ name: m.custom_name || 'Repas', calories: m.calories })) }) })
             const json = await res.json()
-
-            if (!json.success) {
-                const fallback = slot === 'diner'
-                    ? 'Belle journée ! Repose-toi bien. 💪'
-                    : `Bilan ${SLOT_LABELS[slot]} non disponible.`
-                setSlotBilan(slot, { message: fallback, goalReached: false, exceeded: false, date: bilanDate, needsRefresh: false })
-                setBilanStatus('done')
-                return
-            }
-
-            setSlotBilan(slot, {
-                message: json.message,
-                goalReached: json.goalReached,
-                exceeded: json.exceeded,
-                date: bilanDate,
-                needsRefresh: false,
-            })
+            if (!json.success) { setSlotBilan(slot, { message: slot === 'diner' ? 'Belle journée ! Repose-toi bien. 💪' : `Bilan ${SLOT_LABELS[slot]} non disponible.`, goalReached: false, exceeded: false, date: bilanDate, needsRefresh: false }); setBilanStatus('done'); return }
+            setSlotBilan(slot, { message: json.message, goalReached: json.goalReached, exceeded: json.exceeded, date: bilanDate, needsRefresh: false })
             setBilanStatus('done')
-        } catch (err) {
-            console.error(err)
-            setBilanStatus('done')
-        }
+        } catch (err) { console.error(err); setBilanStatus('done') }
     }
 
     const currentBilan = activeSlot ? slotBilans[activeSlot] : null
     const goalReached = currentBilan?.goalReached ?? false
     const exceeded = currentBilan?.exceeded ?? false
     const bilanMessage = currentBilan?.message ?? ''
-
     const bilanEmoji = goalReached ? '🎉' : exceeded ? '⚠️' : '📊'
-    const bilanTitle = activeSlot === 'diner'
-        ? (goalReached ? 'Objectif atteint !' : exceeded ? 'Objectif dépassé' : 'Journée incomplète')
-        : `Bilan ${activeSlot ? SLOT_LABELS[activeSlot] : ''}`
+    const bilanTitle = activeSlot === 'diner' ? (goalReached ? 'Objectif atteint !' : exceeded ? 'Objectif dépassé' : 'Journée incomplète') : `Bilan ${activeSlot ? SLOT_LABELS[activeSlot] : ''}`
+    const bilanColor = goalReached ? '#10b981' : exceeded ? '#ef4444' : '#f59e0b'
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut()
-        router.push('/login')
-    }
+    const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
+
+    const stats = [
+        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal', color: STAT_COLORS[0] },
+        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g', color: STAT_COLORS[1] },
+        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g', color: STAT_COLORS[2] },
+        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g', color: STAT_COLORS[3] },
+    ]
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px' }}>
+        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
+
+            {/* Halos d'ambiance */}
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div style={{ padding: '52px 20px 24px' }}>
-                <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '500', marginBottom: '20px' }}>Mon profil</h1>
+                <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '600', marginBottom: '20px' }}>Mon profil</h1>
 
-                {/* AVATAR */}
-                <div style={{ ...card, display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{
-                        width: '50px', height: '50px', borderRadius: '14px',
-                        background: '#fff', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: '20px', fontWeight: '500',
-                        color: '#000', flexShrink: 0
-                    }}>
+                {/* AVATAR CARD */}
+                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b, #ec4899)' }} />
+                    <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'linear-gradient(135deg, #6366f1, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '700', color: '#fff', flexShrink: 0 }}>
                         {profile?.name?.[0] || 'U'}
                     </div>
                     <div>
-                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>{profile?.name || 'Utilisateur'}</p>
-                        <p style={{ color: '#555', fontSize: '13px', marginTop: '2px' }}>
-                            {profile?.country || '—'} · {profile?.goal ? GOAL_LABELS[profile.goal] : 'Objectif non défini'}
-                        </p>
+                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '600' }}>{profile?.name || 'Utilisateur'}</p>
+                        <p style={{ color: '#555', fontSize: '13px', marginTop: '2px' }}>{profile?.country || '—'} · {profile?.goal ? GOAL_LABELS[profile.goal] : 'Objectif non défini'}</p>
                     </div>
                 </div>
             </div>
 
-            {/* BILAN CRÉNEAU OU JOURNÉE */}
+            {/* BILAN CRÉNEAU */}
             {activeSlot && (
-                <div style={{
-                    background: '#161616',
-                    border: bilanStatus === 'empty' ? '0.5px solid #2a2a2a' : '0.5px solid #fff',
-                    borderRadius: '16px',
-                    padding: '16px',
-                    margin: '0 20px 20px',
-                }}>
+                <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'empty' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
+                    {bilanStatus !== 'empty' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
+
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '20px' }}>⏳</span>
-                            <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>
-                                Génération du bilan...
-                            </p>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>⏳</div>
+                            <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>Génération du bilan...</p>
                         </div>
                     )}
                     {bilanStatus === 'empty' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '24px' }}>🍽️</span>
+                            <span style={{ fontSize: '22px' }}>🍽️</span>
                             <div>
-                                <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>
-                                    Aucun repas — {SLOT_LABELS[activeSlot]}
-                                </p>
-                                <p style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>
-                                    Scanne tes repas pour obtenir un bilan personnalisé
-                                </p>
+                                <p style={{ color: '#fff', fontWeight: '600', fontSize: '14px' }}>Aucun repas — {SLOT_LABELS[activeSlot]}</p>
+                                <p style={{ color: '#444', fontSize: '12px', marginTop: '4px' }}>Scanne tes repas pour un bilan personnalisé</p>
                             </div>
                         </div>
                     )}
                     {bilanStatus === 'done' && bilanMessage && (
                         <>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                <span style={{ fontSize: '24px' }}>{bilanEmoji}</span>
+                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
                                 <div>
-                                    <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>{bilanTitle}</p>
-                                    <p style={{ color: '#555', fontSize: '12px' }}>
-                                        {activeSlot === 'diner' ? 'Bilan du jour' : `Créneau ${SLOT_LABELS[activeSlot]}`}
-                                    </p>
+                                    <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
+                                    <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Bilan du jour' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
                                 </div>
                             </div>
                             <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '14px' }}>{bilanMessage}</p>
 
-                            {/* Mini stats — pour le bilan diner on affiche les totaux jour, sinon les stats du créneau */}
                             {activeSlot === 'diner' ? (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                    {[
-                                        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal' },
-                                        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g' },
-                                        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g' },
-                                        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g' },
-                                    ].map(stat => (
-                                        <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px' }}>
-                                            <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
-                                                {Math.round(stat.current)}
-                                                <span style={{ color: '#444', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
-                                            </p>
-                                            <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '6px 0 4px' }}>
-                                                <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: '#fff' }} />
+                                    {stats.map(stat => (
+                                        <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', border: `0.5px solid ${stat.color}15` }}>
+                                            <p style={{ color: stat.color, fontSize: '16px', fontWeight: '600' }}>{Math.round(stat.current)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {stat.target}{stat.unit}</span></p>
+                                            <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '6px 0 4px' }}>
+                                                <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: stat.color }} />
                                             </div>
-                                            <p style={{ color: '#555', fontSize: '11px' }}>{stat.label}</p>
+                                            <p style={{ color: '#444', fontSize: '11px' }}>{stat.label}</p>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ background: '#0a0a0a', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `0.5px solid ${bilanColor}15` }}>
                                     <div>
-                                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
-                                            {Math.round(slots[activeSlot].consumed)}
-                                            <span style={{ color: '#444', fontSize: '11px' }}> / {slots[activeSlot].target} kcal</span>
-                                        </p>
-                                        <p style={{ color: '#555', fontSize: '11px', marginTop: '4px' }}>Calories {SLOT_LABELS[activeSlot]}</p>
+                                        <p style={{ color: bilanColor, fontSize: '17px', fontWeight: '700' }}>{Math.round(slots[activeSlot].consumed)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {slots[activeSlot].target} kcal</span></p>
+                                        <p style={{ color: '#444', fontSize: '11px', marginTop: '4px' }}>Calories {SLOT_LABELS[activeSlot]}</p>
                                     </div>
-                                    <div style={{ width: '80px', height: '2px', background: '#222', borderRadius: '2px' }}>
-                                        <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((slots[activeSlot].consumed / slots[activeSlot].target) * 100))}%`, background: '#fff' }} />
+                                    <div style={{ width: '70px', height: '3px', background: '#1e1e1e', borderRadius: '2px' }}>
+                                        <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((slots[activeSlot].consumed / slots[activeSlot].target) * 100))}%`, background: bilanColor }} />
                                     </div>
                                 </div>
                             )}
@@ -281,35 +167,26 @@ export default function ProfilPage() {
 
             <div style={{ padding: '0 20px' }}>
 
-                <p style={{ color: '#444', fontSize: '11px', fontWeight: '500', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                    Aujourd'hui
-                </p>
+                <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Aujourd'hui</p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
-                    {[
-                        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal' },
-                        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g' },
-                        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g' },
-                        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g' },
-                    ].map((stat) => (
-                        <div key={stat.label} style={card}>
-                            <p style={{ color: '#fff', fontSize: '22px', fontWeight: '500', letterSpacing: '-0.5px' }}>
-                                {Math.round(stat.current)}
-                                <span style={{ color: '#444', fontSize: '12px', fontWeight: '400', marginLeft: '3px' }}>{stat.unit}</span>
+                    {stats.map((stat) => (
+                        <div key={stat.label} style={{ background: '#141414', border: `0.5px solid ${stat.color}20`, borderRadius: '14px', padding: '14px', position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color }} />
+                            <p style={{ color: stat.color, fontSize: '22px', fontWeight: '700', letterSpacing: '-0.5px' }}>
+                                {Math.round(stat.current)}<span style={{ color: '#333', fontSize: '12px', fontWeight: '400', marginLeft: '3px' }}>{stat.unit}</span>
                             </p>
-                            <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '8px 0 6px' }}>
-                                <div style={{ height: '100%', borderRadius: '2px', width: `${getProgressPercent(stat.current, stat.target)}%`, background: '#fff', transition: 'width 0.5s ease' }} />
+                            <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '8px 0 6px' }}>
+                                <div style={{ height: '100%', borderRadius: '2px', width: `${getProgressPercent(stat.current, stat.target)}%`, background: stat.color, transition: 'width 0.5s ease' }} />
                             </div>
                             <p style={{ color: '#444', fontSize: '11px' }}>{stat.label} · {stat.target}{stat.unit}</p>
                         </div>
                     ))}
                 </div>
 
-                <p style={{ color: '#444', fontSize: '11px', fontWeight: '500', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                    Mes informations
-                </p>
+                <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Mes informations</p>
 
-                <div style={{ background: '#161616', border: '0.5px solid #2a2a2a', borderRadius: '14px', marginBottom: '16px', overflow: 'hidden' }}>
+                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', marginBottom: '16px', overflow: 'hidden' }}>
                     {[
                         { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—' },
                         { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—' },
@@ -318,39 +195,34 @@ export default function ProfilPage() {
                         { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—' },
                         { label: 'Pays', value: profile?.country || '—' },
                     ].map((item, i, arr) => (
-                        <div key={item.label} style={{
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            padding: '13px 16px',
-                            borderBottom: i < arr.length - 1 ? '0.5px solid #1e1e1e' : 'none'
-                        }}>
-                            <span style={{ color: '#555', fontSize: '13px' }}>{item.label}</span>
+                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
+                            <span style={{ color: '#444', fontSize: '13px' }}>{item.label}</span>
                             <span style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>{item.value}</span>
                         </div>
                     ))}
                 </div>
 
-                {/* CUISINES */}
                 {profile?.preferred_cuisines && profile.preferred_cuisines.length > 0 && (
                     <>
-                        <p style={{ color: '#444', fontSize: '11px', fontWeight: '500', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '20px 0 10px' }}>
-                            Cuisines préférées
-                        </p>
+                        <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '20px 0 10px' }}>Cuisines préférées</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
-                            {profile.preferred_cuisines.map((c) => (
-                                <span key={c} style={{ padding: '6px 14px', background: '#161616', border: '0.5px solid #333', borderRadius: '20px', color: '#fff', fontSize: '12px', fontWeight: '500' }}>
-                                    {c}
-                                </span>
-                            ))}
+                            {profile.preferred_cuisines.map((c, i) => {
+                                const color = STAT_COLORS[i % STAT_COLORS.length]
+                                return (
+                                    <span key={c} style={{ padding: '6px 14px', background: `${color}12`, border: `0.5px solid ${color}40`, borderRadius: '20px', color: color, fontSize: '12px', fontWeight: '500' }}>
+                                        {c}
+                                    </span>
+                                )
+                            })}
                         </div>
                     </>
                 )}
 
-                {/* BOUTONS */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '48px', background: '#fff', border: 'none', borderRadius: '12px', color: '#000', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '48px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>
                         ✏️ Modifier
                     </button>
-                    <button onClick={handleLogout} style={{ flex: 1, height: '48px', background: '#161616', border: '0.5px solid #2a2a2a', borderRadius: '12px', color: '#555', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
+                    <button onClick={handleLogout} style={{ flex: 1, height: '48px', background: '#141414', border: '0.5px solid #222', borderRadius: '12px', color: '#555', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
                         Déconnexion
                     </button>
                 </div>
