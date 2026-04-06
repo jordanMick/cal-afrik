@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 
+
 export default function ResetPasswordPage() {
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
     const [message, setMessage] = useState('')
     const [loading, setLoading] = useState(false)
+    const [ready, setReady] = useState(false)
 
     const router = useRouter()
 
@@ -16,28 +18,39 @@ export default function ResetPasswordPage() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+
     useEffect(() => {
-        const handleSession = async () => {
+        const handleRecovery = async () => {
             const hash = window.location.hash
 
-            if (hash) {
-                const access_token = new URLSearchParams(hash.replace('#', '')).get('access_token')
-                const refresh_token = new URLSearchParams(hash.replace('#', '')).get('refresh_token')
+            if (!hash) {
+                setReady(true)
+                return
+            }
 
-                if (access_token && refresh_token) {
-                    const { error } = await supabase.auth.setSession({
-                        access_token,
-                        refresh_token,
-                    })
+            const params = new URLSearchParams(hash.substring(1))
 
-                    if (error) {
-                        console.error("Erreur session:", error.message)
-                    }
+            const access_token = params.get('access_token')
+            const refresh_token = params.get('refresh_token')
+
+            if (access_token && refresh_token) {
+                const { error } = await supabase.auth.setSession({
+                    access_token,
+                    refresh_token
+                })
+
+                if (error) {
+                    console.error('Erreur setSession:', error)
+                } else {
+                    console.log('Session créée ✅')
                 }
             }
+
+            // ✅ TRÈS IMPORTANT
+            setReady(true)
         }
 
-        handleSession()
+        handleRecovery()
     }, [])
 
     const handleReset = async () => {
@@ -127,7 +140,7 @@ export default function ResetPasswordPage() {
 
                 <button
                     onClick={handleReset}
-                    disabled={loading}
+                    disabled={loading || !ready}
                     style={{
                         width: '100%',
                         height: '45px',
