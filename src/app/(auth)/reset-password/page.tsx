@@ -16,18 +16,32 @@ export default function ResetPasswordPage() {
 
 
     useEffect(() => {
-        const handleAuth = async () => {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+        const handleRecovery = async () => {
+            const hash = window.location.hash
 
-            if (error) {
-                console.error('Erreur auth:', error)
-            } else {
-                console.log('Session prête ✅')
+            if (!hash) {
+                setReady(true)
+                return
             }
+
+            const params = new URLSearchParams(hash.substring(1))
+
+            const access_token = params.get('access_token')
+            const refresh_token = params.get('refresh_token')
+
+            if (access_token && refresh_token) {
+                await supabase.auth.setSession({
+                    access_token,
+                    refresh_token
+                })
+            }
+
+            setReady(true)
         }
 
-        handleAuth()
+        handleRecovery()
     }, [])
+
     const handleReset = async () => {
         if (password !== confirm) {
             setMessage("Les mots de passe ne correspondent pas")
@@ -47,6 +61,20 @@ export default function ResetPasswordPage() {
         }
 
         setLoading(false)
+    }
+
+    if (!ready) {
+        return (
+            <div style={{
+                height: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff'
+            }}>
+                Chargement sécurisé...
+            </div>
+        )
     }
     return (
         <div style={{
