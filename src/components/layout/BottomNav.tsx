@@ -24,7 +24,7 @@ export default function BottomNav() {
         {
             id: 'rapport',
             label: 'Rapport',
-            path: '/rapport',
+            path: '/journal',
             color: '#10b981',
             icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
