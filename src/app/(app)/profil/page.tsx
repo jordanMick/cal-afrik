@@ -93,6 +93,35 @@ export default function ProfilPage() {
         { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g', color: STAT_COLORS[3] },
     ]
 
+    // LOGIQUE DE BILAN AUTOMATIQUE (NON-AI) POUR PRO/FREE
+    const getAutomatedBilan = () => {
+        const calPercent = (dailyCalories / calorieTarget) * 100
+        const protPercent = (dailyProtein / proteinTarget) * 100
+        
+        let message = ""
+        let kofiNudge = ""
+
+        if (calPercent > 105) {
+            message = "⚠️ Budget calories dépassé. Essayez de compenser sur le prochain repas."
+            kofiNudge = "Kofi vous dirait quel type d'activité physique exacte ferait fondre cet excès."
+        } else if (calPercent < 80) {
+            message = "✅ Vous avez encore de la marge calorique pour aujourd'hui."
+            kofiNudge = "Kofi vous suggérerait le plat idéal pour combler ce vide sans casser votre rythme."
+        } else {
+            message = "🎯 Équilibre calorique exemplaire. Continuez comme ça !"
+            kofiNudge = "Kofi analyserait la qualité nutritionnelle de ces calories pour optimiser votre énergie."
+        }
+
+        if (protPercent < 70) {
+            message += " Pensez à augmenter vos protéines."
+            kofiNudge = "Kofi vous proposerait une liste de snacks hyper-protéinés adaptés à vos goûts."
+        }
+
+        return { message, kofiNudge }
+    }
+
+    const { message: autoMessage, kofiNudge } = getAutomatedBilan()
+
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
 
@@ -204,9 +233,19 @@ export default function ProfilPage() {
                                 </div>
                             </div>
 
-                            {/* MESSAGE DU COACH RÉSERVÉ PREMIUM */}
-                            {checkPermission(profile, 'hasCoachKofi') && bilanMessage && (
-                                <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px', borderLeft: `2px solid ${bilanColor}40`, paddingLeft: '12px' }}>{bilanMessage}</p>
+                            {/* MESSAGE DU COACH RÉSERVÉ PREMIUM OU AUTO-MESSAGE POUR PRO/FREE */}
+                            {checkPermission(profile, 'hasCoachKofi') ? (
+                                bilanMessage && <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px', borderLeft: `2px solid ${bilanColor}40`, paddingLeft: '12px' }}>{bilanMessage}</p>
+                            ) : (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>{autoMessage}</p>
+                                    <div 
+                                        onClick={() => router.push('/upgrade')}
+                                        style={{ background: 'rgba(245,158,11,0.05)', borderRadius: '10px', padding: '10px', border: '0.5px dashed rgba(245,158,11,0.3)', cursor: 'pointer' }}>
+                                        <p style={{ color: '#f59e0b', fontSize: '11px', fontWeight: '600', marginBottom: '2px' }}>💡 L'avantage Premium :</p>
+                                        <p style={{ color: '#666', fontSize: '10px', lineHeight: '1.4', fontStyle: 'italic' }}>{kofiNudge} <span style={{ fontWeight: 'bold' }}>Débloquer →</span></p>
+                                    </div>
+                                </div>
                             )}
 
                             {activeSlot === 'diner' ? (

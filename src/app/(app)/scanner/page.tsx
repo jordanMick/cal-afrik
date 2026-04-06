@@ -399,42 +399,50 @@ export default function ScannerPage() {
                                         )
                                     ) : (
                                         /* BANDEAU UPGRADE VISIBLE IMMÉDIATEMENT SI NON PREMIUM */
-                                        <div 
-                                            onClick={() => router.push('/upgrade')}
-                                            style={{ 
-                                                background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.1))', 
-                                                border: '1px solid rgba(245,158,11,0.3)', 
-                                                borderRadius: '16px', 
-                                                padding: '24px 16px',
-                                                cursor: 'pointer',
-                                                textAlign: 'center',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                gap: '12px',
-                                                marginTop: '10px'
-                                            }}>
-                                            <div style={{ fontSize: '32px' }}>🔒</div>
-                                            <div>
-                                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>
-                                                    {profile?.subscription_tier === 'pro' ? 'Kofi t\'attend au Premium' : 'Analyse terminée !'}
-                                                </p>
-                                                <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.4' }}>
-                                                    {profile?.subscription_tier === 'pro' 
-                                                        ? 'Le Coach Kofi a déjà analysé ton repas ! Passe au plan Premium pour lire tes conseils exclusifs.'
-                                                        : 'Le Coach Kofi a fini son analyse ! Passe au plan Premium pour débloquer tes conseils personnalisés.'}
-                                                </p>
-                                            </div>
-                                            <div style={{ 
-                                                marginTop: '8px',
-                                                padding: '8px 24px', 
-                                                borderRadius: '10px', 
-                                                background: '#f59e0b', 
-                                                color: '#000', 
-                                                fontSize: '13px', 
-                                                fontWeight: '700' 
-                                            }}>
-                                                Voir mes conseils →
+                                        <div style={{ marginBottom: '16px' }}>
+                                            {/* CONSEIL AUTOMATIQUE (SUR LE POUCE) */}
+                                            <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>
+                                                {totals.calories > 600 
+                                                    ? "🍴 Ce repas est assez consistant. Veillez à bien vous hydrater." 
+                                                    : "✅ Repas léger et équilibré. Idéal pour rester dynamique."}
+                                            </p>
+                                            
+                                            <div 
+                                                onClick={() => router.push('/upgrade')}
+                                                style={{ 
+                                                    background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.1))', 
+                                                    border: '1px solid rgba(245,158,11,0.3)', 
+                                                    borderRadius: '16px', 
+                                                    padding: '20px 16px',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'center',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '12px'
+                                                }}>
+                                                <div style={{ fontSize: '28px' }}>🔒</div>
+                                                <div>
+                                                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: '800', marginBottom: '4px' }}>
+                                                        {profile?.subscription_tier === 'pro' ? 'Analyse Premium de Kofi' : 'Analyse terminée !'}
+                                                    </p>
+                                                    <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.4' }}>
+                                                        {profile?.subscription_tier === 'pro' 
+                                                            ? 'Le Coach Kofi connaît les secrets de ce plat. Débloquez son analyse pour optimiser votre santé.'
+                                                            : 'Le Coach Kofi a fini son analyse ! Passe au plan Premium pour débloquer tes conseils personnalisés.'}
+                                                    </p>
+                                                </div>
+                                                <div style={{ 
+                                                    marginTop: '4px',
+                                                    padding: '6px 20px', 
+                                                    borderRadius: '8px', 
+                                                    background: '#f59e0b', 
+                                                    color: '#000', 
+                                                    fontSize: '12px', 
+                                                    fontWeight: '700' 
+                                                }}>
+                                                    Voir le conseil de Kofi →
+                                                </div>
                                             </div>
                                         </div>
                                     )
