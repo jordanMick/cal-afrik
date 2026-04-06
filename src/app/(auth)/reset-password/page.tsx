@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 
@@ -14,10 +14,6 @@ export default function ResetPasswordPage() {
 
     const router = useRouter()
 
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
 
     useEffect(() => {
         const handleRecovery = async () => {
