@@ -328,11 +328,11 @@ export default function ScannerPage() {
                 </div>
             )}
 
-            {showRecap && <div onClick={() => setShowRecap(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 40 }} />}
+            {showRecap && <div onClick={() => setShowRecap(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000 }} />}
 
             {/* POPUP RÉCAP */}
             {showRecap && (
-                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 50, padding: '0 0 100px 0', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 1010, padding: '0 0 100px 0', maxHeight: '90vh', overflowY: 'auto' }}>
                     <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: `linear-gradient(90deg, ${slotColor}, #6366f1)` }} />
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}>
                         <div style={{ width: '36px', height: '4px', background: '#222', borderRadius: '2px' }} />
