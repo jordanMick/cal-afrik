@@ -17,6 +17,15 @@ function getActiveBilanSlot(hour: number): MealSlotKey | null {
     return null
 }
 
+function getNextSlotInfo(hour: number): { label: string; time: string } {
+    if (hour >= 8 && hour < 12)  return { label: 'Petit-déjeuner', time: '12h00' }
+    if (hour >= 12 && hour < 16) return { label: 'Déjeuner',       time: '16h00' }
+    if (hour >= 16 && hour < 19) return { label: 'Collation',      time: '19h00' }
+    if (hour >= 19 && hour < 23) return { label: 'Dîner',          time: '23h00' }
+    return { label: 'Petit-déjeuner', time: '12h00' }
+}
+
+
 const STAT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
 
 export default function ProfilPage() {
@@ -36,6 +45,7 @@ export default function ProfilPage() {
     const bilanDinerDate = isBefore8 ? yesterday : today
 
     const activeSlot = getActiveBilanSlot(hour)
+    const nextSlotInfo = getNextSlotInfo(hour)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
     const existingBilan = activeSlot ? slotBilans[activeSlot] : null
     const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh
@@ -107,7 +117,7 @@ export default function ProfilPage() {
             </div>
 
             {/* BILAN CRÉNEAU */}
-            {activeSlot && (
+            {activeSlot ? (
                 <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'empty' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
                     {bilanStatus !== 'empty' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
@@ -163,7 +173,20 @@ export default function ProfilPage() {
                         </>
                     )}
                 </div>
+            ) : (
+                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', margin: '0 20px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(99,102,241,0.12)', border: '0.5px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>📊</div>
+                    <div>
+                        <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600' }}>
+                            Bilan {nextSlotInfo.label}
+                        </p>
+                        <p style={{ color: '#555', fontSize: '12px', marginTop: '3px' }}>
+                            Disponible à partir de {nextSlotInfo.time}
+                        </p>
+                    </div>
+                </div>
             )}
+
 
             <div style={{ padding: '0 20px' }}>
 
