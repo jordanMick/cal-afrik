@@ -23,8 +23,9 @@ const ACTIVITY_LABELS: Record<string, string> = {
 export default function ProfilPage() {
     const router = useRouter()
     const {
-        profile, dailyCalories, dailyProtein, dailyCarbs, dailyFat,
-        todayMeals, bilanSeenDate, setBilanSeenDate,
+        profile,
+        dailyCalories, dailyProtein, dailyCarbs, dailyFat,
+        bilanSeenDate, setBilanSeenDate,
         bilanMessage, setBilanMessage,
         bilanGoalReached, setBilanGoalReached,
         bilanExceeded, setBilanExceeded,
@@ -40,30 +41,36 @@ export default function ProfilPage() {
     const today = now.toISOString().split('T')[0]
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
-    // Bilan visible entre 23h et 8h
     const isAfter23 = hour >= 23
     const isBefore8 = hour < 8
     const bilanDate = isBefore8 ? yesterday : today
     const hasBilan = (isAfter23 || isBefore8) && bilanSeenDate !== bilanDate
 
-    const [showBilan, setShowBilan] = useState(hasBilan || (bilanSeenDate === bilanDate && !!bilanMessage && (isAfter23 || isBefore8)))
-    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | null>(bilanMessage ? 'done' : null)
+    const [showBilan, setShowBilan] = useState(
+        hasBilan || (bilanSeenDate === bilanDate && !!bilanMessage && (isAfter23 || isBefore8))
+    )
+    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(
+        bilanMessage ? 'done' : null
+    )
+
+    // ✅ Vraies valeurs du jour — viennent de l'API bilan (source de vérité = BD)
+    // On les stocke localement pour l'affichage dans le bilan
+    const [realDailyCalories, setRealDailyCalories] = useState(0)
+    const [realDailyProtein, setRealDailyProtein] = useState(0)
+    const [realDailyCarbs, setRealDailyCarbs] = useState(0)
+    const [realDailyFat, setRealDailyFat] = useState(0)
 
     useEffect(() => {
-        // Si le bilan doit s'afficher et n'a pas encore été généré pour cette date
         if (hasBilan) {
             setShowBilan(true)
             loadBilan()
-        }
-        // Si le bilan a déjà été généré pour cette date, juste l'afficher sans rappeler l'IA
-        else if (bilanSeenDate === bilanDate && bilanMessage && (isAfter23 || isBefore8)) {
+        } else if (bilanSeenDate === bilanDate && bilanMessage && (isAfter23 || isBefore8)) {
             setShowBilan(true)
             setBilanStatus('done')
         }
     }, [])
 
     const loadBilan = async () => {
-        // Si un message existe déjà pour cette date, ne pas rappeler l'IA
         if (bilanSeenDate === bilanDate && bilanMessage) {
             setBilanStatus('done')
             return
@@ -74,42 +81,57 @@ export default function ProfilPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
+            // ✅ On n'envoie PLUS les valeurs du store — l'API relit depuis la BD
             const res = await fetch('/api/bilan', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${session.access_token}`
+                    Authorization: `Bearer ${session.access_token}`,
                 },
                 body: JSON.stringify({
-                    dailyCalories,
-                    dailyProtein,
-                    dailyCarbs,
-                    dailyFat,
                     calorieTarget,
                     proteinTarget,
                     carbsTarget,
                     fatTarget,
-                    meals: todayMeals.map(m => ({ name: m.custom_name || 'Repas', calories: m.calories })),
                     goal: profile?.goal || 'maintenir',
                 })
             })
 
             const json = await res.json()
-            if (json.success) {
-                setBilanMessage(json.message)
-                setBilanGoalReached(json.goalReached)
-                setBilanExceeded(json.exceeded)
-            } else {
+
+            if (!json.success) {
                 setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
                 setBilanGoalReached(false)
                 setBilanExceeded(false)
+                setBilanStatus('done')
+                setBilanSeenDate(bilanDate)
+                return
             }
+
+            // ✅ Cas aucun repas aujourd'hui
+            if (json.empty) {
+                setBilanStatus('empty')
+                setBilanSeenDate(bilanDate)
+                return
+            }
+
+            // ✅ On utilise les totaux retournés par l'API (calculés depuis la BD)
+            setRealDailyCalories(json.dailyCalories ?? 0)
+            setRealDailyProtein(json.dailyProtein ?? 0)
+            setRealDailyCarbs(json.dailyCarbs ?? 0)
+            setRealDailyFat(json.dailyFat ?? 0)
+
+            setBilanMessage(json.message)
+            setBilanGoalReached(json.goalReached)
+            setBilanExceeded(json.exceeded)
+            setBilanStatus('done')
+            setBilanSeenDate(bilanDate)
+
         } catch (err) {
             console.error(err)
             setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
             setBilanGoalReached(false)
             setBilanExceeded(false)
-        } finally {
             setBilanStatus('done')
             setBilanSeenDate(bilanDate)
         }
@@ -144,48 +166,73 @@ export default function ProfilPage() {
                 {showBilan && (
                     <div style={{
                         background: '#1A1108',
-                        border: `1px solid ${bilanColor}44`,
+                        border: `1px solid ${bilanStatus === 'empty' ? '#2A1F14' : bilanColor + '44'}`,
                         borderRadius: '20px',
                         padding: '20px',
                         marginBottom: '24px',
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                            <span style={{ fontSize: '28px' }}>{bilanEmoji}</span>
-                            <div>
-                                <p style={{ color: bilanColor, fontWeight: '800', fontSize: '16px' }}>{bilanTitle}</p>
-                                <p style={{ color: '#555', fontSize: '12px' }}>Bilan du jour</p>
-                            </div>
-                        </div>
-
-                        {/* Message IA */}
+                        {/* ✅ Cas chargement */}
                         {bilanStatus === 'loading' && (
-                            <p style={{ color: '#777', fontSize: '13px', fontStyle: 'italic' }}>⏳ Génération du bilan...</p>
-                        )}
-                        {bilanStatus === 'done' && bilanMessage && (
-                            <p style={{ color: '#ccc', fontSize: '13px', lineHeight: '1.6', marginBottom: '16px' }}>
-                                {bilanMessage}
-                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '24px' }}>⏳</span>
+                                <p style={{ color: '#777', fontSize: '13px', fontStyle: 'italic' }}>
+                                    Génération de ton bilan du jour...
+                                </p>
+                            </div>
                         )}
 
-                        {/* Mini stats bilan */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                            {[
-                                { label: 'Calories', current: Math.round(dailyCalories), target: calorieTarget, unit: 'kcal', color: bilanColor },
-                                { label: 'Protéines', current: Math.round(dailyProtein), target: proteinTarget, unit: 'g', color: '#52B788' },
-                                { label: 'Glucides', current: Math.round(dailyCarbs), target: carbsTarget, unit: 'g', color: '#E9C46A' },
-                                { label: 'Lipides', current: Math.round(dailyFat), target: fatTarget, unit: 'g', color: '#888' },
-                            ].map(stat => (
-                                <div key={stat.label} style={{ background: '#0F0A06', borderRadius: '12px', padding: '12px' }}>
-                                    <p style={{ color: stat.color, fontSize: '18px', fontWeight: '800' }}>
-                                        {stat.current}<span style={{ color: '#555', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
+                        {/* ✅ Cas aucun repas */}
+                        {bilanStatus === 'empty' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '28px' }}>🍽️</span>
+                                <div>
+                                    <p style={{ color: '#E9C46A', fontWeight: '800', fontSize: '16px' }}>
+                                        Aucun repas aujourd'hui
                                     </p>
-                                    <div style={{ width: '100%', height: '3px', background: '#2A1F14', borderRadius: '2px', margin: '6px 0 4px' }}>
-                                        <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: stat.color }} />
-                                    </div>
-                                    <p style={{ color: '#555', fontSize: '11px' }}>{stat.label}</p>
+                                    <p style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>
+                                        Scanne tes repas pour obtenir un bilan personnalisé
+                                    </p>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        )}
+
+                        {/* ✅ Cas bilan disponible */}
+                        {bilanStatus === 'done' && bilanMessage && (
+                            <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                                    <span style={{ fontSize: '28px' }}>{bilanEmoji}</span>
+                                    <div>
+                                        <p style={{ color: bilanColor, fontWeight: '800', fontSize: '16px' }}>{bilanTitle}</p>
+                                        <p style={{ color: '#555', fontSize: '12px' }}>Bilan du jour</p>
+                                    </div>
+                                </div>
+
+                                <p style={{ color: '#ccc', fontSize: '13px', lineHeight: '1.6', marginBottom: '16px' }}>
+                                    {bilanMessage}
+                                </p>
+
+                                {/* ✅ Stats depuis la BD (pas le store) */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    {[
+                                        { label: 'Calories', current: realDailyCalories, target: calorieTarget, unit: 'kcal', color: bilanColor },
+                                        { label: 'Protéines', current: realDailyProtein, target: proteinTarget, unit: 'g', color: '#52B788' },
+                                        { label: 'Glucides', current: realDailyCarbs, target: carbsTarget, unit: 'g', color: '#E9C46A' },
+                                        { label: 'Lipides', current: realDailyFat, target: fatTarget, unit: 'g', color: '#888' },
+                                    ].map(stat => (
+                                        <div key={stat.label} style={{ background: '#0F0A06', borderRadius: '12px', padding: '12px' }}>
+                                            <p style={{ color: stat.color, fontSize: '18px', fontWeight: '800' }}>
+                                                {stat.current}
+                                                <span style={{ color: '#555', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
+                                            </p>
+                                            <div style={{ width: '100%', height: '3px', background: '#2A1F14', borderRadius: '2px', margin: '6px 0 4px' }}>
+                                                <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: stat.color }} />
+                                            </div>
+                                            <p style={{ color: '#555', fontSize: '11px' }}>{stat.label}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
@@ -205,7 +252,7 @@ export default function ProfilPage() {
 
             <div style={{ padding: '0 24px', position: 'relative', zIndex: 1 }}>
 
-                {/* Stats du jour */}
+                {/* Stats du jour — depuis le store (temps réel) */}
                 <p style={{ color: '#555', fontSize: '12px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
                     Aujourd'hui
                 </p>
@@ -269,10 +316,12 @@ export default function ProfilPage() {
 
                 {/* Boutons */}
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '50px', background: '#1A1108', border: '1px solid #2A1F14', borderRadius: '14px', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/onboarding')}
+                        style={{ flex: 1, height: '50px', background: '#1A1108', border: '1px solid #2A1F14', borderRadius: '14px', color: '#fff', fontWeight: '700', cursor: 'pointer' }}>
                         ✏️ Modifier
                     </button>
-                    <button onClick={handleLogout} style={{ flex: 1, height: '50px', background: '#1A1108', border: 'none', borderRadius: '14px', color: '#ff6b6b', fontWeight: '700', cursor: 'pointer' }}>
+                    <button onClick={handleLogout}
+                        style={{ flex: 1, height: '50px', background: '#1A1108', border: 'none', borderRadius: '14px', color: '#ff6b6b', fontWeight: '700', cursor: 'pointer' }}>
                         Déconnexion
                     </button>
                 </div>

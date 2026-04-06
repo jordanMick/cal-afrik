@@ -40,6 +40,9 @@ const CATEGORIES = [
     { value: 'plats_composes', label: '🍽️ Plats composés' },
 ]
 
+// ─── Dernier créneau de la journée ───────────────────────────
+const LAST_SLOT = 'diner'
+
 export default function ScannerPage() {
     const router = useRouter()
     const { addMeal, profile, slots, dailyCalories, setLastCoachMessage } = useAppStore()
@@ -71,6 +74,18 @@ export default function ScannerPage() {
     const currentSlotKey = getMealSlot(currentHour)
     const currentSlot = slots[currentSlotKey]
     const slotLabel = SLOT_LABELS[currentSlotKey]
+    const isLastSlot = currentSlotKey === LAST_SLOT
+
+    // ─── Calculs calories journée ─────────────────────────────
+    const calorieTarget = profile?.calorie_target ?? 0
+    const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
+    const dailyRemainingNow = calorieTarget - dailyConsumed
+
+    // Bandeau du haut : "Restant journée" si dîner, "Restant créneau" sinon
+    const displayedRemaining = isLastSlot
+        ? Math.max(0, dailyRemainingNow)
+        : Math.max(0, currentSlot.remaining)
+    const displayedRemainingLabel = isLastSlot ? 'Restant journée' : 'Restant créneau'
 
     useEffect(() => { loadFoods() }, [])
 
@@ -224,7 +239,6 @@ export default function ScannerPage() {
         portion_g: acc.portion_g + food.portion_g,
     }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
 
-    // ─── Conseil IA basé sur le slot ─────────────────────────
     const loadCoachMessage = async () => {
         if (coachMessage) { setShowCoach(true); return }
         setIsLoadingCoach(true)
@@ -250,11 +264,12 @@ export default function ScannerPage() {
                         fat_g: Math.round(totals.fat_g * 10) / 10,
                     },
                     slotLabel,
-                    slotTarget: freshSlot.target,
-                    slotConsumed: freshSlot.consumed,
-                    slotRemaining: freshSlot.remaining,
+                    // ✅ Si dîner, on envoie les stats journée au coach
+                    slotTarget: isLastSlot ? calorieTarget : freshSlot.target,
+                    slotConsumed: isLastSlot ? dailyConsumed : freshSlot.consumed,
+                    slotRemaining: isLastSlot ? dailyRemainingNow : freshSlot.remaining,
                     dailyCalories: storeState.dailyCalories,
-                    calorieTarget: profile?.calorie_target || 2000,
+                    calorieTarget,
                 })
             })
 
@@ -351,7 +366,6 @@ export default function ScannerPage() {
                     fat_g: Math.round(totals.fat_g * 10) / 10,
                     image_url: capturedImage,
                     ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length),
-                    // ✅ On sauvegarde le message coach s'il a été généré
                     coach_message: coachMessage || null,
                 }),
             })
@@ -382,9 +396,16 @@ export default function ScannerPage() {
         color: '#aaa', fontSize: '12px', marginBottom: '4px', display: 'block',
     }
 
-    // Calories restantes du créneau après ajout de ce repas
-    const slotRemainingAfter = currentSlot.target - currentSlot.consumed - totals.calories
-    const slotExceeded = slotRemainingAfter < 0
+    // ─── Recap : restant après ajout ──────────────────────────
+    // Dîner → journée entière / Autre → créneau seul
+    const recapRemainingAfter = isLastSlot
+        ? dailyRemainingNow - totals.calories
+        : currentSlot.target - currentSlot.consumed - totals.calories
+    const recapExceeded = recapRemainingAfter < 0
+    const recapLabel = isLastSlot ? `Journée · objectif ${calorieTarget} kcal` : `Créneau ${slotLabel}`
+    const recapConsumedLabel = isLastSlot
+        ? `${Math.round(dailyConsumed)} + ${Math.round(totals.calories)} kcal`
+        : `${Math.round(currentSlot.consumed)} + ${Math.round(totals.calories)} kcal`
 
     return (
         <div style={{ minHeight: '100vh', background: '#0F0A06', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px' }}>
@@ -397,9 +418,10 @@ export default function ScannerPage() {
                     <p style={{ color: '#fff', fontWeight: '700', fontSize: '14px' }}>{slotLabel}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                    <p style={{ color: '#777', fontSize: '11px' }}>Restant</p>
-                    <p style={{ color: currentSlot.remaining <= 0 ? '#E24B4A' : '#C4622D', fontWeight: '700', fontSize: '14px' }}>
-                        {Math.max(0, currentSlot.remaining)} kcal
+                    {/* ✅ Label et valeur dynamiques */}
+                    <p style={{ color: '#777', fontSize: '11px' }}>{displayedRemainingLabel}</p>
+                    <p style={{ color: displayedRemaining <= 0 ? '#E24B4A' : '#C4622D', fontWeight: '700', fontSize: '14px' }}>
+                        {displayedRemaining} kcal
                     </p>
                 </div>
             </div>
@@ -530,16 +552,16 @@ export default function ScannerPage() {
                             {selectedFoods.map(f => f.name).join(' · ')}
                         </p>
 
-                        {/* Calories */}
+                        {/* Calories du repas */}
                         <div style={{ background: '#0F0A06', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '12px' }}>
                             <p style={{ color: '#C4622D', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
                             <p style={{ color: '#555', fontSize: '14px' }}>kilocalories</p>
                         </div>
 
-                        {/* ✅ Calories restantes du créneau après ajout */}
+                        {/* ✅ Bandeau restant — journée si dîner, créneau sinon */}
                         <div style={{
-                            background: slotExceeded ? 'rgba(226,75,74,0.08)' : 'rgba(196,98,45,0.08)',
-                            border: `1px solid ${slotExceeded ? '#3A1010' : '#2A1F14'}`,
+                            background: recapExceeded ? 'rgba(226,75,74,0.08)' : 'rgba(196,98,45,0.08)',
+                            border: `1px solid ${recapExceeded ? '#3A1010' : '#2A1F14'}`,
                             borderRadius: '12px',
                             padding: '12px 16px',
                             marginBottom: '16px',
@@ -548,23 +570,17 @@ export default function ScannerPage() {
                             alignItems: 'center',
                         }}>
                             <div>
-                                <p style={{ color: '#555', fontSize: '11px' }}>Créneau {slotLabel}</p>
-                                <p style={{ color: '#777', fontSize: '12px', marginTop: '2px' }}>
-                                    {Math.round(currentSlot.consumed)} + {Math.round(totals.calories)} kcal
-                                </p>
+                                <p style={{ color: '#555', fontSize: '11px' }}>{recapLabel}</p>
+                                <p style={{ color: '#777', fontSize: '12px', marginTop: '2px' }}>{recapConsumedLabel}</p>
                             </div>
                             <div style={{ textAlign: 'right' }}>
                                 <p style={{ color: '#555', fontSize: '11px' }}>
-                                    {slotExceeded ? '⚠️ Dépassement' : 'Restant après repas'}
+                                    {recapExceeded ? '⚠️ Dépassement' : 'Restant après repas'}
                                 </p>
-                                <p style={{
-                                    color: slotExceeded ? '#E24B4A' : '#C4622D',
-                                    fontWeight: '800',
-                                    fontSize: '18px',
-                                }}>
-                                    {slotExceeded
-                                        ? `+${Math.abs(Math.round(slotRemainingAfter))} kcal`
-                                        : `${Math.round(slotRemainingAfter)} kcal`
+                                <p style={{ color: recapExceeded ? '#E24B4A' : '#C4622D', fontWeight: '800', fontSize: '18px' }}>
+                                    {recapExceeded
+                                        ? `+${Math.abs(Math.round(recapRemainingAfter))} kcal`
+                                        : `${Math.round(recapRemainingAfter)} kcal`
                                     }
                                 </p>
                             </div>
