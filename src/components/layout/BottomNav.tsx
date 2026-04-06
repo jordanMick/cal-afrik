@@ -1,12 +1,10 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useRef } from 'react'
 
 export default function BottomNav() {
     const router = useRouter()
     const pathname = usePathname()
-    const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const tabs = [
         {
@@ -24,7 +22,7 @@ export default function BottomNav() {
         {
             id: 'rapport',
             label: 'Rapport',
-            path: '/journal',
+            path: '/rapport',
             color: '#10b981',
             icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -121,7 +119,7 @@ export default function BottomNav() {
                     marginTop: '-20px',
                 }}>
                     <button
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => router.push('/scanner')}
                         style={{
                             width: '52px',
                             height: '52px',
@@ -190,20 +188,6 @@ export default function BottomNav() {
                 })}
             </div>
 
-            {/* Input file caché pour le scanner */}
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                        ; (window as any).tempImage = file
-                    router.push('/scanner')
-                }}
-            />
         </>
     )
 }
