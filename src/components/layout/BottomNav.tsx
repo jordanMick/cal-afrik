@@ -1,135 +1,216 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useRef } from 'react'
-import { useAppStore } from '@/store/useAppStore'
-
-const navItems = [
-    { path: '/dashboard', emoji: '🏠', label: 'Accueil' },
-    { path: '/journal', emoji: '📋', label: 'Rapport' },
-    { path: '/scanner', emoji: '📷', label: 'Scanner' },
-    { path: '/profil', emoji: '👤', label: 'Profil' },
-]
+import { useRef } from 'react'
 
 export default function BottomNav() {
     const router = useRouter()
     const pathname = usePathname()
-    const touchStartX = useRef<number | null>(null)
-    const touchStartY = useRef<number | null>(null)
-    const { bilanSeenDate } = useAppStore()
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-    const currentIndex = navItems.findIndex(item => item.path === pathname)
-    const today = new Date().toISOString().split('T')[0]
-    const hour = new Date().getHours()
-    const showBilanBadge = hour >= 22 && bilanSeenDate !== today
-
-    useEffect(() => {
-        const handleTouchStart = (e: TouchEvent) => {
-            touchStartX.current = e.touches[0].clientX
-            touchStartY.current = e.touches[0].clientY
-        }
-
-        const handleTouchEnd = (e: TouchEvent) => {
-            if (touchStartX.current === null || touchStartY.current === null) return
-
-            const deltaX = e.changedTouches[0].clientX - touchStartX.current
-            const deltaY = e.changedTouches[0].clientY - touchStartY.current
-
-            if (Math.abs(deltaY) > Math.abs(deltaX)) return
-            if (Math.abs(deltaX) < 60) return
-
-            const target = e.target as HTMLElement
-            const scrollableParent = target.closest('[data-swipe-ignore]') ||
-                target.closest('input') || target.closest('select') ||
-                (() => {
-                    let el: HTMLElement | null = target
-                    while (el) {
-                        const style = window.getComputedStyle(el)
-                        const overflowX = style.overflowX
-                        if ((overflowX === 'auto' || overflowX === 'scroll') && el.scrollWidth > el.clientWidth) return el
-                        el = el.parentElement
-                    }
-                    return null
-                })()
-
-            if (scrollableParent) return
-
-            if (deltaX < 0) {
-                const nextIndex = currentIndex + 1
-                if (nextIndex < navItems.length) router.push(navItems[nextIndex].path)
-            } else {
-                const prevIndex = currentIndex - 1
-                if (prevIndex >= 0) router.push(navItems[prevIndex].path)
-            }
-
-            touchStartX.current = null
-            touchStartY.current = null
-        }
-
-        document.addEventListener('touchstart', handleTouchStart, { passive: true })
-        document.addEventListener('touchend', handleTouchEnd, { passive: true })
-
-        return () => {
-            document.removeEventListener('touchstart', handleTouchStart)
-            document.removeEventListener('touchend', handleTouchEnd)
-        }
-    }, [currentIndex, router])
+    const tabs = [
+        {
+            id: 'accueil',
+            label: 'Accueil',
+            path: '/dashboard',
+            color: '#6366f1',
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 9L12 2L21 9V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V9Z"
+                        fill="currentColor" />
+                </svg>
+            ),
+        },
+        {
+            id: 'rapport',
+            label: 'Rapport',
+            path: '/rapport',
+            color: '#10b981',
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M7 12H17M7 8H17M7 16H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+            ),
+        },
+        {
+            id: 'profil',
+            label: 'Profil',
+            path: '/profil',
+            color: '#ec4899',
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M4 20C4 17.7909 7.58172 16 12 16C16.4183 16 20 17.7909 20 20"
+                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+            ),
+        },
+    ]
 
     return (
-        <div style={{
-            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-            width: '100%', maxWidth: '480px', height: '72px',
-            background: '#1A1108', borderTop: '1px solid #2A1F14',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-around',
-            padding: '0 16px', zIndex: 100,
-        }}>
-            {navItems.map((item) => {
-                const isActive = pathname === item.path
-                const isProfilItem = item.path === '/profil'
+        <>
+            <div style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: '#0d0d0d',
+                borderTop: '0.5px solid #222',
+                display: 'flex',
+                justifyContent: 'space-around',
+                alignItems: 'flex-end',
+                padding: '10px 0 20px',
+                zIndex: 999,
+                maxWidth: '480px',
+                margin: '0 auto',
+            }}>
 
-                return (
+                {/* Tabs gauche : Accueil + Rapport */}
+                {tabs.slice(0, 2).map((tab) => {
+                    const isActive = pathname === tab.path
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => router.push(tab.path)}
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                minWidth: '72px',
+                                padding: 0,
+                            }}
+                        >
+                            <div style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '12px',
+                                background: isActive ? `rgba(${hexToRgbStr(tab.color)}, 0.15)` : 'transparent',
+                                border: isActive ? `0.5px solid rgba(${hexToRgbStr(tab.color)}, 0.3)` : '0.5px solid transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: isActive ? tab.color : '#444',
+                                transition: 'all 0.2s',
+                            }}>
+                                {tab.icon}
+                            </div>
+                            <span style={{
+                                fontSize: '10px',
+                                color: isActive ? tab.color : '#444',
+                                fontWeight: isActive ? '500' : '400',
+                                transition: 'color 0.2s',
+                            }}>
+                                {tab.label}
+                            </span>
+                        </button>
+                    )
+                })}
+
+                {/* Scanner FAB central */}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                    minWidth: '72px',
+                    marginTop: '-20px',
+                }}>
                     <button
-                        key={item.path}
-                        onClick={() => router.push(item.path)}
+                        onClick={() => fileInputRef.current?.click()}
                         style={{
-                            display: 'flex', flexDirection: 'column', alignItems: 'center',
-                            gap: '4px', background: 'none', border: 'none',
-                            cursor: 'pointer', padding: '8px 12px',
-                            touchAction: 'manipulation',
-                            WebkitTapHighlightColor: 'transparent',
-                            position: 'relative',
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                            border: '3px solid #0d0d0d',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 6px 20px rgba(99,102,241,0.4)',
+                            cursor: 'pointer',
                         }}
                     >
-                        <div style={{
-                            width: '36px', height: '36px', borderRadius: '10px',
-                            background: isActive ? 'rgba(196, 98, 45, 0.15)' : 'transparent',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '20px', color: isActive ? '#C4622D' : '#888',
-                            transition: 'all 0.2s ease',
-                            position: 'relative',
-                        }}>
-                            {item.emoji}
-
-                            {/* ✅ Badge bilan non lu */}
-                            {isProfilItem && showBilanBadge && (
-                                <div style={{
-                                    position: 'absolute', top: '0px', right: '0px',
-                                    width: '8px', height: '8px', borderRadius: '50%',
-                                    background: '#E24B4A', border: '1.5px solid #1A1108',
-                                }} />
-                            )}
-                        </div>
-
-                        <span style={{ fontSize: '10px', fontWeight: '600', color: isActive ? '#C4622D' : '#444' }}>
-                            {item.label}
-                        </span>
-
-                        {isActive && (
-                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#C4622D' }} />
-                        )}
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 4H8M16 4H20M4 20H8M16 20H20M4 8V4H8M20 8V4H16M4 16V20H8M20 16V20H16"
+                                stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                            <rect x="9" y="9" width="6" height="6" rx="1" fill="#fff" />
+                        </svg>
                     </button>
-                )
-            })}
-        </div>
+                    <span style={{ fontSize: '10px', color: '#555' }}>Scanner</span>
+                </div>
+
+                {/* Tab droite : Profil */}
+                {tabs.slice(2).map((tab) => {
+                    const isActive = pathname === tab.path
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => router.push(tab.path)}
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                minWidth: '72px',
+                                padding: 0,
+                            }}
+                        >
+                            <div style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '12px',
+                                background: isActive ? `rgba(${hexToRgbStr(tab.color)}, 0.15)` : 'transparent',
+                                border: isActive ? `0.5px solid rgba(${hexToRgbStr(tab.color)}, 0.3)` : '0.5px solid transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: isActive ? tab.color : '#444',
+                                transition: 'all 0.2s',
+                            }}>
+                                {tab.icon}
+                            </div>
+                            <span style={{
+                                fontSize: '10px',
+                                color: isActive ? tab.color : '#444',
+                                fontWeight: isActive ? '500' : '400',
+                                transition: 'color 0.2s',
+                            }}>
+                                {tab.label}
+                            </span>
+                        </button>
+                    )
+                })}
+            </div>
+
+            {/* Input file caché pour le scanner */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                        ; (window as any).tempImage = file
+                    router.push('/scanner')
+                }}
+            />
+        </>
     )
+}
+
+function hexToRgbStr(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `${r},${g},${b}`
 }
