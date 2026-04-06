@@ -1,70 +1,200 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { LayoutDashboard, ReceiptText, User, ScanLine } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-const TABS = [
-  { id: 'accueil', label: 'Home', path: '/dashboard', icon: LayoutDashboard },
-  { id: 'journal', label: 'Journal', path: '/journal', icon: ReceiptText },
-  { id: 'scanner', label: 'Scan', path: '/scanner', icon: ScanLine },
-  { id: 'profil', label: 'Me', path: '/profil', icon: User },
-]
 
 export default function BottomNav() {
   const router = useRouter()
   const pathname = usePathname()
 
-  return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-[360px] z-[999] pointer-events-none">
-      <div className="glass-panel h-16 rounded-full grid grid-cols-4 items-center w-full px-2 shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/5 pointer-events-auto">
-        
-        {TABS.map((tab) => {
-          const isActive = pathname === tab.path
-          const isScanner = tab.id === 'scanner'
-          const Icon = tab.icon
+  const tabs = [
+    {
+      id: 'accueil',
+      label: 'Accueil',
+      path: '/dashboard',
+      color: '#6366f1',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 9L12 2L21 9V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V9Z"
+            fill="currentColor" />
+        </svg>
+      ),
+    },
+    {
+      id: 'rapport',
+      label: 'Rapport',
+      path: '/rapport',
+      color: '#10b981',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M7 12H17M7 8H17M7 16H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
+      id: 'profil',
+      label: 'Profil',
+      path: '/profil',
+      color: '#ec4899',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M4 20C4 17.7909 7.58172 16 12 16C16.4183 16 20 17.7909 20 20"
+            stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+  ]
 
+  return (
+    <>
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: '#0d0d0d',
+        borderTop: '0.5px solid #222',
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'flex-end',
+        padding: '10px 0 20px',
+        zIndex: 999,
+        maxWidth: '480px',
+        margin: '0 auto',
+      }}>
+
+        {/* Tabs gauche : Accueil + Rapport */}
+        {tabs.slice(0, 2).map((tab) => {
+          const isActive = pathname === tab.path
           return (
             <button
               key={tab.id}
               onClick={() => router.push(tab.path)}
-              className="relative flex items-center justify-center h-full group bg-transparent border-none p-0 outline-none appearance-none cursor-pointer"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                minWidth: '72px',
+                padding: 0,
+              }}
             >
-              <div className={cn(
-                "relative z-10 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-500 ease-out",
-                isScanner 
-                   ? (isActive 
-                       ? "bg-white text-black scale-110 shadow-[0_0_30px_rgba(255,255,255,0.4)]" 
-                       : "bg-zinc-900 text-white hover:bg-zinc-800")
-                   : (isActive ? "text-white" : "text-white/20 group-hover:text-white/50")
-              )}>
-                <motion.div
-                  whileTap={{ scale: 0.8 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                  className="flex items-center justify-center text-inherit"
-                >
-                  <Icon className={cn("w-5 h-5", isScanner && "w-6 h-6")} />
-                </motion.div>
-                
-                {isActive && !isScanner && (
-                  <motion.div 
-                    layoutId="navIndicator"
-                    className="absolute -bottom-1 w-1 h-1 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,1)]"
-                  />
-                )}
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '12px',
+                background: isActive ? `rgba(${hexToRgbStr(tab.color)}, 0.15)` : 'transparent',
+                border: isActive ? `0.5px solid rgba(${hexToRgbStr(tab.color)}, 0.3)` : '0.5px solid transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isActive ? tab.color : '#444',
+                transition: 'all 0.2s',
+              }}>
+                {tab.icon}
               </div>
+              <span style={{
+                fontSize: '10px',
+                color: isActive ? tab.color : '#444',
+                fontWeight: isActive ? '500' : '400',
+                transition: 'color 0.2s',
+              }}>
+                {tab.label}
+              </span>
             </button>
           )
         })}
 
+        {/* Scanner FAB central */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '4px',
+          minWidth: '72px',
+          marginTop: '-20px',
+        }}>
+          <button
+            onClick={() => router.push('/scanner')}
+            style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #6366f1, #10b981)',
+              border: '3px solid #0d0d0d',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 6px 20px rgba(99,102,241,0.4)',
+              cursor: 'pointer',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M4 4H8M16 4H20M4 20H8M16 20H20M4 8V4H8M20 8V4H16M4 16V20H8M20 16V20H16"
+                stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+              <rect x="9" y="9" width="6" height="6" rx="1" fill="#fff" />
+            </svg>
+          </button>
+          <span style={{ fontSize: '10px', color: '#555' }}>Scanner</span>
+        </div>
+
+        {/* Tab droite : Profil */}
+        {tabs.slice(2).map((tab) => {
+          const isActive = pathname === tab.path
+          return (
+            <button
+              key={tab.id}
+              onClick={() => router.push(tab.path)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                minWidth: '72px',
+                padding: 0,
+              }}
+            >
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '12px',
+                background: isActive ? `rgba(${hexToRgbStr(tab.color)}, 0.15)` : 'transparent',
+                border: isActive ? `0.5px solid rgba(${hexToRgbStr(tab.color)}, 0.3)` : '0.5px solid transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isActive ? tab.color : '#444',
+                transition: 'all 0.2s',
+              }}>
+                {tab.icon}
+              </div>
+              <span style={{
+                fontSize: '10px',
+                color: isActive ? tab.color : '#444',
+                fontWeight: isActive ? '500' : '400',
+                transition: 'color 0.2s',
+              }}>
+                {tab.label}
+              </span>
+            </button>
+          )
+        })}
       </div>
-    </div>
+
+    </>
   )
 }
-
+
+function hexToRgbStr(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `${r},${g},${b}`
+}

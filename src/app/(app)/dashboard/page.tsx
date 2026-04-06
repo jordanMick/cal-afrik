@@ -11,10 +11,9 @@ export default function DashboardPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-    const { profile, todayMeals, setTodayMeals, removeMeal, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useAppStore()
+    const { profile, todayMeals, setTodayMeals, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
-    // Mis à jour à chaque arrivée sur la page pour refléter l'heure réelle
     const [currentHour, setCurrentHour] = useState(new Date().getHours())
 
     const calorieTarget = profile?.calorie_target || 2000
@@ -29,9 +28,7 @@ export default function DashboardPage() {
     const percent = getProgressPercent(dailyCalories, calorieTarget)
     const strokeDashoffset = circumference - (percent / 100) * circumference
 
-    useEffect(() => {
-        setCurrentHour(new Date().getHours())
-    }, [])
+    useEffect(() => { setCurrentHour(new Date().getHours()) }, [])
 
     const getCoachMessage = () => {
         const hour = currentHour
@@ -41,16 +38,12 @@ export default function DashboardPage() {
             const over = Math.round(dailyCalories - calorieTarget)
             return { emoji: '⚠️', text: `Tu as dépassé ton objectif de ${over} kcal. Essaie de rester léger pour le reste de la journée.` }
         }
-
         if (dailyCalories === 0) {
-            if (hour >= 0 && hour < 5) return { emoji: '🌙', text: `C'est une nouvelle journée ! Repose-toi bien et pense à un bon petit-déjeuner ce matin.` }
             if (hour >= 5 && hour < 10) return { emoji: '🌅', text: `Bonne journée ! Commence par un bon petit-déjeuner pour bien démarrer.` }
             if (hour >= 10 && hour < 14) return { emoji: '☀️', text: `Il est l'heure de déjeuner ! Tu n'as encore rien mangé aujourd'hui.` }
             if (hour >= 14 && hour < 17) return { emoji: '🥜', text: `L'après-midi est bien entamé. Pense à manger quelque chose.` }
-            if (hour >= 17 && hour < 23) return { emoji: '🌙', text: `Tu n'as rien mangé de la journée. Prends un bon dîner ce soir.` }
-            return { emoji: '🌙', text: `Nouvelle journée qui commence. Pense à bien manger demain matin !` }
+            return { emoji: '🌙', text: `Tu n'as rien mangé de la journée. Prends un bon dîner ce soir.` }
         }
-
         if (pctDone < 0.25) return { emoji: '💪', text: `Bon début ! Il te reste ${Math.round(remaining)} kcal. Continue à bien manger.` }
         if (pctDone < 0.60) {
             const remainingProtein = Math.max(0, proteinTarget - dailyProtein)
@@ -87,8 +80,7 @@ export default function DashboardPage() {
             if (!session) return
             const res = await fetch(`/api/meals?id=${mealId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
-            // ✅ removeMeal au lieu de setTodayMeals pour déclencher markSlotNeedsRefresh
-            if (json.success) removeMeal(mealId)
+            if (json.success) setTodayMeals(todayMeals.filter(m => m.id !== mealId))
         } catch (err) { console.error(err) }
     }
 
@@ -134,6 +126,7 @@ export default function DashboardPage() {
 
             {/* CARTE CALORIES */}
             <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', border: '0.5px solid #222', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
+                {/* ligne déco */}
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: exceeded ? 'linear-gradient(90deg, #ef4444, #f97316)' : 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)' }} />
                 <p style={{ color: '#555', fontSize: '12px', marginBottom: '8px' }}>Calories restantes</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

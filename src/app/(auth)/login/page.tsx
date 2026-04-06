@@ -164,38 +164,7 @@ export default function LoginPage() {
                                 outline: 'none', boxSizing: 'border-box',
                             }}
                         />
-
-                        <p
-                            onClick={async () => {
-                                if (!email) {
-                                    setError("Entre ton email d'abord")
-                                    return
-                                }
-
-                                const supabase = getSupabase()
-
-                                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                                    redirectTo: 'https://https://cal-afrik.vercel.app/reset-password',
-                                })
-
-                                if (error) {
-                                    setError(error.message)
-                                } else {
-                                    setError("Email de réinitialisation envoyé 📩")
-                                }
-                            }}
-                            style={{
-                                color: '#888',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                textAlign: 'right',
-                            }}
-                        >
-                            Mot de passe oublié ?
-                        </p>
                     </div>
-
-
 
                     {error && (
                         <div style={{
