@@ -236,9 +236,9 @@ export default function RapportPage() {
             const resWeight = await fetch('/api/user/weight_logs', { headers: { Authorization: `Bearer ${session.access_token}` } })
             const jsonWeight = await resWeight.json()
             if (jsonWeight.success && jsonWeight.data.length > 0) {
-                // On transforme les logs en format {date, weight} pour le graphique
+                // On garde l'horodatage complet pour distinguer plusieurs pesées le même jour
                 const history = jsonWeight.data.map((log: any) => ({
-                    date: log.logged_at.split('T')[0],
+                    date: log.logged_at,
                     weight: parseFloat(log.weight_kg)
                 }))
                 setWeightEntries(history)
@@ -275,13 +275,9 @@ export default function RapportPage() {
             setProfile({ ...profile, weight_kg: newWeight })
             localStorage.setItem('lastWeightDate', todayStr)
             
-            // Mettre à jour l'état local pour le graphique immédiatement
-            const newEntry = { date: todayStr, weight: newWeight }
-            setWeightEntries(prev => {
-                const exists = prev.find(e => e.date === todayStr)
-                if (exists) return prev.map(e => e.date === todayStr ? newEntry : e)
-                return [...prev, newEntry].sort((a, b) => a.date.localeCompare(b.date))
-            })
+            // On ajoute la nouvelle pesée à la liste au lieu de l'écraser
+            const newEntry = { date: new Date().toISOString(), weight: newWeight }
+            setWeightEntries(prev => [...prev, newEntry].sort((a, b) => a.date.localeCompare(b.date)))
         } catch (err) { console.error(err) }
     }
 
