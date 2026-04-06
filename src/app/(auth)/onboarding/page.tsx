@@ -9,7 +9,6 @@ import type { UserProfile } from '@/types'
 
 const STEPS = ['Identité', 'Corps', 'Objectif', 'Cuisine']
 
-// Couleur par step
 const STEP_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
 const STEP_BG = ['rgba(99,102,241,0.12)', 'rgba(16,185,129,0.12)', 'rgba(245,158,11,0.12)', 'rgba(236,72,153,0.12)']
 
@@ -31,21 +30,24 @@ const RESTRICTIONS = ['Halal', 'Sans porc', 'Végétarien', 'Sans gluten', 'Épi
 
 export default function OnboardingPage() {
     const router = useRouter()
-    const { setProfile } = useAppStore()
+    const { profile, setProfile } = useAppStore()
     const [step, setStep] = useState(0)
     const [isSaving, setIsSaving] = useState(false)
 
+    // Mode édition si un profil existe déjà
+    const isEditMode = !!profile
+
     const [form, setForm] = useState({
-        name: '',
-        country: 'TG',
-        age: '',
-        gender: 'homme' as 'homme' | 'femme' | 'autre',
-        weight_kg: '',
-        height_cm: '',
-        activity_level: 'modere' as UserProfile['activity_level'],
-        goal: 'maintenir' as UserProfile['goal'],
-        preferred_cuisines: [] as string[],
-        dietary_restrictions: [] as string[],
+        name: profile?.name || '',
+        country: profile?.country || 'TG',
+        age: profile?.age?.toString() || '',
+        gender: (profile?.gender as 'homme' | 'femme' | 'autre') || 'homme',
+        weight_kg: profile?.weight_kg?.toString() || '',
+        height_cm: profile?.height_cm?.toString() || '',
+        activity_level: (profile?.activity_level as UserProfile['activity_level']) || 'modere',
+        goal: (profile?.goal as UserProfile['goal']) || 'maintenir',
+        preferred_cuisines: profile?.preferred_cuisines || [] as string[],
+        dietary_restrictions: profile?.dietary_restrictions || [] as string[],
     })
 
     const update = (key: string, value: any) =>
@@ -64,6 +66,10 @@ export default function OnboardingPage() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
+
+    const handleCancel = () => {
+        router.push('/profil')
+    }
 
     const handleFinish = async () => {
         setIsSaving(true)
@@ -101,7 +107,7 @@ export default function OnboardingPage() {
                 return
             }
 
-            const { data: profile, error } = await supabase
+            const { data: updatedProfile, error } = await supabase
                 .from('user_profiles')
                 .upsert(
                     { user_id: session.user.id, ...profileData },
@@ -109,10 +115,11 @@ export default function OnboardingPage() {
                 )
                 .select()
                 .single()
+
             if (error) { alert('Erreur: ' + error.message); return }
 
-            setProfile(profile)
-            router.push('/dashboard')
+            setProfile(updatedProfile)
+            router.push(isEditMode ? '/profil' : '/dashboard')
         } catch (err) {
             console.error('Erreur:', err)
             alert('Erreur lors de la sauvegarde')
@@ -175,15 +182,53 @@ export default function OnboardingPage() {
             }} />
 
             {/* HEADER */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '36px' }}>
-                <div style={{
-                    width: '34px', height: '34px', borderRadius: '10px',
-                    background: `linear-gradient(135deg, ${activeColor}, ${STEP_COLORS[(step + 1) % 4]})`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '17px', transition: 'background 0.4s ease',
-                }}>🌍</div>
-                <span style={{ color: '#fff', fontSize: '18px', fontWeight: '600' }}>Cal Afrik</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '36px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                        width: '34px', height: '34px', borderRadius: '10px',
+                        background: `linear-gradient(135deg, ${activeColor}, ${STEP_COLORS[(step + 1) % 4]})`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '17px', transition: 'background 0.4s ease',
+                    }}>🌍</div>
+                    <span style={{ color: '#fff', fontSize: '18px', fontWeight: '600' }}>Cal Afrik</span>
+                </div>
+
+                {/* Bouton Annuler visible uniquement en mode édition */}
+                {isEditMode && (
+                    <button
+                        onClick={handleCancel}
+                        style={{
+                            background: '#141414',
+                            border: '0.5px solid #2a2a2a',
+                            borderRadius: '10px',
+                            color: '#666',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            padding: '8px 14px',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        Annuler
+                    </button>
+                )}
             </div>
+
+            {/* Badge mode édition */}
+            {isEditMode && (
+                <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 12px',
+                    background: 'rgba(99,102,241,0.1)',
+                    border: '0.5px solid rgba(99,102,241,0.25)',
+                    borderRadius: '20px',
+                    marginBottom: '20px',
+                }}>
+                    <span style={{ fontSize: '11px' }}>✏️</span>
+                    <span style={{ color: '#6366f1', fontSize: '12px', fontWeight: '500' }}>
+                        Modification du profil
+                    </span>
+                </div>
+            )}
 
             {/* PROGRESS STEPS */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '36px' }}>
@@ -216,7 +261,7 @@ export default function OnboardingPage() {
                             <span style={{ color: STEP_COLORS[0], fontSize: '11px', fontWeight: '600' }}>Étape 1 / 4</span>
                         </div>
                         <h2 style={{ color: '#fff', fontSize: '24px', fontWeight: '700', marginBottom: '6px', letterSpacing: '-0.3px' }}>
-                            Comment vous appelez-vous ?
+                            {isEditMode ? 'Votre identité' : 'Comment vous appelez-vous ?'}
                         </h2>
                         <p style={{ color: '#555', fontSize: '14px' }}>Dites-nous qui vous êtes</p>
                     </div>
@@ -475,14 +520,23 @@ export default function OnboardingPage() {
                 background: 'linear-gradient(to top, #0a0a0a 80%, transparent)',
                 display: 'flex', gap: '10px',
             }}>
-                {step > 0 && (
+                {/* Annuler (step 0 en mode édition) ou Retour (steps suivants) */}
+                {step === 0 && isEditMode ? (
+                    <button onClick={handleCancel} style={{
+                        flex: 1, height: '48px',
+                        background: '#141414', border: '0.5px solid #2a2a2a',
+                        borderRadius: '12px', color: '#666',
+                        fontSize: '14px', fontWeight: '500', cursor: 'pointer',
+                    }}>Annuler</button>
+                ) : step > 0 ? (
                     <button onClick={() => setStep(step - 1)} style={{
                         flex: 1, height: '48px',
                         background: '#141414', border: '0.5px solid #222',
                         borderRadius: '12px', color: '#fff',
                         fontSize: '14px', fontWeight: '500', cursor: 'pointer',
                     }}>← Retour</button>
-                )}
+                ) : null}
+
                 <button
                     onClick={() => step < STEPS.length - 1 ? setStep(step + 1) : handleFinish()}
                     disabled={isSaving}
@@ -499,7 +553,9 @@ export default function OnboardingPage() {
                     }}>
                     {step < STEPS.length - 1
                         ? 'Continuer →'
-                        : isSaving ? 'Création...' : 'Commencer 🚀'}
+                        : isSaving
+                            ? 'Sauvegarde...'
+                            : isEditMode ? 'Enregistrer ✓' : 'Commencer 🚀'}
                 </button>
             </div>
         </div>
