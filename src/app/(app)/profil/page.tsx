@@ -124,71 +124,6 @@ export default function ProfilPage() {
 
             <div style={{ padding: '52px 20px 24px' }}>
                 <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '500', marginBottom: '20px' }}>Mon profil</h1>
-
-                {/* BILAN FIN DE JOURNÉE */}
-                {showBilan && (
-                    <div style={{
-                        background: '#161616',
-                        border: bilanStatus === 'empty' ? '0.5px solid #2a2a2a' : '0.5px solid #fff',
-                        borderRadius: '16px',
-                        padding: '16px',
-                        marginBottom: '20px',
-                    }}>
-                        {bilanStatus === 'loading' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span style={{ fontSize: '20px' }}>⏳</span>
-                                <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>
-                                    Génération de ton bilan du jour...
-                                </p>
-                            </div>
-                        )}
-                        {bilanStatus === 'empty' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span style={{ fontSize: '24px' }}>🍽️</span>
-                                <div>
-                                    <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>Aucun repas aujourd'hui</p>
-                                    <p style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>Scanne tes repas pour obtenir un bilan personnalisé</p>
-                                </div>
-                            </div>
-                        )}
-                        {bilanStatus === 'done' && bilanMessage && (
-                            <>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                                    <span style={{ fontSize: '24px' }}>{bilanEmoji}</span>
-                                    <div>
-                                        <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>{bilanTitle}</p>
-                                        <p style={{ color: '#555', fontSize: '12px' }}>Bilan du jour</p>
-                                    </div>
-                                </div>
-                                <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '14px' }}>{bilanMessage}</p>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                    {[
-                                        { label: 'Calories', current: realDailyCalories, target: calorieTarget, unit: 'kcal' },
-                                        { label: 'Protéines', current: realDailyProtein, target: proteinTarget, unit: 'g' },
-                                        { label: 'Glucides', current: realDailyCarbs, target: carbsTarget, unit: 'g' },
-                                        { label: 'Lipides', current: realDailyFat, target: fatTarget, unit: 'g' },
-                                    ].map(stat => (
-                                        <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px' }}>
-                                            <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
-                                                {stat.current}
-                                                <span style={{ color: '#444', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
-                                            </p>
-                                            <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '6px 0 4px' }}>
-                                                <div style={{
-                                                    height: '100%', borderRadius: '2px',
-                                                    width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`,
-                                                    background: '#fff'
-                                                }} />
-                                            </div>
-                                            <p style={{ color: '#555', fontSize: '11px' }}>{stat.label}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-
                 {/* AVATAR */}
                 <div style={{ ...card, display: 'flex', alignItems: 'center', gap: '14px' }}>
                     <div style={{
@@ -207,6 +142,72 @@ export default function ProfilPage() {
                     </div>
                 </div>
             </div>
+
+            {/* BILAN FIN DE JOURNÉE */}
+            {showBilan && (
+                <div style={{
+                    background: '#161616',
+                    border: bilanStatus === 'empty' ? '0.5px solid #2a2a2a' : '0.5px solid #fff',
+                    borderRadius: '16px',
+                    padding: '16px',
+                    marginBottom: '20px',
+                }}>
+                    {bilanStatus === 'loading' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '20px' }}>⏳</span>
+                            <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>
+                                Génération de ton bilan du jour...
+                            </p>
+                        </div>
+                    )}
+                    {bilanStatus === 'empty' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '24px' }}>🍽️</span>
+                            <div>
+                                <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>Aucun repas aujourd'hui</p>
+                                <p style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>Scanne tes repas pour obtenir un bilan personnalisé</p>
+                            </div>
+                        </div>
+                    )}
+                    {bilanStatus === 'done' && bilanMessage && (
+                        <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                                <span style={{ fontSize: '24px' }}>{bilanEmoji}</span>
+                                <div>
+                                    <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>{bilanTitle}</p>
+                                    <p style={{ color: '#555', fontSize: '12px' }}>Bilan du jour</p>
+                                </div>
+                            </div>
+                            <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '14px' }}>{bilanMessage}</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                {[
+                                    { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal' },
+                                    { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g' },
+                                    { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g' },
+                                    { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g' },
+                                ].map(stat => (
+                                    <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px' }}>
+                                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
+                                            {stat.current}
+                                            <span style={{ color: '#444', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
+                                        </p>
+                                        <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '6px 0 4px' }}>
+                                            <div style={{
+                                                height: '100%', borderRadius: '2px',
+                                                width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`,
+                                                background: '#fff'
+                                            }} />
+                                        </div>
+                                        <p style={{ color: '#555', fontSize: '11px' }}>{stat.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
+
 
             <div style={{ padding: '0 20px' }}>
 
