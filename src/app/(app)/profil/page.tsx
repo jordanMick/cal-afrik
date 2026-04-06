@@ -18,10 +18,10 @@ function getActiveBilanSlot(hour: number): MealSlotKey | null {
 }
 
 function getNextSlotInfo(hour: number): { label: string; time: string } {
-    if (hour >= 8 && hour < 12)  return { label: 'Petit-déjeuner', time: '12h00' }
-    if (hour >= 12 && hour < 16) return { label: 'Déjeuner',       time: '16h00' }
-    if (hour >= 16 && hour < 19) return { label: 'Collation',      time: '19h00' }
-    if (hour >= 19 && hour < 23) return { label: 'Dîner',          time: '23h00' }
+    if (hour >= 8 && hour < 12) return { label: 'Petit-déjeuner', time: '12h00' }
+    if (hour >= 12 && hour < 16) return { label: 'Déjeuner', time: '16h00' }
+    if (hour >= 16 && hour < 19) return { label: 'Collation', time: '19h00' }
+    if (hour >= 19 && hour < 23) return { label: 'Dîner', time: '23h00' }
     return { label: 'Petit-déjeuner', time: '12h00' }
 }
 
@@ -103,10 +103,10 @@ export default function ProfilPage() {
                 <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', marginBottom: '24px', letterSpacing: '-0.5px' }}>Mon Profil</h1>
 
                 {/* BLOC PROFIL CONSOLIDÉ */}
-                <div style={{ 
-                    background: '#141414', 
-                    borderRadius: '24px', 
-                    padding: '20px', 
+                <div style={{
+                    background: '#141414',
+                    borderRadius: '24px',
+                    padding: '20px',
                     marginBottom: '20px',
                     border: '0.5px solid #222',
                     position: 'relative',
@@ -115,12 +115,12 @@ export default function ProfilPage() {
                 }}>
                     {/* Décoration en arrière-plan */}
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
-                    
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
-                        <div style={{ 
-                            width: '68px', height: '68px', borderRadius: '22px', 
-                            background: 'linear-gradient(135deg, #6366f1, #ec4899)', 
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        <div style={{
+                            width: '68px', height: '68px', borderRadius: '22px',
+                            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '30px', fontWeight: 'bold', color: '#fff',
                             boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
                             flexShrink: 0
@@ -132,8 +132,8 @@ export default function ProfilPage() {
                             <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ opacity: 0.7 }}>🎯</span> {GOAL_LABELS[profile?.goal || ''] || 'Définir un objectif'}
                             </p>
-                            <div style={{ 
-                                display: 'inline-flex', padding: '4px 10px', borderRadius: '10px', 
+                            <div style={{
+                                display: 'inline-flex', padding: '4px 10px', borderRadius: '10px',
                                 background: profile?.subscription_tier === 'pro' ? 'rgba(99,102,241,0.15)' : profile?.subscription_tier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
                                 color: profile?.subscription_tier === 'pro' ? '#818cf8' : profile?.subscription_tier === 'premium' ? '#34d399' : '#888',
                                 fontSize: '10px', fontWeight: '900', letterSpacing: '0.8px', border: '0.5px solid rgba(255,255,255,0.08)',
@@ -147,7 +147,7 @@ export default function ProfilPage() {
 
                 {/* BANNIÈRE UPGRADE SI FREE */}
                 {(!profile?.subscription_tier || profile?.subscription_tier === 'free') && (
-                    <div 
+                    <div
                         onClick={() => router.push('/upgrade')}
                         style={{
                             marginBottom: '28px',

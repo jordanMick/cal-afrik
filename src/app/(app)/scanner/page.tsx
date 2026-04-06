@@ -379,7 +379,38 @@ export default function ScannerPage() {
 
                         {showCoach && (
                             <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
-                                {isLoadingCoach ? <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Analyse en cours...</p> : <p style={{ color: '#ccc', fontSize: '13px', lineHeight: '1.6' }}>{coachMessage}</p>}
+                                {isLoadingCoach ? <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Analyse en cours...</p> : (
+                                    /* CONSEIL DU COACH - RÉSERVÉ PREMIUM */
+                                    coachMessage && (
+                                        <div style={{ marginTop: '20px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                <span style={{ fontSize: '18px' }}>🤖</span>
+                                                <span style={{ color: '#f59e0b', fontSize: '14px', fontWeight: '600' }}>Conseil du coach</span>
+                                            </div>
+                                            
+                                            {checkPermission(profile, 'hasCoachKofi') ? (
+                                                <div style={{ background: 'rgba(245,158,11,0.05)', border: '0.5px solid rgba(245,158,11,0.2)', borderRadius: '14px', padding: '16px' }}>
+                                                    <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
+                                                </div>
+                                            ) : (
+                                                <div 
+                                                    onClick={() => router.push('/upgrade')}
+                                                    style={{ 
+                                                        background: 'rgba(255,255,255,0.03)', 
+                                                        border: '0.5px dashed #333', 
+                                                        borderRadius: '14px', 
+                                                        padding: '16px',
+                                                        cursor: 'pointer',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                    <p style={{ color: '#666', fontSize: '13px', fontStyle: 'italic' }}>
+                                                        ⭐ Passez au plan Premium pour débloquer les conseils personnalisés du Coach Kofi
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                )}
                             </div>
                         )}
 
