@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -12,17 +12,11 @@ export default function LoginPage() {
     const [error, setError] = useState('')
     const [isRegister, setIsRegister] = useState(false)
 
-    const getSupabase = () => createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
         setError('')
         try {
-            const supabase = getSupabase()
             if (isRegister) {
                 const { error } = await supabase.auth.signUp({ email, password })
                 if (error) { setError(error.message); return }

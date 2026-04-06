@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { calculateCalorieTarget } from '@/lib/nutrition'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 import type { UserProfile } from '@/types'
 
 const STEPS = ['Identité', 'Corps', 'Objectif', 'Cuisine']
@@ -62,11 +62,6 @@ export default function OnboardingPage() {
         }))
     }
 
-    const getSupabase = () => createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
     const handleCancel = () => {
         router.push('/profil')
     }
@@ -98,7 +93,6 @@ export default function OnboardingPage() {
                 ...targets,
             }
 
-            const supabase = getSupabase()
             const { data: { session } } = await supabase.auth.getSession()
 
             if (!session) {
@@ -117,6 +111,18 @@ export default function OnboardingPage() {
                 .single()
 
             if (error) { alert('Erreur: ' + error.message); return }
+
+            // AJOUT : Enregistrer aussi dans l'historique de poids (weight_logs)
+            if (form.weight_kg) {
+                await fetch('/api/user/weight_logs', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ weight_kg: Number(form.weight_kg) })
+                })
+            }
 
             setProfile(updatedProfile)
             router.push(isEditMode ? '/profil' : '/dashboard')
