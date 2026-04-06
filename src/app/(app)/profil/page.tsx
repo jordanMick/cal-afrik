@@ -100,45 +100,46 @@ export default function ProfilPage() {
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div style={{ padding: '52px 20px 24px' }}>
-                <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '600', marginBottom: '20px' }}>Mon profil</h1>
+                <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', marginBottom: '24px', letterSpacing: '-0.5px' }}>Mon Profil</h1>
 
-                {/* AVATAR CARD */}
-                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b, #ec4899)' }} />
-                    <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'linear-gradient(135deg, #6366f1, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '700', color: '#fff', flexShrink: 0 }}>
-                        {profile?.name?.[0] || 'U'}
-                    </div>
-                    <div>
-                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '600' }}>{profile?.name || 'Utilisateur'}</p>
-                        <p style={{ color: '#555', fontSize: '13px', marginTop: '2px' }}>{profile?.country || '—'} · {profile?.goal ? GOAL_LABELS[profile.goal] : 'Objectif non défini'}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* BILAN CRÉNEAU */}
-            {activeSlot ? (
-                <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'empty' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
-                    {bilanStatus !== 'empty' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
-
-                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'linear-gradient(135deg, #1f1f1f, #151515)', border: '0.5px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>👤</div>
-                        <div>
-                            <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <div style={{ 
-                                    padding: '2px 8px', 
-                                    borderRadius: '6px', 
-                                    background: profile?.subscription_tier === 'pro' ? 'rgba(99,102,241,0.15)' : profile?.subscription_tier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                                    color: profile?.subscription_tier === 'pro' ? '#818cf8' : profile?.subscription_tier === 'premium' ? '#34d399' : '#666',
-                                    fontSize: '10px', 
-                                    fontWeight: '800', 
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px',
-                                    border: `0.5px solid ${profile?.subscription_tier === 'pro' ? 'rgba(99,102,241,0.3)' : profile?.subscription_tier === 'premium' ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}`
-                                }}>
-                                    PLAN {profile?.subscription_tier || 'FREE'}
-                                </div>
+                {/* BLOC PROFIL CONSOLIDÉ */}
+                <div style={{ 
+                    background: '#141414', 
+                    borderRadius: '24px', 
+                    padding: '20px', 
+                    marginBottom: '20px',
+                    border: '0.5px solid #222',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                }}>
+                    {/* Décoration en arrière-plan */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
+                        <div style={{ 
+                            width: '68px', height: '68px', borderRadius: '22px', 
+                            background: 'linear-gradient(135deg, #6366f1, #ec4899)', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            fontSize: '30px', fontWeight: 'bold', color: '#fff',
+                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                            flexShrink: 0
+                        }}>
+                            {profile?.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
+                            <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ opacity: 0.7 }}>🎯</span> {GOAL_LABELS[profile?.goal || ''] || 'Définir un objectif'}
+                            </p>
+                            <div style={{ 
+                                display: 'inline-flex', padding: '4px 10px', borderRadius: '10px', 
+                                background: profile?.subscription_tier === 'pro' ? 'rgba(99,102,241,0.15)' : profile?.subscription_tier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                                color: profile?.subscription_tier === 'pro' ? '#818cf8' : profile?.subscription_tier === 'premium' ? '#34d399' : '#888',
+                                fontSize: '10px', fontWeight: '900', letterSpacing: '0.8px', border: '0.5px solid rgba(255,255,255,0.08)',
+                                textTransform: 'uppercase'
+                            }}>
+                                PLAN {(profile?.subscription_tier || 'FREE')}
                             </div>
                         </div>
                     </div>
@@ -149,26 +150,33 @@ export default function ProfilPage() {
                     <div 
                         onClick={() => router.push('/upgrade')}
                         style={{
-                            marginBottom: '24px',
-                            padding: '16px',
-                            borderRadius: '16px',
+                            marginBottom: '28px',
+                            padding: '18px',
+                            borderRadius: '24px',
                             background: 'linear-gradient(135deg, #6366f1, #10b981)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             cursor: 'pointer',
-                            boxShadow: '0 8px 20px rgba(99,102,241,0.2)'
+                            boxShadow: '0 12px 24px -10px rgba(99,102,241,0.5)',
+                            transition: 'all 0.2s ease',
                         }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <span style={{ fontSize: '24px' }}>🚀</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🚀</div>
                             <div>
-                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700' }}>Passez à Cal-Afrik Pro</p>
-                                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px' }}>Débloquez les graphiques et le scan illimité</p>
+                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800' }}>Passez à Cal-Afrik Pro</p>
+                                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '500' }}>Plus de scans, plus de graphiques</p>
                             </div>
                         </div>
-                        <span style={{ color: '#fff', fontSize: '18px' }}>→</span>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>→</div>
                     </div>
                 )}
+            </div>
+
+            {/* BILAN CRÉNEAU */}
+            {activeSlot ? (
+                <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'empty' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
+                    {bilanStatus !== 'empty' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
