@@ -17,14 +17,27 @@ export default function ResetPasswordPage() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     useEffect(() => {
-        const hash = window.location.hash
+        const handleSession = async () => {
+            const hash = window.location.hash
 
-        if (hash) {
-            supabase.auth.setSession({
-                access_token: new URLSearchParams(hash.replace('#', '')).get('access_token')!,
-                refresh_token: new URLSearchParams(hash.replace('#', '')).get('refresh_token')!,
-            })
+            if (hash) {
+                const access_token = new URLSearchParams(hash.replace('#', '')).get('access_token')
+                const refresh_token = new URLSearchParams(hash.replace('#', '')).get('refresh_token')
+
+                if (access_token && refresh_token) {
+                    const { error } = await supabase.auth.setSession({
+                        access_token,
+                        refresh_token,
+                    })
+
+                    if (error) {
+                        console.error("Erreur session:", error.message)
+                    }
+                }
+            }
         }
+
+        handleSession()
     }, [])
 
     const handleReset = async () => {
@@ -44,7 +57,7 @@ export default function ResetPasswordPage() {
         } else {
             setMessage("Mot de passe mis à jour ✅")
             setTimeout(() => {
-                router.push('/')
+                router.push('/login')
             }, 2000)
         }
 
