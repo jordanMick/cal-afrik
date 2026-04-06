@@ -26,6 +26,7 @@ export default function DashboardPage() {
     const exceeded = dailyCalories > calorieTarget
 
     const [isRenewing, setIsRenewing] = useState(false)
+    const [isDismissed, setIsDismissed] = useState(false)
 
     const handleRenew = async () => {
         if (effectiveTier === 'free') return;
@@ -42,7 +43,7 @@ export default function DashboardPage() {
 
             const data = await res.json();
             if (!res.ok || !data.success) throw new Error(data.error || 'Erreur de paiement');
-            
+
             window.location.href = data.url;
         } catch (error: any) {
             alert(`Erreur: ${error.message}`);
@@ -166,7 +167,7 @@ export default function DashboardPage() {
             </div>
 
             {/* ALERTE EXPIRATION */}
-            {isExpiringSoon && (
+            {isExpiringSoon && !isDismissed && (
                 <div 
                     onClick={isRenewing ? undefined : handleRenew}
                     style={{
@@ -180,7 +181,8 @@ export default function DashboardPage() {
                         justifyContent: 'space-between',
                         cursor: isRenewing ? 'default' : 'pointer',
                         animation: isRenewing ? 'none' : 'pulse 2s infinite',
-                        opacity: isRenewing ? 0.7 : 1
+                        opacity: isRenewing ? 0.7 : 1,
+                        position: 'relative'
                     }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ fontSize: '20px' }}>{isRenewing ? '⏳' : '⚠️'}</span>
@@ -189,11 +191,31 @@ export default function DashboardPage() {
                                 {isRenewing ? 'Préparation du paiement...' : `Abonnement ${effectiveTier.toUpperCase()} expire bientôt`}
                             </p>
                             <p style={{ color: 'rgba(239,68,68,0.7)', fontSize: '11px' }}>
-                                {isRenewing ? 'Veuillez patienter' : `Il ne vous reste que ${daysLeft} jours d'accès Coach Kofi.`}
+                                {isRenewing ? 'Veuillez patienter' : `Il ne vous reste que ${daysLeft} jours d'accès.`}
                             </p>
                         </div>
                     </div>
-                    {!isRenewing && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>→</span>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {!isRenewing && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>→</span>}
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsDismissed(true);
+                            }}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'rgba(239,68,68,0.5)',
+                                fontSize: '18px',
+                                padding: '4px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                            ✕
+                        </button>
+                    </div>
                 </div>
             )}
 
