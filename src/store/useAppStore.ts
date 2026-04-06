@@ -25,6 +25,21 @@ export const SLOT_PCT: Record<MealSlotKey, number> = {
     diner: 0.30,
 }
 
+// Créneau suivant pour les conseils
+export const NEXT_SLOT: Partial<Record<MealSlotKey, MealSlotKey>> = {
+    petit_dejeuner: 'dejeuner',
+    dejeuner: 'collation',
+    collation: 'diner',
+}
+
+// Heure à partir de laquelle le bilan du créneau est disponible
+export const SLOT_BILAN_HOUR: Record<MealSlotKey, number> = {
+    petit_dejeuner: 12,
+    dejeuner: 16,
+    collation: 19,
+    diner: 23,
+}
+
 const SLOT_ORDER: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
 
 interface SlotState {
@@ -32,6 +47,15 @@ interface SlotState {
     consumed: number
     remaining: number
     locked: boolean
+}
+
+// Cache d'un bilan par créneau
+export interface SlotBilan {
+    message: string
+    goalReached: boolean
+    exceeded: boolean
+    date: string // YYYY-MM-DD pour savoir si c'est encore valide
+    needsRefresh: boolean
 }
 
 interface AppState {
@@ -51,22 +75,10 @@ interface AppState {
     lastCoachMessage: string | null
     setLastCoachMessage: (msg: string) => void
 
-    // ─── Bilan ───────────────────────────────────────────────
-    bilanSeenDate: string | null
-    setBilanSeenDate: (date: string) => void
-
-    bilanMessage: string | null
-    setBilanMessage: (msg: string) => void
-
-    bilanGoalReached: boolean
-    setBilanGoalReached: (v: boolean) => void
-
-    bilanExceeded: boolean
-    setBilanExceeded: (v: boolean) => void
-
-    // true = repas ajouté/supprimé depuis le dernier bilan → régénérer au prochain affichage
-    bilanNeedsRefresh: boolean
-    setBilanNeedsRefresh: (v: boolean) => void
+    // ─── Bilans par créneau ──────────────────────────────────
+    slotBilans: Partial<Record<MealSlotKey, SlotBilan>>
+    setSlotBilan: (slot: MealSlotKey, bilan: SlotBilan) => void
+    markSlotNeedsRefresh: (slot: MealSlotKey) => void
 
     // ─── Slots nutritionnels ─────────────────────────────────
     slots: Record<MealSlotKey, SlotState>
@@ -133,8 +145,10 @@ export const useAppStore = create<AppState>()(
                 const slot = getMealSlot(hour)
                 get().updateSlotOnAdd(slot, meal.calories)
 
-                // Marquer le bilan comme à régénérer après ce changement
-                set({ bilanNeedsRefresh: true })
+                // Invalider le bilan du créneau concerné et tous les suivants
+                const slotIndex = SLOT_ORDER.indexOf(slot)
+                const slotsToInvalidate = SLOT_ORDER.slice(slotIndex)
+                slotsToInvalidate.forEach(s => get().markSlotNeedsRefresh(s))
             },
 
             removeMeal: (mealId) => {
@@ -148,10 +162,11 @@ export const useAppStore = create<AppState>()(
                     const hour = new Date(meal.logged_at).getHours()
                     const slot = getMealSlot(hour)
                     get().updateSlotOnRemove(slot, meal.calories)
-                }
 
-                // Marquer le bilan comme à régénérer après ce changement
-                set({ bilanNeedsRefresh: true })
+                    const slotIndex = SLOT_ORDER.indexOf(slot)
+                    const slotsToInvalidate = SLOT_ORDER.slice(slotIndex)
+                    slotsToInvalidate.forEach(s => get().markSlotNeedsRefresh(s))
+                }
             },
 
             updateSlotOnAdd: (slot, calories) => {
@@ -216,20 +231,22 @@ export const useAppStore = create<AppState>()(
             lastCoachMessage: null,
             setLastCoachMessage: (msg) => set({ lastCoachMessage: msg }),
 
-            bilanSeenDate: null,
-            setBilanSeenDate: (date) => set({ bilanSeenDate: date }),
-
-            bilanMessage: null,
-            setBilanMessage: (msg) => set({ bilanMessage: msg }),
-
-            bilanGoalReached: false,
-            setBilanGoalReached: (v) => set({ bilanGoalReached: v }),
-
-            bilanExceeded: false,
-            setBilanExceeded: (v) => set({ bilanExceeded: v }),
-
-            bilanNeedsRefresh: false,
-            setBilanNeedsRefresh: (v) => set({ bilanNeedsRefresh: v }),
+            slotBilans: {},
+            setSlotBilan: (slot, bilan) =>
+                set((state) => ({
+                    slotBilans: { ...state.slotBilans, [slot]: bilan }
+                })),
+            markSlotNeedsRefresh: (slot) =>
+                set((state) => {
+                    const existing = state.slotBilans[slot]
+                    if (!existing) return state
+                    return {
+                        slotBilans: {
+                            ...state.slotBilans,
+                            [slot]: { ...existing, needsRefresh: true }
+                        }
+                    }
+                }),
 
             dailyCalories: 0,
             dailyProtein: 0,
@@ -259,11 +276,7 @@ export const useAppStore = create<AppState>()(
         {
             name: 'app-storage',
             partialize: (state) => ({
-                bilanSeenDate: state.bilanSeenDate,
-                bilanMessage: state.bilanMessage,
-                bilanGoalReached: state.bilanGoalReached,
-                bilanExceeded: state.bilanExceeded,
-                bilanNeedsRefresh: state.bilanNeedsRefresh,
+                slotBilans: state.slotBilans,
             }),
         }
     )

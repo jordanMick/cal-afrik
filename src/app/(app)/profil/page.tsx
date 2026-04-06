@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, MealSlotKey, SLOT_LABELS, SLOT_BILAN_HOUR, NEXT_SLOT } from '@/store/useAppStore'
 import { useRouter } from 'next/navigation'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
@@ -28,16 +28,22 @@ const card: React.CSSProperties = {
     marginBottom: '10px',
 }
 
+// Détermine quel créneau doit afficher son bilan en ce moment
+function getActiveBilanSlot(hour: number): MealSlotKey | null {
+    if (hour >= 23 || hour < 8) return 'diner'      // bilan de nuit (23h → 8h)
+    if (hour >= 19 && hour < 23) return 'collation'  // bilan collation (19h → 23h)
+    if (hour >= 16 && hour < 19) return 'dejeuner'   // bilan déjeuner (16h → 19h)
+    if (hour >= 12 && hour < 16) return 'petit_dejeuner' // bilan petit-déj (12h → 16h)
+    return null
+}
+
 export default function ProfilPage() {
     const router = useRouter()
     const {
         profile,
         dailyCalories, dailyProtein, dailyCarbs, dailyFat,
-        bilanSeenDate, setBilanSeenDate,
-        bilanMessage, setBilanMessage,
-        bilanGoalReached, setBilanGoalReached,
-        bilanExceeded, setBilanExceeded,
-        bilanNeedsRefresh, setBilanNeedsRefresh,
+        slots, slotBilans, setSlotBilan,
+        todayMeals,
     } = useAppStore()
 
     const calorieTarget = profile?.calorie_target || 2000
@@ -50,83 +56,115 @@ export default function ProfilPage() {
     const today = now.toISOString().split('T')[0]
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
-    const isAfter23 = hour >= 23
+    // Pour le bilan diner (23h→8h), la date de référence est hier si on est avant 8h
     const isBefore8 = hour < 8
-    const bilanDate = isBefore8 ? yesterday : today
+    const bilanDinerDate = isBefore8 ? yesterday : today
 
-    // Le bilan doit s'afficher si :
-    // 1. On est dans la fenêtre horaire (23h-8h)
-    // 2. ET soit c'est la première fois (bilanSeenDate !== bilanDate)
-    //    soit un repas a changé depuis (bilanNeedsRefresh)
-    const inBilanWindow = isAfter23 || isBefore8
-    const shouldGenerate = inBilanWindow && (bilanSeenDate !== bilanDate || bilanNeedsRefresh)
-    const shouldShowExisting = inBilanWindow && bilanSeenDate === bilanDate && !!bilanMessage && !bilanNeedsRefresh
+    const activeSlot = getActiveBilanSlot(hour)
+    const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
 
-    const [showBilan, setShowBilan] = useState(shouldGenerate || shouldShowExisting)
+    const existingBilan = activeSlot ? slotBilans[activeSlot] : null
+    const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh
+    const shouldGenerate = !!activeSlot && !bilanIsValid
+    const shouldShowExisting = !!activeSlot && bilanIsValid
+
     const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(
         shouldShowExisting ? 'done' : null
     )
 
     useEffect(() => {
         if (shouldGenerate) {
-            setShowBilan(true)
-            loadBilan()
+            loadBilan(activeSlot!)
         } else if (shouldShowExisting) {
-            setShowBilan(true)
             setBilanStatus('done')
         }
     }, [])
 
-    const loadBilan = async () => {
+    const loadBilan = async (slot: MealSlotKey) => {
+        // Si aucun repas dans ce créneau et ce n'est pas le bilan de fin de journée
+        const slotMeals = slot !== 'diner'
+            ? todayMeals.filter(m => {
+                const h = new Date(m.logged_at).getHours()
+                if (slot === 'petit_dejeuner') return h >= 0 && h < 12
+                if (slot === 'dejeuner') return h >= 12 && h < 16
+                if (slot === 'collation') return h >= 16 && h < 19
+                return false
+            })
+            : todayMeals
+
+        if (slot !== 'diner' && slotMeals.length === 0) {
+            setBilanStatus('empty')
+            setSlotBilan(slot, { message: '', goalReached: false, exceeded: false, date: bilanDate, needsRefresh: false })
+            return
+        }
+
         setBilanStatus('loading')
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
+            const slotData = slots[slot]
+            const nextSlot = NEXT_SLOT[slot]
+
             const res = await fetch('/api/bilan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                body: JSON.stringify({ calorieTarget, proteinTarget, carbsTarget, fatTarget, goal: profile?.goal || 'maintenir' })
+                body: JSON.stringify({
+                    type: slot === 'diner' ? 'journee' : 'creneau',
+                    slot,
+                    slotLabel: SLOT_LABELS[slot],
+                    nextSlotLabel: nextSlot ? SLOT_LABELS[nextSlot] : null,
+                    // Données du créneau
+                    slotConsumed: slotData.consumed,
+                    slotTarget: slotData.target,
+                    // Données globales (pour le bilan diner)
+                    dailyCalories,
+                    dailyProtein,
+                    dailyCarbs,
+                    dailyFat,
+                    calorieTarget,
+                    proteinTarget,
+                    carbsTarget,
+                    fatTarget,
+                    goal: profile?.goal || 'maintenir',
+                    meals: slotMeals.map(m => ({ name: m.custom_name || 'Repas', calories: m.calories })),
+                })
             })
 
             const json = await res.json()
 
             if (!json.success) {
-                setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
-                setBilanGoalReached(false)
-                setBilanExceeded(false)
+                const fallback = slot === 'diner'
+                    ? 'Belle journée ! Repose-toi bien. 💪'
+                    : `Bilan ${SLOT_LABELS[slot]} non disponible.`
+                setSlotBilan(slot, { message: fallback, goalReached: false, exceeded: false, date: bilanDate, needsRefresh: false })
                 setBilanStatus('done')
-                setBilanSeenDate(bilanDate)
-                setBilanNeedsRefresh(false)
                 return
             }
 
-            if (json.empty) {
-                setBilanStatus('empty')
-                setBilanSeenDate(bilanDate)
-                setBilanNeedsRefresh(false)
-                return
-            }
-
-            setBilanMessage(json.message)
-            setBilanGoalReached(json.goalReached)
-            setBilanExceeded(json.exceeded)
+            setSlotBilan(slot, {
+                message: json.message,
+                goalReached: json.goalReached,
+                exceeded: json.exceeded,
+                date: bilanDate,
+                needsRefresh: false,
+            })
             setBilanStatus('done')
-            setBilanSeenDate(bilanDate)
-            setBilanNeedsRefresh(false) // ✅ Réinitialiser après génération
         } catch (err) {
             console.error(err)
-            setBilanMessage('Belle journée ! Reviens demain pour continuer. 💪')
-            setBilanGoalReached(false)
-            setBilanExceeded(false)
             setBilanStatus('done')
-            setBilanSeenDate(bilanDate)
-            setBilanNeedsRefresh(false)
         }
     }
 
-    const bilanEmoji = bilanGoalReached ? '🎉' : bilanExceeded ? '⚠️' : '📊'
-    const bilanTitle = bilanGoalReached ? 'Objectif atteint !' : bilanExceeded ? 'Objectif dépassé' : 'Journée incomplète'
+    const currentBilan = activeSlot ? slotBilans[activeSlot] : null
+    const goalReached = currentBilan?.goalReached ?? false
+    const exceeded = currentBilan?.exceeded ?? false
+    const bilanMessage = currentBilan?.message ?? ''
+
+    const bilanEmoji = goalReached ? '🎉' : exceeded ? '⚠️' : '📊'
+    const bilanTitle = activeSlot === 'diner'
+        ? (goalReached ? 'Objectif atteint !' : exceeded ? 'Objectif dépassé' : 'Journée incomplète')
+        : `Bilan ${activeSlot ? SLOT_LABELS[activeSlot] : ''}`
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -158,21 +196,20 @@ export default function ProfilPage() {
                 </div>
             </div>
 
-            {/* BILAN FIN DE JOURNÉE */}
-            {showBilan && (
+            {/* BILAN CRÉNEAU OU JOURNÉE */}
+            {activeSlot && (
                 <div style={{
                     background: '#161616',
                     border: bilanStatus === 'empty' ? '0.5px solid #2a2a2a' : '0.5px solid #fff',
                     borderRadius: '16px',
                     padding: '16px',
-                    marginBottom: '20px',
                     margin: '0 20px 20px',
                 }}>
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span style={{ fontSize: '20px' }}>⏳</span>
                             <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>
-                                Génération de ton bilan du jour...
+                                Génération du bilan...
                             </p>
                         </div>
                     )}
@@ -180,8 +217,12 @@ export default function ProfilPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span style={{ fontSize: '24px' }}>🍽️</span>
                             <div>
-                                <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>Aucun repas aujourd'hui</p>
-                                <p style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>Scanne tes repas pour obtenir un bilan personnalisé</p>
+                                <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>
+                                    Aucun repas — {SLOT_LABELS[activeSlot]}
+                                </p>
+                                <p style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>
+                                    Scanne tes repas pour obtenir un bilan personnalisé
+                                </p>
                             </div>
                         </div>
                     )}
@@ -191,33 +232,48 @@ export default function ProfilPage() {
                                 <span style={{ fontSize: '24px' }}>{bilanEmoji}</span>
                                 <div>
                                     <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px' }}>{bilanTitle}</p>
-                                    <p style={{ color: '#555', fontSize: '12px' }}>Bilan du jour</p>
+                                    <p style={{ color: '#555', fontSize: '12px' }}>
+                                        {activeSlot === 'diner' ? 'Bilan du jour' : `Créneau ${SLOT_LABELS[activeSlot]}`}
+                                    </p>
                                 </div>
                             </div>
                             <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '14px' }}>{bilanMessage}</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                {[
-                                    { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal' },
-                                    { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g' },
-                                    { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g' },
-                                    { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g' },
-                                ].map(stat => (
-                                    <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px' }}>
-                                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
-                                            {Math.round(stat.current)}
-                                            <span style={{ color: '#444', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
-                                        </p>
-                                        <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '6px 0 4px' }}>
-                                            <div style={{
-                                                height: '100%', borderRadius: '2px',
-                                                width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`,
-                                                background: '#fff'
-                                            }} />
+
+                            {/* Mini stats — pour le bilan diner on affiche les totaux jour, sinon les stats du créneau */}
+                            {activeSlot === 'diner' ? (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    {[
+                                        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal' },
+                                        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g' },
+                                        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g' },
+                                        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g' },
+                                    ].map(stat => (
+                                        <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px' }}>
+                                            <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
+                                                {Math.round(stat.current)}
+                                                <span style={{ color: '#444', fontSize: '11px' }}> / {stat.target}{stat.unit}</span>
+                                            </p>
+                                            <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '6px 0 4px' }}>
+                                                <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: '#fff' }} />
+                                            </div>
+                                            <p style={{ color: '#555', fontSize: '11px' }}>{stat.label}</p>
                                         </div>
-                                        <p style={{ color: '#555', fontSize: '11px' }}>{stat.label}</p>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>
+                                            {Math.round(slots[activeSlot].consumed)}
+                                            <span style={{ color: '#444', fontSize: '11px' }}> / {slots[activeSlot].target} kcal</span>
+                                        </p>
+                                        <p style={{ color: '#555', fontSize: '11px', marginTop: '4px' }}>Calories {SLOT_LABELS[activeSlot]}</p>
                                     </div>
-                                ))}
-                            </div>
+                                    <div style={{ width: '80px', height: '2px', background: '#222', borderRadius: '2px' }}>
+                                        <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((slots[activeSlot].consumed / slots[activeSlot].target) * 100))}%`, background: '#fff' }} />
+                                    </div>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
@@ -242,11 +298,7 @@ export default function ProfilPage() {
                                 <span style={{ color: '#444', fontSize: '12px', fontWeight: '400', marginLeft: '3px' }}>{stat.unit}</span>
                             </p>
                             <div style={{ width: '100%', height: '2px', background: '#222', borderRadius: '2px', margin: '8px 0 6px' }}>
-                                <div style={{
-                                    height: '100%', borderRadius: '2px',
-                                    width: `${getProgressPercent(stat.current, stat.target)}%`,
-                                    background: '#fff', transition: 'width 0.5s ease'
-                                }} />
+                                <div style={{ height: '100%', borderRadius: '2px', width: `${getProgressPercent(stat.current, stat.target)}%`, background: '#fff', transition: 'width 0.5s ease' }} />
                             </div>
                             <p style={{ color: '#444', fontSize: '11px' }}>{stat.label} · {stat.target}{stat.unit}</p>
                         </div>
@@ -285,11 +337,7 @@ export default function ProfilPage() {
                         </p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
                             {profile.preferred_cuisines.map((c) => (
-                                <span key={c} style={{
-                                    padding: '6px 14px',
-                                    background: '#161616', border: '0.5px solid #333',
-                                    borderRadius: '20px', color: '#fff', fontSize: '12px', fontWeight: '500'
-                                }}>
+                                <span key={c} style={{ padding: '6px 14px', background: '#161616', border: '0.5px solid #333', borderRadius: '20px', color: '#fff', fontSize: '12px', fontWeight: '500' }}>
                                     {c}
                                 </span>
                             ))}
@@ -299,18 +347,10 @@ export default function ProfilPage() {
 
                 {/* BOUTONS */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <button onClick={() => router.push('/onboarding')} style={{
-                        flex: 1, height: '48px',
-                        background: '#fff', border: 'none',
-                        borderRadius: '12px', color: '#000', fontWeight: '500', fontSize: '14px', cursor: 'pointer'
-                    }}>
+                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '48px', background: '#fff', border: 'none', borderRadius: '12px', color: '#000', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
                         ✏️ Modifier
                     </button>
-                    <button onClick={handleLogout} style={{
-                        flex: 1, height: '48px',
-                        background: '#161616', border: '0.5px solid #2a2a2a',
-                        borderRadius: '12px', color: '#555', fontWeight: '500', fontSize: '14px', cursor: 'pointer'
-                    }}>
+                    <button onClick={handleLogout} style={{ flex: 1, height: '48px', background: '#161616', border: '0.5px solid #2a2a2a', borderRadius: '12px', color: '#555', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
                         Déconnexion
                     </button>
                 </div>

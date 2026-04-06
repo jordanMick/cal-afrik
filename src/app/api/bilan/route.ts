@@ -1,123 +1,155 @@
+// /api/bilan/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization')
-        if (!authHeader) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) return NextResponse.json({ success: false }, { status: 401 })
 
         const token = authHeader.replace('Bearer ', '')
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-        if (!user || authError) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { global: { headers: { Authorization: `Bearer ${token}` } } }
+        )
 
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ success: false }, { status: 401 })
+
+        const body = await req.json()
         const {
+            type, // 'creneau' | 'journee'
+            slot,
+            slotLabel,
+            nextSlotLabel,
+            slotConsumed,
+            slotTarget,
+            dailyCalories,
+            dailyProtein,
+            dailyCarbs,
+            dailyFat,
             calorieTarget,
             proteinTarget,
             carbsTarget,
             fatTarget,
             goal,
-        } = await req.json()
+            meals,
+        } = body
 
-        // ✅ On relit les repas d'AUJOURD'HUI directement depuis la BD
-        // pour ne jamais dépendre du store Zustand côté client
-        const today = new Date().toISOString().split('T')[0]
-        const start = `${today}T00:00:00.000Z`
-        const end = `${today}T23:59:59.999Z`
-
-        const { data: todayMeals, error: mealsError } = await supabaseAdmin
-            .from('meals')
-            .select('custom_name, calories, protein_g, carbs_g, fat_g')
-            .eq('user_id', user.id)
-            .gte('logged_at', start)
-            .lte('logged_at', end)
-
-        if (mealsError) {
-            console.error('❌ Meals fetch error:', mealsError)
-            return NextResponse.json({ success: false, error: mealsError.message }, { status: 500 })
+        // Pas de repas et ce n'est pas le bilan de fin de journée
+        if (type === 'creneau' && (!meals || meals.length === 0)) {
+            return NextResponse.json({ success: true, empty: true })
         }
 
-        const meals = todayMeals ?? []
+        const goalLabels: Record<string, string> = {
+            perdre: 'perdre du poids',
+            maintenir: 'maintenir le poids',
+            prendre: 'prendre du poids',
+        }
+        const goalLabel = goalLabels[goal] || 'maintenir le poids'
 
-        // ✅ Cas aucun repas : on retourne un flag spécial, pas de bilan IA
-        if (meals.length === 0) {
+        let prompt = ''
+
+        if (type === 'creneau') {
+            // ── Bilan de créneau ──────────────────────────────────
+            const pct = Math.round((slotConsumed / slotTarget) * 100)
+            const slotGoalReached = pct >= 80 && pct <= 120
+            const slotExceeded = pct > 120
+
+            const mealsText = meals.map((m: { name: string; calories: number }) =>
+                `- ${m.name} : ${m.calories} kcal`
+            ).join('\n')
+
+            prompt = `Tu es un coach nutritionnel bienveillant. L'utilisateur vient de terminer son créneau "${slotLabel}".
+
+Son objectif global est de ${goalLabel}.
+
+Repas consommés pendant ce créneau :
+${mealsText}
+
+Calories du créneau : ${Math.round(slotConsumed)} kcal / ${slotTarget} kcal (${pct}%)
+${slotGoalReached ? '✅ Objectif du créneau atteint.' : slotExceeded ? '⚠️ Objectif du créneau dépassé.' : '📉 En dessous de l\'objectif du créneau.'}
+
+${nextSlotLabel ? `Le prochain créneau est : ${nextSlotLabel}.` : ''}
+
+Écris un message court (2-3 phrases max) qui :
+1. Fait un bref bilan de ce créneau (bien ou à améliorer)
+2. ${nextSlotLabel ? `Donne un conseil concret pour le ${nextSlotLabel} (ex: aliment recommandé, quantité, timing)` : 'Encourage pour la suite de la journée'}
+
+Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
+
+            const response = await anthropic.messages.create({
+                model: 'claude-opus-4-5',
+                max_tokens: 200,
+                messages: [{ role: 'user', content: prompt }]
+            })
+
+            const message = response.content[0].type === 'text' ? response.content[0].text : ''
+
             return NextResponse.json({
                 success: true,
-                empty: true,
-                message: null,
-                dailyCalories: 0,
-                dailyProtein: 0,
-                dailyCarbs: 0,
-                dailyFat: 0,
+                message,
+                goalReached: slotGoalReached,
+                exceeded: slotExceeded,
+            })
+
+        } else {
+            // ── Bilan de journée (diner / 23h) ────────────────────
+            const calPct = Math.round((dailyCalories / calorieTarget) * 100)
+            const goalReached = calPct >= 85 && calPct <= 115
+            const exceeded = calPct > 115
+
+            const proteinOk = dailyProtein >= proteinTarget * 0.8
+            const carbsOk = dailyCarbs >= carbsTarget * 0.8
+            const fatOk = dailyFat >= fatTarget * 0.8
+
+            const mealsText = meals && meals.length > 0
+                ? meals.map((m: { name: string; calories: number }) => `- ${m.name} : ${m.calories} kcal`).join('\n')
+                : 'Aucun repas enregistré.'
+
+            prompt = `Tu es un coach nutritionnel bienveillant. Voici le bilan de journée de l'utilisateur.
+
+Objectif : ${goalLabel}
+
+Repas de la journée :
+${mealsText}
+
+Résumé nutritionnel :
+- Calories : ${Math.round(dailyCalories)} / ${calorieTarget} kcal (${calPct}%) ${goalReached ? '✅' : exceeded ? '⚠️' : '📉'}
+- Protéines : ${Math.round(dailyProtein)} / ${proteinTarget}g ${proteinOk ? '✅' : '📉'}
+- Glucides : ${Math.round(dailyCarbs)} / ${carbsTarget}g ${carbsOk ? '✅' : '📉'}
+- Lipides : ${Math.round(dailyFat)} / ${fatTarget}g ${fatOk ? '✅' : '📉'}
+
+Écris un message de bilan de journée (3-4 phrases max) qui :
+1. Dit clairement si l'objectif calorique est atteint, dépassé ou incomplet
+2. Mentionne les macros qui méritent attention (seulement si vraiment hors cible)
+3. Si l'objectif n'est pas atteint, donne UN conseil concret pour compenser avant minuit (ex: "mange encore X kcal avec un bol de X")
+4. Si l'objectif est atteint, félicite chaleureusement
+
+Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
+
+            const response = await anthropic.messages.create({
+                model: 'claude-opus-4-5',
+                max_tokens: 250,
+                messages: [{ role: 'user', content: prompt }]
+            })
+
+            const message = response.content[0].type === 'text' ? response.content[0].text : ''
+
+            return NextResponse.json({
+                success: true,
+                message,
+                goalReached,
+                exceeded,
             })
         }
 
-        // ✅ Calcul des totaux depuis la BD (source de vérité)
-        const dailyCalories = meals.reduce((acc, m) => acc + (m.calories ?? 0), 0)
-        const dailyProtein = meals.reduce((acc, m) => acc + (m.protein_g ?? 0), 0)
-        const dailyCarbs = meals.reduce((acc, m) => acc + (m.carbs_g ?? 0), 0)
-        const dailyFat = meals.reduce((acc, m) => acc + (m.fat_g ?? 0), 0)
-
-        const goalReached = dailyCalories >= calorieTarget * 0.9 && dailyCalories <= calorieTarget * 1.1
-        const exceeded = dailyCalories > calorieTarget * 1.1
-        const pctCalories = Math.round((dailyCalories / calorieTarget) * 100)
-
-        const prompt = `Tu es un coach nutritionnel bienveillant expert en cuisine africaine subsaharienne.
-
-Voici le bilan nutritionnel de la journée de l'utilisateur :
-
-Repas consommés : ${meals.map((m: any) => `${m.custom_name} (${Math.round(m.calories)} kcal)`).join(', ')}
-
-Bilan :
-- Calories : ${Math.round(dailyCalories)} / ${calorieTarget} kcal (${pctCalories}%)
-- Protéines : ${Math.round(dailyProtein)} / ${proteinTarget}g
-- Glucides : ${Math.round(dailyCarbs)} / ${carbsTarget}g
-- Lipides : ${Math.round(dailyFat)} / ${fatTarget}g
-
-Objectif : ${goal === 'perdre' ? 'Perdre du poids' : goal === 'prendre' ? 'Prendre du poids' : 'Maintenir le poids'}
-
-Statut : ${goalReached ? 'Objectif atteint ✅' : exceeded ? 'Objectif dépassé ⚠️' : 'Objectif non atteint 📊'}
-
-Écris un message de bilan personnalisé en français (4-5 phrases max) :
-1. Commence par féliciter si objectif atteint, encourager si non atteint, ou recadrer bienveillamment si dépassé
-2. Mentionne 1-2 points spécifiques sur les macros (ce qui était bien ou ce qui manquait)
-3. Donne 1 conseil concret pour demain basé sur l'objectif
-4. Termine avec une phrase d'encouragement chaleureuse
-
-Ton style : chaleureux, motivant, comme un ami coach. Pas de liste, juste du texte naturel.`
-
-        const response = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 400,
-            messages: [{ role: 'user', content: prompt }]
-        })
-
-        const message = response.content[0].type === 'text'
-            ? response.content[0].text
-            : 'Belle journée ! Reviens demain pour continuer sur ta lancée 💪'
-
-        return NextResponse.json({
-            success: true,
-            empty: false,
-            message,
-            goalReached,
-            exceeded,
-            // ✅ On renvoie aussi les vrais totaux pour que le front les affiche
-            dailyCalories: Math.round(dailyCalories),
-            dailyProtein: Math.round(dailyProtein),
-            dailyCarbs: Math.round(dailyCarbs),
-            dailyFat: Math.round(dailyFat),
-        })
-
-    } catch (err: any) {
-        console.error('❌ Bilan API error:', err)
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+    } catch (err) {
+        console.error('Bilan API error:', err)
+        return NextResponse.json({ success: false }, { status: 500 })
     }
 }
