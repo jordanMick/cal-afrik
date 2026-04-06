@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { FedaPay } from '@/lib/fedapay';
-import { Transaction } from 'fedapay';
+import { FedaPay, Transaction } from 'fedapay';
 
 const PRICES = {
     pro: 4900,
@@ -12,13 +11,15 @@ export async function POST(req: Request) {
     try {
         const { tier } = await req.json();
         
-        // 1. Initialisation SDK (Directe pour Vercel)
-        FedaPay.setApiKey(process.env.FEDAPAY_SECRET_KEY || '');
+        // 1. Initialisation SDK
+        const secretKey = process.env.FEDAPAY_SECRET_KEY || '';
+        FedaPay.setApiKey(secretKey);
         FedaPay.setEnvironment(process.env.FEDAPAY_ENVIRONMENT || 'live');
 
-        console.log('[FedaPay] Initialisation avec config:', { 
-            env: process.env.FEDAPAY_ENVIRONMENT || 'live',
-            hasKey: !!process.env.FEDAPAY_SECRET_KEY 
+        console.log('[FedaPay] Diagnostic Clé:', { 
+            length: secretKey.length,
+            prefix: secretKey.substring(0, 8) + '...', // sk_live_...
+            env: process.env.FEDAPAY_ENVIRONMENT 
         });
 
         // 2. Authentification Supabase
