@@ -16,39 +16,18 @@ export default function ResetPasswordPage() {
 
 
     useEffect(() => {
-        const handleRecovery = async () => {
-            const hash = window.location.hash
+        const handleAuth = async () => {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href)
 
-            if (!hash) {
-                setReady(true)
-                return
+            if (error) {
+                console.error('Erreur auth:', error)
+            } else {
+                console.log('Session prête ✅')
             }
-
-            const params = new URLSearchParams(hash.substring(1))
-
-            const access_token = params.get('access_token')
-            const refresh_token = params.get('refresh_token')
-
-            if (access_token && refresh_token) {
-                const { error } = await supabase.auth.setSession({
-                    access_token,
-                    refresh_token
-                })
-
-                if (error) {
-                    console.error('Erreur setSession:', error)
-                } else {
-                    console.log('Session créée ✅')
-                }
-            }
-
-            // ✅ TRÈS IMPORTANT
-            setReady(true)
         }
 
-        handleRecovery()
+        handleAuth()
     }, [])
-
     const handleReset = async () => {
         if (password !== confirm) {
             setMessage("Les mots de passe ne correspondent pas")
@@ -57,25 +36,6 @@ export default function ResetPasswordPage() {
 
         setLoading(true)
 
-        // 🔥 attendre que la session soit prête
-        let session = null
-        let tries = 0
-
-        while (!session && tries < 5) {
-            const { data } = await supabase.auth.getSession()
-            session = data.session
-            if (!session) {
-                await new Promise(res => setTimeout(res, 300))
-                tries++
-            }
-        }
-
-        if (!session) {
-            setMessage("Session non prête, réessaie...")
-            setLoading(false)
-            return
-        }
-
         const { error } = await supabase.auth.updateUser({
             password: password,
         })
@@ -83,10 +43,7 @@ export default function ResetPasswordPage() {
         if (error) {
             setMessage(error.message)
         } else {
-            setMessage("Mot de passe mis à jour ✅")
-            setTimeout(() => {
-                router.push('/login')
-            }, 2000)
+            router.push('/login')
         }
 
         setLoading(false)
