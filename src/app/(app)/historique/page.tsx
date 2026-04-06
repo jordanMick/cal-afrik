@@ -5,10 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Meal } from '@/types'
 
-const MONTHS_FR = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-]
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
 const formatTime = (iso: string) =>
@@ -21,19 +17,9 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
     petit_dejeuner: 'Petit-déjeuner', dejeuner: 'Déjeuner', diner: 'Dîner', collation: 'Collation',
 }
 
-const card: React.CSSProperties = {
-    background: '#161616',
-    border: '0.5px solid #2a2a2a',
-    borderRadius: '14px',
-    padding: '14px',
-    marginBottom: '8px',
-}
+const DOT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
 
-function MealDetailPanel({ meal, onClose, onDelete }: {
-    meal: Meal
-    onClose: () => void
-    onDelete: (id: string) => Promise<void>
-}) {
+function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () => void; onDelete: (id: string) => Promise<void> }) {
     const [showCoach, setShowCoach] = useState(false)
     const totalKcal = (meal.protein_g * 4) + (meal.carbs_g * 4) + (meal.fat_g * 9)
     const macros = totalKcal === 0 ? { protein: 0, carbs: 0, fat: 0 } : {
@@ -44,94 +30,64 @@ function MealDetailPanel({ meal, onClose, onDelete }: {
 
     return (
         <>
-            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 40 }} />
-            <div style={{
-                position: 'fixed', bottom: 0, left: 0, right: 0,
-                margin: '0 auto', maxWidth: '480px',
-                background: '#111', borderRadius: '20px 20px 0 0',
-                border: '0.5px solid #2a2a2a', zIndex: 50,
-                maxHeight: '90vh', overflowY: 'auto', paddingBottom: '100px',
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
-                    <div style={{ width: '36px', height: '4px', background: '#333', borderRadius: '2px' }} />
+            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 40 }} />
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 50, maxHeight: '90vh', overflowY: 'auto', paddingBottom: '100px' }}>
+                <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)' }} />
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}>
+                    <div style={{ width: '36px', height: '4px', background: '#222', borderRadius: '2px' }} />
                 </div>
-                {meal.image_url && (
-                    <div style={{ width: '100%', height: '180px', overflow: 'hidden' }}>
-                        <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                )}
-                <div style={{ padding: '20px 20px' }}>
+                {meal.image_url && <div style={{ width: '100%', height: '180px', overflow: 'hidden' }}><img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
+                <div style={{ padding: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                        <h2 style={{ color: '#fff', fontSize: '17px', fontWeight: '500', flex: 1, marginRight: '12px' }}>
-                            {meal.custom_name || 'Repas'}
-                        </h2>
-                        <span style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>{formatTime(meal.logged_at)}</span>
+                        <h2 style={{ color: '#fff', fontSize: '17px', fontWeight: '600', flex: 1, marginRight: '12px' }}>{meal.custom_name || 'Repas'}</h2>
+                        <span style={{ color: '#444', fontSize: '12px', marginTop: '4px' }}>{formatTime(meal.logged_at)}</span>
                     </div>
-                    <p style={{ color: '#555', fontSize: '12px', marginBottom: '16px' }}>
-                        {MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'} {MEAL_TYPE_LABELS[meal.meal_type] || ''} · {meal.portion_g}g
-                    </p>
+                    <p style={{ color: '#444', fontSize: '12px', marginBottom: '16px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'} {MEAL_TYPE_LABELS[meal.meal_type] || ''} · {meal.portion_g}g</p>
 
-                    <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '16px', textAlign: 'center', marginBottom: '12px' }}>
-                        <p style={{ color: '#fff', fontSize: '40px', fontWeight: '500', letterSpacing: '-2px' }}>{Math.round(meal.calories)}</p>
-                        <p style={{ color: '#555', fontSize: '13px' }}>kilocalories</p>
+                    <div style={{ background: '#0a0a0a', borderRadius: '14px', padding: '16px', textAlign: 'center', marginBottom: '12px', border: '0.5px solid rgba(99,102,241,0.2)' }}>
+                        <p style={{ color: '#6366f1', fontSize: '44px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(meal.calories)}</p>
+                        <p style={{ color: '#444', fontSize: '13px' }}>kilocalories</p>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px' }}>
                         {[
-                            { label: 'Protéines', value: meal.protein_g, pct: macros.protein },
-                            { label: 'Glucides', value: meal.carbs_g, pct: macros.carbs },
-                            { label: 'Lipides', value: meal.fat_g, pct: macros.fat },
+                            { label: 'Protéines', value: meal.protein_g, color: '#6366f1', pct: macros.protein },
+                            { label: 'Glucides', value: meal.carbs_g, color: '#f59e0b', pct: macros.carbs },
+                            { label: 'Lipides', value: meal.fat_g, color: '#10b981', pct: macros.fat },
                         ].map(m => (
-                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px 8px', textAlign: 'center' }}>
-                                <p style={{ color: '#fff', fontSize: '18px', fontWeight: '500' }}>{m.value}g</p>
-                                <p style={{ color: '#555', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
-                                <p style={{ color: '#333', fontSize: '9px', marginTop: '2px' }}>{m.pct}%</p>
+                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
+                                <p style={{ color: m.color, fontSize: '18px', fontWeight: '600' }}>{m.value}g</p>
+                                <p style={{ color: '#444', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
+                                <p style={{ color: '#2a2a2a', fontSize: '9px', marginTop: '2px' }}>{m.pct}%</p>
                             </div>
                         ))}
                     </div>
 
                     <div style={{ marginBottom: '16px' }}>
                         <div style={{ display: 'flex', height: '4px', borderRadius: '4px', overflow: 'hidden', gap: '2px' }}>
-                            <div style={{ width: `${macros.protein}%`, background: '#fff', borderRadius: '4px 0 0 4px' }} />
-                            <div style={{ width: `${macros.carbs}%`, background: '#888' }} />
-                            <div style={{ width: `${macros.fat}%`, background: '#444', borderRadius: '0 4px 4px 0' }} />
+                            <div style={{ width: `${macros.protein}%`, background: '#6366f1', borderRadius: '4px 0 0 4px' }} />
+                            <div style={{ width: `${macros.carbs}%`, background: '#f59e0b' }} />
+                            <div style={{ width: `${macros.fat}%`, background: '#10b981', borderRadius: '0 4px 4px 0' }} />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                            <span style={{ color: '#666', fontSize: '9px' }}>Prot. {macros.protein}%</span>
-                            <span style={{ color: '#666', fontSize: '9px' }}>Gluc. {macros.carbs}%</span>
-                            <span style={{ color: '#666', fontSize: '9px' }}>Lip. {macros.fat}%</span>
+                            <span style={{ color: '#6366f1', fontSize: '9px' }}>Prot. {macros.protein}%</span>
+                            <span style={{ color: '#f59e0b', fontSize: '9px' }}>Gluc. {macros.carbs}%</span>
+                            <span style={{ color: '#10b981', fontSize: '9px' }}>Lip. {macros.fat}%</span>
                         </div>
                     </div>
 
                     {meal.coach_message && (
-                        <div style={{ marginBottom: '16px' }}>
-                            <button onClick={() => setShowCoach(!showCoach)} style={{
-                                width: '100%', padding: '10px 12px', borderRadius: '10px',
-                                background: 'transparent', border: '0.5px solid #333',
-                                color: '#888', fontWeight: '500', fontSize: '13px',
-                                cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0'
-                            }}>
+                        <div style={{ marginBottom: '14px' }}>
+                            <button onClick={() => setShowCoach(!showCoach)} style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}>
                                 {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
                             </button>
-                            {showCoach && (
-                                <div style={{ background: '#0a0a0a', borderRadius: '10px', padding: '14px', border: '0.5px solid #2a2a2a' }}>
-                                    <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.6' }}>{meal.coach_message}</p>
-                                </div>
-                            )}
+                            {showCoach && <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '10px', padding: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}><p style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.6' }}>{meal.coach_message}</p></div>}
                         </div>
                     )}
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={onClose} style={{
-                            flex: 1, padding: '13px', borderRadius: '12px',
-                            background: '#1a1a1a', border: '0.5px solid #333',
-                            color: '#fff', fontWeight: '500', fontSize: '13px', cursor: 'pointer'
-                        }}>← Retour</button>
-                        <button onClick={async () => { if (confirm('Supprimer ce repas ?')) { await onDelete(meal.id); onClose() } }} style={{
-                            flex: 1, padding: '13px', borderRadius: '12px',
-                            background: 'transparent', border: '0.5px solid #555',
-                            color: '#888', fontWeight: '500', fontSize: '13px', cursor: 'pointer'
-                        }}>🗑️ Supprimer</button>
+                        <button onClick={onClose} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: '#1a1a1a', border: '0.5px solid #222', color: '#fff', fontWeight: '500', fontSize: '13px', cursor: 'pointer' }}>← Retour</button>
+                        <button onClick={async () => { if (confirm('Supprimer ce repas ?')) { await onDelete(meal.id); onClose() } }} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: 'transparent', border: '0.5px solid rgba(239,68,68,0.3)', color: '#f87171', fontWeight: '500', fontSize: '13px', cursor: 'pointer' }}>🗑️ Supprimer</button>
                     </div>
                 </div>
             </div>
@@ -142,7 +98,6 @@ function MealDetailPanel({ meal, onClose, onDelete }: {
 export default function HistoriquePage() {
     const router = useRouter()
     const now = new Date()
-
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth())
     const [selectedDate, setSelectedDate] = useState<string | null>(now.toISOString().split('T')[0])
@@ -160,14 +115,9 @@ export default function HistoriquePage() {
             if (!session) return
             const firstDay = `${year}-${String(month + 1).padStart(2, '0')}-01`
             const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0]
-            const res = await fetch(`/api/meals?date_from=${firstDay}&date_to=${lastDay}`, {
-                headers: { Authorization: `Bearer ${session.access_token}` }
-            })
+            const res = await fetch(`/api/meals?date_from=${firstDay}&date_to=${lastDay}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
-            if (json.success) {
-                const days = new Set<string>((json.data as Meal[]).map(m => m.logged_at.split('T')[0]))
-                setDaysWithMeals(days)
-            }
+            if (json.success) setDaysWithMeals(new Set<string>((json.data as Meal[]).map(m => m.logged_at.split('T')[0])))
         } catch (err) { console.error(err) }
     }
 
@@ -176,9 +126,7 @@ export default function HistoriquePage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const res = await fetch(`/api/meals?date=${date}`, {
-                headers: { Authorization: `Bearer ${session.access_token}` }
-            })
+            const res = await fetch(`/api/meals?date=${date}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
             if (json.success) setMealsForDate(json.data)
         } catch (err) { console.error(err) }
@@ -188,14 +136,9 @@ export default function HistoriquePage() {
     const handleDeleteMeal = async (mealId: string) => {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
-        await fetch(`/api/meals?id=${mealId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${session.access_token}` }
-        })
+        await fetch(`/api/meals?id=${mealId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.access_token}` } })
         setMealsForDate(prev => prev.filter(m => m.id !== mealId))
-        if (mealsForDate.length <= 1 && selectedDate) {
-            setDaysWithMeals(prev => { const s = new Set(prev); s.delete(selectedDate); return s })
-        }
+        if (mealsForDate.length <= 1 && selectedDate) setDaysWithMeals(prev => { const s = new Set(prev); s.delete(selectedDate); return s })
     }
 
     const firstDayOfMonth = new Date(year, month, 1).getDay()
@@ -205,50 +148,39 @@ export default function HistoriquePage() {
     const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }
     const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }
 
-    const cells: (number | null)[] = [
-        ...Array(firstDayOfMonth).fill(null),
-        ...Array.from({ length: daysInMonth }, (_, i) => i + 1)
-    ]
+    const cells: (number | null)[] = [...Array(firstDayOfMonth).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
     while (cells.length % 7 !== 0) cells.push(null)
 
     const selectedDayCalories = mealsForDate.reduce((acc, m) => acc + m.calories, 0)
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', fontFamily: 'system-ui, sans-serif', position: 'relative', overflow: 'hidden' }}>
+
+            <div style={{ position: 'fixed', top: '-60px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             {/* HEADER */}
-            <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '14px', borderBottom: '0.5px solid #1e1e1e' }}>
-                <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '20px', cursor: 'pointer' }}>←</button>
-                <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '500' }}>Historique</h1>
+            <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '14px', borderBottom: '0.5px solid #1a1a1a' }}>
+                <button onClick={() => router.back()} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '8px', width: '32px', height: '32px', color: '#fff', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
+                <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '600' }}>Historique</h1>
             </div>
 
             <div style={{ padding: '20px' }}>
 
                 {/* CALENDRIER */}
-                <div style={{ background: '#161616', border: '0.5px solid #2a2a2a', borderRadius: '18px', padding: '18px', marginBottom: '18px' }}>
+                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '20px', padding: '18px', marginBottom: '18px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b, #ec4899)' }} />
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                        <button onClick={prevMonth} style={{
-                            background: '#111', border: '0.5px solid #2a2a2a', borderRadius: '50%',
-                            width: '30px', height: '30px', color: '#fff', cursor: 'pointer', fontSize: '16px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>‹</button>
-                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>
-                            {year} / {String(month + 1).padStart(2, '0')}
-                        </p>
-                        <button onClick={nextMonth} style={{
-                            background: '#111', border: '0.5px solid #2a2a2a', borderRadius: '50%',
-                            width: '30px', height: '30px', color: '#fff', cursor: 'pointer', fontSize: '16px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>›</button>
+                        <button onClick={prevMonth} style={{ background: '#0f0f0f', border: '0.5px solid #222', borderRadius: '50%', width: '30px', height: '30px', color: '#fff', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '600' }}>{year} / {String(month + 1).padStart(2, '0')}</p>
+                        <button onClick={nextMonth} style={{ background: '#0f0f0f', border: '0.5px solid #222', borderRadius: '50%', width: '30px', height: '30px', color: '#fff', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '6px' }}>
-                        {DAYS_FR.map(d => (
-                            <div key={d} style={{ textAlign: 'center', color: '#444', fontSize: '10px', fontWeight: '500', padding: '4px 0' }}>{d}</div>
-                        ))}
+                        {DAYS_FR.map(d => <div key={d} style={{ textAlign: 'center', color: '#333', fontSize: '10px', fontWeight: '600', padding: '4px 0' }}>{d}</div>)}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
                         {cells.map((day, i) => {
                             if (day === null) return <div key={`e-${i}`} />
                             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -259,19 +191,16 @@ export default function HistoriquePage() {
                             return (
                                 <button key={day} onClick={() => !isFuture && setSelectedDate(dateStr)} disabled={isFuture}
                                     style={{
-                                        position: 'relative', width: '100%', aspectRatio: '1',
-                                        borderRadius: '50%',
-                                        background: isSelected ? '#fff' : isToday ? 'rgba(255,255,255,0.08)' : 'transparent',
-                                        border: isToday && !isSelected ? '0.5px solid #555' : '0.5px solid transparent',
-                                        color: isFuture ? '#2a2a2a' : isSelected ? '#000' : '#fff',
-                                        fontSize: '12px', fontWeight: isSelected ? '500' : '400',
+                                        position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '50%',
+                                        background: isSelected ? 'linear-gradient(135deg, #6366f1, #10b981)' : isToday ? 'rgba(99,102,241,0.12)' : 'transparent',
+                                        border: isToday && !isSelected ? '1px solid rgba(99,102,241,0.4)' : '1px solid transparent',
+                                        color: isFuture ? '#1e1e1e' : isSelected ? '#fff' : '#fff',
+                                        fontSize: '12px', fontWeight: isSelected ? '600' : '400',
                                         cursor: isFuture ? 'default' : 'pointer',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     }}>
                                     {day}
-                                    {hasMeals && !isSelected && (
-                                        <span style={{ position: 'absolute', bottom: '3px', width: '3px', height: '3px', borderRadius: '50%', background: '#fff' }} />
-                                    )}
+                                    {hasMeals && !isSelected && <span style={{ position: 'absolute', bottom: '2px', width: '4px', height: '4px', borderRadius: '50%', background: '#6366f1' }} />}
                                 </button>
                             )
                         })}
@@ -282,78 +211,63 @@ export default function HistoriquePage() {
                 {selectedDate && (
                     <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                            <p style={{ color: '#fff', fontSize: '14px', fontWeight: '500' }}>
+                            <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600' }}>
                                 {new Date(selectedDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                             </p>
-                            {mealsForDate.length > 0 && (
-                                <span style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>
-                                    {Math.round(selectedDayCalories)} kcal
-                                </span>
-                            )}
+                            {mealsForDate.length > 0 && <span style={{ color: '#6366f1', fontSize: '13px', fontWeight: '600' }}>{Math.round(selectedDayCalories)} kcal</span>}
                         </div>
 
                         {isLoading ? (
-                            <div style={{ textAlign: 'center', padding: '32px', color: '#444' }}>Chargement...</div>
+                            <div style={{ textAlign: 'center', padding: '32px', color: '#333' }}>Chargement...</div>
                         ) : mealsForDate.length === 0 ? (
-                            <div style={{ background: '#161616', border: '0.5px solid #2a2a2a', borderRadius: '14px', padding: '32px', textAlign: 'center' }}>
+                            <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '32px', textAlign: 'center' }}>
                                 <p style={{ fontSize: '24px', marginBottom: '8px' }}>📋</p>
-                                <p style={{ color: '#444', fontSize: '13px' }}>Aucun repas ce jour</p>
+                                <p style={{ color: '#333', fontSize: '13px' }}>Aucun repas ce jour</p>
                             </div>
                         ) : (
                             <div>
-                                {/* macros résumé */}
-                                <div style={{ background: '#161616', border: '0.5px solid #2a2a2a', borderRadius: '14px', padding: '12px', marginBottom: '8px' }}>
+                                {/* macros */}
+                                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px', marginBottom: '8px' }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
                                         {[
-                                            { label: 'Protéines', value: Math.round(mealsForDate.reduce((a, m) => a + m.protein_g, 0)) },
-                                            { label: 'Glucides', value: Math.round(mealsForDate.reduce((a, m) => a + m.carbs_g, 0)) },
-                                            { label: 'Lipides', value: Math.round(mealsForDate.reduce((a, m) => a + m.fat_g, 0)) },
+                                            { label: 'Protéines', value: Math.round(mealsForDate.reduce((a, m) => a + m.protein_g, 0)), color: '#6366f1' },
+                                            { label: 'Glucides', value: Math.round(mealsForDate.reduce((a, m) => a + m.carbs_g, 0)), color: '#f59e0b' },
+                                            { label: 'Lipides', value: Math.round(mealsForDate.reduce((a, m) => a + m.fat_g, 0)), color: '#10b981' },
                                         ].map(m => (
-                                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
-                                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>{m.value}g</p>
-                                                <p style={{ color: '#444', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
+                                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
+                                                <p style={{ color: m.color, fontSize: '15px', fontWeight: '600' }}>{m.value}g</p>
+                                                <p style={{ color: '#333', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                {mealsForDate.map(meal => (
-                                    <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{
-                                        ...card, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'
-                                    }}>
-                                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
-                                            {meal.image_url
-                                                ? <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
-                                                    {MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}
-                                                </div>
-                                            }
+                                {mealsForDate.map((meal, idx) => {
+                                    const dotColor = DOT_COLORS[idx % DOT_COLORS.length]
+                                    return (
+                                        <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '8px', position: 'relative', overflow: 'hidden' }}>
+                                            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px', background: dotColor }} />
+                                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', overflow: 'hidden', background: '#222', flexShrink: 0, marginLeft: '8px' }}>
+                                                {meal.image_url ? <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}</div>}
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meal.custom_name || 'Repas'}</p>
+                                                <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>{formatTime(meal.logged_at)} · {meal.protein_g}g prot · {meal.carbs_g}g gluc</p>
+                                            </div>
+                                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                                <p style={{ color: dotColor, fontSize: '14px', fontWeight: '600' }}>{Math.round(meal.calories)}<span style={{ color: '#333', fontSize: '10px' }}> kcal</span></p>
+                                                <span style={{ color: '#333', fontSize: '14px' }}>›</span>
+                                            </div>
                                         </div>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {meal.custom_name || 'Repas'}
-                                            </p>
-                                            <p style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>
-                                                {formatTime(meal.logged_at)} · {meal.protein_g}g prot · {meal.carbs_g}g gluc
-                                            </p>
-                                        </div>
-                                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                                            <p style={{ color: '#fff', fontSize: '14px', fontWeight: '500' }}>
-                                                {Math.round(meal.calories)} <span style={{ color: '#444', fontSize: '10px' }}>kcal</span>
-                                            </p>
-                                            <span style={{ color: '#444', fontSize: '14px' }}>›</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         )}
                     </div>
                 )}
             </div>
 
-            {selectedMeal && (
-                <MealDetailPanel meal={selectedMeal} onClose={() => setSelectedMeal(null)} onDelete={handleDeleteMeal} />
-            )}
+            {selectedMeal && <MealDetailPanel meal={selectedMeal} onClose={() => setSelectedMeal(null)} onDelete={handleDeleteMeal} />}
         </div>
     )
 }
