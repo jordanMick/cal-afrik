@@ -398,16 +398,35 @@ export default function ScannerPage() {
                                                 <div 
                                                     onClick={() => router.push('/upgrade')}
                                                     style={{ 
-                                                        background: 'rgba(255,255,255,0.03)', 
-                                                        border: '0.5px dashed #333', 
-                                                        borderRadius: '14px', 
-                                                        padding: '16px',
+                                                        background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.1))', 
+                                                        border: '1px solid rgba(245,158,11,0.3)', 
+                                                        borderRadius: '16px', 
+                                                        padding: '24px 16px',
                                                         cursor: 'pointer',
-                                                        textAlign: 'center'
+                                                        textAlign: 'center',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: '12px'
                                                     }}>
-                                                    <p style={{ color: '#666', fontSize: '13px', fontStyle: 'italic' }}>
-                                                        ⭐ Passez au plan Premium pour débloquer les conseils personnalisés du Coach Kofi
-                                                    </p>
+                                                    <div style={{ fontSize: '32px' }}>🔒</div>
+                                                    <div>
+                                                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>Contenu Premium</p>
+                                                        <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.4' }}>
+                                                            Le Coach Kofi a analysé ton repas ! Passe au plan Premium pour lire ses conseils personnalisés.
+                                                        </p>
+                                                    </div>
+                                                    <div style={{ 
+                                                        marginTop: '8px',
+                                                        padding: '8px 24px', 
+                                                        borderRadius: '10px', 
+                                                        background: '#f59e0b', 
+                                                        color: '#000', 
+                                                        fontSize: '13px', 
+                                                        fontWeight: '700' 
+                                                    }}>
+                                                        Débloquer Coach Kofi →
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
