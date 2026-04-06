@@ -68,6 +68,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
             if (profileError || !profile) {
                 router.push('/onboarding')
+                setLoading(false)
                 return
             }
 
@@ -86,9 +87,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 const json = await res.json()
                 if (json.success) setTodayMeals(json.data)
             }
+            setLoading(false)
 
         } catch (err) {
             console.error('Erreur AuthProvider:', err)
+            setLoading(false)
         }
     }
     if (loading) return null
