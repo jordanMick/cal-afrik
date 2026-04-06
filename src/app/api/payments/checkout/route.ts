@@ -12,12 +12,29 @@ export async function POST(req: Request) {
     try {
         const { tier } = await req.json();
         
-        // 1. Authentification
+        // 1. Initialisation SDK (Directe pour Vercel)
+        FedaPay.setApiKey(process.env.FEDAPAY_SECRET_KEY || '');
+        FedaPay.setEnvironment(process.env.FEDAPAY_ENVIRONMENT || 'live');
+
+        console.log('[FedaPay] Initialisation avec config:', { 
+            env: process.env.FEDAPAY_ENVIRONMENT || 'live',
+            hasKey: !!process.env.FEDAPAY_SECRET_KEY 
+        });
+
+        // 2. Authentification Supabase
         const authHeader = req.headers.get('Authorization');
-        if (!authHeader) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+        if (!authHeader) {
+            console.error('[FedaPay] Header Authorization manquant');
+            return NextResponse.json({ error: 'Auth header missing' }, { status: 401 });
+        }
         
-        const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-        if (authError || !user) return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 401 });
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        
+        if (authError || !user) {
+            console.error('[FedaPay] Erreur auth Supabase:', authError?.message);
+            return NextResponse.json({ error: 'Session invalide ou expirée. Reconnectez-vous.' }, { status: 401 });
+        }
 
         if (!['pro', 'premium'].includes(tier)) {
             return NextResponse.json({ error: 'Plan invalide' }, { status: 400 });
@@ -25,8 +42,9 @@ export async function POST(req: Request) {
 
         const amount = PRICES[tier as keyof typeof PRICES];
 
-        // 2. Création de la transaction FedaPay
-        // Note: On passe l'ID de l'utilisateur et le tier choisi dans les métadonnées
+        // 3. Création de la transaction FedaPay
+        console.log(`[FedaPay] Création transaction pour ${user.email} - Montant: ${amount}`);
+        
         const transaction = await Transaction.create({
             description: `Abonnement Cal-Afrik ${tier.toUpperCase()}`,
             amount: amount,
@@ -42,17 +60,17 @@ export async function POST(req: Request) {
             }
         });
 
-        // 3. Génération du token de paiement
-        const token = await transaction.generateToken();
+        // 4. Génération du token
+        const tokenData = await transaction.generateToken();
 
         return NextResponse.json({ 
             success: true, 
-            token: token.token,
-            url: token.url 
+            token: tokenData.token,
+            url: tokenData.url 
         });
 
     } catch (error: any) {
-        console.error('Erreur Checkout FedaPay:', error);
-        return NextResponse.json({ error: error.message || 'Erreur lors de la création du paiement' }, { status: 500 });
+        console.error('[FedaPay] Erreur fatale Checkout:', error.message);
+        return NextResponse.json({ error: error.message || 'Erreur serveur' }, { status: 500 });
     }
 }
