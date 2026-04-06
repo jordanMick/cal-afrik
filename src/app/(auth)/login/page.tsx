@@ -3,6 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
+import { motion } from 'framer-motion'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs))
+}
 
 export default function LoginPage() {
     const router = useRouter()
@@ -42,222 +51,108 @@ export default function LoginPage() {
     }
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: '#0a0a0a',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
-            fontFamily: 'system-ui, sans-serif',
-            position: 'relative',
-            overflow: 'hidden',
-        }}>
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative overflow-hidden">
+            {/* Halos Cal AI */}
+            <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-green-500/10 blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] rounded-full bg-blue-500/10 blur-[100px] pointer-events-none" />
 
-            {/* Halos colorés d'ambiance */}
-            <div style={{
-                position: 'fixed', top: '-100px', right: '-100px',
-                width: '350px', height: '350px', borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none',
-            }} />
-            <div style={{
-                position: 'fixed', bottom: '-80px', left: '-60px',
-                width: '280px', height: '280px', borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)',
-                pointerEvents: 'none',
-            }} />
-            <div style={{
-                position: 'fixed', top: '50%', left: '-40px',
-                width: '180px', height: '180px', borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%)',
-                pointerEvents: 'none',
-            }} />
-
-            {/* LOGO */}
-            <div style={{ textAlign: 'center', marginBottom: '36px', position: 'relative', zIndex: 1 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                    <div style={{
-                        width: '44px', height: '44px', borderRadius: '14px',
-                        background: 'linear-gradient(135deg, #6366f1, #10b981)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '22px',
-                    }}>🌍</div>
-                    <span style={{ fontSize: '26px', fontWeight: '700', color: '#fff', letterSpacing: '-0.5px' }}>
-                        Cal Afrik
-                    </span>
-                </div>
-                <p style={{ color: '#555', fontSize: '14px' }}>Suivez vos calories, mangez bien</p>
-            </div>
-
-            {/* CARD */}
-            <div style={{
-                width: '100%', maxWidth: '400px',
-                background: '#141414',
-                borderRadius: '24px',
-                padding: '28px',
-                border: '0.5px solid #222',
-                position: 'relative', zIndex: 1,
-            }}>
-
-                {/* Ligne déco en haut de la card */}
-                <div style={{
-                    position: 'absolute', top: 0, left: '10%', right: '10%', height: '2px',
-                    background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)',
-                    borderRadius: '0 0 4px 4px',
-                }} />
-
-                {/* TABS */}
-                <div style={{
-                    display: 'flex', gap: '4px',
-                    background: '#0a0a0a',
-                    borderRadius: '12px', padding: '4px', marginBottom: '24px',
-                }}>
-                    {['Se connecter', "S'inscrire"].map((tab, i) => (
-                        <button key={tab}
-                            onClick={() => { setIsRegister(i === 1); setError('') }}
-                            style={{
-                                flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-                                cursor: 'pointer', fontSize: '13px', fontWeight: '500',
-                                background: isRegister === (i === 1)
-                                    ? 'linear-gradient(135deg, #6366f1, #818cf8)'
-                                    : 'transparent',
-                                color: isRegister === (i === 1) ? '#fff' : '#555',
-                                transition: 'all 0.2s',
-                            }}
-                        >{tab}</button>
-                    ))}
-                </div>
-
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-                    <div>
-                        <label style={{ display: 'block', color: '#666', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>
-                            Adresse email
-                        </label>
-                        <input
-                            type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="vous@email.com" required
-                            style={{
-                                width: '100%', height: '46px', padding: '0 14px',
-                                background: '#0a0a0a', border: '0.5px solid #2a2a2a',
-                                borderRadius: '10px', color: '#fff', fontSize: '14px',
-                                outline: 'none', boxSizing: 'border-box',
-                            }}
-                        />
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', color: '#666', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>
-                            Mot de passe
-                        </label>
-                        <input
-                            type="password" value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••" required
-                            style={{
-                                width: '100%', height: '46px', padding: '0 14px',
-                                background: '#0a0a0a', border: '0.5px solid #2a2a2a',
-                                borderRadius: '10px', color: '#fff', fontSize: '14px',
-                                outline: 'none', boxSizing: 'border-box',
-                            }}
-                        />
-
-                        <p
-                            onClick={async () => {
-                                if (!email) {
-                                    setError("Entre ton email d'abord")
-                                    return
-                                }
-
-                                const supabase = getSupabase()
-
-                                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                                    redirectTo: 'https://https://cal-afrik.vercel.app/reset-password',
-                                })
-
-                                if (error) {
-                                    setError(error.message)
-                                } else {
-                                    setError("Email de réinitialisation envoyé 📩")
-                                }
-                            }}
-                            style={{
-                                color: '#888',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                textAlign: 'right',
-                            }}
-                        >
-                            Mot de passe oublié ?
-                        </p>
-                    </div>
-
-
-
-                    {error && (
-                        <div style={{
-                            padding: '11px 14px',
-                            background: 'rgba(239,68,68,0.08)',
-                            border: '0.5px solid rgba(239,68,68,0.3)',
-                            borderRadius: '10px', color: '#f87171', fontSize: '13px',
-                        }}>{error}</div>
-                    )}
-
-                    <button
-                        type="submit" disabled={isLoading}
-                        style={{
-                            width: '100%', height: '48px',
-                            background: isLoading
-                                ? '#1e1e1e'
-                                : 'linear-gradient(135deg, #6366f1, #10b981)',
-                            border: 'none', borderRadius: '12px',
-                            color: isLoading ? '#444' : '#fff',
-                            fontSize: '14px', fontWeight: '600',
-                            cursor: isLoading ? 'not-allowed' : 'pointer',
-                            marginTop: '4px',
-                            letterSpacing: '0.01em',
-                        }}
+            <div className="w-full max-w-sm z-10 space-y-8">
+                {/* LOGO SECTION */}
+                <div className="text-center space-y-2">
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="inline-flex items-center gap-3"
                     >
-                        {isLoading ? 'Chargement...' : isRegister ? 'Créer mon compte →' : 'Se connecter →'}
-                    </button>
-                </form>
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-2xl shadow-lg shadow-green-500/20">
+                            🌍
+                        </div>
+                        <span className="text-3xl font-black tracking-tighter text-white">Cal Afrik</span>
+                    </motion.div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">L'IA au service de votre nutrition</p>
+                </div>
 
-                {isRegister && (
-                    <p style={{ color: '#333', fontSize: '12px', textAlign: 'center', marginTop: '14px' }}>
-                        Minimum 6 caractères pour le mot de passe
-                    </p>
-                )}
-            </div>
-
-            {/* Features rapides */}
-            <div style={{
-                display: 'flex', gap: '16px', marginTop: '28px',
-                position: 'relative', zIndex: 1,
-            }}>
-                {[
-                    { icon: '📷', label: 'Scan IA', color: '#6366f1' },
-                    { icon: '📊', label: 'Suivi', color: '#10b981' },
-                    { icon: '🎯', label: 'Objectifs', color: '#f59e0b' },
-                ].map(f => (
-                    <div key={f.label} style={{ textAlign: 'center' }}>
-                        <div style={{
-                            width: '40px', height: '40px', borderRadius: '12px',
-                            background: `${f.color}18`,
-                            border: `0.5px solid ${f.color}40`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '18px', margin: '0 auto 4px',
-                        }}>{f.icon}</div>
-                        <p style={{ color: '#444', fontSize: '11px' }}>{f.label}</p>
+                <Card className="border-white/5 bg-zinc-950/50 backdrop-blur-3xl shadow-2xl">
+                    {/* TABS ÉLITE */}
+                    <div className="flex p-1 bg-black rounded-full mb-8 border border-white/5">
+                        {['Connexion', 'Inscription'].map((tab, i) => (
+                            <button
+                                key={tab}
+                                onClick={() => { setIsRegister(i === 1); setError('') }}
+                                className={cn(
+                                    "flex-1 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all",
+                                    isRegister === (i === 1) 
+                                        ? "bg-white text-black shadow-lg" 
+                                        : "text-white/30 hover:text-white/60"
+                                )}
+                            >
+                                {tab}
+                            </button>
+                        ))}
                     </div>
-                ))}
-            </div>
 
-            <p style={{ color: '#2a2a2a', fontSize: '12px', marginTop: '24px', position: 'relative', zIndex: 1 }}>
-                Cal Afrik • Fait avec ❤️ pour l'Afrique
-            </p>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Email</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="nom@exemple.com"
+                                    required
+                                    className="w-full h-14 px-5 rounded-3xl bg-white/5 border border-white/5 text-white placeholder:text-white/10 focus:border-green-500/30 focus:bg-white/10 transition-all outline-none text-sm"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Mot de passe</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                    className="w-full h-14 px-5 rounded-3xl bg-white/5 border border-white/5 text-white placeholder:text-white/10 focus:border-green-500/30 focus:bg-white/10 transition-all outline-none text-sm"
+                                />
+                                <div className="text-right">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {/* reset pass logic */}}
+                                        className="text-[9px] font-bold text-white/20 hover:text-white/60 transition-colors uppercase tracking-tight"
+                                    >
+                                        Mot de passe oublié ?
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {error && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold text-center"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
+
+                        <Button 
+                            type="submit" 
+                            disabled={isLoading}
+                            variant="primary"
+                            fullWidth
+                            className="bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-500/20"
+                        >
+                            {isLoading ? 'Chargement...' : isRegister ? "CRÉER MON COMPTE" : "SE CONNECTER"}
+                        </Button>
+                    </form>
+                </Card>
+
+                <p className="text-center text-[10px] font-bold text-white/10 uppercase tracking-[0.2em] pt-4">
+                    Cal Afrik • Made for Africa ❤️
+                </p>
+            </div>
         </div>
     )
 }
