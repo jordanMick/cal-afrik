@@ -57,6 +57,25 @@ export default function ResetPasswordPage() {
 
         setLoading(true)
 
+        // 🔥 attendre que la session soit prête
+        let session = null
+        let tries = 0
+
+        while (!session && tries < 5) {
+            const { data } = await supabase.auth.getSession()
+            session = data.session
+            if (!session) {
+                await new Promise(res => setTimeout(res, 300))
+                tries++
+            }
+        }
+
+        if (!session) {
+            setMessage("Session non prête, réessaie...")
+            setLoading(false)
+            return
+        }
+
         const { error } = await supabase.auth.updateUser({
             password: password,
         })
@@ -72,7 +91,6 @@ export default function ResetPasswordPage() {
 
         setLoading(false)
     }
-
     return (
         <div style={{
             minHeight: '100vh',
