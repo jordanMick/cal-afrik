@@ -120,6 +120,56 @@ export default function ProfilPage() {
                 <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'empty' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
                     {bilanStatus !== 'empty' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
+                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'linear-gradient(135deg, #1f1f1f, #151515)', border: '0.5px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>👤</div>
+                        <div>
+                            <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ 
+                                    padding: '2px 8px', 
+                                    borderRadius: '6px', 
+                                    background: profile?.subscription_tier === 'pro' ? 'rgba(99,102,241,0.15)' : profile?.subscription_tier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                                    color: profile?.subscription_tier === 'pro' ? '#818cf8' : profile?.subscription_tier === 'premium' ? '#34d399' : '#666',
+                                    fontSize: '10px', 
+                                    fontWeight: '800', 
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    border: `0.5px solid ${profile?.subscription_tier === 'pro' ? 'rgba(99,102,241,0.3)' : profile?.subscription_tier === 'premium' ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}`
+                                }}>
+                                    PLAN {profile?.subscription_tier || 'FREE'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* BANNIÈRE UPGRADE SI FREE */}
+                {(!profile?.subscription_tier || profile?.subscription_tier === 'free') && (
+                    <div 
+                        onClick={() => router.push('/upgrade')}
+                        style={{
+                            marginBottom: '24px',
+                            padding: '16px',
+                            borderRadius: '16px',
+                            background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                            boxShadow: '0 8px 20px rgba(99,102,241,0.2)'
+                        }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontSize: '24px' }}>🚀</span>
+                            <div>
+                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700' }}>Passez à Cal-Afrik Pro</p>
+                                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px' }}>Débloquez les graphiques et le scan illimité</p>
+                            </div>
+                        </div>
+                        <span style={{ color: '#fff', fontSize: '18px' }}>→</span>
+                    </div>
+                )}
+
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>⏳</div>

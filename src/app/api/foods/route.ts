@@ -6,18 +6,35 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// ─── GET : récupérer tous les aliments ───────────────────────
-export async function GET() {
+// ─── GET : récupérer les aliments selon le plan ────────────────
+export async function GET(req: NextRequest) {
     try {
+        const authHeader = req.headers.get('authorization')
+        let limit = 100 // Défaut gratuit
+
+        if (authHeader) {
+            const token = authHeader.replace('Bearer ', '')
+            const { data: { user } } = await supabase.auth.getUser(token)
+            
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('user_profiles')
+                    .select('subscription_tier')
+                    .eq('user_id', user.id)
+                    .single()
+                
+                if (profile?.subscription_tier === 'pro' || profile?.subscription_tier === 'premium') {
+                    limit = 2000 // Illimité (ou très large)
+                }
+            }
+        }
+
         const { data, error } = await supabase
             .from('food_items')
             .select('*')
-            .limit(50)
+            .limit(limit)
 
-        if (error) {
-            return NextResponse.json({ success: false, error: error.message })
-        }
-
+        if (error) return NextResponse.json({ success: false, error: error.message })
         return NextResponse.json({ success: true, data })
 
     } catch (err) {

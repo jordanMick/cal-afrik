@@ -76,7 +76,11 @@ export default function ScannerPage() {
 
     const loadFoods = async () => {
         try {
-            const res = await fetch('/api/foods')
+            const { data: { session } } = await supabase.auth.getSession()
+            const headers: any = {}
+            if (session) headers.Authorization = `Bearer ${session.access_token}`
+            
+            const res = await fetch('/api/foods', { headers })
             const json = await res.json()
             if (json.success) setFoods(json.data)
         } catch (err) { console.error(err) }
@@ -105,8 +109,20 @@ export default function ScannerPage() {
             const base64Image = await toBase64(file)
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) { simulateAI(); return }
-            const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ images: [{ data: base64Image, mimeType: file.type }] }) })
+            const res = await fetch('/api/analyze', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
+                body: JSON.stringify({ images: [{ data: base64Image, mimeType: file.type }] }) 
+            })
             const json = await res.json()
+
+            if (json.error && json.code === 'LIMIT_REACHED') {
+                setIsAnalyzing(false)
+                alert("🚀 Limite de scan atteinte ! Passez au plan Pro pour scanner sans limite.")
+                router.push('/upgrade')
+                return
+            }
+
             if (!json.success || !json.data) { simulateAI(); return }
             setMealName(json.meal_name || 'Repas détecté')
             setTotalCaloriesAI(json.total_calories || 0)
