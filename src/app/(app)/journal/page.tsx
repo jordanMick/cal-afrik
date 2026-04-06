@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
+import { calculateCalorieTarget } from '@/lib/nutrition'
 import type { Meal } from '@/types'
 
 const getLast7Days = () => Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return d.toISOString().split('T')[0] }).reverse()
@@ -216,6 +217,7 @@ export default function RapportPage() {
     const [showWeightModal, setShowWeightModal] = useState(false)
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [targetUpdate, setTargetUpdate] = useState<{ old: number, new: number } | null>(null)
 
     const last7 = getLast7Days()
     const todayStr = today()
@@ -262,20 +264,50 @@ export default function RapportPage() {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session || !profile) return
         try {
-            // 1. Mettre à jour le poids actuel du profil
-            const resProfile = await fetch('/api/user/weight', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ weight_kg: newWeight }) })
+            // Calculer les nouveaux objectifs nutritionnels
+            const newTargets = calculateCalorieTarget({
+                age: profile.age,
+                gender: profile.gender === 'autre' ? 'homme' : profile.gender,
+                weight_kg: newWeight,
+                height_cm: profile.height_cm,
+                activity_level: profile.activity_level,
+                goal: profile.goal || 'maintenir'
+            })
+
+            const hasChanged = Math.abs(newWeight - (profile.weight_kg || 0)) > 0.1
+            const oldTarget = profile.calorie_target
+
+            // 1. Mettre à jour le poids actuel du profil ET les nouveaux objectifs
+            const resProfile = await fetch('/api/user/weight', { 
+                method: 'PATCH', 
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
+                body: JSON.stringify({ 
+                    weight_kg: newWeight,
+                    ...newTargets
+                }) 
+            })
             const jsonProfile = await resProfile.json()
             
             // 2. Ajouter l'entrée dans l'historique (weight_logs)
-            const resLog = await fetch('/api/user/weight_logs', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ weight_kg: newWeight }) })
+            const resLog = await fetch('/api/user/weight_logs', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
+                body: JSON.stringify({ weight_kg: newWeight }) 
+            })
             const jsonLog = await resLog.json()
 
             if (!jsonProfile.success || !jsonLog.success) return
 
-            setProfile({ ...profile, weight_kg: newWeight })
+            setProfile({ ...profile, weight_kg: newWeight, ...newTargets })
             localStorage.setItem('lastWeightDate', todayStr)
             
-            // On ajoute la nouvelle pesée à la liste au lieu de l'écraser
+            // Afficher la notification si l'objectif calorique a changé
+            if (hasChanged && oldTarget !== newTargets.calorie_target) {
+                setTargetUpdate({ old: oldTarget, new: newTargets.calorie_target })
+                setTimeout(() => setTargetUpdate(null), 5000)
+            }
+
+            // Mettre à jour l'état local pour le graphique immédiatement
             const newEntry = { date: new Date().toISOString(), weight: newWeight }
             setWeightEntries(prev => [...prev, newEntry].sort((a, b) => a.date.localeCompare(b.date)))
         } catch (err) { console.error(err) }
@@ -468,6 +500,43 @@ export default function RapportPage() {
 
             {showWeightModal && <WeightModal currentWeight={currentWeight} onClose={() => setShowWeightModal(false)} onSave={handleSaveWeight} />}
             {selectedMeal && <MealDetailPanel meal={selectedMeal} onClose={() => setSelectedMeal(null)} onDelete={handleDeleteMeal} />}
+
+            {/* Notification de mise à jour des objectifs */}
+            {targetUpdate && (
+                <div style={{
+                    position: 'fixed',
+                    top: '20px',
+                    left: '20px',
+                    right: '20px',
+                    background: 'rgba(16,185,129,0.95)',
+                    color: '#fff',
+                    padding: '16px',
+                    borderRadius: '16px',
+                    zIndex: 100,
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(8px)',
+                    border: '0.5px solid rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    animation: 'slideIn 0.4s ease'
+                }}>
+                    <style>{`
+                        @keyframes slideIn {
+                            from { transform: translateY(-100%); opacity: 0; }
+                            to { transform: translateY(0); opacity: 1; }
+                        }
+                    `}</style>
+                    <div style={{ fontSize: '24px' }}>⚡</div>
+                    <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: '700', fontSize: '14px' }}>Objectifs mis à jour !</p>
+                        <p style={{ fontSize: '12px', opacity: 0.9 }}>
+                            Suite à votre pesée, votre cible passe de <span style={{ fontWeight: '700' }}>{targetUpdate.old}</span> à <span style={{ fontWeight: '700' }}>{targetUpdate.new} kcal</span>.
+                        </p>
+                    </div>
+                    <button onClick={() => setTargetUpdate(null)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '20px', cursor: 'pointer', padding: '4px' }}>×</button>
+                </div>
+            )}
         </div>
     )
 }
