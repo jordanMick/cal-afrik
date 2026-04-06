@@ -4,7 +4,7 @@ export type SubscriptionTier = 'free' | 'pro' | 'premium'
 
 export const SUBSCRIPTION_RULES = {
     free: {
-        maxScansPerDay: 1,
+        maxScansPerDay: 2,
         hasGraph: false,
         hasAutomaticRecalculation: false,
         hasCoachKofi: false,
@@ -23,8 +23,23 @@ export const SUBSCRIPTION_RULES = {
     }
 }
 
-export function checkPermission(profile: UserProfile | null, feature: keyof typeof SUBSCRIPTION_RULES.free) {
-    if (!profile) return false
+export function getEffectiveTier(profile: UserProfile | null): SubscriptionTier {
+    if (!profile) return 'free'
     const tier = profile.subscription_tier || 'free'
+    if (tier === 'free') return 'free'
+    
+    // Vérification de la date d'expiration
+    if (profile.subscription_expires_at) {
+        const expiresAt = new Date(profile.subscription_expires_at)
+        if (expiresAt < new Date()) {
+            return 'free'
+        }
+    }
+    
+    return tier
+}
+
+export function checkPermission(profile: UserProfile | null, feature: keyof typeof SUBSCRIPTION_RULES.free) {
+    const tier = getEffectiveTier(profile)
     return SUBSCRIPTION_RULES[tier][feature]
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
+import { getEffectiveTier } from '@/lib/subscription'
 
 declare global {
     interface Window {
@@ -20,7 +21,8 @@ export default function PricingPage() {
     const router = useRouter()
     const { profile } = useAppStore()
     const [loading, setLoading] = useState<string | null>(null)
-    const currentTier = profile?.subscription_tier || 'free'
+    const effectiveTier = getEffectiveTier(profile)
+    const currentTier = effectiveTier
 
     // Chargement du script FedaPay Checkout
     useEffect(() => {

@@ -5,7 +5,7 @@ import { useAppStore, MealSlotKey, SLOT_LABELS, NEXT_SLOT } from '@/store/useApp
 import { useRouter } from 'next/navigation'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
-import { checkPermission } from '@/lib/subscription'
+import { checkPermission, getEffectiveTier } from '@/lib/subscription'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -41,6 +41,7 @@ export default function ProfilPage() {
     const proteinTarget = profile?.protein_target_g || 100
     const carbsTarget = profile?.carbs_target_g || 250
     const fatTarget = profile?.fat_target_g || 65
+    const effectiveTier = getEffectiveTier(profile)
 
     const now = new Date()
     const hour = now.getHours()
@@ -188,13 +189,18 @@ export default function ProfilPage() {
                             </p>
                             <div style={{
                                 display: 'inline-flex', padding: '4px 10px', borderRadius: '10px',
-                                background: profile?.subscription_tier === 'pro' ? 'rgba(99,102,241,0.15)' : profile?.subscription_tier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                                color: profile?.subscription_tier === 'pro' ? '#818cf8' : profile?.subscription_tier === 'premium' ? '#34d399' : '#888',
+                                background: effectiveTier === 'pro' ? 'rgba(99,102,241,0.15)' : effectiveTier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                                color: effectiveTier === 'pro' ? '#818cf8' : effectiveTier === 'premium' ? '#34d399' : '#888',
                                 fontSize: '10px', fontWeight: '900', letterSpacing: '0.8px', border: '0.5px solid rgba(255,255,255,0.08)',
                                 textTransform: 'uppercase'
                             }}>
-                                PLAN {(profile?.subscription_tier || 'FREE')}
+                                PLAN {effectiveTier.toUpperCase()}
                             </div>
+                            {profile?.subscription_expires_at && effectiveTier !== 'free' && (
+                                <p style={{ color: '#444', fontSize: '11px', marginTop: '6px' }}>
+                                    Expire le {new Date(profile.subscription_expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>

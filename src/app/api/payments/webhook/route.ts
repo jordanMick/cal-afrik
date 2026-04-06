@@ -22,14 +22,17 @@ export async function POST(req: Request) {
 
             console.log(`[FedaPay Webhook] Validation paiement pour ${userId} - Plan: ${tier}`);
 
+            // Calcul de la date d'expiration (+30 jours)
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30);
+
             // Mise à jour de l'abonnement dans Supabase
-            // Utilisation de la clé service role si possible, sinon on utilise supabase normal
-            // Note: En mode serveur, on peut utiliser une instance supabase privilégiée pour les webhooks
             const { error: updateError } = await supabase
                 .from('user_profiles')
                 .update({ 
                     subscription_tier: tier,
-                    // Vous pouvez ajouter un champ 'updated_at' ou 'subscription_expires_at' ici
+                    subscription_expires_at: expiresAt.toISOString(),
+                    updated_at: new Date().toISOString(),
                 })
                 .eq('user_id', userId);
 

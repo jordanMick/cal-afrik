@@ -141,11 +141,17 @@ export async function POST(req: Request) {
     // ─── VÉRIFICATION ABONNEMENT ──────────────────────────────
     const { data: profile } = await supabase
         .from('user_profiles')
-        .select('subscription_tier')
+        .select('subscription_tier, subscription_expires_at')
         .eq('user_id', user.id)
         .single()
     
-    const tier = profile?.subscription_tier || 'free'
+    let tier = profile?.subscription_tier || 'free'
+    const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
+    
+    // Si l'abonnement est expiré, on force le mode free
+    if (expiresAt && expiresAt < new Date()) {
+        tier = 'free'
+    }
 
     if (tier === 'free') {
         const today = new Date().toISOString().split('T')[0]
@@ -157,10 +163,11 @@ export async function POST(req: Request) {
             .lte('logged_at', `${today}T23:59:59.999Z`)
             .gt('ai_confidence', 0)
 
-        if (count !== null && count >= 1) {
+        // Limite passée à 2 scans gratuits par jour
+        if (count !== null && count >= 2) {
             return new Response(JSON.stringify({ 
                 success: false, 
-                error: "Limite de scan atteinte", 
+                error: "Limite de scan atteinte (2/jour en mode gratuit)", 
                 code: "LIMIT_REACHED" 
             }), { status: 403 })
         }
