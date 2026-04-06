@@ -18,10 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const currentIndex = navPaths.indexOf(pathname)
 
     return (
-        <div style={{
-            maxWidth: '480px', margin: '0 auto', minHeight: '100vh',
-            position: 'relative', background: '#0a0603', overflow: 'hidden',
-        }}>
+        <div className="mx-auto max-w-[480px] min-h-screen relative bg-zinc-950 overflow-hidden flex flex-col">
             <AuthProvider>
                 {/* ✅ Surveille les changements de créneau */}
                 <SlotWatcherInit />
@@ -34,7 +31,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: '-100%', opacity: 0 }}
                         transition={{ type: 'tween', ease: [0.25, 0.46, 0.45, 0.94], duration: 0.25 }}
-                        style={{ minHeight: '100vh' }}
+                        className="flex-1"
                     >
                         {children}
                     </motion.div>
