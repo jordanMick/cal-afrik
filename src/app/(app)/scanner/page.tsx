@@ -172,12 +172,84 @@ export default function ScannerPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
+            
+            // 1. Sauvegarder l'aliment dans la base de données (pour futur usage)
             const factor = manualFood.portion_g > 0 ? 100 / manualFood.portion_g : 1
-            const res = await fetch('/api/foods', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name_fr: manualFood.name_fr, category: manualFood.category, calories_per_100g: Math.round(manualFood.calories * factor), protein_per_100g: Math.round(manualFood.protein_g * factor * 10) / 10, carbs_per_100g: Math.round(manualFood.carbs_g * factor * 10) / 10, fat_per_100g: Math.round(manualFood.fat_g * factor * 10) / 10, default_portion_g: manualFood.portion_g, verified: false, origin_country: [] }) })
-            const json = await res.json()
-            if (json.success && json.data) { setSelectedFoods(prev => [...prev, { id: json.data.id, name: manualFood.name_fr, score: 100, calories: manualFood.calories, protein_g: manualFood.protein_g, carbs_g: manualFood.carbs_g, fat_g: manualFood.fat_g, portion_g: manualFood.portion_g, calories_detected: manualFood.calories, protein_detected: manualFood.protein_g, carbs_detected: manualFood.carbs_g, fat_detected: manualFood.fat_g, confidence: 100, detected: manualFood.name_fr, fromAI: false }]); setShowManualForm(false) }
-        } catch (err) { console.error(err) }
-        finally { setIsSavingManual(false) }
+            const resFood = await fetch('/api/foods', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
+                body: JSON.stringify({ 
+                    name_fr: manualFood.name_fr, 
+                    category: manualFood.category, 
+                    calories_per_100g: Math.round(manualFood.calories * factor), 
+                    protein_per_100g: Math.round(manualFood.protein_g * factor * 10) / 10, 
+                    carbs_per_100g: Math.round(manualFood.carbs_g * factor * 10) / 10, 
+                    fat_per_100g: Math.round(manualFood.fat_g * factor * 10) / 10, 
+                    default_portion_g: manualFood.portion_g, 
+                    verified: false, 
+                    origin_country: [] 
+                }) 
+            })
+            const jsonFood = await resFood.json()
+            if (!jsonFood.success) throw new Error("Erreur lors de la sauvegarde de l'aliment")
+
+            // 2. Préparer le repas complet (Aliments déjà sélectionnés + ce nouvel aliment)
+            const newFoodEntry: EnrichedSuggestion = { 
+                id: jsonFood.data.id, 
+                name: manualFood.name_fr, 
+                score: 100, 
+                calories: manualFood.calories, 
+                protein_g: manualFood.protein_g, 
+                carbs_g: manualFood.carbs_g, 
+                fat_g: manualFood.fat_g, 
+                portion_g: manualFood.portion_g, 
+                calories_detected: manualFood.calories, 
+                protein_detected: manualFood.protein_g, 
+                carbs_detected: manualFood.carbs_g, 
+                fat_detected: manualFood.fat_g, 
+                confidence: 100, 
+                detected: manualFood.name_fr, 
+                fromAI: false 
+            }
+
+            const allFoods = [...selectedFoods, newFoodEntry]
+            const finalTotals = allFoods.reduce((acc, f) => ({
+                calories: acc.calories + f.calories,
+                protein_g: acc.protein_g + f.protein_g,
+                carbs_g: acc.carbs_g + f.carbs_g,
+                fat_g: acc.fat_g + f.fat_g,
+                portion_g: acc.portion_g + f.portion_g
+            }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
+
+            // 3. Sauvegarder le repas (Meal) directement
+            const resMeal = await fetch('/api/meals', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
+                body: JSON.stringify({ 
+                    custom_name: mealName || allFoods.map(f => f.name).join(', '), 
+                    portion_g: Math.round(finalTotals.portion_g), 
+                    calories: Math.round(finalTotals.calories), 
+                    protein_g: Math.round(finalTotals.protein_g * 10) / 10, 
+                    carbs_g: Math.round(finalTotals.carbs_g * 10) / 10, 
+                    fat_g: Math.round(finalTotals.fat_g * 10) / 10, 
+                    image_url: capturedImage, 
+                    ai_confidence: 100,
+                    coach_message: null // Pas de conseil AI sur l'ajout manuel instantané
+                }) 
+            })
+            
+            const jsonMeal = await resMeal.json()
+            if (jsonMeal.success && jsonMeal.data) {
+                addMeal(jsonMeal.data)
+                router.push('/journal')
+            }
+
+        } catch (err) { 
+            console.error(err)
+            alert("Erreur lors de l'enregistrement.")
+        } finally { 
+            setIsSavingManual(false) 
+        }
     }
 
     const saveAIFoodToDB = async (food: EnrichedSuggestion, session: any) => {
