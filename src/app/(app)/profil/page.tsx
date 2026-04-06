@@ -76,6 +76,31 @@ export default function ProfilPage() {
     }
 
     const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(getInitialStatus())
+    const [isRenewing, setIsRenewing] = useState(false)
+
+    const handleRenew = async () => {
+        if (effectiveTier === 'free') return;
+        setIsRenewing(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { router.push('/login'); return; }
+
+            const res = await fetch('/api/payments/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify({ tier: effectiveTier })
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Erreur de paiement');
+            
+            window.location.href = data.url;
+        } catch (error: any) {
+            alert(`Erreur: ${error.message}`);
+        } finally {
+            setIsRenewing(false);
+        }
+    }
 
     useEffect(() => { 
         if (shouldGenerate) {
@@ -220,19 +245,20 @@ export default function ProfilPage() {
                                     
                                     {isExpiringSoon && (
                                         <button 
-                                            onClick={() => router.push('/upgrade')}
+                                            onClick={handleRenew}
+                                            disabled={isRenewing}
                                             style={{
                                                 marginTop: '12px',
                                                 padding: '8px 16px',
-                                                background: 'rgba(239,68,68,0.1)',
+                                                background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.1)',
                                                 border: '1px solid rgba(239,68,68,0.3)',
                                                 borderRadius: '10px',
                                                 color: '#ef4444',
                                                 fontSize: '12px',
                                                 fontWeight: '700',
-                                                cursor: 'pointer'
+                                                cursor: isRenewing ? 'default' : 'pointer'
                                             }}>
-                                            Renouveler mon plan ⏳
+                                            {isRenewing ? 'Initialisation...' : 'Renouveler mon plan ⏳'}
                                         </button>
                                     )}
                                 </div>

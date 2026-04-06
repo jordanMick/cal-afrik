@@ -25,6 +25,32 @@ export default function DashboardPage() {
     const remaining = Math.max(0, calorieTarget - dailyCalories)
     const exceeded = dailyCalories > calorieTarget
 
+    const [isRenewing, setIsRenewing] = useState(false)
+
+    const handleRenew = async () => {
+        if (effectiveTier === 'free') return;
+        setIsRenewing(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { router.push('/login'); return; }
+
+            const res = await fetch('/api/payments/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify({ tier: effectiveTier })
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Erreur de paiement');
+            
+            window.location.href = data.url;
+        } catch (error: any) {
+            alert(`Erreur: ${error.message}`);
+        } finally {
+            setIsRenewing(false);
+        }
+    }
+
     // Logique d'expiration
     const effectiveTier = getEffectiveTier(profile)
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
@@ -142,9 +168,9 @@ export default function DashboardPage() {
             {/* ALERTE EXPIRATION */}
             {isExpiringSoon && (
                 <div 
-                    onClick={() => router.push('/upgrade')}
+                    onClick={isRenewing ? undefined : handleRenew}
                     style={{
-                        background: 'rgba(239,68,68,0.1)',
+                        background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.1)',
                         border: '1.5px solid rgba(239,68,68,0.3)',
                         borderRadius: '16px',
                         padding: '14px 16px',
@@ -152,17 +178,22 @@ export default function DashboardPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        cursor: 'pointer',
-                        animation: 'pulse 2s infinite'
+                        cursor: isRenewing ? 'default' : 'pointer',
+                        animation: isRenewing ? 'none' : 'pulse 2s infinite',
+                        opacity: isRenewing ? 0.7 : 1
                     }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '20px' }}>⏳</span>
+                        <span style={{ fontSize: '20px' }}>{isRenewing ? '⏳' : '⚠️'}</span>
                         <div>
-                            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '800' }}>Abonnement {effectiveTier.toUpperCase()} expire bientôt</p>
-                            <p style={{ color: 'rgba(239,68,68,0.7)', fontSize: '11px' }}>Il ne vous reste que {daysLeft} jours d'accès Coach Kofi.</p>
+                            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '800' }}>
+                                {isRenewing ? 'Préparation du paiement...' : `Abonnement ${effectiveTier.toUpperCase()} expire bientôt`}
+                            </p>
+                            <p style={{ color: 'rgba(239,68,68,0.7)', fontSize: '11px' }}>
+                                {isRenewing ? 'Veuillez patienter' : `Il ne vous reste que ${daysLeft} jours d'accès Coach Kofi.`}
+                            </p>
                         </div>
                     </div>
-                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>→</span>
+                    {!isRenewing && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>→</span>}
                 </div>
             )}
 
