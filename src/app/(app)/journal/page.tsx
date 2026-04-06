@@ -143,8 +143,8 @@ function WeightModal({ currentWeight, onClose, onSave }: { currentWeight: number
     const handleSave = async () => { const num = parseFloat(value); if (isNaN(num) || num < 20 || num > 300) return; setSaving(true); await onSave(num); setSaving(false); onClose() }
     return (
         <>
-            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 60 }} />
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 70, padding: '24px 20px 48px' }}>
+            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000 }} />
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 1010, padding: '24px 20px 60px' }}>
                 <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', paddingTop: '10px' }}><div style={{ width: '36px', height: '4px', background: '#222', borderRadius: '2px' }} /></div>
                 <h3 style={{ color: '#fff', fontSize: '17px', fontWeight: '600', marginBottom: '4px' }}>Consigner mon poids</h3>
@@ -168,8 +168,8 @@ function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () 
     const macros = totalKcal === 0 ? { protein: 0, carbs: 0, fat: 0 } : { protein: Math.round((meal.protein_g * 4 / totalKcal) * 100), carbs: Math.round((meal.carbs_g * 4 / totalKcal) * 100), fat: Math.round((meal.fat_g * 9 / totalKcal) * 100) }
     return (
         <>
-            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 40 }} />
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 50, maxHeight: '90vh', overflowY: 'auto', paddingBottom: '100px' }}>
+            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000 }} />
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 1010, maxHeight: '90vh', overflowY: 'auto', paddingBottom: '100px' }}>
                 <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)' }} />
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}><div style={{ width: '36px', height: '4px', background: '#222', borderRadius: '2px' }} /></div>
                 {meal.image_url && <div style={{ width: '100%', height: '160px', overflow: 'hidden' }}><img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
