@@ -62,17 +62,21 @@ export default function ProfilPage() {
     const shouldShowExisting = !!activeSlot && bilanIsValid
 
     // Déterminer le statut initial si on a déjà un bilan
-    const initialStatus = shouldShowExisting 
-        ? ((existingBilan?.message === "" && activeSlot !== 'diner') ? 'empty' : 'done')
-        : null
+    const getInitialStatus = () => {
+        if (!shouldShowExisting) return null
+        if (!existingBilan) return null
+        if (existingBilan.message === "" && activeSlot !== 'diner') return 'empty'
+        return 'done'
+    }
 
-    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(initialStatus)
+    const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(getInitialStatus())
 
     useEffect(() => { 
         if (shouldGenerate) {
+            setBilanStatus('loading')
             loadBilan(activeSlot!); 
         } else if (shouldShowExisting) {
-            setBilanStatus(initialStatus)
+            setBilanStatus(getInitialStatus())
         }
     }, [activeSlot, profile?.subscription_tier, bilanDate])
 
@@ -232,80 +236,86 @@ export default function ProfilPage() {
             </div>
 
             {/* SECTION BILAN - TOTALEMENT RÉSERVÉE PRO/PREMIUM */}
-            {profile?.subscription_tier !== 'free' && (
-                activeSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') ? (
-                    <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
-                        {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
+            {profile?.subscription_tier !== 'free' && activeSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') && (
+                <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : (bilanColor + '40')}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
+                    {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
-                        {bilanStatus === 'loading' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>⏳</div>
-                                <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>Génération du bilan...</p>
+                    {bilanStatus === 'loading' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>⏳</div>
+                            <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>Génération du bilan...</p>
+                        </div>
+                    )}
+
+                    {(bilanStatus === 'done' || bilanStatus === 'empty') && (
+                        <>
+                            {/* TITRE ET ÉMOJI */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
+                                <div>
+                                    <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
+                                    <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Résumé de la journée' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
+                                </div>
                             </div>
-                        )}
-                        {bilanStatus === 'done' && (
-                            <>
-                                {/* TITRE ET ÉMOJI VISIBLE PAR TOUS PRO/PREMIUM */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
+
+                            {/* CONTENU SI BILAN DISPONIBLE */}
+                            {bilanStatus === 'done' && (
+                                <>
+                                    {checkPermission(profile, 'hasCoachKofi') ? (
+                                        bilanMessage && <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px', borderLeft: `2px solid ${bilanColor}40`, paddingLeft: '12px' }}>{bilanMessage}</p>
+                                    ) : (
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>{autoMessage}</p>
+                                            <div 
+                                                onClick={() => router.push('/upgrade')}
+                                                style={{ background: 'rgba(245,158,11,0.05)', borderRadius: '10px', padding: '10px', border: '0.5px dashed rgba(245,158,11,0.3)', cursor: 'pointer' }}>
+                                                <p style={{ color: '#f59e0b', fontSize: '11px', fontWeight: '600', marginBottom: '2px' }}>💡 L'avantage Premium :</p>
+                                                <p style={{ color: '#666', fontSize: '10px', lineHeight: '1.4', fontStyle: 'italic' }}>{kofiNudge} <span style={{ fontWeight: 'bold' }}>Débloquer →</span></p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeSlot === 'diner' ? (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                            {stats.map(stat => (
+                                                <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', border: `0.5px solid ${stat.color}15` }}>
+                                                    <p style={{ color: stat.color, fontSize: '16px', fontWeight: '600' }}>{Math.round(stat.current)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {stat.target}{stat.unit}</span></p>
+                                                    <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '6px 0 4px' }}>
+                                                        <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: stat.color }} />
+                                                    </div>
+                                                    <p style={{ color: '#444', fontSize: '11px' }}>{stat.label}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        slots[activeSlot] && (
+                                            <div style={{ background: '#0a0a0a', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `0.5px solid ${bilanColor}15` }}>
+                                                <div>
+                                                    <p style={{ color: bilanColor, fontSize: '17px', fontWeight: '700' }}>{Math.round(slots[activeSlot].consumed)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {slots[activeSlot].target} kcal</span></p>
+                                                    <p style={{ color: '#444', fontSize: '11px', marginTop: '4px' }}>Calories {SLOT_LABELS[activeSlot]}</p>
+                                                </div>
+                                                <div style={{ width: '70px', height: '3px', background: '#1e1e1e', borderRadius: '2px' }}>
+                                                    <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((slots[activeSlot].consumed / slots[activeSlot].target) * 100))}%`, background: bilanColor }} />
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+                                </>
+                            )}
+
+                            {/* SI VIDE */}
+                            {bilanStatus === 'empty' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🍽️</div>
                                     <div>
-                                        <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
-                                        <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Résumé de la journée' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
+                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>Aucun repas détecté</p>
+                                        <p style={{ color: '#444', fontSize: '11px' }}>Scannez vos plats pour voir le bilan {SLOT_LABELS[activeSlot]}</p>
                                     </div>
                                 </div>
-
-                                {/* MESSAGE DU COACH RÉSERVÉ PREMIUM OU AUTO-MESSAGE POUR PRO */}
-                                {checkPermission(profile, 'hasCoachKofi') ? (
-                                    bilanMessage && <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px', borderLeft: `2px solid ${bilanColor}40`, paddingLeft: '12px' }}>{bilanMessage}</p>
-                                ) : (
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>{autoMessage}</p>
-                                        <div 
-                                            onClick={() => router.push('/upgrade')}
-                                            style={{ background: 'rgba(245,158,11,0.05)', borderRadius: '10px', padding: '10px', border: '0.5px dashed rgba(245,158,11,0.3)', cursor: 'pointer' }}>
-                                            <p style={{ color: '#f59e0b', fontSize: '11px', fontWeight: '600', marginBottom: '2px' }}>💡 L'avantage Premium :</p>
-                                            <p style={{ color: '#666', fontSize: '10px', lineHeight: '1.4', fontStyle: 'italic' }}>{kofiNudge} <span style={{ fontWeight: 'bold' }}>Débloquer →</span></p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {activeSlot === 'diner' ? (
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                        {stats.map(stat => (
-                                            <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', border: `0.5px solid ${stat.color}15` }}>
-                                                <p style={{ color: stat.color, fontSize: '16px', fontWeight: '600' }}>{Math.round(stat.current)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {stat.target}{stat.unit}</span></p>
-                                                <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '6px 0 4px' }}>
-                                                    <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: stat.color }} />
-                                                </div>
-                                                <p style={{ color: '#444', fontSize: '11px' }}>{stat.label}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div style={{ background: '#0a0a0a', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `0.5px solid ${bilanColor}15` }}>
-                                        <div>
-                                            <p style={{ color: bilanColor, fontSize: '17px', fontWeight: '700' }}>{Math.round(slots[activeSlot].consumed)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {slots[activeSlot].target} kcal</span></p>
-                                            <p style={{ color: '#444', fontSize: '11px', marginTop: '4px' }}>Calories {SLOT_LABELS[activeSlot]}</p>
-                                        </div>
-                                        <div style={{ width: '70px', height: '3px', background: '#1e1e1e', borderRadius: '2px' }}>
-                                            <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((slots[activeSlot].consumed / slots[activeSlot].target) * 100))}%`, background: bilanColor }} />
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {bilanStatus === 'empty' && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🍽️</div>
-                                        <div>
-                                            <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>Aucun repas détecté</p>
-                                            <p style={{ color: '#444', fontSize: '11px' }}>Scannez vos plats pour voir le bilan {SLOT_LABELS[activeSlot]}</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                ) : null
+                            )}
+                        </>
+                    )}
+                </div>
             )}
 
 
