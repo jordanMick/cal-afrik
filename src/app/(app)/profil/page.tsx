@@ -10,12 +10,16 @@ import { checkPermission } from '@/lib/subscription'
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
 
-function getActiveBilanSlot(hour: number): MealSlotKey | null {
-    if (hour >= 23 || hour < 8) return 'diner'
-    if (hour >= 19 && hour < 23) return 'collation'
-    if (hour >= 16 && hour < 19) return 'dejeuner'
-    if (hour >= 12 && hour < 16) return 'petit_dejeuner'
-    return null
+function getActiveBilanSlot(hour: number, minutes: number = 0): MealSlotKey {
+    // Règle : Un bilan reste affiché jusqu'à 30 minutes avant le début du suivant
+    const time = hour + minutes / 60
+
+    if (time >= 22.5 || time < 11.5) return 'diner'           // Bilan journée visible de 22h30 à 11h30
+    if (time >= 18.5 && time < 22.5) return 'collation'       // Bilan collation visible de 18h30 à 22h30
+    if (time >= 15.5 && time < 18.5) return 'dejeuner'        // Bilan déjeuner visible de 15h30 à 18h30
+    if (time >= 11.5 && time < 15.5) return 'petit_dejeuner'  // Bilan petit-déjeuner de 11h30 à 15h30
+    
+    return 'diner'
 }
 
 function getNextSlotInfo(hour: number): { label: string; time: string } {
@@ -40,12 +44,13 @@ export default function ProfilPage() {
 
     const now = new Date()
     const hour = now.getHours()
+    const minutes = now.getMinutes()
     const today = now.toISOString().split('T')[0]
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-    const isBefore8 = hour < 8
-    const bilanDinerDate = isBefore8 ? yesterday : today
+    const isBefore11 = hour < 11
+    const bilanDinerDate = isBefore11 ? yesterday : today
 
-    const activeSlot = getActiveBilanSlot(hour)
+    const activeSlot = getActiveBilanSlot(hour, minutes)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
     const existingBilan = activeSlot ? slotBilans[activeSlot] : null
     
@@ -220,7 +225,7 @@ export default function ProfilPage() {
 
             {/* SECTION BILAN - TOTALEMENT RÉSERVÉE PRO/PREMIUM */}
             {profile?.subscription_tier !== 'free' && (
-                activeSlot && (bilanStatus === 'loading' || (bilanStatus === 'done' && (bilanMessage || true))) ? (
+                activeSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') ? (
                     <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : bilanColor + '40'}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
                         {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
@@ -279,33 +284,20 @@ export default function ProfilPage() {
                                         </div>
                                     </div>
                                 )}
+                                
+                                {bilanStatus === 'empty' && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🍽️</div>
+                                        <div>
+                                            <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>Aucun repas détecté</p>
+                                            <p style={{ color: '#444', fontSize: '11px' }}>Scannez vos plats pour voir le bilan {SLOT_LABELS[activeSlot]}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
-                ) : (
-                    <div style={{
-                        background: '#141414', border: '0.5px solid #222',
-                        borderRadius: '16px', padding: '16px',
-                        margin: '0 20px 20px',
-                        display: 'flex', alignItems: 'center', gap: '12px',
-                    }}>
-                        <div style={{
-                            width: '36px', height: '36px', borderRadius: '10px',
-                            background: 'rgba(99,102,241,0.12)',
-                            border: '0.5px solid rgba(99,102,241,0.3)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '16px', flexShrink: 0,
-                        }}>⏰</div>
-                        <div>
-                            <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600' }}>
-                                Bilan {getNextSlotInfo(hour).label}
-                            </p>
-                            <p style={{ color: '#555', fontSize: '12px', marginTop: '3px' }}>
-                                Disponible à partir de {getNextSlotInfo(hour).time}
-                            </p>
-                        </div>
-                    </div>
-                )
+                ) : null
             )}
 
 
