@@ -48,13 +48,20 @@ export default function ProfilPage() {
     const activeSlot = getActiveBilanSlot(hour)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
     const existingBilan = activeSlot ? slotBilans[activeSlot] : null
-    const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh
+    
+    // VALIDITÉ : On ajoute un check sur le message si l'utilisateur est Premium
+    const needsKofiMessage = profile?.subscription_tier === 'premium' && (!existingBilan?.message || existingBilan.message === "")
+    const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh && !needsKofiMessage
+    
     const shouldGenerate = !!activeSlot && !bilanIsValid
     const shouldShowExisting = !!activeSlot && bilanIsValid
 
     const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(shouldShowExisting ? 'done' : null)
 
-    useEffect(() => { if (shouldGenerate) loadBilan(activeSlot!); else if (shouldShowExisting) setBilanStatus('done') }, [])
+    useEffect(() => { 
+        if (shouldGenerate) loadBilan(activeSlot!); 
+        else if (shouldShowExisting) setBilanStatus('done') 
+    }, [activeSlot, profile?.subscription_tier, bilanDate])
 
     const loadBilan = async (slot: MealSlotKey) => {
         const slotMeals = slot !== 'diner'
