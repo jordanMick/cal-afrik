@@ -34,10 +34,11 @@ export const Button = ({
 
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      whileTap={{ scale: 0.98 }}
+      whileHover={{ scale: 1.01 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={cn(
-        'h-12 px-6 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:pointer-events-none text-[15px]',
+        'h-14 px-8 rounded-full flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none text-sm font-bold tracking-tight',
         fullWidth && 'w-full',
         variants[variant],
         className

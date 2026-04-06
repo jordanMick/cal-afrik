@@ -14,27 +14,28 @@
 }
 
 :root {
-  /* Palette Silicon Valley (Zinc/Neutre) */
-  --background: #09090b;
-  --foreground: #fafafa;
+  /* Palette Cal AI Elite (Noir pur / Vert vibrant) */
+  --background: #000000;
+  --foreground: #ffffff;
   
   /* Surfaces */
-  --card: #121214;
-  --card-border: rgba(255, 255, 255, 0.08);
-  --input: #18181b;
+  --card: #0a0a0a;
+  --card-border: rgba(255, 255, 255, 0.05);
+  --input: #111111;
   
-  /* Accents */
-  --accent: #ffffff;
-  --accent-muted: #a1a1aa;
+  /* Accents Cal AI */
+  --accent: #22c55e;
+  --accent-muted: #14532d;
   
   /* Status */
-  --success: #10b981;
+  --success: #22c55e;
   --warning: #f59e0b;
   --error: #ef4444;
 }
 
 html {
   scroll-behavior: smooth;
+  background-color: #000;
 }
 
 body {
@@ -45,20 +46,20 @@ body {
   overflow-x: hidden;
 }
 
-/* Utilitaires Design Pro */
+/* Utilitaires Design Cal AI */
 .glass-panel {
-  background: rgba(18, 18, 20, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--card-border);
 }
 
-.subtle-border {
-  border: 1px solid var(--card-border);
+.pill-shape {
+  border-radius: 9999px;
 }
 
 .text-gradient {
-  background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+  background: linear-gradient(180deg, #ffffff 30%, rgba(255,255,255,0.4) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

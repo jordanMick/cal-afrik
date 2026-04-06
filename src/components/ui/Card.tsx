@@ -21,9 +21,9 @@ export const Card = ({
   return (
     <div
       className={cn(
-        'rounded-2xl transition-all duration-300',
+        'rounded-[2.5rem] transition-all duration-300',
         glass ? 'glass-panel' : 'bg-card subtle-border',
-        !noPadding && 'p-4',
+        !noPadding && 'p-6',
         className
       )}
       {...props}

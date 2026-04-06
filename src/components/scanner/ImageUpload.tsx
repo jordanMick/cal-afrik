@@ -22,40 +22,49 @@ export const ImageUpload = ({
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   return (
-    <div className="relative mb-6">
+    <div className="relative w-full overflow-hidden">
       <AnimatePresence mode="wait">
         {!image ? (
           <motion.div
             key="upload"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => fileInputRef.current?.click()}
-            className="group relative h-48 rounded-2xl border-2 border-dashed border-white/10 bg-zinc-900/40 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all hover:bg-zinc-900/60 hover:border-white/20 overflow-hidden"
+            className="group relative aspect-[3/4] w-full bg-zinc-950 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all overflow-hidden rounded-b-[3rem] border-b border-white/5"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            {/* Effet de profondeur Cal AI */}
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent z-0" />
+            
             <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-white/60 transition-transform group-hover:scale-110"
-              style={{ backgroundColor: `${slotColor}1a` }}
+              className="w-20 h-20 rounded-full flex items-center justify-center text-white transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10 z-10 border border-white/5 backdrop-blur-sm"
+              style={{ backgroundColor: `${slotColor}15` }}
             >
-              <Camera className="w-6 h-6" />
+              <Camera className="w-8 h-8" />
             </div>
-            <p className="text-sm font-medium text-zinc-500">Ajouter une photo du repas</p>
+            <div className="text-center z-10">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-white">Prendre une Photo</p>
+                <p className="text-[10px] font-bold text-white/30 mt-1 uppercase tracking-widest">IA ANALYSE INSTANTANÉE</p>
+            </div>
           </motion.div>
         ) : (
           <motion.div
             key="preview"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative aspect-video rounded-2xl overflow-hidden border border-white/10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-b-[3.5rem] shadow-2xl"
           >
             <img src={image} alt="Meal preview" className="w-full h-full object-cover" />
+            
+            {/* Overlay Gradient pour lisibilité */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+
             {!isAnalyzing && (
               <button
                 onClick={onClear}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white transition-transform hover:scale-110"
+                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             )}
             
@@ -64,17 +73,20 @@ export const ImageUpload = ({
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4"
+                  className="absolute inset-0 bg-black/20 backdrop-blur-[2px] flex flex-col items-center justify-center gap-6 overflow-hidden"
                 >
-                  <div className="relative w-12 h-12">
-                     <div className="absolute inset-0 border-2 border-white/20 rounded-full" />
-                     <motion.div 
-                       animate={{ rotate: 360 }}
-                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                       className="absolute inset-0 border-2 border-transparent border-t-white rounded-full"
-                     />
-                  </div>
-                  <p className="text-white font-medium text-sm">Analyse de l'IA...</p>
+                    {/* Laser Scan Animation */}
+                    <motion.div 
+                        initial={{ top: '0%' }}
+                        animate={{ top: '100%' }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="absolute left-0 right-0 h-[2px] bg-[#22c55e] shadow-[0_0_20px_#22c55e] z-30"
+                    />
+                    
+                    <div className="glass-panel px-6 py-3 rounded-full flex items-center gap-3 animate-pulse">
+                        <div className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e]" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">IA EN ACTION...</span>
+                    </div>
                 </motion.div>
               )}
             </AnimatePresence>

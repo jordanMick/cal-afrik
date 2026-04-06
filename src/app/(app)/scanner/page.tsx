@@ -308,61 +308,76 @@ export default function ScannerPage() {
     const recapExceeded = recapRemainingAfter < 0
 
     return (
-        <div className="min-h-screen bg-zinc-950 pb-36 p-6 max-w-[480px] mx-auto relative overflow-hidden">
-            {/* Halo décoratif subtil */}
+        <div className="flex flex-col min-h-[calc(100vh-64px)] w-full pb-32 bg-black relative overflow-hidden">
+            {/* Halo décoratif Cal AI */}
             <div 
-                className="absolute top-[-100px] right-[-100px] w-[300px] h-[300px] blur-[120px] rounded-full opacity-[0.08]" 
-                style={{ backgroundColor: slotColor }} 
+                className="absolute top-[-10%]"
+                style={{
+                    width: '100%',
+                    height: '40%',
+                    background: `radial-gradient(circle at 50% 0%, ${slotColor}15, transparent 70%)`,
+                    pointerEvents: 'none'
+                }}
             />
 
-            <ScannerHeader 
-                slotLabel={slotLabel}
-                slotColor={slotColor}
-                displayedRemaining={displayedRemaining}
-                displayedRemainingLabel={displayedRemainingLabel}
-            />
-
-            <ImageUpload 
-                image={image}
-                onImageChange={processImage}
-                onClear={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName('') }}
-                isAnalyzing={isAnalyzing}
-                slotColor={slotColor}
-            />
-
-            <div className="space-y-8">
-                <AnalysisResults 
-                    mealName={mealName}
-                    totalCalories={totalCaloriesAI}
-                    suggestions={suggestions}
-                    selectedFoods={selectedFoods}
-                    onSelect={toggleFoodSelection}
+            {/* Zone de Scan Immersive (Haut) - Style Cal AI */}
+            <div className="w-full relative z-10 transition-all duration-700 ease-in-out">
+                <ImageUpload 
+                    image={image}
+                    onImageChange={processImage}
+                    onClear={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName('') }}
+                    isAnalyzing={isAnalyzing}
                     slotColor={slotColor}
                 />
-
-                {!isAnalyzing && image && (
-                    <ManualFoodForm 
-                        isOpen={showManualForm}
-                        onToggle={() => setShowManualForm(!showManualForm)}
-                        manualFood={manualFood}
-                        setManualFood={setManualFood}
-                        onSave={handleSaveManualFood}
-                        isSaving={isSavingManual}
-                        slotColor={slotColor}
-                    />
-                )}
             </div>
 
-            {/* Bouton récapitulatif flottant */}
+            {/* Dashboard & Contenu (Bas) */}
+            <div className="flex-1 flex flex-col justify-end px-6 space-y-8 relative z-20">
+                
+                {/* Statistiques et Onglets Déplacés en Bas (Ergonomie) */}
+                <ScannerHeader 
+                    slotLabel={slotLabel}
+                    slotColor={slotColor}
+                    displayedRemaining={displayedRemaining}
+                    displayedRemainingLabel={displayedRemainingLabel}
+                />
+
+                <div className="space-y-6">
+                    <AnalysisResults 
+                        mealName={mealName}
+                        totalCalories={totalCaloriesAI}
+                        suggestions={suggestions}
+                        selectedFoods={selectedFoods}
+                        onSelect={toggleFoodSelection}
+                        slotColor={slotColor}
+                    />
+
+                    {!isAnalyzing && image && (
+                        <ManualFoodForm 
+                            isOpen={showManualForm}
+                            onToggle={() => setShowManualForm(!showManualForm)}
+                            manualFood={manualFood}
+                            setManualFood={setManualFood}
+                            onSave={handleSaveManualFood}
+                            isSaving={isSavingManual}
+                            slotColor={slotColor}
+                        />
+                    )}
+                </div>
+            </div>
+
+            {/* Bouton récapitulatif flottant Élite */}
             {selectedFoods.length > 0 && (
-                <div className="fixed bottom-24 left-0 right-0 max-w-[480px] mx-auto px-6 z-40">
+                <div className="fixed bottom-28 left-0 right-0 max-w-[480px] mx-auto px-6 z-40">
                     <Button 
                         fullWidth 
                         onClick={() => setShowRecap(true)}
-                        className="h-14 rounded-2xl shadow-2xl shadow-black/40"
+                        className="h-16 rounded-full shadow-2xl shadow-green-500/10 border border-white/5"
                         style={{ backgroundColor: slotColor }}
                     >
-                       📊 Voir le récapitulatif • {Math.round(totals.calories)} kcal
+                       <span className="flex items-center gap-2 text-black font-black">
+                         VOIR LE RÉCAPITULATIF • {Math.round(totals.calories)} KCAL
+                       </span>
                     </Button>
                 </div>
             )}
