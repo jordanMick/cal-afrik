@@ -18,120 +18,218 @@ const ACCENT_COLOR = '#6366f1'
 const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 
-function WeightChart({ entries }: { entries: { date: string; weight: number }[] }) {
-    const lastWeightDate = localStorage.getItem('lastWeightDate') || entries[entries.length - 1]?.date || new Date().toISOString().split('T')[0]
+function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { entries: { date: string; weight: number }[], profile: any, selectedPeriod: string, setSelectedPeriod: (p: string) => void }) {
+    const isPremium = profile?.subscription_tier === 'premium'
+    
+    // 1. Consolidation Mensuelle : On ne garde que la dernière pesée de chaque mois
+    const getConsolidatedData = (period: string) => {
+        const monthsCount = period === '90' ? 3 : period === '1y' ? 12 : 6
+        const result: { label: string; weight: number; date: string }[] = []
+        const now = new Date()
+
+        for (let i = monthsCount - 1; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+            const monthKey = d.toISOString().slice(0, 7) // YYYY-MM
+            const label = d.toLocaleDateString('fr-FR', { month: 'short' }).charAt(0).toUpperCase() + d.toLocaleDateString('fr-FR', { month: 'short' }).slice(1)
+            
+            // Trouver la dernière entrée pour ce mois
+            const monthEntries = entries.filter(e => e.date.startsWith(monthKey))
+            if (monthEntries.length > 0) {
+                result.push({
+                    label,
+                    weight: monthEntries[monthEntries.length - 1].weight,
+                    date: monthKey
+                })
+            }
+        }
+        return result
+    }
+
+    const chartData = getConsolidatedData(selectedPeriod)
+    
+    // 2. Calcul du message de progression
+    const getProgressionInfo = () => {
+        if (chartData.length < 2) return null
+        const first = chartData[0].weight
+        const last = chartData[chartData.length - 1].weight
+        const diff = Math.round((last - first) * 10) / 10
+        const goal = profile?.goal || 'maintenir'
+        
+        let isPositive = false
+        let message = ""
+
+        if (goal === 'perdre') {
+            isPositive = diff < 0
+            message = isPositive 
+                ? `Super ! Tu as perdu ${Math.abs(diff)}kg sur cette période. Continue comme ça ! 🔥` 
+                : (diff === 0 ? "Ton poids est stable. Reste vigilant sur tes portions pour relancer la perte. 💪" : `Ton poids a augmenté de ${diff}kg. Yao te conseille de bouger un peu plus cette semaine. ⚠️`)
+        } else if (goal === 'prendre') {
+            isPositive = diff > 0
+            message = isPositive 
+                ? `Excellent ! +${diff}kg de masse. Tes muscles te remercient ! 💪` 
+                : (diff === 0 ? "Stabilité parfaite. Pour prendre du muscle, essaie d'augmenter tes protéines. 🥩" : `Oups, -${Math.abs(diff)}kg. N'oublie pas de manger suffisamment ! 🍽️`)
+        } else {
+            isPositive = Math.abs(diff) <= 0.5
+            message = isPositive 
+                ? "Maintien parfait ! Ton équilibre actuel est idéal. 🎯" 
+                : `Léger écart de ${Math.abs(diff)}kg. Reviens doucement vers ton poids de forme. ⚖️`
+        }
+
+        return { message, isPositive }
+    }
+
+    const prog = getProgressionInfo()
+    const lastWeightDate = entries[entries.length - 1]?.date || new Date().toISOString().split('T')[0]
     const daysSince = Math.floor((Date.now() - new Date(lastWeightDate).getTime()) / 86400000)
     const daysLeft = Math.max(0, 30 - daysSince)
     const pct = Math.round((daysSince / 30) * 100)
     const urgentColor = daysLeft <= 5 ? '#ef4444' : daysLeft <= 10 ? '#f59e0b' : '#6366f1'
 
-    const W = 320, H = 120, padX = 36, padY = 14
-    const weights = entries.map(e => e.weight)
-    const minW = entries.length > 1 ? Math.min(...weights) - 1 : (weights[0] || 70) - 2
-    const maxW = entries.length > 1 ? Math.max(...weights) + 1 : (weights[0] || 70) + 2
+    const W = 320, H = 140, padX = 30, padY = 20
+    const weights = chartData.map(e => e.weight)
+    const minW = chartData.length > 1 ? Math.min(...weights) - 2 : (weights[0] || 70) - 5
+    const maxW = chartData.length > 1 ? Math.max(...weights) + 2 : (weights[0] || 70) + 5
     const range = maxW - minW || 1
-    const toX = (i: number) => padX + (i / Math.max(entries.length - 1, 1)) * (W - padX - 12)
-    const toY = (w: number) => padY + ((maxW - w) / range) * (H - padY * 2)
-    const points = entries.map((e, i) => ({ x: toX(i), y: toY(e.weight), ...e }))
+    const toX = (i: number) => padX + (i / Math.max(chartData.length - 1, 1)) * (W - padX - 15)
+    const toY = (w: number) => padY + ((maxW - w) / range) * (H - padY * 2.5)
+    const points = chartData.map((e, i) => ({ x: toX(i), y: toY(e.weight), ...e }))
     const path = points.length > 1 ? points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') : ''
 
-    // Labels mois sur l'axe X
-    const monthLabels = entries.map(e => {
-        const d = new Date(e.date)
-        return d.toLocaleDateString('fr-FR', { month: 'short' })
-    })
-
     return (
-        <div>
+        <div style={{ padding: '8px 0' }}>
+            {/* Pied de sélecteur pour Premium ou Label pour Pro */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <p style={{ color: '#444', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    {isPremium ? 'Période d\'analyse' : 'Vue sur 6 mois (Premium pour +)'}
+                </p>
+                {isPremium && (
+                    <div style={{ display: 'flex', background: '#0a0a0a', borderRadius: '8px', padding: '2px', border: '0.5px solid #222' }}>
+                        {[
+                            { id: '90', label: '90j' },
+                            { id: '6m', label: '6m' },
+                            { id: '1y', label: '1an' }
+                        ].map(p => (
+                            <button
+                                key={p.id}
+                                onClick={() => setSelectedPeriod(p.id)}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    fontSize: '10px',
+                                    fontWeight: '700',
+                                    background: selectedPeriod === p.id ? '#1a1a1a' : 'transparent',
+                                    color: selectedPeriod === p.id ? '#fff' : '#555',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
             {/* Graphique */}
-            <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '120px', display: 'block' }}>
-                <defs>
-                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1e3a5f" stopOpacity="0.8" />
-                        <stop offset="100%" stopColor="#0a0a0a" stopOpacity="0" />
-                    </linearGradient>
-                </defs>
+            {chartData.length > 0 ? (
+                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '140px', display: 'block' }}>
+                    <defs>
+                        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+                            <stop offset="100%" stopColor="#0a0a0a" stopOpacity="0" />
+                        </linearGradient>
+                    </defs>
 
-                {/* Fond noir */}
-                <rect x="0" y="0" width={W} height={H} fill="#0a0a0a" rx="8" />
+                    {/* Grille horizontale (Lignes de repère) */}
+                    {[0, 0.5, 1].map((t, i) => {
+                        const y = padY + t * (H - padY * 2.5)
+                        const val = Math.round(maxW - t * range)
+                        return (
+                            <g key={i}>
+                                <line x1={padX} y1={y} x2={W - 8} y2={y} stroke="#ffffff08" strokeWidth="1" />
+                                <text x={padX - 6} y={y + 3} textAnchor="end" fill="#ffffff20" fontSize="8" fontWeight="600">{val}</text>
+                            </g>
+                        )
+                    })}
 
-                {/* Grille horizontale */}
-                {[0, 0.5, 1].map((t, i) => {
-                    const y = padY + t * (H - padY * 2)
-                    const val = (maxW - t * range).toFixed(1)
-                    return (
+                    {/* Aire sous la courbe */}
+                    {path && points.length > 1 && (
+                        <path
+                            d={`${path} L ${points[points.length - 1].x.toFixed(1)} ${H - padY * 1.5} L ${points[0].x.toFixed(1)} ${H - padY * 1.5} Z`}
+                            fill="url(#areaGrad)"
+                        />
+                    )}
+
+                    {/* Courbe */}
+                    {path && <path d={path} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+
+                    {/* Points + labels mois */}
+                    {points.map((p, i) => (
                         <g key={i}>
-                            <line x1={padX} y1={y} x2={W - 8} y2={y} stroke="#ffffff15" strokeWidth="1" strokeDasharray="3,4" />
-                            <text x={padX - 4} y={y + 4} textAnchor="end" fill="#ffffff60" fontSize="9">{val}</text>
+                            <circle cx={p.x} cy={p.y} r="3.5" fill="#6366f1" stroke="#0a0a0a" strokeWidth="2" />
+                            {i === points.length - 1 && (
+                                <g>
+                                    <rect x={p.x - 18} y={p.y - 22} width="36" height="14" rx="4" fill="#6366f1" />
+                                    <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#fff" fontSize="8" fontWeight="800">{p.weight}k</text>
+                                </g>
+                            )}
+                            <text x={p.x} y={H - 5} textAnchor="middle" fill={i === points.length - 1 ? '#6366f1' : '#ffffff25'} fontSize="8" fontWeight="700">{p.label}</text>
                         </g>
-                    )
-                })}
+                    ))}
 
-                {/* Axe Y */}
-                <line x1={padX} y1={padY} x2={padX} y2={H - padY} stroke="#ffffff25" strokeWidth="1" />
+                    {/* Si un seul point */}
+                    {points.length === 1 && (
+                        <circle cx={points[0].x} cy={points[0].y} r="4" fill="#6366f1" stroke="#0a0a0a" strokeWidth="2" />
+                    )}
+                </svg>
+            ) : (
+                <div style={{ height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333', fontSize: '12px' }}>
+                    Pas assez de données pour cette période
+                </div>
+            )}
 
-                {/* Axe X */}
-                <line x1={padX} y1={H - padY} x2={W - 8} y2={H - padY} stroke="#ffffff25" strokeWidth="1" />
+            {/* Message de Yao */}
+            {prog && (
+                <div style={{
+                    marginTop: '16px',
+                    padding: '12px 14px',
+                    borderRadius: '16px',
+                    background: prog.isPositive ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+                    border: `0.5px solid ${prog.isPositive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px'
+                }}>
+                    <span style={{ fontSize: '18px' }}>{prog.isPositive ? '✨' : '💡'}</span>
+                    <p style={{ color: prog.isPositive ? '#10b981' : '#f87171', fontSize: '12px', lineHeight: '1.5', fontWeight: '500' }}>
+                        {prog.message}
+                    </p>
+                </div>
+            )}
 
-                {/* Aire sous la courbe */}
-                {path && points.length > 1 && (
-                    <path
-                        d={`${path} L ${points[points.length - 1].x.toFixed(1)} ${H - padY} L ${points[0].x.toFixed(1)} ${H - padY} Z`}
-                        fill="url(#areaGrad)"
-                    />
-                )}
-
-                {/* Courbe */}
-                {path && <path d={path} fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
-
-                {/* Points + labels mois */}
-                {points.map((p, i) => (
-                    <g key={i}>
-                        <circle cx={p.x} cy={p.y} r="4" fill="#1d4ed8" stroke="#0a0a0a" strokeWidth="2" />
-                        {i === points.length - 1 && (
-                            <>
-                                <rect x={p.x - 20} y={p.y - 24} width="40" height="16" rx="5" fill="#1d4ed8" />
-                                <text x={p.x} y={p.y - 13} textAnchor="middle" fill="#fff" fontSize="9" fontWeight="600">{p.weight}kg</text>
-                            </>
-                        )}
-                        <text x={p.x} y={H - 2} textAnchor="middle" fill="#ffffff50" fontSize="8">{monthLabels[i]}</text>
-                    </g>
-                ))}
-
-                {/* Si un seul point */}
-                {points.length === 1 && (
-                    <circle cx={points[0].x} cy={points[0].y} r="5" fill="#1d4ed8" stroke="#0a0a0a" strokeWidth="2" />
-                )}
-            </svg>
-
-            {/* Décompte pesée */}
+            {/* Rappel Pesée */}
             <div style={{
-                marginTop: '14px',
+                marginTop: '12px',
                 background: '#0d0d0d',
-                borderRadius: '12px',
+                borderRadius: '16px',
                 padding: '12px 14px',
-                border: `0.5px solid ${urgentColor}30`,
+                border: `0.5px solid ${urgentColor}20`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '12px',
             }}>
                 <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>
-                            {daysLeft === 0 ? '⚠️ Pesée en retard !' : `⚖️ Prochaine pesée dans ${daysLeft}j`}
+                        <p style={{ color: '#fff', fontSize: '12px', fontWeight: '600' }}>
+                           Dernière pesée ⚖️
                         </p>
-                        <span style={{ color: urgentColor, fontSize: '12px', fontWeight: '600' }}>
-                            {pct}%
+                        <span style={{ color: urgentColor, fontSize: '10px', fontWeight: '700' }}>
+                            {daysLeft === 0 ? 'URGENT' : `${daysLeft}j restants`}
                         </span>
                     </div>
-                    {/* Barre de progression */}
-                    <div style={{ height: '4px', background: '#1e1e1e', borderRadius: '2px' }}>
-                        <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, background: urgentColor, borderRadius: '2px', transition: 'width 0.4s ease' }} />
+                    <div style={{ height: '3px', background: '#1e1e1e', borderRadius: '2px' }}>
+                        <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, background: urgentColor, borderRadius: '2px' }} />
                     </div>
-                    <p style={{ color: '#444', fontSize: '11px', marginTop: '6px' }}>
-                        Dernière pesée : {new Date(lastWeightDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                    </p>
                 </div>
             </div>
         </div>
@@ -217,6 +315,7 @@ export default function RapportPage() {
     const [weightEntries, setWeightEntries] = useState<{ date: string; weight: number }[]>([])
     const [showWeightModal, setShowWeightModal] = useState(false)
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
+    const [selectedPeriod, setSelectedPeriod] = useState('6m')
     const [isLoading, setIsLoading] = useState(true)
     const [targetUpdate, setTargetUpdate] = useState<{ old: number, new: number, isLocked: boolean } | null>(null)
 
@@ -498,10 +597,15 @@ export default function RapportPage() {
                     )}
 
                     {weightEntries.length > 0 ? (
-                        <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '12px', border: '0.5px solid rgba(99,102,241,0.1)' }}>
+                        <div style={{ background: '#0a0a0a', borderRadius: '24px', padding: '16px', border: '0.5px solid rgba(99,102,241,0.1)' }}>
                             {/* GRAPHIQUE OU PAYWALL */}
             {checkPermission(profile, 'hasGraph') ? (
-                <WeightChart entries={weightEntries} />
+                <WeightChart 
+                    entries={weightEntries} 
+                    profile={profile} 
+                    selectedPeriod={selectedPeriod} 
+                    setSelectedPeriod={setSelectedPeriod} 
+                />
             ) : (
                 <div 
                     onClick={() => router.push('/upgrade')}
