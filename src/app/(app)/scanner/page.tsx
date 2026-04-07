@@ -261,6 +261,22 @@ export default function ScannerPage() {
         // Muet : on ne fait rien, on attend juste que ça scanne
     }
 
+    const handleFileScan = async (file: File) => {
+        setIsAnalyzing(true);
+        try {
+            if (!qrScannerRef.current) {
+                qrScannerRef.current = new Html5Qrcode("reader");
+            }
+            const decodedText = await qrScannerRef.current.scanFile(file, true);
+            await onScanSuccess(decodedText);
+        } catch (err) {
+            console.error(err);
+            alert("Aucun code-barres lisible n'a été trouvé sur cette image.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }
+
     const simulateAI = () => {
         const filtered = foods.filter(food => ['riz', 'poulet', 'oeuf', 'thon', 'plantain'].some(kw => food.name_fr.toLowerCase().includes(kw)))
         setSuggestions((filtered.length > 0 ? filtered.slice(0, 5) : foods.slice(0, 5)).map(food => ({ id: food.id, name: food.name_fr, score: 50, calories: Math.round((food.calories_per_100g * (food.default_portion_g || 200)) / 100), protein_g: Math.round((food.protein_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10, carbs_g: Math.round((food.carbs_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10, fat_g: Math.round((food.fat_per_100g * (food.default_portion_g || 200)) / 100 * 10) / 10, portion_g: food.default_portion_g || 200, calories_detected: 0, protein_detected: 0, carbs_detected: 0, fat_detected: 0, confidence: 50, detected: food.name_fr, fromAI: false })))
@@ -464,6 +480,34 @@ export default function ScannerPage() {
                 <div style={{ marginBottom: '20px' }}>
                     <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414', minHeight: '250px' }}></div>
                     <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres dans le carré</p>
+                    
+                    <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                        <p style={{ color: '#444', fontSize: '11px', marginBottom: '10px', textTransform: 'uppercase', fontWeight: '700' }}>Ou</p>
+                        <button 
+                            onClick={() => {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'image/*';
+                                input.onchange = (e: any) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleFileScan(file);
+                                };
+                                input.click();
+                            }}
+                            style={{ 
+                                background: 'transparent', 
+                                border: `1px solid ${slotColor}30`, 
+                                color: slotColor, 
+                                padding: '10px 20px', 
+                                borderRadius: '12px', 
+                                fontSize: '13px', 
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            🖼️ Choisir une image
+                        </button>
+                    </div>
                 </div>
             )}
 
