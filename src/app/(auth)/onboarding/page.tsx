@@ -22,9 +22,9 @@ const CUISINES = ['Africaine (Générale)', 'Togolaise', 'Ivoirienne', 'Sénéga
 
 // ─── COMPOSANTS AUXILIAIRES REUTILISABLES (PICKER WHEEL) ───────────
 
-function WheelPicker({ 
+function WheelPicker({
     min, max, value, onChange, unit, step = 1
-}: { 
+}: {
     min: number, max: number, value: number, onChange: (v: number) => void, unit?: string, step?: number
 }) {
     const listRef = useRef<HTMLDivElement>(null)
@@ -63,8 +63,8 @@ function WheelPicker({
                 background: 'rgba(255,255,255,0.08)', borderRadius: '16px', pointerEvents: 'none',
                 zIndex: 0
             }} />
-            
-            <div 
+
+            <div
                 ref={listRef}
                 onScroll={handleScroll}
                 style={{
@@ -75,8 +75,8 @@ function WheelPicker({
             >
                 <div style={{ height: ITEM_HEIGHT * 2 }} />
                 {items.map((item) => (
-                    <div 
-                        key={item} 
+                    <div
+                        key={item}
                         style={{
                             height: ITEM_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center',
                             scrollSnapAlign: 'center', fontSize: item === localValue ? '32px' : '22px',
@@ -100,10 +100,10 @@ function WheelPicker({
 
 export default function OnboardingPage() {
     const router = useRouter()
-    const { 
-        profile, setProfile, 
+    const {
+        profile, setProfile,
         onboardingStep: step, setOnboardingStep: setStep,
-        onboardingForm, setOnboardingForm 
+        onboardingForm, setOnboardingForm
     } = useAppStore()
     const [isSaving, setIsSaving] = useState(false)
     const [analysisProgress, setAnalysisProgress] = useState(0)
@@ -242,10 +242,10 @@ export default function OnboardingPage() {
             {/* PROGRESS BAR */}
             {step < 9 && (
                 <div style={{ width: '100%', height: '4px', background: '#111', borderRadius: '2px', marginBottom: '40px' }}>
-                    <div style={{ 
-                        width: `${(step / 9) * 100}%`, height: '100%', 
-                        background: 'linear-gradient(90deg, #22c55e, #10b981)', 
-                        borderRadius: '2px', transition: 'width 0.4s ease' 
+                    <div style={{
+                        width: `${(step / 9) * 100}%`, height: '100%',
+                        background: 'linear-gradient(90deg, #22c55e, #10b981)',
+                        borderRadius: '2px', transition: 'width 0.4s ease'
                     }} />
                 </div>
             )}
@@ -253,7 +253,7 @@ export default function OnboardingPage() {
             {/* 0. NOM */}
             {step === 0 && (
                 <StepWrapper key="step0" title="Comment devons-nous vous appeler ?" icon="👋">
-                    <input 
+                    <input
                         autoFocus
                         type="text" value={form.name} onChange={e => update('name', e.target.value)}
                         placeholder="Votre prénom"
@@ -395,8 +395,8 @@ export default function OnboardingPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                         {form.goal !== 'maintenir' && (
                             <div>
-                                <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', fontWeight:'600' }}>POIDS CIBLE (KG)</label>
-                                <input 
+                                <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', fontWeight: '600' }}>POIDS CIBLE (KG)</label>
+                                <input
                                     type="number" value={form.target_weight_kg} onChange={e => update('target_weight_kg', e.target.value)}
                                     placeholder="Ex: 65"
                                     style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px', outline: 'none' }}
@@ -404,8 +404,8 @@ export default function OnboardingPage() {
                             </div>
                         )}
                         <div>
-                            <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', fontWeight:'600' }}>DURÉE ESTIMÉE (SEM.)</label>
-                            <input 
+                            <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', fontWeight: '600' }}>DURÉE ESTIMÉE (SEM.)</label>
+                            <input
                                 type="number" value={form.target_weeks} onChange={e => update('target_weeks', e.target.value)}
                                 placeholder="Ex: 8"
                                 style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px', outline: 'none' }}
@@ -440,7 +440,7 @@ export default function OnboardingPage() {
                         <div style={{ fontSize: '12px', color: '#22c55e', fontWeight: '800', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '12px' }}>Objectif Quotidien</div>
                         <div style={{ fontSize: '68px', fontWeight: '900', color: '#fff', letterSpacing: '-2px' }}>{liveResults.calorie_target}</div>
                         <div style={{ fontSize: '16px', color: '#666', marginBottom: '40px', fontWeight: '500' }}>Calories / jour</div>
-                        
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
                             <div>
                                 <div style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>{liveResults.protein_target_g}g</div>
@@ -478,13 +478,13 @@ export default function OnboardingPage() {
                         </ul>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <button 
+                        <button
                             disabled={isSaving}
                             onClick={() => router.push('/upgrade?hideFree=true')}
                             style={{ width: '100%', height: '56px', background: 'linear-gradient(90deg, #22c55e, #10b981)', color: '#000', borderRadius: '18px', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '16px' }}>
                             Voir les offres Premium
                         </button>
-                        <button 
+                        <button
                             disabled={isSaving}
                             onClick={handleFinish}
                             style={{ width: '100%', height: '56px', background: 'transparent', color: '#555', borderRadius: '18px', fontWeight: '700', border: 'none', cursor: 'pointer', fontSize: '15px' }}>
@@ -519,7 +519,7 @@ function StepWrapper({ children, title, sub, icon }: { children: React.ReactNode
 
 function NextButton({ disabled = false, label = "Suivant", onClick }: { disabled?: boolean, label?: string, onClick: () => void }) {
     return (
-        <button 
+        <button
             disabled={disabled}
             onClick={onClick}
             style={{

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
 import { getProgressPercent } from '@/lib/nutrition'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -278,15 +278,44 @@ export default function DashboardPage() {
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             {/* HEADER */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px' }}>🌍</div>
-                    <h1 style={{ fontSize: '18px', fontWeight: '600', color: '#fff' }}>Cal Afrik</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                <div>
+                    <p style={{ color: '#555', fontSize: '13px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#141414', border: '0.5px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🔥</div>
-                    <div onClick={() => router.push('/profil')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '14px', color: '#fff', cursor: 'pointer' }}>
-                        {profile?.name?.[0] || 'U'}
+                <div style={{ position: 'relative' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#111', border: '0.5px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🔔</div>
+                    <div style={{ position: 'absolute', top: '10px', right: '10px', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', border: '2px solid #0a0a0a' }} />
+                </div>
+            </div>
+
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '24px', lineHeight: '1.4' }}>
+                Tu es sur la bonne voie pour tes objectifs !
+            </h2>
+
+            {/* CARTE STATUT KILLED / REDESIGNED */}
+            <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', border: '0.5px solid #222', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ position: 'relative', width: '200px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="200" height="120" viewBox="0 0 200 120">
+                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#222" strokeWidth="12" strokeLinecap="round" />
+                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#arcGrad)" strokeWidth="12" strokeLinecap="round" strokeDasharray="251.32" strokeDashoffset={251.32 - (251.32 * Math.min(100, (dailyCalories / calorieTarget) * 100)) / 100} style={{ transition: 'stroke-dashoffset 1s ease' }} />
+                        <defs>
+                            <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#f59e0b" />
+                                <stop offset="100%" stopColor="#10b981" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div style={{ position: 'absolute', bottom: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>{remaining}</div>
+                        <div style={{ fontSize: '11px', color: '#555', fontWeight: '600' }}>kcal rest.</div>
+                    </div>
+                    <div style={{ position: 'absolute', left: '0', bottom: '0', textAlign: 'center' }}>
+                        <div style={{ fontSize: '16px', fontWeight: '800', color: '#fff' }}>{dailyCalories}</div>
+                        <div style={{ fontSize: '10px', color: '#444' }}>mangé</div>
+                    </div>
+                     <div style={{ position: 'absolute', right: '0', bottom: '0', textAlign: 'center' }}>
+                        <div style={{ fontSize: '16px', fontWeight: '800', color: '#fff' }}>{calorieTarget}</div>
+                        <div style={{ fontSize: '10px', color: '#444' }}>objectif</div>
                     </div>
                 </div>
             </div>
@@ -320,58 +349,13 @@ export default function DashboardPage() {
                             </p>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {!isRenewing && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>→</span>}
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsDismissed(true);
-                            }}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'rgba(239,68,68,0.5)',
-                                fontSize: '18px',
-                                padding: '4px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                            ✕
-                        </button>
-                    </div>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setIsDismissed(true); }}
+                        style={{ background: 'transparent', border: 'none', color: 'rgba(239,68,68,0.5)', fontSize: '18px', padding: '4px', cursor: 'pointer' }}>
+                        ✕
+                    </button>
                 </div>
             )}
-
-            {/* CARTE CALORIES */}
-            <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', border: '0.5px solid #222', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: exceeded ? 'linear-gradient(90deg, #ef4444, #f97316)' : 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)' }} />
-                <p style={{ color: '#555', fontSize: '12px', marginBottom: '8px' }}>Calories restantes</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h2 style={{ fontSize: '40px', fontWeight: '700', color: exceeded ? '#ef4444' : '#fff', letterSpacing: '-1.5px' }}>{remaining}</h2>
-                        <p style={{ color: '#444', fontSize: '12px', marginTop: '2px' }}>/ {calorieTarget} kcal · <span style={{ color: exceeded ? '#ef4444' : '#6366f1' }}>{Math.round(percent)}% atteint</span></p>
-                    </div>
-                    <svg width="90" height="90">
-                        <circle cx="45" cy="45" r={radius} stroke="#1e1e1e" strokeWidth="6" fill="none" />
-                        <circle cx="45" cy="45" r={radius}
-                            stroke={exceeded ? '#ef4444' : 'url(#ringGrad)'}
-                            strokeWidth="6" fill="none"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
-                            strokeLinecap="round"
-                            transform="rotate(-90 45 45)"
-                        />
-                        <defs>
-                            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#6366f1" />
-                                <stop offset="100%" stopColor="#10b981" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-            </div>
 
             {/* MESSAGE COACH */}
             <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px 14px', marginBottom: '18px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
@@ -381,67 +365,85 @@ export default function DashboardPage() {
                 <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>{coachMsg.text}</p>
             </div>
 
-            {/* MACROS */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '28px', gap: '8px' }}>
-                {macros.map((m) => {
-                    const pct = Math.min(100, Math.round((m.val / m.target) * 100))
-                    return (
-                        <div key={m.label} style={{ flex: 1, background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px 10px', textAlign: 'center' }}>
-                            <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: `2px solid ${m.color}`, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: '12px', fontWeight: '600', color: m.color }}>
-                                {Math.round(m.val)}g
-                            </div>
-                            <p style={{ color: '#555', fontSize: '10px' }}>{m.label}</p>
-                            <div style={{ height: '2px', background: '#222', borderRadius: '1px', marginTop: '6px' }}>
-                                <div style={{ height: '100%', width: `${pct}%`, background: m.color, borderRadius: '1px' }} />
-                            </div>
-                        </div>
-                    )
-                })}
+            {/* MACROS REDESIGNED AS PILLS */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '10px' }}>
+                {[
+                    { label: 'Glucides', val: dailyCarbs, target: carbsTarget, title: 'Carbs', bg: '#e0f2fe', color: '#0ea5e9' },
+                    { label: 'Protéines', val: dailyProtein, target: proteinTarget, title: 'Protein', bg: '#f0fdf4', color: '#22c55e' },
+                    { label: 'Lipides', val: dailyFat, target: fatTarget, title: 'Fats', bg: '#fffbeb', color: '#f59e0b' },
+                ].map((m) => (
+                    <div key={m.title} style={{ 
+                        flex: 1, background: m.bg, borderRadius: '16px', padding: '12px 6px', textAlign: 'center', 
+                        display: 'flex', flexDirection: 'column', gap: '4px' 
+                    }}>
+                        <p style={{ color: m.color, fontSize: '11px', fontWeight: '700' }}>{m.title}</p>
+                        <p style={{ color: '#111', fontSize: '12px', fontWeight: '800' }}>{Math.round(m.val)}/{m.target}</p>
+                    </div>
+                ))}
             </div>
 
             {/* GRAPHIQUE 7 DERNIERS JOURS */}
             <WeeklyProgressChart targetKcal={calorieTarget} tier={effectiveTier} />
 
-            {/* REPAS */}
-            <div>
-                <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#fff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ display: 'inline-block', width: '3px', height: '14px', background: 'linear-gradient(#6366f1, #10b981)', borderRadius: '2px' }} />
-                    Repas du jour
-                </h2>
+            {/* REPAS GROUPÉS PAR SLOTS */}
+            <div style={{ marginBottom: '32px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>Tous les repas</h2>
+                    <span onClick={() => fileInputRef.current?.click()} style={{ fontSize: '20px', color: '#6366f1', cursor: 'pointer' }}>+</span>
+                </div>
 
                 {isLoading ? (
                     <p style={{ color: '#333', fontSize: '13px' }}>Chargement...</p>
-                ) : todayMeals.length === 0 ? (
-                    <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '32px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '28px', marginBottom: '8px' }}>🍽️</p>
-                        <p style={{ color: '#333', fontSize: '13px' }}>Aucun repas enregistré aujourd'hui</p>
-                        <p style={{ color: '#222', fontSize: '12px', marginTop: '4px' }}>Appuie sur + pour scanner ton repas</p>
-                    </div>
                 ) : (
-                    todayMeals.map((meal, idx) => {
-                        const dotColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
-                        const dotColor = dotColors[idx % dotColors.length]
-                        return (
-                            <div key={meal.id} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <div style={{ position: 'relative', flexShrink: 0 }}>
-                                    <img src={meal.image_url || 'https://via.placeholder.com/48'} style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }} />
-                                    <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', borderRadius: '50%', background: dotColor, border: '1.5px solid #0a0a0a' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {[
+                            { id: 'petit_dejeuner' as MealSlotKey, label: 'Petit-déjeuner', icon: '🥛' },
+                            { id: 'dejeuner' as MealSlotKey, label: 'Déjeuner', icon: '🍲' },
+                            { id: 'collation' as MealSlotKey, label: 'Collation', icon: '🥜' },
+                            { id: 'diner' as MealSlotKey, label: 'Dîner', icon: '🥗' },
+                        ].map(slot => {
+                            const slotState = useAppStore.getState().slots[slot.id]
+                            const pct = Math.min(100, (slotState.consumed / slotState.target) * 100)
+                            
+                            return (
+                                <div 
+                                    key={slot.id} 
+                                    onClick={() => {
+                                        // Optionnel: Voir les repas détaillés du créneau
+                                        const slotMeals = todayMeals.filter(m => {
+                                            const hour = new Date(m.logged_at).getHours()
+                                            const s = getMealSlot(hour)
+                                            return s === slot.id
+                                        })
+                                        if (slotMeals.length > 0) {
+                                            const details = slotMeals.map(m => `- ${m.custom_name || 'Repas'} (${Math.round(m.calories)} kcal)`).join('\n')
+                                            alert(`${slot.label} :\n${details}`)
+                                        }
+                                    }}
+                                    style={{ 
+                                        background: '#141414', border: '0.5px solid #222', borderRadius: '18px', 
+                                        padding: '16px', display: 'flex', alignItems: 'center', gap: '14px',
+                                        cursor: 'pointer', transition: 'transform 0.2s'
+                                    }}
+                                >
+                                    <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                                        {slot.icon}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                            <p style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{slot.label}</p>
+                                            <p style={{ fontSize: '12px', color: '#555' }}>
+                                                <span style={{ color: '#fff' }}>{Math.round(slotState.consumed)}</span>/{slotState.target} kcal
+                                            </p>
+                                        </div>
+                                        <div style={{ height: '6px', background: '#222', borderRadius: '3px', overflow: 'hidden' }}>
+                                            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #6366f1, #10b981)', borderRadius: '3px' }} />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <p style={{ fontWeight: '500', fontSize: '13px', color: '#fff' }}>{meal.custom_name || 'Repas'}</p>
-                                    <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>{formatTime(meal.logged_at)}</p>
-                                </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: dotColor, fontWeight: '600', fontSize: '13px' }}>{Math.round(meal.calories)}</p>
-                                    <p style={{ color: '#333', fontSize: '10px' }}>kcal</p>
-                                </div>
-                                <button onClick={() => { if (confirm('Supprimer ce repas ?')) handleDeleteMeal(meal.id) }}
-                                    style={{ background: '#1e1e1e', border: '0.5px solid #2a2a2a', borderRadius: '8px', padding: '6px 9px', color: '#444', cursor: 'pointer', fontSize: '11px' }}>
-                                    ✕
-                                </button>
-                            </div>
-                        )
-                    })
+                            )
+                        })}
+                    </div>
                 )}
             </div>
 
