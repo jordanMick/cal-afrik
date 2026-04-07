@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -19,10 +19,12 @@ const plans = {
 
 export default function PricingPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { profile } = useAppStore()
     const [loading, setLoading] = useState<string | null>(null)
     const effectiveTier = getEffectiveTier(profile)
     const currentTier = effectiveTier
+    const hideFree = searchParams.get('hideFree') === 'true'
 
     // Chargement du script FedaPay Checkout
     useEffect(() => {
@@ -84,7 +86,7 @@ export default function PricingPage() {
         }
     }
 
-    const showFree = currentTier === 'free'
+    const showFree = currentTier === 'free' && !hideFree
     const showPro = currentTier === 'free' || currentTier === 'pro'
     const showPremium = true
     const visibleCards = (showFree ? 1 : 0) + (showPro ? 1 : 0) + (showPremium ? 1 : 0)

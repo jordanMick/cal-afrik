@@ -55,6 +55,8 @@ export default function OnboardingPage() {
         country: profile?.country || 'TG',
     })
 
+    // ─── ACTIONS ──────────────────────────────────────────────────
+
     const update = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }))
 
     const toggleHabit = (id: string) => {
@@ -143,35 +145,6 @@ export default function OnboardingPage() {
         goal: form.goal,
     })
 
-    // ─── RENDUS DES ÉTAPES ────────────────────────────────────────
-
-    const StepWrapper = ({ children, title, sub, icon }: { children: React.ReactNode, title: string, sub?: string, icon?: string }) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', animation: 'fadeIn 0.5s ease' }}>
-            <div style={{ textAlign: 'center' }}>
-                {icon && <div style={{ fontSize: '48px', marginBottom: '20px' }}>{icon}</div>}
-                <h2 style={{ color: '#fff', fontSize: '28px', fontWeight: '800', marginBottom: '10px', letterSpacing: '-0.5px' }}>{title}</h2>
-                {sub && <p style={{ color: '#666', fontSize: '15px', lineHeight: '1.5' }}>{sub}</p>}
-            </div>
-            <div style={{ flex: 1 }}>{children}</div>
-        </div>
-    )
-
-    const nextBtn = (disabled = false, label = "Continuer") => (
-        <button 
-            disabled={disabled}
-            onClick={next}
-            style={{
-                width: '100%', height: '54px', background: disabled ? '#1a1a1a' : '#fff',
-                color: disabled ? '#444' : '#000', borderRadius: '16px',
-                fontSize: '16px', fontWeight: '700', cursor: disabled ? 'default' : 'pointer',
-                border: 'none', transition: 'all 0.2s',
-                marginTop: 'auto'
-            }}
-        >
-            {label}
-        </button>
-    )
-
     return (
         <div style={{
             minHeight: '100vh', background: '#000', color: '#fff',
@@ -196,20 +169,22 @@ export default function OnboardingPage() {
 
             {/* 0. NOM */}
             {step === 0 && (
-                <StepWrapper title="Commençons par faire connaissance" sub="Comment devons-nous vous appeler ?" icon="👋">
+                <StepWrapper key="step0" title="Commençons par faire connaissance" sub="Comment devons-nous vous appeler ?" icon="👋">
                     <input 
                         autoFocus
                         type="text" value={form.name} onChange={e => update('name', e.target.value)}
                         placeholder="Votre prénom"
                         style={{ width: '100%', height: '60px', background: '#111', border: '1.5px solid #222', borderRadius: '16px', color: '#fff', padding: '0 20px', fontSize: '18px', outline: 'none' }}
                     />
-                    <div style={{ marginTop: '40px' }}>{nextBtn(!form.name)}</div>
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton disabled={!form.name} onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
             {/* 1. OBJECTIF */}
             {step === 1 && (
-                <StepWrapper title="Quel est votre objectif ?" icon="🎯">
+                <StepWrapper key="step1" title="Quel est votre objectif ?" icon="🎯">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {[
                             { id: 'perdre', label: 'Perdre du poids', icon: '🔥' },
@@ -231,38 +206,44 @@ export default function OnboardingPage() {
 
             {/* 2, 3, 4. MEASUREMENTS */}
             {step === 2 && (
-                <StepWrapper title="Dites-nous votre poids actuel" icon="⚖️">
+                <StepWrapper key="step2" title="Dites-nous votre poids actuel" icon="⚖️">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <input type="number" autoFocus value={form.weight_kg} onChange={e => update('weight_kg', e.target.value)} style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: '#fff', fontSize: '64px', fontWeight: '800', outline: 'none' }} />
                         <span style={{ fontSize: '24px', color: '#666' }}>kg</span>
                     </div>
-                    {nextBtn(!form.weight_kg)}
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton disabled={!form.weight_kg} onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
             {step === 3 && (
-                <StepWrapper title="Quelle est votre taille ?" icon="📏">
+                <StepWrapper key="step3" title="Quelle est votre taille ?" icon="📏">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <input type="number" autoFocus value={form.height_cm} onChange={e => update('height_cm', e.target.value)} style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: '#fff', fontSize: '64px', fontWeight: '800', outline: 'none' }} />
                         <span style={{ fontSize: '24px', color: '#666' }}>cm</span>
                     </div>
-                    {nextBtn(!form.height_cm)}
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton disabled={!form.height_cm} onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
             {step === 4 && (
-                <StepWrapper title="Quel est votre âge ?" icon="🎂">
+                <StepWrapper key="step4" title="Quel est votre âge ?" icon="🎂">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <input type="number" autoFocus value={form.age} onChange={e => update('age', e.target.value)} style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: '#fff', fontSize: '64px', fontWeight: '800', outline: 'none' }} />
                         <span style={{ fontSize: '24px', color: '#666' }}>ans</span>
                     </div>
-                    {nextBtn(!form.age)}
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton disabled={!form.age} onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
             {/* 5. ACTIVITÉ */}
             {step === 5 && (
-                <StepWrapper title="Votre niveau d'activité ?" icon="⚡">
+                <StepWrapper key="step5" title="Votre niveau d'activité ?" icon="⚡">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {[
                             { id: 'sedentaire', label: 'Sédentaire', sub: 'Bureau, peu de sport' },
@@ -285,7 +266,7 @@ export default function OnboardingPage() {
 
             {/* 6. HABITUDES */}
             {step === 6 && (
-                <StepWrapper title="Vos habitudes ?" sub="Identifiez ce qui vous freine aujourd'hui" icon="🍽️">
+                <StepWrapper key="step6" title="Vos habitudes ?" sub="Identifiez ce qui vous freine aujourd'hui" icon="🍽️">
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                         {EATING_HABITS.map(h => (
                             <button key={h.id} onClick={() => toggleHabit(h.id)} style={{
@@ -298,13 +279,15 @@ export default function OnboardingPage() {
                             </button>
                         ))}
                     </div>
-                    <div style={{ marginTop: '40px' }}>{nextBtn(false)}</div>
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
             {/* 7. PRÉFÉRENCES (AFRIQUE / INTERNATIONAL) */}
             {step === 7 && (
-                <StepWrapper title="Vos préférences culinaires" sub="Pour adapter les calories aux plats que vous mangez réellement" icon="🌍">
+                <StepWrapper key="step7" title="Vos préférences culinaires" sub="Pour adapter les calories aux plats que vous mangez réellement" icon="🌍">
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                         {CUISINES.map(c => (
                             <button key={c} onClick={() => {
@@ -318,26 +301,30 @@ export default function OnboardingPage() {
                             }}>{c}</button>
                         ))}
                     </div>
-                    <div style={{ marginTop: '40px' }}>{nextBtn(false)}</div>
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
             {/* 8. PROJECTION */}
             {step === 8 && (
-                <StepWrapper title="Votre vision" sub="Dans quel délai voulez-vous atteindre cet objectif ?" icon="🎯">
+                <StepWrapper key="step8" title="Votre vision" sub="Dans quel délai voulez-vous atteindre cet objectif ?" icon="🎯">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         {form.goal !== 'maintenir' && (
                             <div>
                                 <label style={{ color: '#666', fontSize: '12px', display: 'block', marginBottom: '8px' }}>Poids cible (kg)</label>
-                                <input type="number" value={form.target_weight_kg} onChange={e => update('target_weight_kg', e.target.value)} style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px' }} />
+                                <input type="number" value={form.target_weight_kg} onChange={e => update('target_weight_kg', e.target.value)} style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px', outline: 'none' }} />
                             </div>
                         )}
                         <div>
                             <label style={{ color: '#666', fontSize: '12px', display: 'block', marginBottom: '8px' }}>Durée prévue (semaines)</label>
-                            <input type="number" value={form.target_weeks} onChange={e => update('target_weeks', e.target.value)} style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px' }} />
+                            <input type="number" value={form.target_weeks} onChange={e => update('target_weeks', e.target.value)} style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px', outline: 'none' }} />
                         </div>
                     </div>
-                    <div style={{ marginTop: '40px' }}>{nextBtn(false)}</div>
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
@@ -353,17 +340,17 @@ export default function OnboardingPage() {
                     </div>
                     <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '10px' }}>Calcul de votre plan...</h3>
                     <div style={{ color: '#666', minHeight: '20px' }}>
-                        {analysisProgress < 30 && "Analyse du métabolisme..."}
+                        {analysisProgress < 30 && "Analyse du métabolisme basal..."}
                         {analysisProgress >= 30 && analysisProgress < 60 && "Optimisation des macros..."}
-                        {analysisProgress >= 60 && analysisProgress < 90 && "Adaptation aux plats locaux..."}
-                        {analysisProgress >= 90 && "Plan personnalisé prêt !"}
+                        {analysisProgress >= 60 && analysisProgress < 90 && "Adaptation locale..."}
+                        {analysisProgress >= 90 && "Plan prêt !"}
                     </div>
                 </div>
             )}
 
             {/* 10. RESULTATS WOW */}
             {step === 10 && (
-                <StepWrapper title="C'est prêt !" sub={`Voici votre stratégie nutritionnelle personnalisée, ${form.name}.`} icon="🌟">
+                <StepWrapper key="step10" title="C'est prêt !" sub={`Voici votre stratégie nutritionnelle personnalisée, ${form.name}.`} icon="🌟">
                     <div style={{ background: 'linear-gradient(135deg, #111, #080808)', border: '1.5px solid #222', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
                         <div style={{ fontSize: '12px', color: '#22c55e', fontWeight: '700', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }}>Cible quotidienne</div>
                         <div style={{ fontSize: '64px', fontWeight: '900', color: '#fff' }}>{liveResults.calorie_target}</div>
@@ -384,46 +371,81 @@ export default function OnboardingPage() {
                             </div>
                         </div>
                     </div>
-                    <div style={{ marginTop: '40px' }}>{nextBtn(false, "Accéder à mon plan →")}</div>
+                    <div style={{ marginTop: '40px' }}>
+                        <NextButton label="Accéder à mon plan →" onClick={next} />
+                    </div>
                 </StepWrapper>
             )}
 
-            {/* 11. PAYWALL (MODAL LÉGER) */}
+            {/* 11. PAYWALL */}
             {step === 11 && (
-                <StepWrapper title="Libérez tout votre potentiel" icon="🚀">
+                <StepWrapper key="step11" title="Libérez tout votre potentiel" icon="🚀">
                     <div style={{ padding: '20px', background: '#111', borderRadius: '16px', border: '1px solid #333', marginBottom: '16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                             <span style={{ fontWeight: '700' }}>Premium</span>
                             <span style={{ color: '#22c55e' }}>Tout illimité</span>
                         </div>
-                        <ul style={{ color: '#888', fontSize: '14px', listStyle: 'none', padding:0 }}>
+                        <ul style={{ color: '#888', fontSize: '14px', listStyle: 'none', padding: 0 }}>
                             <li style={{ marginBottom: '8px' }}>✓ Coach Yao AI Illimité</li>
                             <li style={{ marginBottom: '8px' }}>✓ Scans photos illimités</li>
                             <li style={{ marginBottom: '8px' }}>✓ Statistiques & Graphiques</li>
                             <li>✓ Accès prioritaire 24/7</li>
                         </ul>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <button 
                             disabled={isSaving}
-                            onClick={() => router.push('/upgrade')}
-                            style={{ width: '100%', height: '54px', background: 'linear-gradient(90deg, #22c55e, #10b981)', color: '#000', borderRadius: '14px', fontWeight: '800', border: 'none' }}>
+                            onClick={() => router.push('/upgrade?hideFree=true')}
+                            style={{ width: '100%', height: '54px', background: 'linear-gradient(90deg, #22c55e, #10b981)', color: '#000', borderRadius: '14px', fontWeight: '800', border: 'none', cursor: 'pointer' }}>
                             Voir les offres Premium
                         </button>
                         <button 
                             disabled={isSaving}
                             onClick={handleFinish}
-                            style={{ width: '100%', height: '54px', background: 'transparent', color: '#666', borderRadius: '14px', fontWeight: '600', border: 'none' }}>
+                            style={{ width: '100%', height: '54px', background: 'transparent', color: '#666', borderRadius: '14px', fontWeight: '600', border: 'none', cursor: 'pointer' }}>
                             Continuer gratuitement (limité)
                         </button>
                     </div>
                 </StepWrapper>
             )}
 
-            {/* BTN RETOUR (uniquement steps de saisie avant l'analyse) */}
+            {/* BTN RETOUR */}
             {step > 0 && step < 9 && (
-                <button onClick={back} style={{ position: 'fixed', bottom: '40px', left: '24px', background: 'transparent', border: 'none', color: '#444', fontSize: '14px', fontWeight: '600' }}>← Précédent</button>
+                <button onClick={back} style={{ position: 'fixed', bottom: '40px', left: '24px', background: 'transparent', border: 'none', color: '#444', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>← Précédent</button>
             )}
         </div>
+    )
+}
+
+// ─── COMPOSANTS AUXILIAIRES (HORS DU RENDU PRINCIPAL) ───
+
+function StepWrapper({ children, title, sub, icon }: { children: React.ReactNode, title: string, sub?: string, icon?: string }) {
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', animation: 'fadeIn 0.4s ease' }}>
+            <div style={{ textAlign: 'center' }}>
+                {icon && <div style={{ fontSize: '48px', marginBottom: '20px' }}>{icon}</div>}
+                <h2 style={{ color: '#fff', fontSize: '28px', fontWeight: '800', marginBottom: '10px', letterSpacing: '-0.5px' }}>{title}</h2>
+                {sub && <p style={{ color: '#666', fontSize: '15px', lineHeight: '1.5' }}>{sub}</p>}
+            </div>
+            <div style={{ flex: 1 }}>{children}</div>
+        </div>
+    )
+}
+
+function NextButton({ disabled = false, label = "Continuer", onClick }: { disabled?: boolean, label?: string, onClick: () => void }) {
+    return (
+        <button 
+            disabled={disabled}
+            onClick={onClick}
+            style={{
+                width: '100%', height: '54px', background: disabled ? '#1a1a1a' : '#fff',
+                color: disabled ? '#444' : '#000', borderRadius: '16px',
+                fontSize: '16px', fontWeight: '700', cursor: disabled ? 'default' : 'pointer',
+                border: 'none', transition: 'all 0.2s',
+                marginTop: 'auto'
+            }}
+        >
+            {label}
+        </button>
     )
 }
