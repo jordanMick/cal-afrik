@@ -280,7 +280,8 @@ export default function DashboardPage() {
             {/* HEADER */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                 <div>
-                    <p style={{ color: '#555', fontSize: '13px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
+                    <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', marginBottom: '2px' }}>Cal Afrik</h1>
+                    <p style={{ color: '#555', fontSize: '12px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
                 </div>
                 <div style={{ position: 'relative' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#111', border: '0.5px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🔔</div>
@@ -368,9 +369,9 @@ export default function DashboardPage() {
             {/* MACROS REDESIGNED AS PILLS */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '10px' }}>
                 {[
-                    { label: 'Glucides', val: dailyCarbs, target: carbsTarget, title: 'Carbs', bg: '#e0f2fe', color: '#0ea5e9' },
-                    { label: 'Protéines', val: dailyProtein, target: proteinTarget, title: 'Protein', bg: '#f0fdf4', color: '#22c55e' },
-                    { label: 'Lipides', val: dailyFat, target: fatTarget, title: 'Fats', bg: '#fffbeb', color: '#f59e0b' },
+                    { label: 'Glucides', val: dailyCarbs, target: carbsTarget, title: 'Glucides', bg: '#e0f2fe', color: '#0ea5e9' },
+                    { label: 'Protéines', val: dailyProtein, target: proteinTarget, title: 'Protéines', bg: '#f0fdf4', color: '#22c55e' },
+                    { label: 'Lipides', val: dailyFat, target: fatTarget, title: 'Lipides', bg: '#fffbeb', color: '#f59e0b' },
                 ].map((m) => (
                     <div key={m.title} style={{ 
                         flex: 1, background: m.bg, borderRadius: '16px', padding: '12px 6px', textAlign: 'center', 
