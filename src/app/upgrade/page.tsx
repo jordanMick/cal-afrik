@@ -117,13 +117,23 @@ export default function PricingPage() {
                     <p style={{ color: '#555', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
                 </div>
 
+                <style>{`
+                    @media (max-width: 768px) {
+                        .pricing-grid {
+                            grid-template-columns: 1fr !important;
+                        }
+                    }
+                `}</style>
+
                 {/* CARDS GRID */}
                 <div 
-                    className={`grid gap-4 items-start grid-cols-1 ${
-                        visibleCards === 1 ? 'md:grid-cols-1' : 
-                        visibleCards === 2 ? 'md:grid-cols-2' : 
-                        'md:grid-cols-3'
-                    }`}
+                    className="pricing-grid"
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: visibleCards === 1 ? '1fr' : visibleCards === 2 ? '1fr 1fr' : 'repeat(3, 1fr)',
+                        gap: '16px',
+                        alignItems: 'start'
+                    }}
                 >
 
                     {/* ── GRATUIT ── */}
