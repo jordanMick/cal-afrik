@@ -430,6 +430,24 @@ export default function ScannerPage() {
             {scanMode === 'barcode' && !image && (
                 <div style={{ marginBottom: '20px' }}>
                     <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414' }}></div>
+                    <style>{`
+                        #reader__status_span { display: none !important; }
+                        #reader__dashboard_section_csr button { 
+                            background: #6366f1 !important; 
+                            color: white !important; 
+                            border: none !important; 
+                            padding: 8px 16px !important; 
+                            border-radius: 8px !important;
+                            font-size: 12px !important;
+                            margin: 10px 0 !important;
+                        }
+                        #reader video { border-radius: 20px !important; }
+                        /* Cacher les erreurs de lecture en rouge */
+                        div[style*="background: rgb(255, 191, 191)"], 
+                        div[style*="background: rgb(255, 0, 0)"] { 
+                            display: none !important; 
+                        }
+                    `}</style>
                     <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres devant la caméra</p>
                 </div>
             )}
