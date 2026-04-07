@@ -286,7 +286,7 @@ export default function ProfilPage() {
                     <div
                         onClick={() => router.push('/upgrade')}
                         style={{
-                            marginBottom: '28px',
+                            marginBottom: '15px',
                             padding: '18px',
                             borderRadius: '24px',
                             background: profile?.subscription_tier === 'pro'
@@ -318,7 +318,7 @@ export default function ProfilPage() {
             </div>
 
             <p style={{
-                marginTop: '8px',
+                marginTop: '25px',
                 fontSize: '11px',
                 color: '#666',
                 textAlign: 'center'
