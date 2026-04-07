@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
@@ -17,7 +17,7 @@ const plans = {
     premium: { price: '9 900', period: 'FCFA/mois', value: 'premium' },
 }
 
-export default function PricingPage() {
+function PricingContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const { profile } = useAppStore()
@@ -286,5 +286,13 @@ export default function PricingPage() {
                 </p>
             </div>
         </div>
+    )
+}
+
+export default function PricingPage() {
+    return (
+        <Suspense fallback={<div style={{ background: '#080808', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333' }}>Chargement...</div>}>
+            <PricingContent />
+        </Suspense>
     )
 }
