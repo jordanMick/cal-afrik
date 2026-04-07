@@ -17,27 +17,27 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
             try {
                 const { data: { session } } = await supabase.auth.getSession()
                 if (!session) return
-                
+
                 const today = new Date()
                 const sevenDaysAgo = new Date(today)
                 sevenDaysAgo.setDate(today.getDate() - 6)
-                
+
                 const dateFrom = sevenDaysAgo.toISOString().split('T')[0]
                 const dateTo = today.toISOString().split('T')[0]
-                
+
                 const res = await fetch(`/api/meals?date_from=${dateFrom}&date_to=${dateTo}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
                 const json = await res.json()
                 if (json.success) {
                     const meals = json.data as { logged_at: string, calories: number }[]
                     const dailyTotals: Record<string, number> = {}
-                    
+
                     // Initialisation des 7 derniers jours à zéro
                     for (let i = 6; i >= 0; i--) {
                         const d = new Date(today)
                         d.setDate(today.getDate() - i)
                         dailyTotals[d.toISOString().split('T')[0]] = 0
                     }
-                    
+
                     // Somme des calories
                     meals.forEach(m => {
                         const dateStr = m.logged_at.split('T')[0]
@@ -45,7 +45,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                             dailyTotals[dateStr] += m.calories
                         }
                     })
-                    
+
                     const chartData = Object.entries(dailyTotals).map(([date, cals]) => ({ date, calories: cals }))
                     setWeeklyData(chartData)
                 }
@@ -70,8 +70,8 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                 <span style={{ display: 'inline-block', width: '3px', height: '14px', background: 'linear-gradient(#f59e0b, #ec4899)', borderRadius: '2px' }} />
                 7 derniers jours
             </h2>
-            
-            <div style={{ 
+
+            <div style={{
                 display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '120px', gap: '8px',
                 filter: isLocked ? 'blur(4px)' : 'none', transition: 'filter 0.3s'
             }}>
@@ -82,17 +82,17 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     const heightValue = day.calories > 0 ? Math.max(10, pct) : 0
                     const dateObj = new Date(day.date)
                     const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' }).charAt(0).toUpperCase()
-                    
+
                     return (
                         <div key={day.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '8px' }}>
                             <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'flex-end', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', position: 'relative' }}>
                                 {/* Barre de l'objectif sur le conteneur du fond */}
                                 <div style={{ position: 'absolute', bottom: `${(targetKcal / maxCal) * 100}%`, left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.1)', zIndex: 0 }} />
-                                
-                                <div style={{ 
-                                    width: '100%', 
-                                    height: `${heightValue}%`, 
-                                    background: isExceeded ? 'linear-gradient(180deg, #ef4444, #f97316)' : 'linear-gradient(180deg, #6366f1, #10b981)', 
+
+                                <div style={{
+                                    width: '100%',
+                                    height: `${heightValue}%`,
+                                    background: isExceeded ? 'linear-gradient(180deg, #ef4444, #f97316)' : 'linear-gradient(180deg, #6366f1, #10b981)',
                                     borderRadius: day.calories > 0 ? '6px' : '0',
                                     transition: 'height 1s ease-out',
                                     zIndex: 1,
@@ -117,7 +117,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     </div>
                     <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Analyses Pro</p>
                     <p style={{ color: '#aaa', fontSize: '11px', marginBottom: '14px', maxWidth: '200px' }}>Débloquez le plan Pro pour suivre votre constance hebdomadaire.</p>
-                    <button 
+                    <button
                         onClick={() => router.push('/upgrade')}
                         style={{
                             background: 'linear-gradient(135deg, #6366f1, #818cf8)', border: 'none', borderRadius: '8px',
@@ -278,14 +278,16 @@ export default function DashboardPage() {
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             {/* HEADER */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
-                    <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', marginBottom: '2px' }}>Cal Afrik</h1>
+                    <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', marginBottom: '5px' }}>Cal Afrik</h1>
                     <p style={{ color: '#555', fontSize: '12px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
                 </div>
-                <div style={{ position: 'relative' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#111', border: '0.5px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🔔</div>
-                    <div style={{ position: 'absolute', top: '10px', right: '10px', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', border: '2px solid #0a0a0a' }} />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#141414', border: '0.5px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🔥</div>
+                    <div onClick={() => router.push('/profil')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '14px', color: '#fff', cursor: 'pointer' }}>
+                        {profile?.name?.[0] || 'U'}
+                    </div>
                 </div>
             </div>
 
@@ -314,7 +316,7 @@ export default function DashboardPage() {
                         <div style={{ fontSize: '16px', fontWeight: '800', color: '#fff' }}>{dailyCalories}</div>
                         <div style={{ fontSize: '10px', color: '#444' }}>mangé</div>
                     </div>
-                     <div style={{ position: 'absolute', right: '0', bottom: '0', textAlign: 'center' }}>
+                    <div style={{ position: 'absolute', right: '0', bottom: '0', textAlign: 'center' }}>
                         <div style={{ fontSize: '16px', fontWeight: '800', color: '#fff' }}>{calorieTarget}</div>
                         <div style={{ fontSize: '10px', color: '#444' }}>objectif</div>
                     </div>
@@ -323,7 +325,7 @@ export default function DashboardPage() {
 
             {/* ALERTE EXPIRATION */}
             {isExpiringSoon && !isDismissed && (
-                <div 
+                <div
                     onClick={isRenewing ? undefined : handleRenew}
                     style={{
                         background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.1)',
@@ -350,7 +352,7 @@ export default function DashboardPage() {
                             </p>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={(e) => { e.stopPropagation(); setIsDismissed(true); }}
                         style={{ background: 'transparent', border: 'none', color: 'rgba(239,68,68,0.5)', fontSize: '18px', padding: '4px', cursor: 'pointer' }}>
                         ✕
@@ -373,9 +375,9 @@ export default function DashboardPage() {
                     { label: 'Protéines', val: dailyProtein, target: proteinTarget, title: 'Protéines', bg: '#f0fdf4', color: '#22c55e' },
                     { label: 'Lipides', val: dailyFat, target: fatTarget, title: 'Lipides', bg: '#fffbeb', color: '#f59e0b' },
                 ].map((m) => (
-                    <div key={m.title} style={{ 
-                        flex: 1, background: m.bg, borderRadius: '16px', padding: '12px 6px', textAlign: 'center', 
-                        display: 'flex', flexDirection: 'column', gap: '4px' 
+                    <div key={m.title} style={{
+                        flex: 1, background: m.bg, borderRadius: '16px', padding: '12px 6px', textAlign: 'center',
+                        display: 'flex', flexDirection: 'column', gap: '4px'
                     }}>
                         <p style={{ color: m.color, fontSize: '11px', fontWeight: '700' }}>{m.title}</p>
                         <p style={{ color: '#111', fontSize: '12px', fontWeight: '800' }}>{Math.round(m.val)}/{m.target}</p>
@@ -405,10 +407,10 @@ export default function DashboardPage() {
                         ].map(slot => {
                             const slotState = useAppStore.getState().slots[slot.id]
                             const pct = Math.min(100, (slotState.consumed / slotState.target) * 100)
-                            
+
                             return (
-                                <div 
-                                    key={slot.id} 
+                                <div
+                                    key={slot.id}
                                     onClick={() => {
                                         // Optionnel: Voir les repas détaillés du créneau
                                         const slotMeals = todayMeals.filter(m => {
@@ -421,8 +423,8 @@ export default function DashboardPage() {
                                             alert(`${slot.label} :\n${details}`)
                                         }
                                     }}
-                                    style={{ 
-                                        background: '#141414', border: '0.5px solid #222', borderRadius: '18px', 
+                                    style={{
+                                        background: '#141414', border: '0.5px solid #222', borderRadius: '18px',
                                         padding: '16px', display: 'flex', alignItems: 'center', gap: '14px',
                                         cursor: 'pointer', transition: 'transform 0.2s'
                                     }}
