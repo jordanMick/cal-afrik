@@ -1,70 +1,86 @@
 =========================================================
-RECAPITULATIF DES FONCTIONNALITES DE CAL-AFRIK (A ce jour)
+RECAPITULATIF COMPLET DES FONCTIONNALITES - CAL-AFRIK
 =========================================================
 
-1. AUTHENTIFICATION & ONBOARDING
-- Inscription et connexion sécurisées.
-- Parcours utilisateur initial : saisie du profil (âge, poids, taille, niveau d'activité) pour générer automatiquement les objectifs caloriques et les macros (Protéines, Glucides, Lipides).
+1. AUTHENTIFICATION & ONBOARDING (Terminé)
+- Inscription/Connexion via Supabase Auth.
+- Calculateur de macros personnalisé : L'utilisateur entre son profil (âge, poids, taille, activité) et l'app génère ses besoins caloriques optimaux pour perdre, maintenir ou prendre du poids.
 
-2. TRACKING ALIMENTAIRE INTELLIGENT (IA)
-- Scan IA par photo : l'utilisateur prend son plat en photo, l'IA reconnaît l'aliment (spécialisé dans les plats africains) et estime les calories.
-- Mode de secours : ajout manuel d'un repas avec sauvegarde facile en un clic.
-- Limite intelligente : les utilisateurs gratuits sont limités à 2 scans par jour pour encourager l'abonnement.
+2. TRACKING ALIMENTAIRE INTELLIGENT (IA V2) (Terminé)
+- Scanner Vision : L'IA (Claude 4.5 Sonnet) analyse la photo, identifie les plats africains et estime les portions (en grammes).
+- Matching Intelligent : Les aliments détectés sont automatiquement comparés à notre base de données locale pour garantir des valeurs nutritionnelles (Calories, Protéines, Glucides, Lipides) précises.
+- Mode Manuel : Recherche d'aliments dans la base de données et ajout rapide.
+- Limite Free : 2 scans par jour pour les utilisateurs gratuits.
 
-3. TABLEAU DE BORD (DASHBOARD)
-- Vue d'ensemble design (Dark mode premium).
-- Jauge circulaire dynamique des calories restantes.
-- Barre de progression pour les macros.
-- Les repas de la journée listés proprement.
-- Petits messages contextuels du Coach Kofi selon l'heure ou les dépassements de calories.
+3. COACH YAO AI (Chat interactif) (Terminé)
+- Ton Expert & Local : Un coach qui parle de "foutou", "bissap" et "poulet bicyclette".
+- Conscience du Contexte : Le coach sait combien de calories vous avez mangé aujourd'hui avant même que vous ne lui posiez une question.
+- Accessibilité : Réservé aux membres Premium pour maximiser la valeur de l'abonnement.
 
-4. JOURNAL ET HISTORIQUE
-- Suivi au jour le jour des repas.
-- Calendrier avec historique pour revoir les anciennes journées.
-- Enregistrement du poids quotidien.
+4. TABLEAU DE BORD & STATS (Terminé)
+- Dashboard Premium : Jauge de progression dynamique style "Apple Watch".
+- Historique & Journal : Calendrier interactif pour voir les repas passés.
+- Graphiques d'Analyse (Pro/Premium) : Visualisation des tendances de poids et de calories sur la semaine.
 
-5. MONETISATION ET CYCLE DE VIE (FEDAPAY)
-- Intégration complète de la passerelle de paiement FedaPay.
-- Plans d'abonnement : Free (limité), Pro et Premium.
-- Webhook backend : lorsqu'un paiement réussit, on ajoute automatiquement 30 jours à l'abonnement en sécurité sur la base de données.
-- Auto-rétrogradation : si la date d'expiration est dépassée, l'app repasse l'utilisateur en mode gratuit toute seule.
-- Alertes : bannière d'expiration à J-7 sur le dashboard (qui peut être fermée pour ne pas gêner), avec clic direct pour payer et renouveler instantanément sans friction.
-
+5. MONETISATION (FedaPay) (Terminé)
+- Plans : Free (Basique), Pro (Stats + Illimité), Premium (Coach Yao + Stats).
+- Cycle de vie : Gestion automatique des expirations (J+30) et alertes de renouvellement 7 jours avant.
 
 =========================================================
-COMMENT NOUS ALLONS CREER LE CHAT "COACH KOFI AI"
+DESSINE-MOI LE BACKEND : COMMENT CA MARCHE ?
 =========================================================
 
-Pour créer une vraie expérience de Chat interactif inspiré de Cal AI, voici la marche à suivre technique en 4 étapes majeures :
+Le backend de Cal-Afrik repose sur une architecture "Serverless" ultra-rapide et sécurisée :
 
-ETAPE 1 : INSTALLATION DES OUTILS DE STREAMING
-Nous allons installer Vercel AI SDK (`npm install ai`). C'est ce qui permettra au coach de répondre de manière fluide en temps réel (le texte s'affichera mot par mot comme ChatGPT) plutôt que de faire attendre l'utilisateur 10 secondes devant un écran de chargement.
+1. LE CERVEAU (API Routes Next.js) :
+- /api/scan : Reçoit l'image -> L'envoie à l'IA Vision -> Analyse la réponse JSON -> Cherche les meilleurs correspondances dans la BD Supabase -> Renvoie le résultat décomposé.
+- /api/chat : Récupère le profil utilisateur -> Construit un "Prompt Système" enrichi avec les données du jour -> Discute avec l'IA en temps réel.
 
-ETAPE 2 : LE BACKEND (Le "Cerveau" du Coach)
-- Création d'une nouvelle route serveur : `/api/coach/chat`.
-- Nous utiliserons les API IA génératives (Gemini ou Claude).
-- Le Secret (Le Prompt Système) : On dira à l'IA : "Tu es Coach Kofi. Un expert en diététique africaine. Ton rôle est de motiver et conseiller l'utilisateur de manière concise."
-- Le Contexte : Chaque fois que l'utilisateur parlera, l'app enverra secrètement à l'IA ses données du jour (ex: "L'utilisateur a un objectif de 2000 kcal, il en a consommé 1500 dont beaucoup de glucides via du foutou"). Le Coach fera ainsi des réponses hyper personnalisées.
+2. LA BASE DE DONNEES (Supabase/PostgreSQL) :
+- Table food_items : Contient les valeurs nutritionnelles des aliments africains.
+- Table meals : Enregistre chaque repas avec sa photo et ses macros.
+- Table user_profiles : Centralise les points, le niveau d'abonnement et les quotas quotidiens.
 
-ETAPE 3 : L'INTERFACE UTILISATEUR (Frontend)
-- Création de la page `/coach`.
-- Design d'une messagerie moderne (bulles vertes pour l'utilisateur, grises pour le coach).
-- Ajout de boutons de suggestions rapides type "Que manger ce soir ?" pour démarrer la conversation facilement.
+3. LE FLUX DE PAIEMENT (Webhooks) :
+- Lorsqu'un utilisateur paie sur FedaPay, FedaPay envoie un "Webhook" (signal secret) à notre route /api/payments/webhook.
+- Le backend vérifie la signature, authentifie l'utilisateur via son email et met à jour son 'subscription_tier' ainsi que sa date d'expiration (+30 jours).
+- Sécurité : Tout est contrôlé côté serveur pour éviter la fraude.
 
-ETAPE 4 : LA RESTRICTION (Paywall)
-- Avant d'afficher l'interface du chat, on fera un contrôle : `if (effectiveTier === 'free')`.
-- Si l'utilisateur est en mode gratuit, on affichera le design du chat verrouillé avec un cadenas et un bouton l'invitant à prendre le plan Premium pour débloquer son coach personnel.
-
+4. LOGIQUE DE PERMISSION (Middleware de donnes) :
+- Un utilitaire central (getEffectiveTier) vérifie à chaque action si l'abonnement est toujours valide. Si la date actuelle > date d'expiration, l'utilisateur revient instantanément en mode 'Free' sans intervention manuelle.
 
 =========================================================
-EVOLUTIONS "QUICK WINS" (PREVUES POUR LE LANCEMENT)
+PROCHAINES ETAPES & IDEES D'EVOLUTIONS (ROADMAPP)
 =========================================================
 
-1. APPLICATION NATIVE (PWA)
-Transformation de l'application Web pour qu'elle puisse être installée directement sur l'écran d'accueil du smartphone. L'utilisateur aura une icône Cal-Afrik et l'application s'ouvrira en plein écran, offrant une expérience 100% native.
+1. TRACKER D'HYDRATATION (Facile)
+- Idée : Ajouter un compteur de verres d'eau quotidien avec des rappels (notifications).
+- Etapes : 
+    1. Ajouter une colonne 'water_ml_today' dans user_profiles.
+    2. Créer un petit widget '+' et '-' sur le dashboard.
+    3. Rappels via Push API.
 
-2. GRAPHIQUES DE PROGRES (Analyses)
-Ajout de visualisations graphiques (en bâtons ou courbes) résumant la consommation de la semaine écoulée, afin que l'utilisateur prenne conscience de sa constance et soit incité à conserver ses bonnes habitudes.
+2. GENERATEUR DE RECETTES "RESTES" (IA)
+- Idée : L'utilisateur dit "Il me reste du riz, du poisson et des tomates", l'IA génère une recette saine et africaine.
+- Etapes : 
+    1. Créer une nouvelle page /recettes.
+    2. Utiliser l'API Chat Claude avec un prompt spécifique "Recettes".
 
-3. PARTAGE SOCIAL VIRAL (Bouton WhatsApp)
-Intégration d'une fonctionnalité de partage du bilan journalier. L'utilisateur pourra générer un message ou une belle image de ses résultats et l'envoyer sur ses statuts WhatsApp, avec un lien vers Cal-Afrik (vecteur puissant d'acquisition gratuite de nouveaux utilisateurs).
+3. RESEAU SOCIAL "AFRI-FIT" (Medium)
+- Idée : Un flux où les utilisateurs peuvent partager la photo de leur repas équilibré et recevoir des encouragements ("Feu" / "Miam").
+- Etapes : 
+    1. Créer une table 'posts' liée aux 'meals'.
+    2. Ajouter un bouton "Partager sur le feed" après un scan.
+    3. Système de "Likes" ou de badges de réussite.
+
+4. MODE BARCODE SCANNER (Expert)
+- Idée : Scanner les codes-barres des produits industriels locaux (Yaourts, Huiles, Jus).
+- Etapes : 
+    1. Intégrer une librairie de scan de code-barre (Html5-qrcode).
+    2. Connecter l'API OpenFoodFacts (avec filtre Afrique de l'Ouest).
+
+5. PROGRAMME DE PARRAINAGE (Growth Hack)
+- Idée : "Invite un ami, gagne 1 semaine de Premium".
+- Etapes : 
+    1. Générer un code unique par utilisateur.
+    2. Incrementer un champ 'referral_count' et appliquer un bonus automatique de +7 jours sur la date d'expiration.

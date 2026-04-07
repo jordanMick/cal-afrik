@@ -118,12 +118,13 @@ export default function PricingPage() {
                 </div>
 
                 {/* CARDS GRID */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: visibleCards === 1 ? '1fr' : visibleCards === 2 ? '1fr 1fr' : 'repeat(3, 1fr)',
-                    gap: '16px',
-                    alignItems: 'start'
-                }}>
+                <div 
+                    className={`grid gap-4 items-start grid-cols-1 ${
+                        visibleCards === 1 ? 'md:grid-cols-1' : 
+                        visibleCards === 2 ? 'md:grid-cols-2' : 
+                        'md:grid-cols-3'
+                    }`}
+                >
 
                     {/* ── GRATUIT ── */}
                     {showFree && (
