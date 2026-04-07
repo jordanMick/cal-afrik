@@ -143,7 +143,7 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <div>
+                    <div style={{ position: 'relative' }}>
                         <label style={{ display: 'block', color: '#666', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>
                             Mot de passe
                         </label>
@@ -158,6 +158,17 @@ export default function LoginPage() {
                                 outline: 'none', boxSizing: 'border-box',
                             }}
                         />
+                        {!isRegister && (
+                            <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                                <button 
+                                    type="button"
+                                    onClick={() => router.push('/forgot-password')}
+                                    style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', cursor: 'pointer', padding: '4px' }}
+                                >
+                                    Mot de passe oublié ?
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {error && (
