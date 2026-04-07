@@ -39,8 +39,7 @@ function getNextSlotInfo(hour: number): { label: string; time: string } {
 }
 
 
-const ACCENT_COLOR = '#6366f1'
-const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
+const STAT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
 
 export default function ProfilPage() {
     const router = useRouter()
@@ -157,10 +156,10 @@ export default function ProfilPage() {
     }
 
     const stats = [
-        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal', color: '#6366f1' },
-        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g', color: '#10b981' },
-        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g', color: '#6366f1' },
-        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g', color: '#10b981' },
+        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal', color: STAT_COLORS[0] },
+        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g', color: STAT_COLORS[1] },
+        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g', color: STAT_COLORS[2] },
+        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g', color: STAT_COLORS[3] },
     ]
 
     // LOGIQUE DE BILAN AUTOMATIQUE (NON-AI) POUR PRO/FREE
@@ -219,10 +218,10 @@ export default function ProfilPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                         <div style={{
                             width: '68px', height: '68px', borderRadius: '22px',
-                            background: GRADIENT,
+                            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '28px', fontWeight: '900', color: '#fff',
-                            boxShadow: '0 8px 16px rgba(99,102,241,0.25)',
+                            fontSize: '30px', fontWeight: 'bold', color: '#fff',
+                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
                             flexShrink: 0
                         }}>
                             {profile?.name?.charAt(0).toUpperCase() || 'U'}
@@ -416,17 +415,17 @@ export default function ProfilPage() {
 
                 <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Aujourd'hui</p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
                     {stats.map((stat) => (
-                        <div key={stat.label} style={{ background: '#141414', border: `0.5px solid ${stat.color}20`, borderRadius: '24px', padding: '20px', position: 'relative', overflow: 'hidden' }}>
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2.5px', background: stat.color }} />
-                            <p style={{ color: stat.color, fontSize: '24px', fontWeight: '900', letterSpacing: '-1px' }}>
-                                {Math.round(stat.current)}<span style={{ color: '#333', fontSize: '13px', fontWeight: '400', marginLeft: '4px' }}>{stat.unit}</span>
+                        <div key={stat.label} style={{ background: '#141414', border: `0.5px solid ${stat.color}20`, borderRadius: '14px', padding: '14px', position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color }} />
+                            <p style={{ color: stat.color, fontSize: '22px', fontWeight: '700', letterSpacing: '-0.5px' }}>
+                                {Math.round(stat.current)}<span style={{ color: '#333', fontSize: '12px', fontWeight: '400', marginLeft: '3px' }}>{stat.unit}</span>
                             </p>
-                            <div style={{ width: '100%', height: '4px', background: '#1e1e1e', borderRadius: '2px', margin: '10px 0 8px' }}>
+                            <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '8px 0 6px' }}>
                                 <div style={{ height: '100%', borderRadius: '2px', width: `${getProgressPercent(stat.current, stat.target)}%`, background: stat.color, transition: 'width 0.5s ease' }} />
                             </div>
-                            <p style={{ color: '#444', fontSize: '12px', fontWeight: '600' }}>{stat.label} <span style={{ opacity: 0.5 }}>· {stat.target}</span></p>
+                            <p style={{ color: '#444', fontSize: '11px' }}>{stat.label} · {stat.target}{stat.unit}</p>
                         </div>
                     ))}
                 </div>
@@ -456,7 +455,7 @@ export default function ProfilPage() {
 
                 <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Mes informations</p>
 
-                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '24px', marginBottom: '24px', overflow: 'hidden', padding: '8px 0' }}>
+                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', marginBottom: '16px', overflow: 'hidden' }}>
                     {[
                         { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—', icon: '👤' },
                         { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—', icon: '⚖️' },
@@ -465,12 +464,12 @@ export default function ProfilPage() {
                         { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '🎯' },
                         { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
                     ].map((item, i, arr) => (
-                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span style={{ fontSize: '16px' }}>{item.icon}</span>
-                                <span style={{ color: '#555', fontSize: '14px', fontWeight: '500' }}>{item.label}</span>
+                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '14px' }}>{item.icon}</span>
+                                <span style={{ color: '#444', fontSize: '13px' }}>{item.label}</span>
                             </div>
-                            <span style={{ color: '#fff', fontSize: '14px', fontWeight: '600' }}>{item.value}</span>
+                            <span style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>{item.value}</span>
                         </div>
                     ))}
                 </div>
@@ -480,8 +479,9 @@ export default function ProfilPage() {
                         <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '20px 0 10px' }}>Cuisines préférées</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
                             {profile.preferred_cuisines.map((c, i) => {
+                                const color = STAT_COLORS[i % STAT_COLORS.length]
                                 return (
-                                    <span key={c} style={{ padding: '6px 14px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', borderRadius: '20px', color: '#6366f1', fontSize: '12px', fontWeight: '700' }}>
+                                    <span key={c} style={{ padding: '6px 14px', background: `${color}12`, border: `0.5px solid ${color}40`, borderRadius: '20px', color: color, fontSize: '12px', fontWeight: '500' }}>
                                         {c}
                                     </span>
                                 )
@@ -490,9 +490,9 @@ export default function ProfilPage() {
                     </>
                 )}
 
-                <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '54px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '18px', color: '#fff', fontWeight: '700', fontSize: '15px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(99,102,241,0.2)' }}>
-                        ✏️ Modifier profil
+                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '48px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>
+                        ✏️ Modifier
                     </button>
                     <button onClick={handleLogout} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#ef4444', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
                         Déconnexion
