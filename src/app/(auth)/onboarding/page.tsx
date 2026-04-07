@@ -23,14 +23,14 @@ const CUISINES = ['Africaine (Générale)', 'Togolaise', 'Ivoirienne', 'Sénéga
 // ─── COMPOSANTS AUXILIAIRES REUTILISABLES (PICKER WHEEL) ───────────
 
 function WheelPicker({ 
-    min, max, value, onChange, unit, step = 1, decimal = false 
+    min, max, value, onChange, unit, step = 1
 }: { 
-    min: number, max: number, value: number, onChange: (v: number) => void, unit?: string, step?: number, decimal?: boolean
+    min: number, max: number, value: number, onChange: (v: number) => void, unit?: string, step?: number
 }) {
     const listRef = useRef<HTMLDivElement>(null)
     const [localValue, setLocalValue] = useState(value || min)
 
-    const items = []
+    const items: number[] = []
     for (let i = min; i <= max; i += step) {
         items.push(i)
     }
@@ -44,7 +44,7 @@ function WheelPicker({
                 listRef.current.scrollTop = index * ITEM_HEIGHT
             }
         }
-    }, [])
+    }, [value]) // Re-sync if value changes externally
 
     const handleScroll = (e: any) => {
         const top = e.target.scrollTop
@@ -57,12 +57,11 @@ function WheelPicker({
     }
 
     return (
-        <div style={{ position: 'relative', height: ITEM_HEIGHT * 5, overflow: 'hidden', padding: '0 20px' }}>
-            {/* Overlay Gradient Background for highligh */}
+        <div style={{ position: 'relative', height: ITEM_HEIGHT * 5, overflow: 'hidden', width: '100%', maxWidth: '200px', margin: '0 auto' }}>
             <div style={{
                 position: 'absolute', top: ITEM_HEIGHT * 2, left: 0, right: 0, height: ITEM_HEIGHT,
-                background: 'rgba(255,255,255,0.05)', borderRadius: '14px', pointerEvents: 'none',
-                zIndex: 0, border: '1px solid rgba(255,255,255,0.05)'
+                background: 'rgba(255,255,255,0.08)', borderRadius: '16px', pointerEvents: 'none',
+                zIndex: 0
             }} />
             
             <div 
@@ -70,28 +69,28 @@ function WheelPicker({
                 onScroll={handleScroll}
                 style={{
                     height: '100%', overflowY: 'scroll', scrollSnapType: 'y mandatory',
-                    scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth',
+                    scrollbarWidth: 'none', msOverflowStyle: 'none',
                     position: 'relative', zIndex: 1
                 }}
             >
-                <style>{`div::-webkit-scrollbar { display: none; }`}</style>
-                <div style={{ height: ITEM_HEIGHT * 2 }} /> {/* Padding top */}
+                <div style={{ height: ITEM_HEIGHT * 2 }} />
                 {items.map((item) => (
                     <div 
                         key={item} 
                         style={{
                             height: ITEM_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            scrollSnapAlign: 'center', fontSize: item === localValue ? '32px' : '20px',
-                            fontWeight: item === localValue ? '800' : '400',
-                            color: item === localValue ? '#fff' : '#333',
-                            transition: 'all 0.2s',
+                            scrollSnapAlign: 'center', fontSize: item === localValue ? '32px' : '22px',
+                            fontWeight: item === localValue ? '800' : '500',
+                            color: item === localValue ? '#fff' : '#444',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                             gap: '8px'
                         }}
                     >
-                        {item}{item === localValue && unit && <span style={{ fontSize: '14px', color: '#666', fontWeight: '500' }}>{unit}</span>}
+                        {item}
+                        {item === localValue && unit && <span style={{ fontSize: '18px', color: '#666', fontWeight: '600', marginLeft: '8px' }}>{unit}</span>}
                     </div>
                 ))}
-                <div style={{ height: ITEM_HEIGHT * 2 }} /> {/* Padding bottom */}
+                <div style={{ height: ITEM_HEIGHT * 2 }} />
             </div>
         </div>
     )
@@ -111,12 +110,13 @@ export default function OnboardingPage() {
 
     const currentYear = new Date().getFullYear()
 
+    // Safety: ensure all numeric values are numbers, not strings
     const initialForm = {
         name: profile?.name || '',
         goal: (profile?.goal as UserProfile['goal']) || 'maintenir',
-        weight_kg: profile?.weight_kg || 70,
-        target_weight_kg: profile?.goal_weight_kg || 65,
-        height_cm: profile?.height_cm || 170,
+        weight_kg: Number(profile?.weight_kg) || 70,
+        target_weight_kg: Number(profile?.goal_weight_kg) || 65,
+        height_cm: Number(profile?.height_cm) || 170,
         birth_year: profile?.age ? currentYear - profile.age : 1995,
         gender: (profile?.gender as 'homme' | 'femme') || 'homme',
         activity_level: (profile?.activity_level as UserProfile['activity_level']) || 'modere',
@@ -128,7 +128,12 @@ export default function OnboardingPage() {
 
     const form = onboardingForm || initialForm
 
-    // ─── ACTIONS ──────────────────────────────────────────────────
+    // Migration safety: if old form doesn't have birth_year but has age
+    useEffect(() => {
+        if (onboardingForm && !onboardingForm.birth_year && onboardingForm.age) {
+            update('birth_year', currentYear - onboardingForm.age)
+        }
+    }, [])
 
     const update = (key: string, value: any) => {
         const newForm = { ...form, [key]: value }
@@ -136,45 +141,53 @@ export default function OnboardingPage() {
     }
 
     const toggleHabit = (id: string) => {
-        const habits = form.eating_habits.includes(id)
+        const habits = form.eating_habits?.includes(id)
             ? form.eating_habits.filter((h: string) => h !== id)
-            : [...form.eating_habits, id]
+            : [...(form.eating_habits || []), id]
         update('eating_habits', habits)
     }
 
     const next = () => setStep(step + 1)
     const back = () => setStep(step - 1)
 
-    // Animation d'analyse
     useEffect(() => {
         if (step === 9) {
             setAnalysisProgress(0)
             const interval = setInterval(() => {
-                setAnalysisProgress(prev => {
-                    if (prev >= 100) {
+                setAnalysisProgress(p => {
+                    if (p >= 100) {
                         clearInterval(interval)
                         setTimeout(next, 800)
                         return 100
                     }
-                    return prev + 2
+                    return p + 2
                 })
             }, 50)
             return () => clearInterval(interval)
         }
     }, [step])
 
+    const calculateSafeTargets = () => {
+        try {
+            const age = currentYear - (form.birth_year || 1995)
+            return calculateCalorieTarget({
+                age: isNaN(age) ? 25 : age,
+                gender: form.gender || 'homme',
+                weight_kg: Number(form.weight_kg) || 70,
+                height_cm: Number(form.height_cm) || 170,
+                activity_level: form.activity_level || 'modere',
+                goal: form.goal || 'maintenir',
+            })
+        } catch (e) {
+            return { calorie_target: 2000, protein_target_g: 150, carbs_target_g: 250, fat_target_g: 65 }
+        }
+    }
+
     const handleFinish = async () => {
         setIsSaving(true)
         try {
-            const age = currentYear - form.birth_year
-            const targets = calculateCalorieTarget({
-                age,
-                gender: form.gender,
-                weight_kg: Number(form.weight_kg),
-                height_cm: Number(form.height_cm),
-                activity_level: form.activity_level,
-                goal: form.goal,
-            })
+            const age = currentYear - (form.birth_year || 1995)
+            const targets = calculateSafeTargets()
 
             const profileData = {
                 name: form.name,
@@ -212,14 +225,7 @@ export default function OnboardingPage() {
         }
     }
 
-    const liveResults = calculateCalorieTarget({
-        age: currentYear - form.birth_year,
-        gender: form.gender,
-        weight_kg: Number(form.weight_kg),
-        height_cm: Number(form.height_cm),
-        activity_level: form.activity_level,
-        goal: form.goal,
-    })
+    const liveResults = calculateSafeTargets()
 
     return (
         <div style={{
@@ -229,7 +235,8 @@ export default function OnboardingPage() {
         }}>
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+                * { -webkit-tap-highlight-color: transparent; }
+                div::-webkit-scrollbar { display: none; }
             `}</style>
 
             {/* PROGRESS BAR */}
@@ -250,9 +257,9 @@ export default function OnboardingPage() {
                         autoFocus
                         type="text" value={form.name} onChange={e => update('name', e.target.value)}
                         placeholder="Votre prénom"
-                        style={{ width: '100%', height: '60px', background: '#111', border: '1.5px solid #222', borderRadius: '16px', color: '#fff', padding: '0 20px', fontSize: '18px', outline: 'none' }}
+                        style={{ width: '100%', height: '64px', background: '#111', border: '1.5px solid #222', borderRadius: '18px', color: '#fff', padding: '0 24px', fontSize: '18px', outline: 'none' }}
                     />
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                    <div style={{ marginTop: 'auto' }}>
                         <NextButton disabled={!form.name} onClick={next} />
                     </div>
                 </StepWrapper>
@@ -261,7 +268,7 @@ export default function OnboardingPage() {
             {/* 1. OBJECTIF */}
             {step === 1 && (
                 <StepWrapper key="step1" title="Quel est votre objectif ?" icon="🎯">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {[
                             { id: 'perdre', label: 'Perdre du poids', icon: '🔥' },
                             { id: 'maintenir', label: 'Maintenir mon poids', icon: '⚖️' },
@@ -270,9 +277,9 @@ export default function OnboardingPage() {
                             <button key={g.id} onClick={() => { update('goal', g.id); next(); }} style={{
                                 padding: '24px', background: form.goal === g.id ? 'rgba(34,197,94,0.1)' : '#111',
                                 border: form.goal === g.id ? '1px solid #22c55e' : '1.5px solid #222',
-                                borderRadius: '16px', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '15px'
+                                borderRadius: '18px', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '16px'
                             }}>
-                                <span style={{ fontSize: '24px' }}>{g.icon}</span>
+                                <span style={{ fontSize: '26px' }}>{g.icon}</span>
                                 <span style={{ color: '#fff', fontSize: '16px', fontWeight: '600' }}>{g.label}</span>
                             </button>
                         ))}
@@ -283,8 +290,10 @@ export default function OnboardingPage() {
             {/* 2. POIDS */}
             {step === 2 && (
                 <StepWrapper key="step2" title="Quel est votre poids ?" sub="Une estimation suffit" icon="⚖️">
-                    <WheelPicker min={30} max={200} value={form.weight_kg} onChange={v => update('weight_kg', v)} unit="kg" />
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <WheelPicker min={30} max={200} value={Number(form.weight_kg)} onChange={v => update('weight_kg', v)} unit="kg" />
+                    </div>
+                    <div style={{ marginTop: 'auto' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -293,8 +302,10 @@ export default function OnboardingPage() {
             {/* 3. TAILLE */}
             {step === 3 && (
                 <StepWrapper key="step3" title="Quelle est votre taille ?" icon="📏">
-                    <WheelPicker min={100} max={250} value={form.height_cm} onChange={v => update('height_cm', v)} unit="cm" />
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <WheelPicker min={100} max={250} value={Number(form.height_cm)} onChange={v => update('height_cm', v)} unit="cm" />
+                    </div>
+                    <div style={{ marginTop: 'auto' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -303,8 +314,10 @@ export default function OnboardingPage() {
             {/* 4. ANNEE DE NAISSANCE */}
             {step === 4 && (
                 <StepWrapper key="step4" title="Votre année de naissance" icon="📅">
-                    <WheelPicker min={1920} max={2015} value={form.birth_year} onChange={v => update('birth_year', v)} />
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <WheelPicker min={1920} max={2015} value={Number(form.birth_year)} onChange={v => update('birth_year', v)} />
+                    </div>
+                    <div style={{ marginTop: 'auto' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -313,7 +326,7 @@ export default function OnboardingPage() {
             {/* 5. ACTIVITÉ */}
             {step === 5 && (
                 <StepWrapper key="step5" title="Votre niveau d'activité ?" icon="⚡">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {[
                             { id: 'sedentaire', label: 'Sédentaire', sub: 'Bureau, peu de sport' },
                             { id: 'leger', label: 'Légèrement actif', sub: '1-2 fois / semaine' },
@@ -323,7 +336,7 @@ export default function OnboardingPage() {
                             <button key={a.id} onClick={() => { update('activity_level', a.id); next(); }} style={{
                                 padding: '18px', background: form.activity_level === a.id ? 'rgba(34,197,94,0.1)' : '#111',
                                 border: form.activity_level === a.id ? '1px solid #22c55e' : '1.5px solid #222',
-                                borderRadius: '14px', textAlign: 'left'
+                                borderRadius: '16px', textAlign: 'left'
                             }}>
                                 <div style={{ color: '#fff', fontSize: '15px', fontWeight: '600' }}>{a.label}</div>
                                 <div style={{ color: '#666', fontSize: '13px' }}>{a.sub}</div>
@@ -336,19 +349,19 @@ export default function OnboardingPage() {
             {/* 6. HABITUDES */}
             {step === 6 && (
                 <StepWrapper key="step6" title="Vos habitudes ?" sub="Identifiez ce qui vous freine" icon="🍽️">
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                         {EATING_HABITS.map(h => (
                             <button key={h.id} onClick={() => toggleHabit(h.id)} style={{
-                                padding: '12px 20px', borderRadius: '30px', border: '1.5px solid #222',
-                                background: form.eating_habits.includes(h.id) ? '#fff' : 'transparent',
-                                color: form.eating_habits.includes(h.id) ? '#000' : '#888',
-                                fontSize: '14px', fontWeight: '600', transition: 'all 0.2s'
+                                padding: '14px 22px', borderRadius: '32px', border: '1.5px solid #222',
+                                background: form.eating_habits?.includes(h.id) ? '#fff' : 'transparent',
+                                color: form.eating_habits?.includes(h.id) ? '#000' : '#888',
+                                fontSize: '14px', fontWeight: '700', transition: 'all 0.2s'
                             }}>
                                 {h.label}
                             </button>
                         ))}
                     </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                    <div style={{ marginTop: 'auto' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -356,21 +369,21 @@ export default function OnboardingPage() {
 
             {/* 7. PRÉFÉRENCES */}
             {step === 7 && (
-                <StepWrapper key="step7" title="Vos préférences" sub="Pour adapter les calories" icon="🌍">
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <StepWrapper key="step7" title="Vos préférences" sub="Pour personnaliser vos repas" icon="🌍">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         {CUISINES.map(c => (
                             <button key={c} onClick={() => {
-                                const list = form.preferred_cuisines.includes(c) ? form.preferred_cuisines.filter((x: string) => x !== c) : [...form.preferred_cuisines, c]
+                                const list = (form.preferred_cuisines || []).includes(c) ? form.preferred_cuisines.filter((x: string) => x !== c) : [...(form.preferred_cuisines || []), c]
                                 update('preferred_cuisines', list)
                             }} style={{
-                                padding: '15px', borderRadius: '12px', border: '1.5px solid #222',
-                                background: form.preferred_cuisines.includes(c) ? 'rgba(34,197,94,0.1)' : '#111',
-                                color: form.preferred_cuisines.includes(c) ? '#22c55e' : '#fff',
-                                fontSize: '14px'
+                                padding: '18px', borderRadius: '14px', border: '1.5px solid #222',
+                                background: (form.preferred_cuisines || []).includes(c) ? 'rgba(34,197,94,0.1)' : '#111',
+                                color: (form.preferred_cuisines || []).includes(c) ? '#22c55e' : '#fff',
+                                fontSize: '14px', fontWeight: '600'
                             }}>{c}</button>
                         ))}
                     </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                    <div style={{ marginTop: 'auto' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -379,63 +392,64 @@ export default function OnboardingPage() {
             {/* 8. PROJECTION */}
             {step === 8 && (
                 <StepWrapper key="step8" title="Votre vision" icon="🎯">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                         {form.goal !== 'maintenir' && (
                             <div>
-                                <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '16px', textAlign: 'center' }}>Poids cible (kg)</label>
-                                <WheelPicker min={30} max={200} value={form.target_weight_kg} onChange={v => update('target_weight_kg', v)} unit="kg" />
+                                <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', textAlign: 'center', fontWeight:'600' }}>POIDS CIBLE (KG)</label>
+                                <WheelPicker min={30} max={200} value={Number(form.target_weight_kg)} onChange={v => update('target_weight_kg', v)} unit="kg" />
                             </div>
                         )}
                         <div>
-                            <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '16px', textAlign: 'center' }}>Durée prévue (semaines)</label>
-                            <WheelPicker min={1} max={52} value={form.target_weeks} onChange={v => update('target_weeks', v)} unit="sem." />
+                            <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', textAlign: 'center', fontWeight:'600' }}>DURÉE ESTIMÉE (SEM.)</label>
+                            <WheelPicker min={1} max={52} value={Number(form.target_weeks)} onChange={v => update('target_weeks', v)} unit="sem." />
                         </div>
                     </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+                    <div style={{ marginTop: 'auto' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
             )}
 
-            {/* 9. ANALYSE (LA FAKE LOADING) */}
+            {/* 9. ANALYSE */}
             {step === 9 && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                    <div style={{ width: '100px', height: '100px', position: 'relative', marginBottom: '30px' }}>
-                        <svg width="100" height="100">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="#222" strokeWidth="8" />
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" strokeWidth="8" strokeDasharray="283" strokeDashoffset={283 - (283 * analysisProgress) / 100} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.1s linear' }} />
+                    <div style={{ width: '120px', height: '120px', position: 'relative', marginBottom: '40px' }}>
+                        <svg width="120" height="120">
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="#111" strokeWidth="8" />
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="#22c55e" strokeWidth="8" strokeDasharray="339.29" strokeDashoffset={339.29 - (339.29 * analysisProgress) / 100} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.1s linear' }} />
                         </svg>
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '18px', fontWeight: '800' }}>{analysisProgress}%</div>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '24px', fontWeight: '900' }}>{analysisProgress}%</div>
                     </div>
-                    <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '10px' }}>Calcul de votre plan...</h3>
+                    <h3 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '12px' }}>Calcul de votre plan...</h3>
+                    <p style={{ color: '#555', fontSize: '15px' }}>Analyse des besoins énergétiques</p>
                 </div>
             )}
 
             {/* 10. RESULTATS WOW */}
             {step === 10 && (
                 <StepWrapper key="step10" title="C'est prêt !" icon="🌟">
-                    <div style={{ background: 'linear-gradient(135deg, #111, #080808)', border: '1.5px solid #222', borderRadius: '24px', padding: '30px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '12px', color: '#22c55e', fontWeight: '700', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }}>Cible quotidienne</div>
-                        <div style={{ fontSize: '64px', fontWeight: '900', color: '#fff' }}>{liveResults.calorie_target}</div>
-                        <div style={{ fontSize: '16px', color: '#666', marginBottom: '30px' }}>Calories / jour</div>
+                    <div style={{ background: 'linear-gradient(135deg, #111, #080808)', border: '1.5px solid #222', borderRadius: '28px', padding: '40px 30px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '12px', color: '#22c55e', fontWeight: '800', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '12px' }}>Objectif Quotidien</div>
+                        <div style={{ fontSize: '68px', fontWeight: '900', color: '#fff', letterSpacing: '-2px' }}>{liveResults.calorie_target}</div>
+                        <div style={{ fontSize: '16px', color: '#666', marginBottom: '40px', fontWeight: '500' }}>Calories / jour</div>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
                             <div>
-                                <div style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>{liveResults.protein_target_g}g</div>
-                                <div style={{ color: '#666', fontSize: '11px' }}>Protéines</div>
+                                <div style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>{liveResults.protein_target_g}g</div>
+                                <div style={{ color: '#555', fontSize: '12px', fontWeight: '600', marginTop: '4px' }}>Protéines</div>
                             </div>
                             <div>
-                                <div style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>{liveResults.carbs_target_g}g</div>
-                                <div style={{ color: '#666', fontSize: '11px' }}>Glucides</div>
+                                <div style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>{liveResults.carbs_target_g}g</div>
+                                <div style={{ color: '#555', fontSize: '12px', fontWeight: '600', marginTop: '4px' }}>Glucides</div>
                             </div>
                             <div>
-                                <div style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>{liveResults.fat_target_g}g</div>
-                                <div style={{ color: '#666', fontSize: '11px' }}>Lipides</div>
+                                <div style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>{liveResults.fat_target_g}g</div>
+                                <div style={{ color: '#555', fontSize: '12px', fontWeight: '600', marginTop: '4px' }}>Lipides</div>
                             </div>
                         </div>
                     </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
-                        <NextButton label="Accéder à mon plan →" onClick={next} />
+                    <div style={{ marginTop: 'auto' }}>
+                        <NextButton label="Découvrir mon plan →" onClick={next} />
                     </div>
                 </StepWrapper>
             )}
@@ -443,29 +457,29 @@ export default function OnboardingPage() {
             {/* 11. PAYWALL */}
             {step === 11 && (
                 <StepWrapper key="step11" title="Libérez tout votre potentiel" icon="🚀">
-                    <div style={{ padding: '20px', background: '#111', borderRadius: '16px', border: '1px solid #333', marginBottom: '16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <span style={{ fontWeight: '700' }}>Premium</span>
-                            <span style={{ color: '#22c55e' }}>Tout illimité</span>
+                    <div style={{ padding: '24px', background: '#111', borderRadius: '20px', border: '1px solid #222', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
+                            <span style={{ fontWeight: '800', fontSize: '18px' }}>Premium Elite</span>
+                            <span style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>Tout illimité</span>
                         </div>
-                        <ul style={{ color: '#888', fontSize: '14px', listStyle: 'none', padding: 0 }}>
-                            <li style={{ marginBottom: '8px' }}>✓ Coach Yao AI Illimité</li>
-                            <li style={{ marginBottom: '8px' }}>✓ Scans photos illimités</li>
-                            <li style={{ marginBottom: '8px' }}>✓ Statistiques & Graphiques</li>
-                            <li>✓ Accès prioritaire 24/7</li>
+                        <ul style={{ color: '#777', fontSize: '15px', listStyle: 'none', padding: 0 }}>
+                            <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Coach Yao AI Illimité</li>
+                            <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Scans photos illimités</li>
+                            <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Statistiques & Graphiques</li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Accès prioritaire 24/7</li>
                         </ul>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <button 
                             disabled={isSaving}
                             onClick={() => router.push('/upgrade?hideFree=true')}
-                            style={{ width: '100%', height: '54px', background: 'linear-gradient(90deg, #22c55e, #10b981)', color: '#000', borderRadius: '14px', fontWeight: '800', border: 'none', cursor: 'pointer' }}>
+                            style={{ width: '100%', height: '56px', background: 'linear-gradient(90deg, #22c55e, #10b981)', color: '#000', borderRadius: '18px', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '16px' }}>
                             Voir les offres Premium
                         </button>
                         <button 
                             disabled={isSaving}
                             onClick={handleFinish}
-                            style={{ width: '100%', height: '54px', background: 'transparent', color: '#666', borderRadius: '14px', fontWeight: '600', border: 'none', cursor: 'pointer' }}>
+                            style={{ width: '100%', height: '56px', background: 'transparent', color: '#555', borderRadius: '18px', fontWeight: '700', border: 'none', cursor: 'pointer', fontSize: '15px' }}>
                             Continuer gratuitement (limité)
                         </button>
                     </div>
@@ -474,7 +488,7 @@ export default function OnboardingPage() {
 
             {/* BTN RETOUR */}
             {step > 0 && step < 9 && (
-                <button onClick={back} style={{ position: 'fixed', bottom: '40px', left: '24px', background: 'transparent', border: 'none', color: '#444', fontSize: '14px', fontWeight: '600', cursor: 'pointer', zIndex: 10 }}>← Précédent</button>
+                <button onClick={back} style={{ position: 'fixed', bottom: '40px', left: '24px', background: 'transparent', border: 'none', color: '#444', fontSize: '14px', fontWeight: '700', cursor: 'pointer', zIndex: 10 }}>← Précédent</button>
             )}
         </div>
     )
@@ -484,13 +498,13 @@ export default function OnboardingPage() {
 
 function StepWrapper({ children, title, sub, icon }: { children: React.ReactNode, title: string, sub?: string, icon?: string }) {
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', animation: 'fadeIn 0.4s ease', flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1)', flex: 1 }}>
             <div style={{ textAlign: 'center' }}>
-                {icon && <div style={{ fontSize: '48px', marginBottom: '20px' }}>{icon}</div>}
-                <h2 style={{ color: '#fff', fontSize: '28px', fontWeight: '800', marginBottom: '10px', letterSpacing: '-0.5px' }}>{title}</h2>
-                {sub && <p style={{ color: '#666', fontSize: '15px', lineHeight: '1.5' }}>{sub}</p>}
+                {icon && <div style={{ fontSize: '52px', marginBottom: '24px' }}>{icon}</div>}
+                <h2 style={{ color: '#fff', fontSize: '28px', fontWeight: '900', marginBottom: '12px', letterSpacing: '-0.5px' }}>{title}</h2>
+                {sub && <p style={{ color: '#555', fontSize: '16px', lineHeight: '1.6' }}>{sub}</p>}
             </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>{children}</div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '30px' }}>{children}</div>
         </div>
     )
 }
@@ -501,10 +515,10 @@ function NextButton({ disabled = false, label = "Suivant", onClick }: { disabled
             disabled={disabled}
             onClick={onClick}
             style={{
-                width: '100%', height: '54px', background: disabled ? '#1a1a1a' : '#fff',
-                color: disabled ? '#444' : '#000', borderRadius: '16px',
-                fontSize: '16px', fontWeight: '700', cursor: disabled ? 'default' : 'pointer',
-                border: 'none', transition: 'all 0.2s',
+                width: '100%', height: '58px', background: disabled ? '#111' : '#fff',
+                color: disabled ? '#333' : '#000', borderRadius: '18px',
+                fontSize: '17px', fontWeight: '800', cursor: disabled ? 'default' : 'pointer',
+                border: 'none', transition: 'all 0.3s ease',
             }}
         >
             {label}
