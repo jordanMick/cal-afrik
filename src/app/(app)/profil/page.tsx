@@ -333,14 +333,22 @@ export default function ProfilPage() {
                 )}
             </div>
 
-            <p style={{
-                marginTop: '25px',
-                fontSize: '11px',
-                color: '#666',
-                textAlign: 'center'
+            <div style={{
+                margin: '20px 20px 10px',
+                padding: '10px 16px',
+                background: 'rgba(255,255,255,0.03)',
+                borderRadius: '12px',
+                border: '0.5px solid #1a1a1a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
             }}>
-                📊 Ton bilan mensuel détaillé arrive dans {daysUntilMonthlyBilan} jours
-            </p>
+                <span style={{ fontSize: '14px' }}>📊</span>
+                <p style={{ color: '#666', fontSize: '11px', fontWeight: '500' }}>
+                    Ton bilan mensuel détaillé arrive dans <span style={{ color: '#fff', fontWeight: '700' }}>{daysUntilMonthlyBilan} jours</span>
+                </p>
+            </div>
 
             {/* SECTION BILAN - TOTALEMENT RÉSERVÉE PRO/PREMIUM */}
             {profile?.subscription_tier !== 'free' && activeSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') && (
