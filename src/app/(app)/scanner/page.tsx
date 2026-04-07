@@ -98,15 +98,59 @@ export default function ScannerPage() {
         reader.onerror = reject
     })
 
+    const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<File> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.readAsDataURL(file)
+            reader.onload = (event) => {
+                const img = new Image()
+                img.src = event.target?.result as string
+                img.onload = () => {
+                    const canvas = document.createElement('canvas')
+                    let width = img.width
+                    let height = img.height
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width
+                            width = maxWidth
+                        }
+                    } else {
+                        if (height > maxWidth) {
+                            width *= maxWidth / height
+                            height = maxWidth
+                        }
+                    }
+
+                    canvas.width = width
+                    canvas.height = height
+                    const ctx = canvas.getContext('2d')
+                    ctx?.drawImage(img, 0, 0, width, height)
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(new File([blob], file.name, { type: 'image/jpeg' }))
+                        } else {
+                            reject(new Error('Canvas error'))
+                        }
+                    }, 'image/jpeg', quality)
+                }
+            }
+            reader.onerror = reject
+        })
+    }
+
     const processImage = async (file: File) => {
         setIsAnalyzing(true)
         setSelectedFoods([]); setSuggestions([]); setMealName('')
         setTotalCaloriesAI(0); setShowManualForm(false); setShowRecap(false); setCoachMessage('')
         try {
-            setImage(URL.createObjectURL(file))
-            const uploadedUrl = await uploadImage(file)
+            // Compression prioritaire
+            const compressedFile = await compressImage(file)
+            setImage(URL.createObjectURL(compressedFile))
+            const uploadedUrl = await uploadImage(compressedFile)
             setCapturedImage(uploadedUrl)
-            const base64Image = await toBase64(file)
+            const base64Image = await toBase64(compressedFile)
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) { simulateAI(); return }
             const res = await fetch('/api/analyze', {
