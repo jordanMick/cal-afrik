@@ -110,18 +110,22 @@ export default function CoachChatPage() {
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
 
+            {/* Halos d'ambiance */}
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '150px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
             {/* HEADER */}
-            <div style={{ padding: '20px', background: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(10px)', borderBottom: '0.5px solid #222', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ padding: '24px 20px', background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(15px)', borderBottom: '0.5px solid #222', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{ position: 'relative' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'linear-gradient(135deg, #f59e0b, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', boxShadow: '0 4px 12px rgba(245,158,11,0.3)' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '18px', background: 'linear-gradient(135deg, #f59e0b, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 8px 20px rgba(245,158,11,0.25)' }}>
                         🤖
                     </div>
                     {/* Status dot */}
-                    <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', background: '#10b981', border: '2px solid #0a0a0a', borderRadius: '50%' }} />
+                    <div style={{ position: 'absolute', bottom: -2, right: -2, width: '14px', height: '14px', background: '#10b981', border: '3px solid #0a0a0a', borderRadius: '50%' }} />
                 </div>
                 <div>
-                    <h1 style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>Coach Yao</h1>
-                    <p style={{ color: '#10b981', fontSize: '12px', fontWeight: '500' }}>En ligne</p>
+                    <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', letterSpacing: '-0.3px' }}>Coach Yao</h1>
+                    <p style={{ color: '#10b981', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>En ligne</p>
                 </div>
             </div>
 
@@ -133,13 +137,13 @@ export default function CoachChatPage() {
                         <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isCoach ? 'flex-start' : 'flex-end', width: '100%' }}>
                             <div style={{
                                 maxWidth: '85%',
-                                padding: '14px 16px',
-                                borderRadius: isCoach ? '4px 20px 20px 20px' : '20px 20px 4px 20px',
+                                padding: '16px 20px',
+                                borderRadius: isCoach ? '6px 24px 24px 24px' : '24px 24px 6px 24px',
                                 background: isCoach ? '#141414' : 'linear-gradient(135deg, #6366f1, #818cf8)',
                                 color: '#fff',
-                                fontSize: '14px',
-                                lineHeight: '1.5',
-                                boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+                                fontSize: '15px',
+                                lineHeight: '1.6',
+                                boxShadow: isCoach ? 'none' : '0 10px 20px rgba(99,102,241,0.2)',
                                 border: isCoach ? '0.5px solid #222' : 'none'
                             }}>
                                 {msg.content}
@@ -198,29 +202,31 @@ export default function CoachChatPage() {
                         </button>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <input
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                            placeholder="Pose-moi une question sur ta diète..."
+                            placeholder="Pose ta question à Yao..."
                             style={{
-                                flex: 1, padding: '16px', borderRadius: '16px',
+                                flex: 1, padding: '18px 24px', borderRadius: '24px',
                                 background: '#141414', border: '0.5px solid #333',
-                                color: '#fff', fontSize: '14px', outline: 'none'
+                                color: '#fff', fontSize: '15px', outline: 'none',
+                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
                             }}
                         />
                         <button
                             onClick={handleSendMessage}
                             disabled={!input.trim()}
                             style={{
-                                width: '52px', height: '52px', borderRadius: '16px',
-                                background: input.trim() ? 'linear-gradient(135deg, #6366f1, #818cf8)' : '#222',
-                                color: input.trim() ? '#fff' : '#555', border: 'none',
+                                width: '58px', height: '58px', borderRadius: '24px',
+                                background: input.trim() ? 'linear-gradient(135deg, #6366f1, #818cf8)' : '#1a1a1a',
+                                color: input.trim() ? '#fff' : '#444', border: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.3s ease',
+                                boxShadow: input.trim() ? '0 10px 20px rgba(99,102,241,0.3)' : 'none'
                             }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
                         </button>
                     </div>
                 )}

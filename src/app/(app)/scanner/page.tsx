@@ -294,37 +294,41 @@ export default function ScannerPage() {
         <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative', overflow: 'hidden' }}>
 
             {/* Halo couleur du créneau */}
-            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '240px', height: '240px', borderRadius: '50%', background: `radial-gradient(circle, ${slotColor}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: `radial-gradient(circle, ${slotColor}15 0%, transparent 70%)`, pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '600', marginBottom: '16px' }}>Scanner</h1>
+            <div style={{ padding: '24px 0 16px' }}>
+                <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', letterSpacing: '-0.5px' }}>Scanner</h1>
+                <p style={{ color: '#555', fontSize: '13px', fontWeight: '500', marginTop: '4px' }}>Analyse ton assiette instantanément</p>
+            </div>
 
             {/* CRÉNEAU */}
-            <div style={{ background: '#141414', border: `0.5px solid ${slotColor}40`, borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: slotColor }} />
+            <div style={{ background: '#141414', border: `0.5px solid ${slotColor}30`, borderRadius: '24px', padding: '18px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2.5px', background: slotColor }} />
                 <div>
-                    <p style={{ color: '#444', fontSize: '11px' }}>Créneau actuel</p>
-                    <p style={{ color: '#fff', fontWeight: '500', fontSize: '13px' }}>{slotLabel}</p>
+                    <p style={{ color: '#444', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Créneau</p>
+                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '15px', marginTop: '2px' }}>{slotLabel}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                    <p style={{ color: '#444', fontSize: '11px' }}>{displayedRemainingLabel}</p>
-                    <p style={{ color: displayedRemaining <= 0 ? '#ef4444' : slotColor, fontWeight: '600', fontSize: '14px' }}>{displayedRemaining} kcal</p>
+                    <p style={{ color: '#444', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{displayedRemainingLabel}</p>
+                    <p style={{ color: displayedRemaining <= 0 ? '#ef4444' : slotColor, fontWeight: '800', fontSize: '16px', marginTop: '2px' }}>{displayedRemaining} kcal</p>
                 </div>
             </div>
 
             {/* IMAGE */}
             {!image ? (
                 <>
-                    <div onClick={() => fileInputRef.current?.click()} style={{ height: '180px', borderRadius: '16px', background: '#141414', border: `1px dashed ${slotColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${slotColor}18`, border: `0.5px solid ${slotColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>📷</div>
-                        <p style={{ color: '#444', fontSize: '13px' }}>Ajouter une photo</p>
+                    <div onClick={() => fileInputRef.current?.click()} style={{ height: '200px', borderRadius: '24px', background: '#141414', border: `1px dashed ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                        <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: `${slotColor}12`, border: `0.5px solid ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 8px 16px ${slotColor}15` }}>📷</div>
+                        <p style={{ color: '#555', fontSize: '14px', fontWeight: '600' }}>Scanner un plat</p>
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (file) await processImage(file) }} style={{ display: 'none' }} />
                 </>
             ) : (
-                <div style={{ position: 'relative', marginBottom: '14px' }}>
-                    <img src={image} style={{ width: '100%', borderRadius: '16px' }} />
+                <div style={{ position: 'relative', marginBottom: '20px' }}>
+                    <img src={image} style={{ width: '100%', borderRadius: '24px', border: '0.5px solid #222' }} />
                     <button onClick={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName(''); setShowManualForm(false) }}
-                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.75)', border: '0.5px solid #333', borderRadius: '50%', width: '30px', height: '30px', color: '#fff', cursor: 'pointer', fontSize: '13px' }}>✕</button>
+                        style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.8)', border: '0.5px solid #333', borderRadius: '50%', width: '36px', height: '36px', color: '#fff', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                 </div>
             )}
 
@@ -338,31 +342,36 @@ export default function ScannerPage() {
             )}
 
             {mealName && !isAnalyzing && (
-                <div style={{ marginBottom: '14px', padding: '12px 14px', background: '#141414', border: `0.5px solid ${slotColor}30`, borderRadius: '12px' }}>
-                    <p style={{ color: '#fff', fontWeight: '500', fontSize: '14px' }}>🍽️ {mealName}</p>
-                    {totalCaloriesAI > 0 && <p style={{ color: '#444', fontSize: '12px', marginTop: '2px' }}>Estimation IA : ~{totalCaloriesAI} kcal</p>}
+                <div style={{ marginBottom: '20px', padding: '16px 20px', background: '#141414', border: `0.5px solid ${slotColor}20`, borderRadius: '18px' }}>
+                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '15px' }}>🍽️ {mealName}</p>
+                    {totalCaloriesAI > 0 && <p style={{ color: '#555', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Estimation IA : ~{totalCaloriesAI} kcal</p>}
                 </div>
             )}
 
             {/* SUGGESTIONS */}
             {suggestions.length > 0 && !isAnalyzing && (
-                <div style={{ marginBottom: '14px' }}>
-                    <p style={{ color: '#444', fontSize: '12px', marginBottom: '10px' }}>Sélectionne les aliments présents</p>
-                    {suggestions.map((food) => {
+                <div style={{ marginBottom: '20px' }}>
+                    <p style={{ color: '#444', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px' }}>Vérifie la composition</p>
+                    {suggestions.map((food, idx) => {
                         const isSelected = !!selectedFoods.find(f => f.id === food.id)
                         return (
-                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)} style={{ padding: '12px 14px', borderRadius: '12px', marginBottom: '8px', background: isSelected ? `${slotColor}15` : '#141414', cursor: 'pointer', border: isSelected ? `1px solid ${slotColor}60` : '0.5px solid #222' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {isSelected && <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: slotColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#fff', fontWeight: '700', flexShrink: 0 }}>✓</div>}
-                                        <p style={{ color: '#fff', fontWeight: '500', fontSize: '13px' }}>{food.name || 'Plat inconnu'}</p>
+                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)} style={{ padding: '16px 20px', borderRadius: '20px', marginBottom: '12px', background: isSelected ? `${slotColor}10` : '#141414', cursor: 'pointer', border: isSelected ? `1px solid ${slotColor}50` : '0.5px solid #222', transition: 'all 0.2s ease', position: 'relative', overflow: 'hidden' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: isSelected ? `1.5px solid ${slotColor}` : '1.5px solid #333', background: isSelected ? slotColor : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                                            {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>✓</span>}
+                                        </div>
+                                        <p style={{ color: '#fff', fontWeight: '700', fontSize: '14px' }}>{food.name || 'Plat inconnu'}</p>
                                     </div>
-                                    {food.fromAI && <span style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontSize: '10px', padding: '2px 8px', borderRadius: '20px', border: '0.5px solid rgba(245,158,11,0.3)' }}>IA</span>}
+                                    {food.fromAI && <span style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '10px', padding: '3px 10px', borderRadius: '20px', border: '0.5px solid rgba(245,158,11,0.2)', fontWeight: '700' }}>IA</span>}
                                 </div>
-                                <p style={{ color: '#444', fontSize: '11px' }}>⚖️ {food.portion_g}g</p>
-                                <p style={{ color: isSelected ? slotColor : '#555', fontSize: '12px', fontWeight: '500', marginTop: '2px' }}>
-                                    {food.calories} kcal · {food.protein_g}g prot · {food.carbs_g}g gluc · {food.fat_g}g lip
-                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ color: '#555', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
+                                    <span style={{ color: '#222', fontSize: '11px' }}>•</span>
+                                    <p style={{ color: isSelected ? slotColor : '#666', fontSize: '12px', fontWeight: '600' }}>
+                                        {food.calories} kcal · {food.protein_g}g prot.
+                                    </p>
+                                </div>
                             </div>
                         )
                     })}

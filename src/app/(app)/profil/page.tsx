@@ -415,17 +415,17 @@ export default function ProfilPage() {
 
                 <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Aujourd'hui</p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
                     {stats.map((stat) => (
-                        <div key={stat.label} style={{ background: '#141414', border: `0.5px solid ${stat.color}20`, borderRadius: '14px', padding: '14px', position: 'relative', overflow: 'hidden' }}>
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color }} />
-                            <p style={{ color: stat.color, fontSize: '22px', fontWeight: '700', letterSpacing: '-0.5px' }}>
-                                {Math.round(stat.current)}<span style={{ color: '#333', fontSize: '12px', fontWeight: '400', marginLeft: '3px' }}>{stat.unit}</span>
+                        <div key={stat.label} style={{ background: '#141414', border: `0.5px solid ${stat.color}20`, borderRadius: '24px', padding: '20px', position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2.5px', background: stat.color }} />
+                            <p style={{ color: stat.color, fontSize: '24px', fontWeight: '900', letterSpacing: '-1px' }}>
+                                {Math.round(stat.current)}<span style={{ color: '#333', fontSize: '13px', fontWeight: '400', marginLeft: '4px' }}>{stat.unit}</span>
                             </p>
-                            <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '8px 0 6px' }}>
+                            <div style={{ width: '100%', height: '4px', background: '#1e1e1e', borderRadius: '2px', margin: '10px 0 8px' }}>
                                 <div style={{ height: '100%', borderRadius: '2px', width: `${getProgressPercent(stat.current, stat.target)}%`, background: stat.color, transition: 'width 0.5s ease' }} />
                             </div>
-                            <p style={{ color: '#444', fontSize: '11px' }}>{stat.label} · {stat.target}{stat.unit}</p>
+                            <p style={{ color: '#444', fontSize: '12px', fontWeight: '600' }}>{stat.label} <span style={{ opacity: 0.5 }}>· {stat.target}</span></p>
                         </div>
                     ))}
                 </div>
@@ -455,7 +455,7 @@ export default function ProfilPage() {
 
                 <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Mes informations</p>
 
-                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', marginBottom: '16px', overflow: 'hidden' }}>
+                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '24px', marginBottom: '24px', overflow: 'hidden', padding: '8px 0' }}>
                     {[
                         { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—', icon: '👤' },
                         { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—', icon: '⚖️' },
@@ -464,12 +464,12 @@ export default function ProfilPage() {
                         { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '🎯' },
                         { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
                     ].map((item, i, arr) => (
-                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '14px' }}>{item.icon}</span>
-                                <span style={{ color: '#444', fontSize: '13px' }}>{item.label}</span>
+                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '16px' }}>{item.icon}</span>
+                                <span style={{ color: '#555', fontSize: '14px', fontWeight: '500' }}>{item.label}</span>
                             </div>
-                            <span style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>{item.value}</span>
+                            <span style={{ color: '#fff', fontSize: '14px', fontWeight: '600' }}>{item.value}</span>
                         </div>
                     ))}
                 </div>
@@ -490,11 +490,11 @@ export default function ProfilPage() {
                     </>
                 )}
 
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '48px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>
-                        ✏️ Modifier
+                <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '54px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '18px', color: '#fff', fontWeight: '700', fontSize: '15px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(99,102,241,0.2)' }}>
+                        ✏️ Modifier profil
                     </button>
-                    <button onClick={handleLogout} style={{ flex: 1, height: '48px', background: '#141414', border: '0.5px solid #222', borderRadius: '12px', color: '#555', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
+                    <button onClick={handleLogout} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#ef4444', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
                         Déconnexion
                     </button>
                 </div>

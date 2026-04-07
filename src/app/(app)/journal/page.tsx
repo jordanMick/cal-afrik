@@ -341,14 +341,17 @@ export default function RapportPage() {
     const weightMin = weightEntries.length > 0 ? Math.min(...weightEntries.map(e => e.weight)) : currentWeight
     const weightMax = weightEntries.length > 0 ? Math.max(...weightEntries.map(e => e.weight)) : currentWeight
 
-    const card: React.CSSProperties = { background: '#141414', border: '0.5px solid #222', borderRadius: '18px', padding: '18px', marginBottom: '12px', position: 'relative', overflow: 'hidden' }
+    const card: React.CSSProperties = { background: '#141414', border: '0.5px solid #222', borderRadius: '24px', padding: '24px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', fontFamily: 'system-ui, sans-serif', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'fixed', top: '-40px', right: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            {/* Halos d'ambiance */}
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            <div style={{ padding: '52px 20px 20px', borderBottom: '0.5px solid #1a1a1a' }}>
-                <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '600' }}>Rapport</h1>
+            <div style={{ padding: '52px 20px 24px' }}>
+                <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.5px' }}>Rapport</h1>
+                <p style={{ color: '#555', fontSize: '13px', fontWeight: '500' }}>Tes analyses nutritionnelles</p>
             </div>
 
             <div style={{ padding: '18px 20px' }}>
@@ -434,17 +437,17 @@ export default function RapportPage() {
                         {todayMeals.map((meal, idx) => {
                             const dotColor = DAY_COLORS[idx % DAY_COLORS.length]
                             return (
-                                <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: '10px', position: 'relative', overflow: 'hidden' }}>
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
-                                        {meal.image_url ? <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}</div>}
+                                <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '24px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ width: '52px', height: '52px', borderRadius: '16px', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
+                                        {meal.image_url ? <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}</div>}
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{meal.custom_name || 'Repas sans nom'}</p>
+                                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{meal.custom_name || 'Repas sans nom'}</p>
                                         <p style={{ color: '#555', fontSize: '11px' }}>{formatTime(meal.logged_at)} · {Math.round(meal.portion_g)}g · {Math.round(meal.protein_g)}g prot.</p>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '700' }}>{Math.round(meal.calories)}</p>
-                                        <p style={{ color: '#333', fontSize: '9px' }}>kcal</p>
+                                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '800' }}>{Math.round(meal.calories)}</p>
+                                        <p style={{ color: '#333', fontSize: '9px', fontWeight: '600' }}>kcal</p>
                                     </div>
                                 </div>
                             )
