@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import { calculateCalorieTarget } from '@/lib/nutrition'
 import { checkPermission } from '@/lib/subscription'
@@ -424,26 +424,62 @@ export default function RapportPage() {
                     </div>
                 </div>
 
-                {/* REPAS D'AUJOURD'HUI */}
+                {/* REPAS D'AUJOURD'HUI GROUPÉS PAR SLOTS */}
                 {todayMeals.length > 0 && (
-                    <div style={{ marginBottom: '12px' }}>
-                        <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>Repas d'aujourd'hui</p>
-                        {todayMeals.map((meal, idx) => {
-                            const dotColor = DAY_COLORS[idx % DAY_COLORS.length]
-                            return (
-                                <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '12px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '8px', position: 'relative', overflow: 'hidden' }}>
-                                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px', background: dotColor }} />
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', overflow: 'hidden', background: '#222', flexShrink: 0, marginLeft: '8px' }}>
-                                        {meal.image_url ? <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}</div>}
+                    <div style={{ marginBottom: '20px' }}>
+                        <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Repas d'aujourd'hui</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {[
+                                { id: 'petit_dejeuner' as MealSlotKey, label: 'Petit-déjeuner', icon: '🥛' },
+                                { id: 'dejeuner' as MealSlotKey, label: 'Déjeuner', icon: '🍲' },
+                                { id: 'collation' as MealSlotKey, label: 'Collation', icon: '🥜' },
+                                { id: 'diner' as MealSlotKey, label: 'Dîner', icon: '🥗' },
+                            ].map(slot => {
+                                const slotMeals = todayMeals.filter(m => getMealSlot(new Date(m.logged_at).getHours()) === slot.id)
+                                if (slotMeals.length === 0) return null
+                                
+                                const slotConsumed = slotMeals.reduce((acc, m) => acc + m.calories, 0)
+                                const slotState = useAppStore.getState().slots[slot.id]
+                                const pct = Math.min(100, (slotConsumed / slotState.target) * 100)
+
+                                return (
+                                    <div 
+                                        key={slot.id} 
+                                        onClick={() => {
+                                            // Si un seul repas, on ouvre directement le panel
+                                            if (slotMeals.length === 1) {
+                                                setSelectedMeal(slotMeals[0])
+                                            } else {
+                                                // Sinon on liste et on laisse l'utilisateur choisir ? 
+                                                // Pour rester simple comme le dashboard, on montre une alerte ou on ouvre le premier
+                                                const details = slotMeals.map(m => `- ${m.custom_name || 'Repas'} (${Math.round(m.calories)} kcal)`).join('\n')
+                                                alert(`${slot.label} :\n${details}`)
+                                            }
+                                        }}
+                                        style={{ 
+                                            background: '#141414', border: '0.5px solid #222', borderRadius: '16px', 
+                                            padding: '14px', display: 'flex', alignItems: 'center', gap: '14px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                                            {slot.icon}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                                <p style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{slot.label}</p>
+                                                <p style={{ fontSize: '11px', color: '#555' }}>
+                                                    <span style={{ color: '#fff' }}>{Math.round(slotConsumed)}</span>/{slotState.target} kcal
+                                                </p>
+                                            </div>
+                                            <div style={{ height: '5px', background: '#1e1e1e', borderRadius: '3px', overflow: 'hidden' }}>
+                                                <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #6366f1, #10b981)', borderRadius: '3px' }} />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meal.custom_name || 'Repas'}</p>
-                                        <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>{formatTime(meal.logged_at)} · {meal.protein_g}g prot · {meal.carbs_g}g gluc</p>
-                                    </div>
-                                    <p style={{ color: dotColor, fontSize: '14px', fontWeight: '600', flexShrink: 0 }}>{Math.round(meal.calories)}<span style={{ color: '#333', fontSize: '10px' }}> kcal</span></p>
-                                </div>
-                            )
-                        })}
+                                )
+                            })}
+                        </div>
                     </div>
                 )}
 
