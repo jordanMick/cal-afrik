@@ -181,33 +181,51 @@ export default function ScannerPage() {
         finally { setIsAnalyzing(false) }
     }
 
-    // LOGIQUE SCAN CODE-BARRES (BAS NIVEAU)
-    const [qrScanner, setQrScanner] = useState<Html5Qrcode | null>(null)
+    // LOGIQUE SCAN CODE-BARRES (FIX ÉCRAN NOIR)
+    const qrScannerRef = useRef<Html5Qrcode | null>(null)
 
     useEffect(() => {
-        if (scanMode === 'barcode' && !image) {
-            const scanner = new Html5Qrcode("reader")
-            setQrScanner(scanner)
-            
-            scanner.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                onScanSuccess,
-                onScanFailure
-            ).catch(err => {
-                console.error("Erreur démarrage caméra:", err)
-            })
-        }
+        let isMounted = true;
+
+        const startScanner = async () => {
+            if (scanMode === 'barcode' && !image) {
+                // Attendre un court instant que le DOM soit prêt
+                await new Promise(r => setTimeout(r, 100));
+                
+                const element = document.getElementById("reader");
+                if (!element) return;
+
+                try {
+                    if (!qrScannerRef.current) {
+                        qrScannerRef.current = new Html5Qrcode("reader");
+                    }
+                    
+                    if (isMounted) {
+                        await qrScannerRef.current.start(
+                            { facingMode: "environment" }, 
+                            { fps: 10, qrbox: { width: 250, height: 250 } },
+                            onScanSuccess,
+                            onScanFailure
+                        );
+                    }
+                } catch (err) {
+                    console.error("Erreur caméra:", err);
+                }
+            }
+        };
+
+        startScanner();
 
         return () => {
-            if (qrScanner) {
-                qrScanner.stop().catch(e => console.error(e))
+            isMounted = false;
+            if (qrScannerRef.current && qrScannerRef.current.isScanning) {
+                qrScannerRef.current.stop().catch(e => console.error("Erreur stop:", e));
             }
-        }
-    }, [scanMode, image])
+        };
+    }, [scanMode, image]);
 
     async function onScanSuccess(decodedText: string) {
-        if (qrScanner) qrScanner.stop().catch(e => console.error(e));
+        if (qrScannerRef.current) qrScannerRef.current.stop().catch(e => console.error(e));
         setScanMode('ai');
         setIsAnalyzing(true);
         try {
