@@ -6,7 +6,7 @@ import { useAppStore, getMealSlot, SLOT_LABELS } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import { checkPermission } from '@/lib/subscription'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
-import { Html5QrcodeScanner } from 'html5-qrcode'
+import { Html5Qrcode } from 'html5-qrcode'
 
 interface EnrichedSuggestion extends FoodSuggestion {
     portion_g: number; calories_detected: number; protein_detected: number
@@ -181,18 +181,34 @@ export default function ScannerPage() {
         finally { setIsAnalyzing(false) }
     }
 
-    // LOGIQUE SCAN CODE-BARRES
+    // LOGIQUE SCAN CODE-BARRES (BAS NIVEAU)
+    const [qrScanner, setQrScanner] = useState<Html5Qrcode | null>(null)
+
     useEffect(() => {
-        let scanner: Html5QrcodeScanner | null = null;
         if (scanMode === 'barcode' && !image) {
-            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-            scanner.render(onScanSuccess, onScanFailure);
+            const scanner = new Html5Qrcode("reader")
+            setQrScanner(scanner)
+            
+            scanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.error("Erreur démarrage caméra:", err)
+            })
         }
-        return () => { if (scanner) scanner.clear().catch(e => console.error(e)) };
-    }, [scanMode, image]);
+
+        return () => {
+            if (qrScanner) {
+                qrScanner.stop().catch(e => console.error(e))
+            }
+        }
+    }, [scanMode, image])
 
     async function onScanSuccess(decodedText: string) {
-        setScanMode('ai'); // Switch back to see result
+        if (qrScanner) qrScanner.stop().catch(e => console.error(e));
+        setScanMode('ai');
         setIsAnalyzing(true);
         try {
             const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
@@ -202,7 +218,7 @@ export default function ScannerPage() {
                 const nuts = p.nutriments;
                 const detectedFood: ManualFood = {
                     name_fr: p.product_name_fr || p.product_name || "Produit inconnu",
-                    portion_g: 100, // Default to 100g for base values
+                    portion_g: 100,
                     calories: Math.round(nuts['energy-kcal_100g'] || 0),
                     protein_g: nuts.proteins_100g || 0,
                     carbs_g: nuts.carbohydrates_100g || 0,
@@ -214,18 +230,17 @@ export default function ScannerPage() {
                 setShowManualForm(true);
                 if (p.image_front_url) setImage(p.image_front_url);
             } else {
-                alert("Produit non trouvé dans la base de données.");
+                alert("Produit non trouvé.");
             }
         } catch (err) {
             console.error(err);
-            alert("Erreur lors de la lecture du code-barres.");
         } finally {
             setIsAnalyzing(false);
         }
     }
 
-    function onScanFailure(error: any) {
-        // Ignorer les erreurs de scan continu (pas de code trouvé dans la frame)
+    function onScanFailure() {
+        // Muet : on ne fait rien, on attend juste que ça scanne
     }
 
     const simulateAI = () => {
@@ -429,35 +444,8 @@ export default function ScannerPage() {
             {/* BARCODE SCAN VIEW */}
             {scanMode === 'barcode' && !image && (
                 <div style={{ marginBottom: '20px' }}>
-                    <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414' }}></div>
-                    <style>{`
-                        #reader__status_span, 
-                        #reader__dashboard_section_csr span,
-                        div[id*="status"],
-                        .html5-qrcode-element { 
-                            display: none !important; 
-                        }
-                        #reader { border: none !important; }
-                        #reader video { 
-                            border-radius: 24px !important; 
-                            width: 100% !important;
-                            object-fit: cover !important;
-                        }
-                        /* Masquer radicalement les bandeaux d'erreur colorés */
-                        #reader div {
-                            background: transparent !important;
-                            border: none !important;
-                            color: transparent !important;
-                            font-size: 0 !important;
-                        }
-                        /* Sauf pour la zone de scan elle-même */
-                        #reader #reader__scan_region, 
-                        #reader #reader__scan_region video {
-                            display: block !important;
-                            color: initial !important;
-                        }
-                    `}</style>
-                    <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres devant la caméra</p>
+                    <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414', minHeight: '250px' }}></div>
+                    <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres dans le carré</p>
                 </div>
             )}
 
