@@ -6,6 +6,7 @@ import { useAppStore, getMealSlot, SLOT_LABELS } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import { checkPermission } from '@/lib/subscription'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
+import { Html5QrcodeScanner } from 'html5-qrcode'
 
 interface EnrichedSuggestion extends FoodSuggestion {
     portion_g: number; calories_detected: number; protein_detected: number
@@ -51,6 +52,8 @@ export default function ScannerPage() {
     const [showCoach, setShowCoach] = useState(false)
     const [coachMessage, setCoachMessage] = useState('')
     const [isLoadingCoach, setIsLoadingCoach] = useState(false)
+    const [scanMode, setScanMode] = useState<'ai' | 'barcode'>('ai')
+    const [isScanningBarcode, setIsScanningBarcode] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
 
     const currentHour = new Date().getHours()
@@ -132,6 +135,53 @@ export default function ScannerPage() {
             if (json.data[0]) { const first = json.data[0] as ScanResultItem; setManualFood({ name_fr: json.meal_name || first.detected, portion_g: first.portion_g, calories: first.calories_detected, protein_g: first.protein_detected, carbs_g: first.carbs_detected, fat_g: first.fat_detected, category: 'plats_composes' }) }
         } catch (err) { console.error(err); simulateAI() }
         finally { setIsAnalyzing(false) }
+    }
+
+    // LOGIQUE SCAN CODE-BARRES
+    useEffect(() => {
+        let scanner: Html5QrcodeScanner | null = null;
+        if (scanMode === 'barcode' && !image) {
+            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+            scanner.render(onScanSuccess, onScanFailure);
+        }
+        return () => { if (scanner) scanner.clear().catch(e => console.error(e)) };
+    }, [scanMode, image]);
+
+    async function onScanSuccess(decodedText: string) {
+        setScanMode('ai'); // Switch back to see result
+        setIsAnalyzing(true);
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${decodedText}.json`);
+            const json = await res.json();
+            if (json.status === 1 && json.product) {
+                const p = json.product;
+                const nuts = p.nutriments;
+                const detectedFood: ManualFood = {
+                    name_fr: p.product_name_fr || p.product_name || "Produit inconnu",
+                    portion_g: 100, // Default to 100g for base values
+                    calories: Math.round(nuts['energy-kcal_100g'] || 0),
+                    protein_g: nuts.proteins_100g || 0,
+                    carbs_g: nuts.carbohydrates_100g || 0,
+                    fat_g: nuts.fat_100g || 0,
+                    category: 'snacks'
+                };
+                setManualFood(detectedFood);
+                setMealName(detectedFood.name_fr);
+                setShowManualForm(true);
+                if (p.image_front_url) setImage(p.image_front_url);
+            } else {
+                alert("Produit non trouvé dans la base de données.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors de la lecture du code-barres.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }
+
+    function onScanFailure(error: any) {
+        // Ignorer les erreurs de scan continu (pas de code trouvé dans la frame)
     }
 
     const simulateAI = () => {
@@ -311,8 +361,18 @@ export default function ScannerPage() {
                 </div>
             </div>
 
-            {/* IMAGE */}
-            {!image ? (
+            {/* SWITCH MODE SCAN */}
+            <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '20px' }}>
+                <button onClick={() => setScanMode('ai')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? '#1e1e1e' : 'transparent', color: scanMode === 'ai' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
+                    📸 Photo IA
+                </button>
+                <button onClick={() => setScanMode('barcode')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'barcode' ? '#1e1e1e' : 'transparent', color: scanMode === 'barcode' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
+                    🏷️ Code-barres
+                </button>
+            </div>
+
+            {/* AI SCAN VIEW */}
+            {scanMode === 'ai' && !image && (
                 <>
                     <div onClick={() => fileInputRef.current?.click()} style={{ height: '200px', borderRadius: '24px', background: '#141414', border: `1px dashed ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                         <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: `${slotColor}12`, border: `0.5px solid ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 8px 16px ${slotColor}15` }}>📷</div>
@@ -320,7 +380,18 @@ export default function ScannerPage() {
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (file) await processImage(file) }} style={{ display: 'none' }} />
                 </>
-            ) : (
+            )}
+
+            {/* BARCODE SCAN VIEW */}
+            {scanMode === 'barcode' && !image && (
+                <div style={{ marginBottom: '20px' }}>
+                    <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414' }}></div>
+                    <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres devant la caméra</p>
+                </div>
+            )}
+
+            {/* PREVIEW IMAGE (SHARED) */}
+            {image && (
                 <div style={{ position: 'relative', marginBottom: '20px' }}>
                     <img src={image} style={{ width: '100%', borderRadius: '24px', border: '0.5px solid #222' }} />
                     <button onClick={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName(''); setShowManualForm(false) }}
