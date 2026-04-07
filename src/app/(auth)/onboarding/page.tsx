@@ -259,7 +259,7 @@ export default function OnboardingPage() {
                         placeholder="Votre prénom"
                         style={{ width: '100%', height: '64px', background: '#111', border: '1.5px solid #222', borderRadius: '18px', color: '#fff', padding: '0 24px', fontSize: '18px', outline: 'none' }}
                     />
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '20px' }}>
                         <NextButton disabled={!form.name} onClick={next} />
                     </div>
                 </StepWrapper>
@@ -293,7 +293,7 @@ export default function OnboardingPage() {
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={30} max={200} value={Number(form.weight_kg)} onChange={v => update('weight_kg', v)} unit="kg" />
                     </div>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '20px' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -305,7 +305,7 @@ export default function OnboardingPage() {
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={100} max={250} value={Number(form.height_cm)} onChange={v => update('height_cm', v)} unit="cm" />
                     </div>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '20px' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -317,7 +317,7 @@ export default function OnboardingPage() {
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={1920} max={2015} value={Number(form.birth_year)} onChange={v => update('birth_year', v)} />
                     </div>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '20px' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -361,7 +361,7 @@ export default function OnboardingPage() {
                             </button>
                         ))}
                     </div>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '20px' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -383,7 +383,7 @@ export default function OnboardingPage() {
                             }}>{c}</button>
                         ))}
                     </div>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '20px' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -395,16 +395,24 @@ export default function OnboardingPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                         {form.goal !== 'maintenir' && (
                             <div>
-                                <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', textAlign: 'center', fontWeight:'600' }}>POIDS CIBLE (KG)</label>
-                                <WheelPicker min={30} max={200} value={Number(form.target_weight_kg)} onChange={v => update('target_weight_kg', v)} unit="kg" />
+                                <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', fontWeight:'600' }}>POIDS CIBLE (KG)</label>
+                                <input 
+                                    type="number" value={form.target_weight_kg} onChange={e => update('target_weight_kg', e.target.value)}
+                                    placeholder="Ex: 65"
+                                    style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px', outline: 'none' }}
+                                />
                             </div>
                         )}
                         <div>
-                            <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', textAlign: 'center', fontWeight:'600' }}>DURÉE ESTIMÉE (SEM.)</label>
-                            <WheelPicker min={1} max={52} value={Number(form.target_weeks)} onChange={v => update('target_weeks', v)} unit="sem." />
+                            <label style={{ color: '#444', fontSize: '13px', display: 'block', marginBottom: '12px', fontWeight:'600' }}>DURÉE ESTIMÉE (SEM.)</label>
+                            <input 
+                                type="number" value={form.target_weeks} onChange={e => update('target_weeks', e.target.value)}
+                                placeholder="Ex: 8"
+                                style={{ width: '100%', height: '54px', background: '#111', border: '1.5px solid #222', borderRadius: '14px', color: '#fff', padding: '0 16px', fontSize: '18px', outline: 'none' }}
+                            />
                         </div>
                     </div>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '40px' }}>
                         <NextButton onClick={next} />
                     </div>
                 </StepWrapper>
@@ -448,7 +456,7 @@ export default function OnboardingPage() {
                             </div>
                         </div>
                     </div>
-                    <div style={{ marginTop: 'auto' }}>
+                    <div style={{ marginTop: '20px' }}>
                         <NextButton label="Découvrir mon plan →" onClick={next} />
                     </div>
                 </StepWrapper>
