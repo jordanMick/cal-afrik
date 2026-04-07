@@ -283,10 +283,14 @@ function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () 
                         <p style={{ color: '#444', fontSize: '13px' }}>kilocalories</p>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-                        {[{ label: 'Protéines', value: meal.protein_g }, { label: 'Glucides', value: meal.carbs_g }, { label: 'Lipides', value: meal.fat_g }].map(m => (
-                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', border: '0.5px solid #222' }}>
-                                <p style={{ color: '#fff', fontSize: '16px', fontWeight: '800' }}>{m.value}g</p>
-                                <p style={{ color: '#444', fontSize: '10px', marginTop: '2px', fontWeight: '600', textTransform: 'uppercase' }}>{m.label}</p>
+                        {[
+                            { label: 'Protéines', value: meal.protein_g, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+                            { label: 'Glucides', value: meal.carbs_g, color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
+                            { label: 'Lipides', value: meal.fat_g, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' }
+                        ].map(m => (
+                            <div key={m.label} style={{ background: m.bg, borderRadius: '14px', padding: '12px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
+                                <p style={{ color: m.color, fontSize: '16px', fontWeight: '800' }}>{Math.round(m.value)}g</p>
+                                <p style={{ color: m.color, opacity: 0.8, fontSize: '9px', marginTop: '2px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{m.label}</p>
                             </div>
                         ))}
                     </div>
@@ -474,9 +478,9 @@ export default function RapportPage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
                         {[
-                            { label: 'Prot. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.protein_g, 0) / 7) : 0, color: '#6366f1' },
-                            { label: 'Gluc. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.carbs_g, 0) / 7) : 0, color: '#f59e0b' },
-                            { label: 'Lip. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.fat_g, 0) / 7) : 0, color: '#10b981' },
+                            { label: 'Prot. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.protein_g, 0) / 7) : 0, color: '#10b981' },
+                            { label: 'Gluc. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.carbs_g, 0) / 7) : 0, color: '#6366f1' },
+                            { label: 'Lip. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.fat_g, 0) / 7) : 0, color: '#f59e0b' },
                         ].map(m => (
                             <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', textAlign: 'center', border: `0.5px solid ${m.color}15` }}>
                                 <p style={{ color: m.color, fontSize: '16px', fontWeight: '600' }}>{m.value}g</p>
