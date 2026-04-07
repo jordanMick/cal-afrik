@@ -32,12 +32,14 @@ export default function PricingPage() {
         document.body.appendChild(script);
 
         return () => {
-            document.body.removeChild(script);
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
         };
     }, []);
 
     const handleSubscribe = async (tier: 'pro' | 'premium') => {
-        if (currentTier === tier) return; // Déjà abonné
+        if (currentTier === tier) return;
 
         setLoading(tier);
         try {
@@ -47,7 +49,6 @@ export default function PricingPage() {
                 return;
             }
 
-            // 1. Créer la transaction sur notre serveur
             const res = await fetch('/api/payments/checkout', {
                 method: 'POST',
                 headers: {
@@ -63,7 +64,6 @@ export default function PricingPage() {
                 throw new Error(errorMsg);
             }
 
-            // 2. Ouvrir le widget FedaPay avec le token reçu
             if (window.FedaPay) {
                 window.FedaPay.init({
                     public_key: process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY,
@@ -74,7 +74,6 @@ export default function PricingPage() {
                 });
             }
 
-            // Redirection directe vers l'URL sécurisée de FedaPay (recommandé pour mobile)
             window.location.href = data.url;
 
         } catch (error: any) {
@@ -85,12 +84,9 @@ export default function PricingPage() {
         }
     }
 
-    // Calcul du nombre de colonnes à afficher
     const showFree = currentTier === 'free'
     const showPro = currentTier === 'free' || currentTier === 'pro'
     const showPremium = true
-
-    // Pour la grille : on compte le nombre de cartes visibles
     const visibleCards = (showFree ? 1 : 0) + (showPro ? 1 : 0) + (showPremium ? 1 : 0)
 
     return (
@@ -102,7 +98,6 @@ export default function PricingPage() {
             position: 'relative',
             overflow: 'hidden',
         }}>
-            {/* Halos fond */}
             <div style={{ position: 'fixed', top: '-100px', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '0', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
@@ -158,15 +153,7 @@ export default function PricingPage() {
                                     </div>
                                 ))}
                             </div>
-                            <button
-                                style={{
-                                    width: '100%', height: '48px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '0.5px solid #333',
-                                    borderRadius: '12px',
-                                    color: '#666', fontSize: '14px', fontWeight: '600',
-                                    cursor: 'default',
-                                }}>
+                            <button style={{ width: '100%', height: '48px', background: 'rgba(255,255,255,0.05)', border: '0.5px solid #333', borderRadius: '12px', color: '#666', fontSize: '14px', fontWeight: '600', cursor: 'default' }}>
                                 Plan actuel
                             </button>
                         </div>
@@ -185,13 +172,7 @@ export default function PricingPage() {
                             opacity: currentTier === 'pro' ? 0.9 : 1
                         }}>
                             {currentTier !== 'pro' && (
-                                <div style={{
-                                    position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)',
-                                    padding: '5px 18px', borderRadius: '20px',
-                                    background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-                                    color: '#fff', fontSize: '12px', fontWeight: '600',
-                                    whiteSpace: 'nowrap',
-                                }}>Recommandé</div>
+                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Recommandé</div>
                             )}
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
@@ -204,6 +185,7 @@ export default function PricingPage() {
                                 {[
                                     'Scanner IA illimité',
                                     '1 000+ plats africains',
+                                    '1 conseil Coach Yao / jour',
                                     'Recalcul auto des calories',
                                     'Graphique de progression',
                                     'Historique 6 mois',
@@ -218,14 +200,7 @@ export default function PricingPage() {
                             <button
                                 disabled={loading !== null || currentTier === 'pro'}
                                 onClick={() => handleSubscribe('pro')}
-                                style={{
-                                    width: '100%', height: '48px',
-                                    background: currentTier === 'pro' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #6366f1, #818cf8)',
-                                    border: currentTier === 'pro' ? '0.5px solid #333' : 'none', borderRadius: '12px',
-                                    color: currentTier === 'pro' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600',
-                                    cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer',
-                                    boxShadow: currentTier === 'pro' ? 'none' : '0 4px 20px rgba(99,102,241,0.35)',
-                                }}>
+                                style={{ width: '100%', height: '48px', background: currentTier === 'pro' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #6366f1, #818cf8)', border: currentTier === 'pro' ? '0.5px solid #333' : 'none', borderRadius: '12px', color: currentTier === 'pro' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer', boxShadow: currentTier === 'pro' ? 'none' : '0 4px 20px rgba(99,102,241,0.35)' }}>
                                 {loading === 'pro' ? 'Initialisation...' : currentTier === 'pro' ? 'Plan actuel' : 'Passer au Pro →'}
                             </button>
                         </div>
@@ -243,13 +218,7 @@ export default function PricingPage() {
                             boxShadow: currentTier === 'premium' ? 'none' : '0 0 40px rgba(16,185,129,0.12)',
                         }}>
                             {currentTier !== 'premium' && (
-                                <div style={{
-                                    position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)',
-                                    padding: '5px 18px', borderRadius: '20px',
-                                    background: 'linear-gradient(135deg, #10b981, #34d399)',
-                                    color: '#fff', fontSize: '12px', fontWeight: '600',
-                                    whiteSpace: 'nowrap',
-                                }}>Elite</div>
+                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, #10b981, #34d399)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Elite</div>
                             )}
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
@@ -261,7 +230,8 @@ export default function PricingPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     'Tout le plan Pro',
-                                    'Coach Kofi IA personnalisé',
+                                    'Coach Yao IA personnalisé',
+                                    'Plus d\'interactions avec Coach Yao',
                                     'Plans repas hebdomadaires',
                                     'Analyse nutritionnelle détaillée',
                                     'Historique illimité',
@@ -276,14 +246,7 @@ export default function PricingPage() {
                             <button
                                 disabled={loading !== null || currentTier === 'premium'}
                                 onClick={() => handleSubscribe('premium')}
-                                style={{
-                                    width: '100%', height: '48px',
-                                    background: currentTier === 'premium' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #10b981, #34d399)',
-                                    border: currentTier === 'premium' ? '0.5px solid #333' : 'none', borderRadius: '12px',
-                                    color: currentTier === 'premium' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600',
-                                    cursor: (loading || currentTier === 'premium') ? 'default' : 'pointer',
-                                    boxShadow: currentTier === 'premium' ? 'none' : '0 4px 20px rgba(16,185,129,0.3)',
-                                }}>
+                                style={{ width: '100%', height: '48px', background: currentTier === 'premium' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #10b981, #34d399)', border: currentTier === 'premium' ? '0.5px solid #333' : 'none', borderRadius: '12px', color: currentTier === 'premium' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'premium') ? 'default' : 'pointer', boxShadow: currentTier === 'premium' ? 'none' : '0 4px 20px rgba(16,185,129,0.3)' }}>
                                 {loading === 'premium' ? 'Initialisation...' : currentTier === 'premium' ? 'Plan actuel' : 'Accéder au Premium →'}
                             </button>
                         </div>
@@ -296,17 +259,12 @@ export default function PricingPage() {
                         <p style={{ color: '#444', fontSize: '13px', fontWeight: '500' }}>Paiement sécurisé via FedaPay</p>
                         <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px' }}>
                             {['MTN', 'Orange', 'Moov', 'Wave', 'Visa', 'Mastercard'].map((p) => (
-                                <div key={p} style={{
-                                    padding: '8px 20px',
-                                    background: '#111', border: '0.5px solid #222',
-                                    borderRadius: '14px', color: '#666', fontSize: '12px', fontWeight: '600',
-                                }}>{p}</div>
+                                <div key={p} style={{ padding: '8px 20px', background: '#111', border: '0.5px solid #222', borderRadius: '14px', color: '#666', fontSize: '12px', fontWeight: '600' }}>{p}</div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* ID de transaction container pour le script FedaPay */}
                 <div id="fedapay-container"></div>
 
                 {/* FOOTER */}
