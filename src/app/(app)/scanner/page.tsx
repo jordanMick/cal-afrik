@@ -149,7 +149,7 @@ export default function ScannerPage() {
 
     const loadCoachMessage = async () => {
         setShowCoach(true)
-        if (!checkPermission(profile, 'hasCoachKofi')) return
+        if (!checkPermission(profile, 'hasCoachYao')) return
         if (coachMessage) return
         setIsLoadingCoach(true)
         try {
@@ -457,7 +457,7 @@ export default function ScannerPage() {
                                     <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Analyse en cours...</p>
                                 ) : (
                                     /* CONSEIL DU COACH - LOGIQUE ACCÈS */
-                                    checkPermission(profile, 'hasCoachKofi') ? (
+                                    checkPermission(profile, 'hasCoachYao') ? (
                                         coachMessage && (
                                             <div style={{ marginTop: '20px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
@@ -496,12 +496,12 @@ export default function ScannerPage() {
                                                 <div style={{ fontSize: '28px' }}>🔒</div>
                                                 <div>
                                                     <p style={{ color: '#fff', fontSize: '14px', fontWeight: '800', marginBottom: '4px' }}>
-                                                        {profile?.subscription_tier === 'pro' ? 'Analyse Premium de Kofi' : 'Analyse terminée !'}
+                                                        {profile?.subscription_tier === 'pro' ? 'Analyse Premium de Yao' : 'Analyse terminée !'}
                                                     </p>
                                                     <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.4' }}>
                                                         {profile?.subscription_tier === 'pro' 
-                                                            ? 'Le Coach Kofi connaît les secrets de ce plat. Débloquez son analyse pour optimiser votre santé.'
-                                                            : 'Le Coach Kofi a fini son analyse ! Passe au plan Premium pour débloquer tes conseils personnalisés.'}
+                                                            ? 'Le Coach Yao connaît les secrets de ce plat. Débloquez son analyse pour optimiser votre santé.'
+                                                            : 'Le Coach Yao a fini son analyse ! Passe au plan Premium pour débloquer tes conseils personnalisés.'}
                                                     </p>
                                                 </div>
                                                 <div style={{ 
@@ -513,7 +513,7 @@ export default function ScannerPage() {
                                                     fontSize: '12px', 
                                                     fontWeight: '700' 
                                                 }}>
-                                                    Voir le conseil de Kofi →
+                                                    Voir le conseil de Yao →
                                                 </div>
                                             </div>
                                         </div>

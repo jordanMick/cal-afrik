@@ -7,19 +7,19 @@ export const SUBSCRIPTION_RULES = {
         maxScansPerDay: 2,
         hasGraph: false,
         hasAutomaticRecalculation: false,
-        hasCoachKofi: false,
+        hasCoachYao: false,
     },
     pro: {
         maxScansPerDay: 1000, // Illimité en pratique
         hasGraph: true,
         hasAutomaticRecalculation: true,
-        hasCoachKofi: false,
+        hasCoachYao: false,
     },
     premium: {
         maxScansPerDay: 1000,
         hasGraph: true,
         hasAutomaticRecalculation: true,
-        hasCoachKofi: true,
+        hasCoachYao: true,
     }
 }
 
