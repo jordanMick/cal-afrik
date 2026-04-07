@@ -447,6 +447,32 @@ export default function DashboardPage() {
                 )}
             </div>
 
+            {/* RECOMMENDED FOR YOU */}
+            <div style={{ marginBottom: '40px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>Recommandé pour vous</h2>
+                    <span style={{ fontSize: '12px', color: '#6366f1', fontWeight: '600' }}>Voir tout</span>
+                </div>
+                <div style={{ display: 'flex', gap: '16px', overflowX: 'scroll', paddingBottom: '10px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {[
+                        { name: 'Attiéké au Poisson', cals: 450, time: '25 min', img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=200&auto=format&fit=crop' },
+                        { name: 'Mafé au Poulet', cals: 620, time: '45 min', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=200&auto=format&fit=crop' },
+                        { name: 'Jollof Rice', cals: 510, time: '35 min', img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7bb7445?q=80&w=200&auto=format&fit=crop' },
+                    ].map((rec, i) => (
+                        <div key={i} style={{ minWidth: '160px', background: '#141414', borderRadius: '20px', overflow: 'hidden', border: '0.5px solid #222' }}>
+                            <img src={rec.img} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
+                            <div style={{ padding: '12px' }}>
+                                <p style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{rec.name}</p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '10px', color: '#555' }}>⏱️ {rec.time}</span>
+                                    <span style={{ fontSize: '10px', color: '#10b981', fontWeight: '700' }}>{rec.cals} kcal</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             {/* FAB */}
             <>
                 <button onClick={() => fileInputRef.current?.click()} style={{
