@@ -431,21 +431,30 @@ export default function ScannerPage() {
                 <div style={{ marginBottom: '20px' }}>
                     <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414' }}></div>
                     <style>{`
-                        #reader__status_span { display: none !important; }
-                        #reader__dashboard_section_csr button { 
-                            background: #6366f1 !important; 
-                            color: white !important; 
-                            border: none !important; 
-                            padding: 8px 16px !important; 
-                            border-radius: 8px !important;
-                            font-size: 12px !important;
-                            margin: 10px 0 !important;
-                        }
-                        #reader video { border-radius: 20px !important; }
-                        /* Cacher les erreurs de lecture en rouge */
-                        div[style*="background: rgb(255, 191, 191)"], 
-                        div[style*="background: rgb(255, 0, 0)"] { 
+                        #reader__status_span, 
+                        #reader__dashboard_section_csr span,
+                        div[id*="status"],
+                        .html5-qrcode-element { 
                             display: none !important; 
+                        }
+                        #reader { border: none !important; }
+                        #reader video { 
+                            border-radius: 24px !important; 
+                            width: 100% !important;
+                            object-fit: cover !important;
+                        }
+                        /* Masquer radicalement les bandeaux d'erreur colorés */
+                        #reader div {
+                            background: transparent !important;
+                            border: none !important;
+                            color: transparent !important;
+                            font-size: 0 !important;
+                        }
+                        /* Sauf pour la zone de scan elle-même */
+                        #reader #reader__scan_region, 
+                        #reader #reader__scan_region video {
+                            display: block !important;
+                            color: initial !important;
                         }
                     `}</style>
                     <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres devant la caméra</p>
