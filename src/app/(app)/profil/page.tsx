@@ -168,22 +168,18 @@ export default function ProfilPage() {
         const protPercent = (dailyProtein / proteinTarget) * 100
 
         let message = ""
-        let yaoNudge = ""
+        let yaoNudge = "Yao vous propose une liste de snacks hyper-protéinés adaptés à vos goûts."
 
         if (calPercent > 105) {
             message = "⚠️ Budget calories dépassé. Essayez de compenser sur le prochain repas."
-            yaoNudge = "Yao vous dirait quel type d'activité physique exacte ferait fondre cet excès."
         } else if (calPercent < 80) {
             message = "✅ Vous avez encore de la marge calorique pour aujourd'hui."
-            yaoNudge = "Yao vous suggérerait le plat idéal pour combler ce vide sans casser votre rythme."
         } else {
             message = "🎯 Équilibre calorique exemplaire. Continuez comme ça !"
-            yaoNudge = "Yao analyserait la qualité nutritionnelle de ces calories pour optimiser votre énergie."
         }
 
         if (protPercent < 70) {
             message += " Pensez à augmenter vos protéines."
-            yaoNudge = "Yao vous proposerait une liste de snacks hyper-protéinés adaptés à vos goûts."
         }
 
         return { message, yaoNudge }
@@ -359,9 +355,13 @@ export default function ProfilPage() {
                                             <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>{autoMessage}</p>
                                             <div
                                                 onClick={() => router.push('/upgrade')}
-                                                style={{ background: 'rgba(245,158,11,0.05)', borderRadius: '10px', padding: '10px', border: '0.5px dashed rgba(245,158,11,0.3)', cursor: 'pointer' }}>
-                                                <p style={{ color: '#f59e0b', fontSize: '11px', fontWeight: '600', marginBottom: '2px' }}>💡 L'avantage Premium :</p>
-                                                <p style={{ color: '#666', fontSize: '10px', lineHeight: '1.4', fontStyle: 'italic' }}>{yaoNudge} <span style={{ fontWeight: 'bold' }}>Débloquer →</span></p>
+                                                style={{ background: 'rgba(245,158,11,0.05)', borderRadius: '12px', padding: '12px', border: '0.5px dashed rgba(245,158,11,0.3)', cursor: 'pointer' }}>
+                                                <p style={{ color: '#f59e0b', fontSize: '11px', lineHeight: '1.5', fontWeight: '500', marginBottom: '8px' }}>
+                                                    {yaoNudge}
+                                                </p>
+                                                <p style={{ color: '#6366f1', fontSize: '10px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                                    PASSEZ À PREMIUM POUR DÉCOUVRIR COACH YAO →
+                                                </p>
                                             </div>
                                         </div>
                                     )}
