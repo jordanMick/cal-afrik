@@ -109,7 +109,7 @@ export default function CoachChatPage() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
-            
+
             {/* HEADER */}
             <div style={{ padding: '20px', background: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(10px)', borderBottom: '0.5px solid #222', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ position: 'relative' }}>
@@ -150,7 +150,7 @@ export default function CoachChatPage() {
                         </div>
                     )
                 })}
-                
+
                 {isTyping && (
                     <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                         <div style={{ padding: '14px 20px', borderRadius: '4px 20px 20px 20px', background: '#141414', border: '0.5px solid #222', display: 'flex', gap: '4px' }}>
@@ -171,12 +171,10 @@ export default function CoachChatPage() {
 
             {/* INPUT AREA (FIXED BOTTOM) */}
             <div style={{ padding: '16px 20px', background: '#0a0a0a', borderTop: '0.5px solid #222', paddingBottom: '100px' }}>
-                
+
                 {/* JAUGE DE QUOTA */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <p style={{ color: '#888', fontSize: '11px', fontWeight: '500' }}>
-                        Messages envoyés : <span style={{ color: limitReached ? '#ef4444' : '#fff' }}>{messagesUsedToday}/{maxMessages}</span>
-                    </p>
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ padding: '2px 8px', background: effectiveTier === 'free' ? 'rgba(255,255,255,0.1)' : 'rgba(99,102,241,0.15)', color: effectiveTier === 'free' ? '#aaa' : '#818cf8', borderRadius: '10px', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase' }}>
                             Plan {effectiveTier}
@@ -185,10 +183,10 @@ export default function CoachChatPage() {
                 </div>
 
                 {limitReached ? (
-                    <div 
+                    <div
                         onClick={() => router.push('/upgrade')}
-                        style={{ 
-                            width: '100%', padding: '16px', borderRadius: '16px', 
+                        style={{
+                            width: '100%', padding: '16px', borderRadius: '16px',
                             background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(245,158,11,0.1))',
                             border: '1px solid rgba(245,158,11,0.3)',
                             textAlign: 'center', cursor: 'pointer'
@@ -201,28 +199,28 @@ export default function CoachChatPage() {
                     </div>
                 ) : (
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <input 
+                        <input
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                             placeholder="Pose-moi une question sur ta diète..."
-                            style={{ 
-                                flex: 1, padding: '16px', borderRadius: '16px', 
-                                background: '#141414', border: '0.5px solid #333', 
+                            style={{
+                                flex: 1, padding: '16px', borderRadius: '16px',
+                                background: '#141414', border: '0.5px solid #333',
                                 color: '#fff', fontSize: '14px', outline: 'none'
                             }}
                         />
-                        <button 
+                        <button
                             onClick={handleSendMessage}
                             disabled={!input.trim()}
-                            style={{ 
-                                width: '52px', height: '52px', borderRadius: '16px', 
+                            style={{
+                                width: '52px', height: '52px', borderRadius: '16px',
                                 background: input.trim() ? 'linear-gradient(135deg, #6366f1, #818cf8)' : '#222',
                                 color: input.trim() ? '#fff' : '#555', border: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default',
                                 transition: 'all 0.2s'
                             }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
                         </button>
                     </div>
                 )}
