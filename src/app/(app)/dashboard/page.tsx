@@ -105,7 +105,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                 })}
             </div>
 
-            {isLocked && (
+            {isLocked ? (
                 <div style={{
                     position: 'absolute', inset: 0,
                     background: 'rgba(10,10,10,0.6)',
@@ -128,6 +128,35 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                         Passer au Pro →
                     </button>
                 </div>
+            ) : (
+                (() => {
+                    const trackedDays = weeklyData.filter(d => d.calories > 0).length
+                    const avg = weeklyData.reduce((acc, d) => acc + d.calories, 0) / (trackedDays || 1)
+                    const diff = avg - targetKcal
+                    const isGood = Math.abs(diff) < targetKcal * 0.1
+                    
+                    if (trackedDays === 0) return null
+
+                    return (
+                        <div style={{
+                            marginTop: '20px',
+                            padding: '12px 14px',
+                            background: isGood ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.06)',
+                            border: `0.5px solid ${isGood ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`,
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '10px'
+                        }}>
+                             <span style={{ fontSize: '16px' }}>{isGood ? '🎯' : '📊'}</span>
+                             <p style={{ color: isGood ? '#10b981' : '#f59e0b', fontSize: '11px', lineHeight: '1.5', fontWeight: '500' }}>
+                                {isGood 
+                                    ? `Excellente constance ! Ta moyenne de ${Math.round(avg)} kcal est pile dans ta cible. Continue comme ça !` 
+                                    : `Analyse : Ta moyenne est de ${Math.round(avg)} kcal. ${diff > 0 ? "Tu es légèrement au-dessus de ta cible." : "Tu manges un peu moins que prévu."} Ajuste tes portions demain !`}
+                             </p>
+                        </div>
+                    )
+                })()
             )}
         </div>
     )
