@@ -32,10 +32,6 @@ export async function POST(req: NextRequest) {
         const isToday = profile.last_usage_reset_date === today
 
         // 2. Calcul des quotas de feedback scanner par tier
-        // free    : 1 essai à vie   (has_used_free_lifetime_feedback)
-        // pro     : 1 feedback / jour
-        // premium : illimité
-
         if (tier === 'free') {
             if (profile.has_used_free_lifetime_feedback) {
                 return NextResponse.json({
@@ -45,7 +41,6 @@ export async function POST(req: NextRequest) {
                 }, { status: 403 })
             }
         } else if (tier === 'pro') {
-            // Remettre le compteur à 0 si on est un nouveau jour
             const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
             if (scanFeedbacksToday >= 1) {
                 return NextResponse.json({
@@ -54,8 +49,24 @@ export async function POST(req: NextRequest) {
                     error: 'Vous avez déjà demandé votre conseil journalier. Revenez demain ou passez au Premium !',
                 }, { status: 403 })
             }
-        // premium : pas de limite, on passe directement
+        }
 
+        // ─── MODE SIMULATION ──────────────────────────────────────────
+        const MOCK_MODE = true
+        if (MOCK_MODE) {
+            // Mise à jour des quotas comme si la vraie IA avait répondu
+            if (tier === 'free') {
+                await supabase.from('user_profiles').update({ has_used_free_lifetime_feedback: true }).eq('user_id', user.id)
+            } else if (tier === 'pro') {
+                const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
+                await supabase.from('user_profiles').update({ scan_feedbacks_today: scanFeedbacksToday + 1, last_usage_reset_date: today }).eq('user_id', user.id)
+            }
+            return NextResponse.json({
+                success: true,
+                message: "[Mode TEST 🔧] Excellent choix ! Ce repas est bien équilibré en macros. Pense à bien t'hydrater et à faire une petite marche après. Continue comme ça ! 💪",
+                exceeded: false,
+                remainingAfter: 200
+            })
         }
         // 3. Lire les données du repas
         const {

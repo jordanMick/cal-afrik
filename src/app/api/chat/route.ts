@@ -69,14 +69,14 @@ Contexte actuel de l'utilisateur :
 
 Réponds avec un ton chaleureux, direct et motivant (pas trop long, 3-4 phrases max, comme dans un SMS). Utilise quelques émojis.`
 
-        // ─── MODE SIMULATION (POUR ÉCONOMISER LES TOKENS EN TEST) ───
-        const MOCK_MODE = false // Mettre à true pour tester sans consommer l'API
+        // ─── MODE SIMULATION ──────────────────────────────────────────
+        const MOCK_MODE = true
 
         let aiMessage = ""
         
         if (MOCK_MODE) {
-            await new Promise(r => setTimeout(r, 1000))
-            aiMessage = `[Mode Test] Salut ${profile.name} ! C'est Coach Yao. Pense à bien équilibrer ton assiette : moitié légumes, un quart féculents (comme l'igname), et un quart de protéines !`
+            await new Promise(r => setTimeout(r, 800)) // Simule un délai réaliste
+            aiMessage = `[Mode TEST 🔧] Salut ${profile.name || 'ami'} ! Super question. Rappelle-toi : l'équilibre c'est la clé ! Mange des légumes africains variés, bois 2L d'eau et écoute ton corps. Tu es sur la bonne voie ! 🌿`
         } else {
             // Formatage des messages pour Anthropic
             const formattedMessages = messages.map((m: any) => ({
