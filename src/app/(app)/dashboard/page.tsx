@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { getProgressPercent } from '@/lib/nutrition'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useRef } from 'react'
 import { getEffectiveTier } from '@/lib/subscription'
 
-function WeeklyProgressChart({ targetKcal }: { targetKcal: number }) {
+function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: string }) {
+    const router = useRouter()
     const [weeklyData, setWeeklyData] = useState<{ date: string, calories: number }[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -62,14 +62,19 @@ function WeeklyProgressChart({ targetKcal }: { targetKcal: number }) {
     );
 
     const maxCal = Math.max(targetKcal, ...weeklyData.map(d => d.calories), Math.min(targetKcal + 500, 3000))
+    const isLocked = tier === 'free'
 
     return (
-        <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '20px', padding: '20px', marginBottom: '28px' }}>
+        <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '20px', padding: '20px', marginBottom: '28px', position: 'relative', overflow: 'hidden' }}>
             <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ display: 'inline-block', width: '3px', height: '14px', background: 'linear-gradient(#f59e0b, #ec4899)', borderRadius: '2px' }} />
                 7 derniers jours
             </h2>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '120px', gap: '8px' }}>
+            
+            <div style={{ 
+                display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '120px', gap: '8px',
+                filter: isLocked ? 'blur(4px)' : 'none', transition: 'filter 0.3s'
+            }}>
                 {weeklyData.map((day) => {
                     const pct = Math.min(100, (day.calories / maxCal) * 100)
                     const isExceeded = day.calories > targetKcal
@@ -99,6 +104,31 @@ function WeeklyProgressChart({ targetKcal }: { targetKcal: number }) {
                     )
                 })}
             </div>
+
+            {isLocked && (
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'rgba(10,10,10,0.6)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 10, padding: '20px', textAlign: 'center'
+                }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(99,102,241,0.15)', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '8px', border: '0.5px solid rgba(99,102,241,0.3)' }}>
+                        🔒
+                    </div>
+                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Analyses Pro</p>
+                    <p style={{ color: '#aaa', fontSize: '11px', marginBottom: '14px', maxWidth: '200px' }}>Débloquez le plan Pro pour suivre votre constance hebdomadaire.</p>
+                    <button 
+                        onClick={() => router.push('/upgrade')}
+                        style={{
+                            background: 'linear-gradient(135deg, #6366f1, #818cf8)', border: 'none', borderRadius: '8px',
+                            color: '#fff', fontSize: '12px', fontWeight: '600', padding: '8px 16px', cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(99,102,241,0.3)'
+                        }}
+                    >
+                        Passer au Pro →
+                    </button>
+                </div>
+            )}
         </div>
     )
 }
@@ -370,7 +400,7 @@ export default function DashboardPage() {
             </div>
 
             {/* GRAPHIQUE 7 DERNIERS JOURS */}
-            <WeeklyProgressChart targetKcal={calorieTarget} />
+            <WeeklyProgressChart targetKcal={calorieTarget} tier={effectiveTier} />
 
             {/* REPAS */}
             <div>
