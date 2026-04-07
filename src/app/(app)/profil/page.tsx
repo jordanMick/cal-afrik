@@ -462,7 +462,6 @@ export default function ProfilPage() {
                         { label: 'Taille', value: profile?.height_cm ? `${profile.height_cm} cm` : '—', icon: '📏' },
                         { label: 'Activité', value: profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—', icon: '⚡' },
                         { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '🎯' },
-                        { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
                     ].map((item, i, arr) => (
                         <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
