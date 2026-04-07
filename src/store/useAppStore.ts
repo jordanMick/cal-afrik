@@ -92,6 +92,12 @@ interface AppState {
     dailyCarbs: number
     dailyFat: number
     updateDailyTotals: () => void
+
+    // ─── Onboarding ──────────────────────────────────────────
+    onboardingStep: number
+    setOnboardingStep: (step: number) => void
+    onboardingForm: any
+    setOnboardingForm: (form: any) => void
 }
 
 const buildInitialSlots = (calorieTarget: number): Record<MealSlotKey, SlotState> => ({
@@ -272,11 +278,18 @@ export const useAppStore = create<AppState>()(
             },
 
             slots: buildInitialSlots(2000),
+
+            onboardingStep: 0,
+            setOnboardingStep: (step) => set({ onboardingStep: step }),
+            onboardingForm: null,
+            setOnboardingForm: (form) => set({ onboardingForm: form }),
         }),
         {
             name: 'app-storage',
             partialize: (state) => ({
                 slotBilans: state.slotBilans,
+                onboardingStep: state.onboardingStep,
+                onboardingForm: state.onboardingForm,
             }),
         }
     )

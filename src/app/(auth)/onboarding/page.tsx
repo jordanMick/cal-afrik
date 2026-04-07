@@ -35,12 +35,15 @@ const CUISINES = ['Africaine (Générale)', 'Togolaise', 'Ivoirienne', 'Sénéga
 
 export default function OnboardingPage() {
     const router = useRouter()
-    const { profile, setProfile } = useAppStore()
-    const [step, setStep] = useState(0)
+    const { 
+        profile, setProfile, 
+        onboardingStep: step, setOnboardingStep: setStep,
+        onboardingForm, setOnboardingForm 
+    } = useAppStore()
     const [isSaving, setIsSaving] = useState(false)
     const [analysisProgress, setAnalysisProgress] = useState(0)
 
-    const [form, setForm] = useState({
+    const initialForm = {
         name: profile?.name || '',
         goal: (profile?.goal as UserProfile['goal']) || 'maintenir',
         weight_kg: profile?.weight_kg?.toString() || '',
@@ -53,23 +56,27 @@ export default function OnboardingPage() {
         preferred_cuisines: profile?.preferred_cuisines || [] as string[],
         target_weeks: '8', // valeur par défaut pour la projection
         country: profile?.country || 'TG',
-    })
+    }
+
+    const form = onboardingForm || initialForm
+    const setForm = (val: any) => setOnboardingForm(typeof val === 'function' ? val(form) : val)
 
     // ─── ACTIONS ──────────────────────────────────────────────────
 
-    const update = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }))
-
-    const toggleHabit = (id: string) => {
-        setForm(prev => ({
-            ...prev,
-            eating_habits: prev.eating_habits.includes(id)
-                ? prev.eating_habits.filter(h => h !== id)
-                : [...prev.eating_habits, id]
-        }))
+    const update = (key: string, value: any) => {
+        const newForm = { ...form, [key]: value }
+        setOnboardingForm(newForm)
     }
 
-    const next = () => setStep(s => s + 1)
-    const back = () => setStep(s => s - 1)
+    const toggleHabit = (id: string) => {
+        const habits = form.eating_habits.includes(id)
+            ? form.eating_habits.filter((h: string) => h !== id)
+            : [...form.eating_habits, id]
+        update('eating_habits', habits)
+    }
+
+    const next = () => setStep(step + 1)
+    const back = () => setStep(step - 1)
 
     // Gestion de l'animation d'analyse (Step 9)
     useEffect(() => {
@@ -126,6 +133,9 @@ export default function OnboardingPage() {
 
             if (error) throw error
             setProfile(updated)
+            // Reset onboarding state after success
+            setStep(0)
+            setOnboardingForm(null)
             router.push('/dashboard')
         } catch (err) {
             console.error(err)
@@ -291,7 +301,7 @@ export default function OnboardingPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                         {CUISINES.map(c => (
                             <button key={c} onClick={() => {
-                                const list = form.preferred_cuisines.includes(c) ? form.preferred_cuisines.filter(x => x !== c) : [...form.preferred_cuisines, c]
+                                const list = form.preferred_cuisines.includes(c) ? form.preferred_cuisines.filter((x: string) => x !== c) : [...form.preferred_cuisines, c]
                                 update('preferred_cuisines', list)
                             }} style={{
                                 padding: '15px', borderRadius: '12px', border: '1.5px solid #222',
