@@ -1,86 +1,66 @@
-=========================================================
-RECAPITULATIF COMPLET DES FONCTIONNALITES - CAL-AFRIK
-=========================================================
+ARCHITECTURE ET FONCTIONNEMENT DE CAL-AFRIK
+============================================
 
-1. AUTHENTIFICATION & ONBOARDING (Terminé)
-- Inscription/Connexion via Supabase Auth.
-- Calculateur de macros personnalisé : L'utilisateur entre son profil (âge, poids, taille, activité) et l'app génère ses besoins caloriques optimaux pour perdre, maintenir ou prendre du poids.
+1. EXPÉRIENCE UTILISATEUR (FRONT-END)
+--------------------------------------
+Conçue pour être premium, intuitive et orientée vers la motivation.
 
-2. TRACKING ALIMENTAIRE INTELLIGENT (IA V2) (Terminé)
-- Scanner Vision : L'IA (Claude 4.5 Sonnet) analyse la photo, identifie les plats africains et estime les portions (en grammes).
-- Matching Intelligent : Les aliments détectés sont automatiquement comparés à notre base de données locale pour garantir des valeurs nutritionnelles (Calories, Protéines, Glucides, Lipides) précises.
-- Mode Manuel : Recherche d'aliments dans la base de données et ajout rapide.
-- Limite Free : 2 scans par jour pour les utilisateurs gratuits.
+* DASHBOARD DYNAMIQUE :
+  - Visualisation du solde calorique en temps réel (Cible vs Consommé).
+  - Graphique de progression du poids (mensuel) et suivi hebdomadaire.
+  - Motivation par IA : Messages contextuels basés sur les pesées (Félicitations ou conseils si stagnation).
 
-3. COACH YAO AI (Chat interactif) (Terminé)
-- Ton Expert & Local : Un coach qui parle de "foutou", "bissap" et "poulet bicyclette".
-- Conscience du Contexte : Le coach sait combien de calories vous avez mangé aujourd'hui avant même que vous ne lui posiez une question.
-- Accessibilité : Réservé aux membres Premium pour maximiser la valeur de l'abonnement.
+* LE SCANNEUR HYBRIDE :
+  - Mode Photo : Analyse visuelle par IA (Claude 3.5 Haiku). Décompose les plats (ex: Garba, Riz Gras) en composants, estime les portions et les calories.
+  - Mode Code-barres : Scan en temps réel de produits industriels avec récupération des données exactes via OpenFoodFacts.
+  - Scan Galerie : Possibilité d'importer des photos pour analyse IA ou décodage de code-barres.
 
-4. TABLEAU DE BORD & STATS (Terminé)
-- Dashboard Premium : Jauge de progression dynamique style "Apple Watch".
-- Historique & Journal : Calendrier interactif pour voir les repas passés.
-- Graphiques d'Analyse (Pro/Premium) : Visualisation des tendances de poids et de calories sur la semaine.
+* JOURNAL ALIMENTAIRE :
+  - Organisation par créneaux (Petit-déjeuner, Déjeuner, Dîner, Collation).
+  - Design system de macros : Vert (Protéines), Indigo (Glucides), Ambre (Lipides).
+  - Recap instantané : Conseil du "Coach Yao" sur la qualité nutritionnelle de chaque repas enregistré.
 
-5. MONETISATION (FedaPay) (Terminé)
-- Plans : Free (Basique), Pro (Stats + Illimité), Premium (Coach Yao + Stats).
-- Cycle de vie : Gestion automatique des expirations (J+30) et alertes de renouvellement 7 jours avant.
+* COACH YAO & PROFIL :
+  - Chat IA disponible pour des conseils nutritionnels personnalisés.
+  - Badge Premium et compte à rebours avant le prochain "Bilan Mensuel" automatique.
 
-=========================================================
-DESSINE-MOI LE BACKEND : COMMENT CA MARCHE ?
-=========================================================
+---
 
-Le backend de Cal-Afrik repose sur une architecture "Serverless" ultra-rapide et sécurisée :
+2. LOGIQUE ET INFRASTRUCTURE (BACKEND)
+--------------------------------------
+Le moteur qui assure la précision, l'économie et la monétisation.
 
-1. LE CERVEAU (API Routes Next.js) :
-- /api/scan : Reçoit l'image -> L'envoie à l'IA Vision -> Analyse la réponse JSON -> Cherche les meilleurs correspondances dans la BD Supabase -> Renvoie le résultat décomposé.
-- /api/chat : Récupère le profil utilisateur -> Construit un "Prompt Système" enrichi avec les données du jour -> Discute avec l'IA en temps réel.
+* MOTEUR D'INTELLIGENCE ARTIFICIELLE :
+  - Claude 3.5 Haiku (Vision) : Analyse les images pour extraire des objets JSON structurés (noms, portions, macros).
+  - Client-Side Compression : Réduit la taille des images avant envoi pour diviser les coûts d'API par 3.
+  - Matching SQL : Algorithme de recherche par score pour lier les détections IA aux aliments réels de la base de données.
 
-2. LA BASE DE DONNEES (Supabase/PostgreSQL) :
-- Table food_items : Contient les valeurs nutritionnelles des aliments africains.
-- Table meals : Enregistre chaque repas avec sa photo et ses macros.
-- Table user_profiles : Centralise les points, le niveau d'abonnement et les quotas quotidiens.
+* GESTION COMMERCIALE (PAYWALL) :
+  - Vérification des droits en temps réel (Supabase Auth + Database).
+  - Limites Free : Bloque à 2 scans photo/jour et 5 scans code-barres/jour.
+  - Redirection automatique vers /upgrade en cas de limite atteinte.
 
-3. LE FLUX DE PAIEMENT (Webhooks) :
-- Lorsqu'un utilisateur paie sur FedaPay, FedaPay envoie un "Webhook" (signal secret) à notre route /api/payments/webhook.
-- Le backend vérifie la signature, authentifie l'utilisateur via son email et met à jour son 'subscription_tier' ainsi que sa date d'expiration (+30 jours).
-- Sécurité : Tout est contrôlé côté serveur pour éviter la fraude.
+* BASE DE DONNÉES (SUPABASE) :
+  - Table 'user_profiles' : Gère les objectifs santé, le niveau d'activité et le statut de l'abonnement.
+  - Table 'meals' : Enregistre l'historique avec marquage de la source (AI, Barcode, Manuel) pour le tracking.
+  - Table 'food_items' : Base de données centrale de la composition des aliments africains.
 
-4. LOGIQUE DE PERMISSION (Middleware de donnes) :
-- Un utilitaire central (getEffectiveTier) vérifie à chaque action si l'abonnement est toujours valide. Si la date actuelle > date d'expiration, l'utilisateur revient instantanément en mode 'Free' sans intervention manuelle.
+* LOGIQUE AUTOMATISÉE :
+  - Bilan Mensuel : Analyse IA déclenchée chaque mois pour évaluer les progrès de l'utilisateur.
+  - Tracking des Pesées : Consolidation mensuelle (dernière pesée du mois) pour les graphiques.
 
-=========================================================
-PROCHAINES ETAPES & IDEES D'EVOLUTIONS (ROADMAPP)
-=========================================================
+--------------------------------------------
+ÉTAT DU PROJET : Prêt pour lancement / Bêta
+DERNIÈRE MISE À JOUR : 07/04/2026
+--------------------------------------------
 
-1. TRACKER D'HYDRATATION (Facile)
-- Idée : Ajouter un compteur de verres d'eau quotidien avec des rappels (notifications).
-- Etapes : 
-    1. Ajouter une colonne 'water_ml_today' dans user_profiles.
-    2. Créer un petit widget '+' et '-' sur le dashboard.
-    3. Rappels via Push API.
-
-2. GENERATEUR DE RECETTES "RESTES" (IA)
-- Idée : L'utilisateur dit "Il me reste du riz, du poisson et des tomates", l'IA génère une recette saine et africaine.
-- Etapes : 
-    1. Créer une nouvelle page /recettes.
-    2. Utiliser l'API Chat Claude avec un prompt spécifique "Recettes".
-
-3. RESEAU SOCIAL "AFRI-FIT" (Medium)
-- Idée : Un flux où les utilisateurs peuvent partager la photo de leur repas équilibré et recevoir des encouragements ("Feu" / "Miam").
-- Etapes : 
-    1. Créer une table 'posts' liée aux 'meals'.
-    2. Ajouter un bouton "Partager sur le feed" après un scan.
-    3. Système de "Likes" ou de badges de réussite.
-
-4. MODE BARCODE SCANNER (Expert)
-- Idée : Scanner les codes-barres des produits industriels locaux (Yaourts, Huiles, Jus).
-- Etapes : 
-    1. Intégrer une librairie de scan de code-barre (Html5-qrcode).
-    2. Connecter l'API OpenFoodFacts (avec filtre Afrique de l'Ouest).
-
-5. PROGRAMME DE PARRAINAGE (Growth Hack)
-- Idée : "Invite un ami, gagne 1 semaine de Premium".
-- Etapes : 
-    1. Générer un code unique par utilisateur.
-    2. Incrementer un champ 'referral_count' et appliquer un bonus automatique de +7 jours sur la date d'expiration.
+3. ÉVOLUTIONS ET FONCTIONNALITÉS CIBLES
+--------------------------------------
+* PLANIFICATION ALIMENTAIRE IA (COACH YAO PLANNER) - [PRO / PREMIUM] :
+  - Emplacement : Intégré au Dashboard (Mode "GPS Nutritionnel").
+  - Plan PRO : Accès à la planification du lendemain (J+1 uniquement).
+  - Plan PREMIUM : Accès à la planification de la semaine entière (7 jours) + Liste de courses.
+  - Génération de menus personnalisés basés sur l'objectif santé et les préférences culinaires locales.
+  - Ajustement dynamique : Suggestions du "prochain repas" en fonction des calories déjà consommées et du budget restant.
+  - Validation instantanée : Possibilité d'enregistrer le repas prévu dans le journal en un clic.
+  - Mode "Frigo Vide" : Proposition de recettes basées uniquement sur les ingrédients disponibles chez l'utilisateur.

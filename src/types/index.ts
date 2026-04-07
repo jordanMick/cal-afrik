@@ -102,11 +102,33 @@ export interface DailyLog {
     notes?: string
 }
 
-export interface WeightLog {
+// ─── Planification Alimentaire (Planner) ────────────────────────
+export interface Recipe {
+    id: string
+    name_fr: string
+    description?: string
+    instructions?: string[]
+    ingredients: { item: string, amount: string }[]
+    calories: number
+    protein_g: number
+    carbs_g: number
+    fat_g: number
+    image_url?: string
+    category: FoodCategory
+    tags: string[]
+    prep_time_min?: number
+}
+
+export interface MealPlan {
     id: string
     user_id: string
-    weight_kg: number
-    logged_at: string
+    date: string
+    slots: {
+        petit_dejeuner?: string // ID de la recette
+        dejeuner?: string
+        diner?: string
+        collation?: string
+    }
 }
 
 // ─── Scan IA ───────────────────────────────────────────────────

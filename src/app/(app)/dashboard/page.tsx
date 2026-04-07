@@ -6,6 +6,7 @@ import { getProgressPercent } from '@/lib/nutrition'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
+import PlannerCard from '@/components/dashboard/PlannerCard'
 
 function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: string }) {
     const router = useRouter()
@@ -396,6 +397,9 @@ export default function DashboardPage() {
                 </div>
                 <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>{coachMsg.text}</p>
             </div>
+
+            {/* PLANNER SUGGESTION */}
+            <PlannerCard />
 
             {/* MACROS REDESIGNED AS PILLS */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '10px' }}>
