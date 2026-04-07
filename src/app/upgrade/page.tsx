@@ -38,7 +38,7 @@ export default function PricingPage() {
 
     const handleSubscribe = async (tier: 'pro' | 'premium') => {
         if (currentTier === tier) return; // Déjà abonné
-        
+
         setLoading(tier);
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -89,7 +89,7 @@ export default function PricingPage() {
     const showFree = currentTier === 'free'
     const showPro = currentTier === 'free' || currentTier === 'pro'
     const showPremium = true
-    
+
     // Pour la grille : on compte le nombre de cartes visibles
     const visibleCards = (showFree ? 1 : 0) + (showPro ? 1 : 0) + (showPremium ? 1 : 0)
 
@@ -106,15 +106,7 @@ export default function PricingPage() {
             <div style={{ position: 'fixed', top: '-100px', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '0', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            <div className={`mx-auto px-4 pt-16 pb-20 relative z-10 w-full ${visibleCards === 1 ? 'max-w-md' : 'max-w-5xl'}`}>
-                {/* BACK BUTTON */}
-                <button
-                    onClick={() => router.push('/profile')}
-                    className="absolute top-4 left-4 md:top-6 md:left-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-                    aria-label="Retour au profil"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
+            <div style={{ maxWidth: visibleCards === 1 ? '400px' : '960px', margin: '0 auto', padding: '60px 24px 80px' }}>
 
                 {/* LOGO */}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '36px' }}>
@@ -123,19 +115,20 @@ export default function PricingPage() {
                 </div>
 
                 {/* TITRE */}
-                <div className="text-center mb-12 px-2">
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight leading-tight">
+                <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+                    <h1 style={{ fontSize: '36px', fontWeight: '800', color: '#fff', marginBottom: '10px', letterSpacing: '-0.5px' }}>
                         {currentTier === 'premium' ? 'Votre abonnement' : 'Améliorez votre expérience'}
                     </h1>
                     <p style={{ color: '#555', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
                 </div>
 
                 {/* CARDS GRID */}
-                <div className={`grid gap-6 items-stretch ${
-                    visibleCards === 1 ? 'grid-cols-1 max-w-sm mx-auto' : 
-                    visibleCards === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto' : 
-                    'grid-cols-1 md:grid-cols-3'
-                }`}>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: visibleCards === 1 ? '1fr' : visibleCards === 2 ? '1fr 1fr' : 'repeat(3, 1fr)',
+                    gap: '16px',
+                    alignItems: 'start'
+                }}>
 
                     {/* ── GRATUIT ── */}
                     {showFree && (
@@ -202,7 +195,7 @@ export default function PricingPage() {
                             )}
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
-                            <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                            <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                                 <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{plans.pro.price}</span>
                                 <span style={{ color: '#555', fontSize: '13px' }}>{plans.pro.period}</span>
                             </div>
@@ -222,7 +215,7 @@ export default function PricingPage() {
                                     </div>
                                 ))}
                             </div>
-                            <button 
+                            <button
                                 disabled={loading !== null || currentTier === 'pro'}
                                 onClick={() => handleSubscribe('pro')}
                                 style={{
@@ -260,7 +253,7 @@ export default function PricingPage() {
                             )}
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
-                            <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                            <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                                 <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{plans.premium.price}</span>
                                 <span style={{ color: '#555', fontSize: '13px' }}>{plans.premium.period}</span>
                             </div>
@@ -280,7 +273,7 @@ export default function PricingPage() {
                                     </div>
                                 ))}
                             </div>
-                            <button 
+                            <button
                                 disabled={loading !== null || currentTier === 'premium'}
                                 onClick={() => handleSubscribe('premium')}
                                 style={{
@@ -299,7 +292,7 @@ export default function PricingPage() {
 
                 {/* MOYENS DE PAIEMENT */}
                 {currentTier !== 'premium' && (
-                    <div className="flex flex-col items-center gap-5 mt-16 px-4">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', marginTop: '60px' }}>
                         <p style={{ color: '#444', fontSize: '13px', fontWeight: '500' }}>Paiement sécurisé via FedaPay</p>
                         <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px' }}>
                             {['MTN', 'Orange', 'Moov', 'Wave', 'Visa', 'Mastercard'].map((p) => (
