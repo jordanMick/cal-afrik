@@ -226,6 +226,27 @@ export default function ScannerPage() {
 
     async function onScanSuccess(decodedText: string) {
         if (qrScannerRef.current) qrScannerRef.current.stop().catch(e => console.error(e));
+        
+        // --- VÉRIFICATION LIMITE SCAN PRODUIT ---
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session && profile?.subscription_tier === 'free') {
+            const today = new Date().toISOString().split('T')[0]
+            const { count } = await supabase
+                .from('meals')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', session.user.id)
+                .eq('ai_confidence', -1) // Marqueur code-barres
+                .gte('logged_at', `${today}T00:00:00.000Z`)
+                .lte('logged_at', `${today}T23:59:59.999Z`)
+            
+            if (count !== null && count >= 5) {
+                alert("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit). Passez au plan Pro pour scanner sans limite !")
+                router.push('/upgrade')
+                return
+            }
+        }
+
+        (window as any).isLastScanFromBarcode = true;
         setScanMode('ai');
         setIsAnalyzing(true);
         try {
@@ -262,6 +283,26 @@ export default function ScannerPage() {
     }
 
     const handleFileScan = async (file: File) => {
+        // --- VÉRIFICATION LIMITE SCAN PRODUIT ---
+        const { data: { session: checkSession } } = await supabase.auth.getSession()
+        if (checkSession && profile?.subscription_tier === 'free') {
+            const today = new Date().toISOString().split('T')[0]
+            const { count } = await supabase
+                .from('meals')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', checkSession.user.id)
+                .eq('ai_confidence', -1)
+                .gte('logged_at', `${today}T00:00:00.000Z`)
+                .lte('logged_at', `${today}T23:59:59.999Z`)
+            
+            if (count !== null && count >= 5) {
+                alert("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit). Passez au plan Pro pour scanner sans limite !")
+                router.push('/upgrade')
+                return
+            }
+        }
+
+        (window as any).isLastScanFromBarcode = true;
         setIsAnalyzing(true);
         try {
             if (!qrScannerRef.current) {
@@ -366,6 +407,7 @@ export default function ScannerPage() {
             }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, portion_g: 0 })
 
             // 3. Sauvegarder le repas (Meal) directement
+            const isBarcode = scanMode === 'barcode' || !!(window as any).isLastScanFromBarcode;
             const resMeal = await fetch('/api/meals', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
@@ -377,8 +419,8 @@ export default function ScannerPage() {
                     carbs_g: Math.round(finalTotals.carbs_g * 10) / 10, 
                     fat_g: Math.round(finalTotals.fat_g * 10) / 10, 
                     image_url: capturedImage, 
-                    ai_confidence: 100,
-                    coach_message: null // Pas de conseil AI sur l'ajout manuel instantané
+                    ai_confidence: isBarcode ? -1 : 100, // -1 marque le scan code-barres
+                    coach_message: null
                 }) 
             })
             
@@ -456,7 +498,7 @@ export default function ScannerPage() {
 
             {/* SWITCH MODE SCAN */}
             <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '20px' }}>
-                <button onClick={() => setScanMode('ai')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? '#1e1e1e' : 'transparent', color: scanMode === 'ai' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
+                <button onClick={() => { setScanMode('ai'); (window as any).isLastScanFromBarcode = false; }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? '#1e1e1e' : 'transparent', color: scanMode === 'ai' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
                     📸 Photo
                 </button>
                 <button onClick={() => setScanMode('barcode')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'barcode' ? '#1e1e1e' : 'transparent', color: scanMode === 'barcode' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
