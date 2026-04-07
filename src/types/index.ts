@@ -28,6 +28,11 @@ export interface UserProfile {
     goal_weight_kg?: number
     subscription_tier: 'free' | 'pro' | 'premium'
     subscription_expires_at?: string | null
+    chat_messages_today?: number
+    scan_feedbacks_today?: number
+    last_usage_reset_date?: string | null
+    has_used_free_lifetime_feedback?: boolean
+    last_monthly_bilan_date?: string | null
 }
 
 export interface WeightLog {

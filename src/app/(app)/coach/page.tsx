@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
+import { supabase } from '@/lib/supabase'
 
 type Role = 'user' | 'coach'
 
@@ -28,13 +29,21 @@ export default function CoachChatPage() {
 
     const maxMessages = limits[effectiveTier] || 1
 
-    // Messages mockés pour la démo UI
+    const todayDate = new Date().toISOString().split('T')[0]
+    const isToday = profile?.last_usage_reset_date === todayDate
+    const initialMessagesUsed = isToday ? (profile?.chat_messages_today || 0) : 0
+
     const [messages, setMessages] = useState<Message[]>([
         { id: '1', role: 'coach', content: `Bonjour ${profile?.name || 'mon ami'} ! Je suis ton coach Yao 🤖. Nutritionniste et expert en plats africains. Que puis-je faire pour t'aider à atteindre ton objectif aujourd'hui ?`, timestamp: new Date() }
     ])
     const [input, setInput] = useState('')
     const [isTyping, setIsTyping] = useState(false)
-    const [messagesUsedToday, setMessagesUsedToday] = useState(0) // Mock du quota
+    const [messagesUsedToday, setMessagesUsedToday] = useState(initialMessagesUsed)
+
+    // Synchroniser si le profil change en arrière-plan
+    useEffect(() => {
+        setMessagesUsedToday(profile?.last_usage_reset_date === todayDate ? (profile?.chat_messages_today || 0) : 0)
+    }, [profile, todayDate])
 
     const endOfMessagesRef = useRef<HTMLDivElement>(null)
 
@@ -46,26 +55,54 @@ export default function CoachChatPage() {
         scrollToBottom()
     }, [messages, isTyping])
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (!input.trim()) return
         if (messagesUsedToday >= maxMessages) return
 
         const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() }
-        setMessages(prev => [...prev, userMsg])
+        const newMessagesContext = [...messages, userMsg]
+        setMessages(newMessagesContext)
         setInput('')
-        setMessagesUsedToday(prev => prev + 1)
         setIsTyping(true)
 
-        // Mock IA Response
-        setTimeout(() => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
+            const contextStr = `Cible: ${profile?.calorie_target || 2000} kcal. Déjà consommé aujourd'hui: ${Math.round(dailyConsumed)} kcal.`
+
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({ messages: newMessagesContext, userContext: contextStr })
+            })
+
+            const data = await res.json()
+
+            if (data.code === 'LIMIT_REACHED') {
+                setMessagesUsedToday(maxMessages)
+                setIsTyping(false)
+                return
+            }
+
+            if (data.success) {
+                setMessagesUsedToday(maxMessages - data.usageRemaining)
+                setMessages(prev => [...prev, {
+                    id: (Date.now() + 1).toString(),
+                    role: 'coach',
+                    content: data.message,
+                    timestamp: new Date()
+                }])
+            } else {
+                setMessages(prev => [...prev, { id: 'err', role: 'coach', content: 'Désolé, une erreur technique est survenue.', timestamp: new Date() }])
+            }
+        } catch (err) {
+            console.error(err)
+            setMessages(prev => [...prev, { id: 'err2', role: 'coach', content: 'Impossible de joindre le serveur.', timestamp: new Date() }])
+        } finally {
             setIsTyping(false)
-            setMessages(prev => [...prev, {
-                id: (Date.now() + 1).toString(),
-                role: 'coach',
-                content: "Ceci est une réponse générée par l'IA pour tester l'interface. Plus tard, nous brancherons ici l'API Gemini pour de vraies recommandations !",
-                timestamp: new Date()
-            }])
-        }, 1500)
+        }
     }
 
     const limitReached = messagesUsedToday >= maxMessages
