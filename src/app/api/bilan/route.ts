@@ -119,6 +119,14 @@ export async function POST(req: NextRequest) {
 
         // ─── BILAN AUTOMATIQUE (sans IA) ─────────────────────
         if (!canUseAI) {
+            if (tier === 'free') {
+                return NextResponse.json({
+                    success: false,
+                    reason: 'upgrade_required',
+                    message: 'Passe en Pro pour débloquer tes bilans quotidiens 🔥',
+                    upgrade: true
+                })
+            }
             const calPct = Math.round((slotConsumed / slotTarget) * 100)
             let autoMsg = ''
 
