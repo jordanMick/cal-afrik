@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useSlotWatcher } from '@/hooks/useSlotWatcher'
 
-const navPaths = ['/dashboard', '/journal', '/scanner', '/profil']
+const navPaths = ['/dashboard', '/journal', '/scanner', '/coach', '/profil']
 
 function SlotWatcherInit() {
     useSlotWatcher()
