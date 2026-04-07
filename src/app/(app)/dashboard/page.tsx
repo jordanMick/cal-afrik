@@ -8,6 +8,101 @@ import { supabase } from '@/lib/supabase'
 import { useRef } from 'react'
 import { getEffectiveTier } from '@/lib/subscription'
 
+function WeeklyProgressChart({ targetKcal }: { targetKcal: number }) {
+    const [weeklyData, setWeeklyData] = useState<{ date: string, calories: number }[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchWeekly = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) return
+                
+                const today = new Date()
+                const sevenDaysAgo = new Date(today)
+                sevenDaysAgo.setDate(today.getDate() - 6)
+                
+                const dateFrom = sevenDaysAgo.toISOString().split('T')[0]
+                const dateTo = today.toISOString().split('T')[0]
+                
+                const res = await fetch(`/api/meals?date_from=${dateFrom}&date_to=${dateTo}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+                const json = await res.json()
+                if (json.success) {
+                    const meals = json.data as { logged_at: string, calories: number }[]
+                    const dailyTotals: Record<string, number> = {}
+                    
+                    // Initialisation des 7 derniers jours à zéro
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date(today)
+                        d.setDate(today.getDate() - i)
+                        dailyTotals[d.toISOString().split('T')[0]] = 0
+                    }
+                    
+                    // Somme des calories
+                    meals.forEach(m => {
+                        const dateStr = m.logged_at.split('T')[0]
+                        if (dailyTotals[dateStr] !== undefined) {
+                            dailyTotals[dateStr] += m.calories
+                        }
+                    })
+                    
+                    const chartData = Object.entries(dailyTotals).map(([date, cals]) => ({ date, calories: cals }))
+                    setWeeklyData(chartData)
+                }
+            } catch (err) { console.error(err) }
+            finally { setLoading(false) }
+        }
+        fetchWeekly()
+    }, [])
+
+    if (loading) return (
+        <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '20px', padding: '20px', marginBottom: '28px', textAlign: 'center', color: '#555', fontSize: '13px' }}>
+            Chargement des analyses...
+        </div>
+    );
+
+    const maxCal = Math.max(targetKcal, ...weeklyData.map(d => d.calories), Math.min(targetKcal + 500, 3000))
+
+    return (
+        <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '20px', padding: '20px', marginBottom: '28px' }}>
+            <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ display: 'inline-block', width: '3px', height: '14px', background: 'linear-gradient(#f59e0b, #ec4899)', borderRadius: '2px' }} />
+                7 derniers jours
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '120px', gap: '8px' }}>
+                {weeklyData.map((day) => {
+                    const pct = Math.min(100, (day.calories / maxCal) * 100)
+                    const isExceeded = day.calories > targetKcal
+                    // On force une hauteur minimale de 4% pour signifier un jour sans relevé visuellement (ou on laisse vide)
+                    const heightValue = day.calories > 0 ? Math.max(10, pct) : 0
+                    const dateObj = new Date(day.date)
+                    const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' }).charAt(0).toUpperCase()
+                    
+                    return (
+                        <div key={day.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '8px' }}>
+                            <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'flex-end', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', position: 'relative' }}>
+                                {/* Barre de l'objectif sur le conteneur du fond */}
+                                <div style={{ position: 'absolute', bottom: `${(targetKcal / maxCal) * 100}%`, left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.1)', zIndex: 0 }} />
+                                
+                                <div style={{ 
+                                    width: '100%', 
+                                    height: `${heightValue}%`, 
+                                    background: isExceeded ? 'linear-gradient(180deg, #ef4444, #f97316)' : 'linear-gradient(180deg, #6366f1, #10b981)', 
+                                    borderRadius: day.calories > 0 ? '6px' : '0',
+                                    transition: 'height 1s ease-out',
+                                    zIndex: 1,
+                                    opacity: day.calories === 0 ? 0 : 1
+                                }} />
+                            </div>
+                            <span style={{ color: day.date === new Date().toISOString().split('T')[0] ? '#fff' : '#555', fontSize: '11px', fontWeight: '600' }}>{dayLabel}</span>
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
 export default function DashboardPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -273,6 +368,9 @@ export default function DashboardPage() {
                     )
                 })}
             </div>
+
+            {/* GRAPHIQUE 7 DERNIERS JOURS */}
+            <WeeklyProgressChart targetKcal={calorieTarget} />
 
             {/* REPAS */}
             <div>
