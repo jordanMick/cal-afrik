@@ -1,0 +1,70 @@
+=========================================================
+RECAPITULATIF DES FONCTIONNALITES DE CAL-AFRIK (A ce jour)
+=========================================================
+
+1. AUTHENTIFICATION & ONBOARDING
+- Inscription et connexion sécurisées.
+- Parcours utilisateur initial : saisie du profil (âge, poids, taille, niveau d'activité) pour générer automatiquement les objectifs caloriques et les macros (Protéines, Glucides, Lipides).
+
+2. TRACKING ALIMENTAIRE INTELLIGENT (IA)
+- Scan IA par photo : l'utilisateur prend son plat en photo, l'IA reconnaît l'aliment (spécialisé dans les plats africains) et estime les calories.
+- Mode de secours : ajout manuel d'un repas avec sauvegarde facile en un clic.
+- Limite intelligente : les utilisateurs gratuits sont limités à 2 scans par jour pour encourager l'abonnement.
+
+3. TABLEAU DE BORD (DASHBOARD)
+- Vue d'ensemble design (Dark mode premium).
+- Jauge circulaire dynamique des calories restantes.
+- Barre de progression pour les macros.
+- Les repas de la journée listés proprement.
+- Petits messages contextuels du Coach Kofi selon l'heure ou les dépassements de calories.
+
+4. JOURNAL ET HISTORIQUE
+- Suivi au jour le jour des repas.
+- Calendrier avec historique pour revoir les anciennes journées.
+- Enregistrement du poids quotidien.
+
+5. MONETISATION ET CYCLE DE VIE (FEDAPAY)
+- Intégration complète de la passerelle de paiement FedaPay.
+- Plans d'abonnement : Free (limité), Pro et Premium.
+- Webhook backend : lorsqu'un paiement réussit, on ajoute automatiquement 30 jours à l'abonnement en sécurité sur la base de données.
+- Auto-rétrogradation : si la date d'expiration est dépassée, l'app repasse l'utilisateur en mode gratuit toute seule.
+- Alertes : bannière d'expiration à J-7 sur le dashboard (qui peut être fermée pour ne pas gêner), avec clic direct pour payer et renouveler instantanément sans friction.
+
+
+=========================================================
+COMMENT NOUS ALLONS CREER LE CHAT "COACH KOFI AI"
+=========================================================
+
+Pour créer une vraie expérience de Chat interactif inspiré de Cal AI, voici la marche à suivre technique en 4 étapes majeures :
+
+ETAPE 1 : INSTALLATION DES OUTILS DE STREAMING
+Nous allons installer Vercel AI SDK (`npm install ai`). C'est ce qui permettra au coach de répondre de manière fluide en temps réel (le texte s'affichera mot par mot comme ChatGPT) plutôt que de faire attendre l'utilisateur 10 secondes devant un écran de chargement.
+
+ETAPE 2 : LE BACKEND (Le "Cerveau" du Coach)
+- Création d'une nouvelle route serveur : `/api/coach/chat`.
+- Nous utiliserons les API IA génératives (Gemini ou Claude).
+- Le Secret (Le Prompt Système) : On dira à l'IA : "Tu es Coach Kofi. Un expert en diététique africaine. Ton rôle est de motiver et conseiller l'utilisateur de manière concise."
+- Le Contexte : Chaque fois que l'utilisateur parlera, l'app enverra secrètement à l'IA ses données du jour (ex: "L'utilisateur a un objectif de 2000 kcal, il en a consommé 1500 dont beaucoup de glucides via du foutou"). Le Coach fera ainsi des réponses hyper personnalisées.
+
+ETAPE 3 : L'INTERFACE UTILISATEUR (Frontend)
+- Création de la page `/coach`.
+- Design d'une messagerie moderne (bulles vertes pour l'utilisateur, grises pour le coach).
+- Ajout de boutons de suggestions rapides type "Que manger ce soir ?" pour démarrer la conversation facilement.
+
+ETAPE 4 : LA RESTRICTION (Paywall)
+- Avant d'afficher l'interface du chat, on fera un contrôle : `if (effectiveTier === 'free')`.
+- Si l'utilisateur est en mode gratuit, on affichera le design du chat verrouillé avec un cadenas et un bouton l'invitant à prendre le plan Premium pour débloquer son coach personnel.
+
+
+=========================================================
+EVOLUTIONS "QUICK WINS" (PREVUES POUR LE LANCEMENT)
+=========================================================
+
+1. APPLICATION NATIVE (PWA)
+Transformation de l'application Web pour qu'elle puisse être installée directement sur l'écran d'accueil du smartphone. L'utilisateur aura une icône Cal-Afrik et l'application s'ouvrira en plein écran, offrant une expérience 100% native.
+
+2. GRAPHIQUES DE PROGRES (Analyses)
+Ajout de visualisations graphiques (en bâtons ou courbes) résumant la consommation de la semaine écoulée, afin que l'utilisateur prenne conscience de sa constance et soit incité à conserver ses bonnes habitudes.
+
+3. PARTAGE SOCIAL VIRAL (Bouton WhatsApp)
+Intégration d'une fonctionnalité de partage du bilan journalier. L'utilisateur pourra générer un message ou une belle image de ses résultats et l'envoyer sur ses statuts WhatsApp, avec un lien vers Cal-Afrik (vecteur puissant d'acquisition gratuite de nouveaux utilisateurs).
