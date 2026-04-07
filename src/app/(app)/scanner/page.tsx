@@ -364,7 +364,7 @@ export default function ScannerPage() {
             {/* SWITCH MODE SCAN */}
             <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '20px' }}>
                 <button onClick={() => setScanMode('ai')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? '#1e1e1e' : 'transparent', color: scanMode === 'ai' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
-                    📸 Photo IA
+                    📸 Photo
                 </button>
                 <button onClick={() => setScanMode('barcode')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'barcode' ? '#1e1e1e' : 'transparent', color: scanMode === 'barcode' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
                     🏷️ Code-barres
@@ -430,7 +430,6 @@ export default function ScannerPage() {
                                         </div>
                                         <p style={{ color: '#fff', fontWeight: '700', fontSize: '14px' }}>{food.name || 'Plat inconnu'}</p>
                                     </div>
-                                    {food.fromAI && <span style={{ background: 'rgba(255,255,255,0.05)', color: '#888', fontSize: '10px', padding: '3px 10px', borderRadius: '20px', border: '0.5px solid #333', fontWeight: '700' }}>IA</span>}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <span style={{ color: '#555', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
