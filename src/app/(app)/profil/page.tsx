@@ -168,8 +168,9 @@ export default function ProfilPage() {
         const protPercent = (dailyProtein / proteinTarget) * 100
 
         let message = ""
-        let yaoNudge = "Yao vous propose une liste de snacks hyper-protéinés adaptés à vos goûts."
+        let yaoNudge = ""
 
+        // Logique de message de base (Status actuel)
         if (calPercent > 105) {
             message = "⚠️ Budget calories dépassé. Essayez de compenser sur le prochain repas."
         } else if (calPercent < 80) {
@@ -180,6 +181,25 @@ export default function ProfilPage() {
 
         if (protPercent < 70) {
             message += " Pensez à augmenter vos protéines."
+        }
+
+        // Logique de Nudge Dynamique (Ce que Yao proposerait pour la suite)
+        if (activeSlot === 'petit_dejeuner') {
+            yaoNudge = calPercent > 30 
+                ? "Yao vous suggère un déjeuner léger à base de fibres pour équilibrer votre matinée."
+                : "Yao a sélectionné des déjeuners locaux riches en fer pour booster votre après-midi."
+        } else if (activeSlot === 'dejeuner') {
+            yaoNudge = protPercent < 40
+                ? "Yao propose une liste de snacks hyper-protéinés (noix, yaourt) pour votre collation de 16h."
+                : "Yao a trouvé des idées de collations fruitées pour maintenir votre énergie sans lourdeur."
+        } else if (activeSlot === 'collation') {
+            yaoNudge = calPercent > 80
+                ? "Yao vous conseille un dîner léger (soupe ou poisson) pour finir la journée en beauté."
+                : "Yao vous propose des dîners complets et savoureux adaptés à votre budget calorique restant."
+        } else { // diner ou fin de journée
+            yaoNudge = exceeded
+                ? "Yao prépare déjà votre programme détox de demain matin pour compenser ce petit écart."
+                : "Yao analyse votre sommeil et vous proposera le petit-déjeuner idéal au réveil."
         }
 
         return { message, yaoNudge }
