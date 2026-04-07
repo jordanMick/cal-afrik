@@ -149,7 +149,6 @@ export default function ScannerPage() {
 
     const loadCoachMessage = async () => {
         setShowCoach(true)
-        if (!checkPermission(profile, 'hasCoachYao')) return
         if (coachMessage) return
         setIsLoadingCoach(true)
         try {
@@ -160,8 +159,14 @@ export default function ScannerPage() {
             const freshSlot = storeState.slots[currentSlotKey]
             const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ selectedFoods: selectedFoods.map(f => f.name), totals: { calories: Math.round(totals.calories), protein_g: Math.round(totals.protein_g * 10) / 10, carbs_g: Math.round(totals.carbs_g * 10) / 10, fat_g: Math.round(totals.fat_g * 10) / 10 }, slotLabel, slotTarget: isLastSlot ? calorieTarget : freshSlot.target, slotConsumed: isLastSlot ? dailyConsumed : freshSlot.consumed, slotRemaining: isLastSlot ? dailyRemainingNow : freshSlot.remaining, dailyCalories: storeState.dailyCalories, calorieTarget }) })
             const json = await res.json()
-            const msg = json.success ? json.message : 'Bon repas ! Continue comme ça 💪'
-            setCoachMessage(msg); setLastCoachMessage(msg)
+            if (json.code === 'FREE_LIFETIME_USED') {
+                setCoachMessage('__FREE_USED__')
+            } else if (json.code === 'PRO_DAILY_LIMIT') {
+                setCoachMessage('__PRO_LIMIT__')
+            } else {
+                const msg = json.success ? json.message : 'Bon repas ! Continue comme ça 💪'
+                setCoachMessage(msg); setLastCoachMessage(msg)
+            }
         } catch { setCoachMessage('Bon repas ! Continue à bien manger 💪') }
         finally { setIsLoadingCoach(false) }
     }
@@ -454,71 +459,38 @@ export default function ScannerPage() {
                         {showCoach && (
                             <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
                                 {isLoadingCoach ? (
-                                    <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Analyse en cours...</p>
-                                ) : (
-                                    /* CONSEIL DU COACH - LOGIQUE ACCÈS */
-                                    checkPermission(profile, 'hasCoachYao') ? (
-                                        coachMessage && (
-                                            <div style={{ marginTop: '20px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                                                    <span style={{ fontSize: '18px' }}>🤖</span>
-                                                    <span style={{ color: '#f59e0b', fontSize: '14px', fontWeight: '600' }}>Conseil du coach</span>
-                                                </div>
-                                                <div style={{ background: 'rgba(245,158,11,0.05)', border: '0.5px solid rgba(245,158,11,0.2)', borderRadius: '14px', padding: '16px' }}>
-                                                    <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
-                                                </div>
-                                            </div>
-                                        )
-                                    ) : (
-                                        /* BANDEAU UPGRADE VISIBLE IMMÉDIATEMENT SI NON PREMIUM */
-                                        <div style={{ marginBottom: '16px' }}>
-                                            {/* CONSEIL AUTOMATIQUE (SUR LE POUCE) */}
-                                            <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>
-                                                {totals.calories > 600 
-                                                    ? "🍴 Ce repas est assez consistant. Veillez à bien vous hydrater." 
-                                                    : "✅ Repas léger et équilibré. Idéal pour rester dynamique."}
-                                            </p>
-                                            
-                                            <div 
-                                                onClick={() => router.push('/upgrade')}
-                                                style={{ 
-                                                    background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.1))', 
-                                                    border: '1px solid rgba(245,158,11,0.3)', 
-                                                    borderRadius: '16px', 
-                                                    padding: '20px 16px',
-                                                    cursor: 'pointer',
-                                                    textAlign: 'center',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    gap: '12px'
-                                                }}>
-                                                <div style={{ fontSize: '28px' }}>🔒</div>
-                                                <div>
-                                                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: '800', marginBottom: '4px' }}>
-                                                        {profile?.subscription_tier === 'pro' ? 'Analyse Premium de Yao' : 'Analyse terminée !'}
-                                                    </p>
-                                                    <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.4' }}>
-                                                        {profile?.subscription_tier === 'pro' 
-                                                            ? 'Le Coach Yao connaît les secrets de ce plat. Débloquez son analyse pour optimiser votre santé.'
-                                                            : 'Le Coach Yao a fini son analyse ! Passe au plan Premium pour débloquer tes conseils personnalisés.'}
-                                                    </p>
-                                                </div>
-                                                <div style={{ 
-                                                    marginTop: '4px',
-                                                    padding: '6px 20px', 
-                                                    borderRadius: '8px', 
-                                                    background: '#f59e0b', 
-                                                    color: '#000', 
-                                                    fontSize: '12px', 
-                                                    fontWeight: '700' 
-                                                }}>
-                                                    Voir le conseil de Yao →
-                                                </div>
-                                            </div>
+                                    <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Yao analyse ton assiette...</p>
+                                ) : coachMessage === '__FREE_USED__' ? (
+                                    <div style={{ textAlign: 'center' }}>
+                                        <p style={{ fontSize: '24px', marginBottom: '8px' }}>🔒</p>
+                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Essai gratuit déjà utilisé</p>
+                                        <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Tu as déjà vu le talent de Coach Yao ! Passe au Plan Pro pour ses conseils chaque jour.</p>
+                                        <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: '#f59e0b', color: '#000', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Voir le Plan Pro →</div>
+                                    </div>
+                                ) : coachMessage === '__PRO_LIMIT__' ? (
+                                    <div style={{ textAlign: 'center' }}>
+                                        <p style={{ fontSize: '24px', marginBottom: '8px' }}>⏰</p>
+                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Conseil du jour déjà utilisé</p>
+                                        <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Yao vous a déjà conseillé aujourd'hui. Passez au Premium pour un accès illimité !</p>
+                                        <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: '#fff', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Débloquer le Premium →</div>
+                                    </div>
+                                ) : coachMessage ? (
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                            <span style={{ fontSize: '18px' }}>🤖</span>
+                                            <span style={{ color: '#f59e0b', fontSize: '13px', fontWeight: '600' }}>Coach Yao</span>
+                                            {profile?.subscription_tier === 'free' && (
+                                                <span style={{ marginLeft: 'auto', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>
+                                            )}
                                         </div>
-                                    )
-                                )}
+                                        <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
+                                        {profile?.subscription_tier === 'free' && (
+                                            <div onClick={() => router.push('/upgrade')} style={{ marginTop: '10px', padding: '6px 12px', background: 'rgba(245,158,11,0.1)', border: '0.5px dashed rgba(245,158,11,0.3)', borderRadius: '8px', color: '#f59e0b', fontSize: '11px', cursor: 'pointer' }}>
+                                                💡 Vous avez aimé ? Obtenez ce conseil chaque jour avec le Plan Pro →
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : null}
                             </div>
                         )}
 

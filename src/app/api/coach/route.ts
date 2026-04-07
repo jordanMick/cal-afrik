@@ -18,79 +18,80 @@ export async function POST(req: NextRequest) {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token)
         if (!user || authError) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-        // ─── VÉRIFICATION ABONNEMENT ──────────────────────────
+        // 1. Récupérer le profil complet avec les quotas
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('subscription_tier')
+            .select('*')
             .eq('user_id', user.id)
             .single()
 
-        if (!profile || profile.subscription_tier !== 'premium') {
-            return NextResponse.json({ 
-                success: false, 
-                error: 'Accès réservé aux membres Premium', 
-                code: 'PREMIUM_REQUIRED' 
-            }, { status: 403 })
-        }
+        if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 })
 
+        const tier = profile.subscription_tier || 'free'
+        const today = new Date().toISOString().split('T')[0]
+        const isToday = profile.last_usage_reset_date === today
+
+        // 2. Calcul des quotas de feedback scanner par tier
+        // free    : 1 essai à vie   (has_used_free_lifetime_feedback)
+        // pro     : 1 feedback / jour
+        // premium : illimité
+
+        if (tier === 'free') {
+            if (profile.has_used_free_lifetime_feedback) {
+                return NextResponse.json({
+                    success: false,
+                    code: 'FREE_LIFETIME_USED',
+                    error: 'Vous avez déjà utilisé votre essai gratuit. Passez au Plan Pro pour des feedbacks quotidiens.',
+                }, { status: 403 })
+            }
+        } else if (tier === 'pro') {
+            // Remettre le compteur à 0 si on est un nouveau jour
+            const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
+            if (scanFeedbacksToday >= 1) {
+                return NextResponse.json({
+                    success: false,
+                    code: 'PRO_DAILY_LIMIT',
+                    error: 'Vous avez déjà demandé votre conseil journalier. Revenez demain ou passez au Premium !',
+                }, { status: 403 })
+            }
+        // premium : pas de limite, on passe directement
+
+        }
+        // 3. Lire les données du repas
         const {
-            selectedFoods,       // noms des aliments sélectionnés
-            totals,              // { calories, protein_g, carbs_g, fat_g } du repas
-            slotLabel,           // "Petit-déjeuner", "Déjeuner", etc.
-            slotTarget,          // cible kcal du créneau actuel
-            slotConsumed,        // kcal déjà consommées dans ce créneau avant cet ajout
-            slotRemaining,       // kcal restantes dans ce créneau après cet ajout
-            dailyCalories,       // total kcal journée
-            calorieTarget,       // objectif journalier
+            selectedFoods,
+            totals,
+            slotLabel,
+            slotTarget,
+            slotConsumed,
+            calorieTarget,
         } = await req.json()
-
-        // ─── MODE SIMULATION (POUR ÉCONOMISER LES TOKENS EN TEST) ───
-        const MOCK_MODE = true 
-
-        if (MOCK_MODE) {
-            const newSlotConsumed = slotConsumed + totals.calories
-            const remainingAfter = Math.max(0, slotTarget - newSlotConsumed)
-            const exceeded = newSlotConsumed > slotTarget
-
-            return NextResponse.json({ 
-                success: true, 
-                message: "[Mode TEST] Superbe choix ! Vos macros sont bien équilibrées. Pensez à boire beaucoup d'eau avec ce repas consistant. 💪", 
-                exceeded, 
-                remainingAfter 
-            })
-        }
 
         const newSlotConsumed = slotConsumed + totals.calories
         const exceeded = newSlotConsumed > slotTarget
         const exceedAmount = Math.round(newSlotConsumed - slotTarget)
         const remainingAfter = Math.max(0, slotTarget - newSlotConsumed)
 
-        const prompt = `Tu es un coach nutritionnel bienveillant expert en cuisine africaine subsaharienne.
+        // 4. Générer le conseil IA
+        const prompt = `Tu es Coach Yao, un nutritionniste africain bienveillant et enthousiaste. Ton ton est chaleureux, direct et positif.
 
-L'utilisateur vient d'ajouter son ${slotLabel.toLowerCase()} : ${selectedFoods.join(', ')}.
+L'utilisateur vient de scanner son ${slotLabel.toLowerCase()} : ${selectedFoods.join(', ')}.
 
 Détail du repas :
-- Calories ajoutées : ${Math.round(totals.calories)} kcal
-- Protéines : ${totals.protein_g}g
-- Glucides : ${totals.carbs_g}g  
-- Lipides : ${totals.fat_g}g
+- Calories : ${Math.round(totals.calories)} kcal
+- Protéines : ${totals.protein_g}g | Glucides : ${totals.carbs_g}g | Lipides : ${totals.fat_g}g
 
 Situation du créneau "${slotLabel}" :
-- Cible du créneau : ${slotTarget} kcal
-- Déjà consommé avant : ${Math.round(slotConsumed)} kcal
-- Total consommé maintenant : ${Math.round(newSlotConsumed)} kcal
-- ${exceeded ? `Dépassement de ${exceedAmount} kcal` : `Il reste ${remainingAfter} kcal pour ce créneau`}
+- Cible : ${slotTarget} kcal
+- Déjà consommé : ${Math.round(slotConsumed)} kcal → Maintenant : ${Math.round(newSlotConsumed)} kcal
+- ${exceeded ? `⚠️ Dépassement de ${exceedAmount} kcal` : `✅ Il reste ${remainingAfter} kcal`}
+- Objectif journalier total : ${calorieTarget} kcal
 
-Total journée : ${Math.round(dailyCalories + totals.calories)} / ${calorieTarget} kcal
-
-Donne un conseil court (2-3 phrases) en français :
-${exceeded
-                ? `1. Signale le dépassement de ${exceedAmount} kcal de façon bienveillante\n2. Conseille comment compenser au prochain créneau avec un aliment africain concret`
-                : `1. Valide le repas et mentionne les ${remainingAfter} kcal restantes pour ce créneau\n2. Si des macros manquent, propose 1 aliment africain concret à ajouter`
-            }
-3. Termine avec une phrase d'encouragement courte
-
-Réponds directement, ton naturel et bienveillant.`
+Donne un conseil court (2-3 phrases max) en français. ${exceeded
+            ? `Signale le dépassement de ${exceedAmount} kcal de façon bienveillante et propose comment compenser avec un aliment africain concret.`
+            : `Valide le repas et si des macros manquent, suggère 1 aliment africain concret à ajouter.`
+        }
+Termine par une phrase d'encouragement courte et utilise 1 émoji africain/alimentaire.`
 
         const response = await anthropic.messages.create({
             model: 'claude-haiku-4-5-20251001',
@@ -101,6 +102,23 @@ Réponds directement, ton naturel et bienveillant.`
         const message = response.content[0].type === 'text'
             ? response.content[0].text
             : 'Bon repas ! Continue comme ça 💪'
+
+        // 5. Mettre à jour les quotas en base de données
+        if (tier === 'free') {
+            await supabase
+                .from('user_profiles')
+                .update({ has_used_free_lifetime_feedback: true })
+                .eq('user_id', user.id)
+        } else if (tier === 'pro') {
+            const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
+            await supabase
+                .from('user_profiles')
+                .update({
+                    scan_feedbacks_today: scanFeedbacksToday + 1,
+                    last_usage_reset_date: today
+                })
+                .eq('user_id', user.id)
+        }
 
         return NextResponse.json({ success: true, message, exceeded, remainingAfter })
 
