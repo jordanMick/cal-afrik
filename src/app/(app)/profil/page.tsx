@@ -39,7 +39,8 @@ function getNextSlotInfo(hour: number): { label: string; time: string } {
 }
 
 
-const STAT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
+const ACCENT_COLOR = '#6366f1'
+const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
 
 export default function ProfilPage() {
     const router = useRouter()
@@ -156,10 +157,10 @@ export default function ProfilPage() {
     }
 
     const stats = [
-        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal', color: STAT_COLORS[0] },
-        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g', color: STAT_COLORS[1] },
-        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g', color: STAT_COLORS[2] },
-        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g', color: STAT_COLORS[3] },
+        { label: 'Calories', current: dailyCalories, target: calorieTarget, unit: 'kcal', color: '#6366f1' },
+        { label: 'Protéines', current: dailyProtein, target: proteinTarget, unit: 'g', color: '#10b981' },
+        { label: 'Glucides', current: dailyCarbs, target: carbsTarget, unit: 'g', color: '#6366f1' },
+        { label: 'Lipides', current: dailyFat, target: fatTarget, unit: 'g', color: '#10b981' },
     ]
 
     // LOGIQUE DE BILAN AUTOMATIQUE (NON-AI) POUR PRO/FREE
@@ -218,10 +219,10 @@ export default function ProfilPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                         <div style={{
                             width: '68px', height: '68px', borderRadius: '22px',
-                            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+                            background: GRADIENT,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '30px', fontWeight: 'bold', color: '#fff',
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                            fontSize: '28px', fontWeight: '900', color: '#fff',
+                            boxShadow: '0 8px 16px rgba(99,102,241,0.25)',
                             flexShrink: 0
                         }}>
                             {profile?.name?.charAt(0).toUpperCase() || 'U'}
@@ -479,9 +480,8 @@ export default function ProfilPage() {
                         <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '20px 0 10px' }}>Cuisines préférées</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
                             {profile.preferred_cuisines.map((c, i) => {
-                                const color = STAT_COLORS[i % STAT_COLORS.length]
                                 return (
-                                    <span key={c} style={{ padding: '6px 14px', background: `${color}12`, border: `0.5px solid ${color}40`, borderRadius: '20px', color: color, fontSize: '12px', fontWeight: '500' }}>
+                                    <span key={c} style={{ padding: '6px 14px', background: 'rgba(99,102,241,0.08)', border: '0.5px solid rgba(99,102,241,0.2)', borderRadius: '20px', color: '#6366f1', fontSize: '12px', fontWeight: '700' }}>
                                         {c}
                                     </span>
                                 )

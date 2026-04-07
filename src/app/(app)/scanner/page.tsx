@@ -28,12 +28,8 @@ const CATEGORIES = [
 
 const LAST_SLOT = 'diner'
 
-const SLOT_COLORS: Record<string, string> = {
-    petit_dejeuner: '#f59e0b',
-    dejeuner: '#10b981',
-    collation: '#ec4899',
-    diner: '#6366f1',
-}
+const ACCENT_COLOR = '#6366f1'
+const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
 
 export default function ScannerPage() {
     const router = useRouter()
@@ -62,7 +58,7 @@ export default function ScannerPage() {
     const currentSlot = slots[currentSlotKey]
     const slotLabel = SLOT_LABELS[currentSlotKey]
     const isLastSlot = currentSlotKey === LAST_SLOT
-    const slotColor = SLOT_COLORS[currentSlotKey] || '#6366f1'
+    const slotColor = ACCENT_COLOR
 
     const calorieTarget = profile?.calorie_target ?? 0
     const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
@@ -355,20 +351,20 @@ export default function ScannerPage() {
                     {suggestions.map((food, idx) => {
                         const isSelected = !!selectedFoods.find(f => f.id === food.id)
                         return (
-                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)} style={{ padding: '16px 20px', borderRadius: '20px', marginBottom: '12px', background: isSelected ? `${slotColor}10` : '#141414', cursor: 'pointer', border: isSelected ? `1px solid ${slotColor}50` : '0.5px solid #222', transition: 'all 0.2s ease', position: 'relative', overflow: 'hidden' }}>
+                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)} style={{ padding: '16px 20px', borderRadius: '20px', marginBottom: '12px', background: isSelected ? 'rgba(99,102,241,0.08)' : '#141414', cursor: 'pointer', border: isSelected ? `1px solid ${ACCENT_COLOR}` : '0.5px solid #222', transition: 'all 0.2s ease', position: 'relative', overflow: 'hidden' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: isSelected ? `1.5px solid ${slotColor}` : '1.5px solid #333', background: isSelected ? slotColor : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                                        <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: isSelected ? `1.5px solid ${ACCENT_COLOR}` : '1.5px solid #333', background: isSelected ? ACCENT_COLOR : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
                                             {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>✓</span>}
                                         </div>
                                         <p style={{ color: '#fff', fontWeight: '700', fontSize: '14px' }}>{food.name || 'Plat inconnu'}</p>
                                     </div>
-                                    {food.fromAI && <span style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '10px', padding: '3px 10px', borderRadius: '20px', border: '0.5px solid rgba(245,158,11,0.2)', fontWeight: '700' }}>IA</span>}
+                                    {food.fromAI && <span style={{ background: 'rgba(255,255,255,0.05)', color: '#888', fontSize: '10px', padding: '3px 10px', borderRadius: '20px', border: '0.5px solid #333', fontWeight: '700' }}>IA</span>}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <span style={{ color: '#555', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
                                     <span style={{ color: '#222', fontSize: '11px' }}>•</span>
-                                    <p style={{ color: isSelected ? slotColor : '#666', fontSize: '12px', fontWeight: '600' }}>
+                                    <p style={{ color: isSelected ? ACCENT_COLOR : '#666', fontSize: '12px', fontWeight: '600' }}>
                                         {food.calories} kcal · {food.protein_g}g prot.
                                     </p>
                                 </div>

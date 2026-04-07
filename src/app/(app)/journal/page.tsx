@@ -14,7 +14,8 @@ const formatDay = (dateStr: string) => new Date(dateStr).toLocaleDateString('fr-
 const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 const MEAL_TYPE_EMOJIS: Record<string, string> = { petit_dejeuner: '🌅', dejeuner: '☀️', diner: '🌙', collation: '🥜' }
 
-const DAY_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#6366f1', '#10b981', '#f59e0b']
+const ACCENT_COLOR = '#6366f1'
+const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 
 function WeightChart({ entries }: { entries: { date: string; weight: number }[] }) {
@@ -183,12 +184,11 @@ function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () 
                         <p style={{ color: '#6366f1', fontSize: '44px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(meal.calories)}</p>
                         <p style={{ color: '#444', fontSize: '13px' }}>kilocalories</p>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-                        {[{ label: 'Protéines', value: meal.protein_g, color: '#6366f1', pct: macros.protein }, { label: 'Glucides', value: meal.carbs_g, color: '#f59e0b', pct: macros.carbs }, { label: 'Lipides', value: meal.fat_g, color: '#10b981', pct: macros.fat }].map(m => (
-                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
-                                <p style={{ color: m.color, fontSize: '18px', fontWeight: '600' }}>{m.value}g</p>
-                                <p style={{ color: '#444', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
-                                <p style={{ color: '#222', fontSize: '9px', marginTop: '2px' }}>{m.pct}%</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                        {[{ label: 'Protéines', value: meal.protein_g }, { label: 'Glucides', value: meal.carbs_g }, { label: 'Lipides', value: meal.fat_g }].map(m => (
+                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', border: '0.5px solid #222' }}>
+                                <p style={{ color: '#fff', fontSize: '16px', fontWeight: '800' }}>{m.value}g</p>
+                                <p style={{ color: '#444', fontSize: '10px', marginTop: '2px', fontWeight: '600', textTransform: 'uppercase' }}>{m.label}</p>
                             </div>
                         ))}
                     </div>
@@ -393,19 +393,23 @@ export default function RapportPage() {
                         <p style={{ color: '#fff', fontSize: '15px', fontWeight: '600' }}>Historique</p>
                         <button onClick={() => router.push('/historique')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', cursor: 'pointer' }}>Tous →</button>
                     </div>
-                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'space-between', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'space-between', marginBottom: '18px' }}>
                         {last7.map((date, idx) => {
                             const dayMeals = mealsByDay[date] || []
                             const hasEaten = dayMeals.length > 0
                             const isToday = date === todayStr
-                            const dotColor = DAY_COLORS[idx]
                             return (
-                                <div key={date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ color: '#333', fontSize: '9px', textTransform: 'uppercase' }}>{formatDay(date)}</span>
-                                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: isToday ? dotColor : hasEaten ? `${dotColor}20` : '#111', border: isToday ? 'none' : hasEaten ? `1px solid ${dotColor}60` : '0.5px solid #1e1e1e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        {hasEaten ? <span style={{ color: isToday ? '#fff' : dotColor, fontSize: '12px' }}>✓</span> : <span style={{ color: '#222', fontSize: '10px' }}>{new Date(date).getDate()}</span>}
+                                <div key={date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ color: '#333', fontSize: '10px', fontWeight: '700' }}>{formatDay(date)}</span>
+                                    <div style={{ 
+                                        width: '32px', height: '32px', borderRadius: '50%', 
+                                        background: isToday ? ACCENT_COLOR : hasEaten ? 'rgba(99,102,241,0.1)' : '#111', 
+                                        border: isToday ? 'none' : hasEaten ? `1.5px solid ${ACCENT_COLOR}` : '0.5px solid #1e1e1e', 
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                                    }}>
+                                        {hasEaten ? <span style={{ color: isToday ? '#fff' : ACCENT_COLOR, fontSize: '14px', fontWeight: '900' }}>✓</span> : <span style={{ color: '#222', fontSize: '11px' }}>{new Date(date).getDate()}</span>}
                                     </div>
-                                    <span style={{ color: hasEaten ? dotColor : '#1e1e1e', fontSize: '8px', fontWeight: '600' }}>{hasEaten ? `${dayMeals.length}` : ''}</span>
+                                    <span style={{ color: hasEaten ? ACCENT_COLOR : '#1e1e1e', fontSize: '9px', fontWeight: '800' }}>{hasEaten ? `${dayMeals.length}` : ''}</span>
                                 </div>
                             )
                         })}
@@ -435,7 +439,6 @@ export default function RapportPage() {
                             <span style={{ fontSize: '10px', color: '#6366f1', background: 'rgba(99,102,241,0.1)', padding: '2px 8px', borderRadius: '10px' }}>{todayMeals.length} scannés</span>
                         </div>
                         {todayMeals.map((meal, idx) => {
-                            const dotColor = DAY_COLORS[idx % DAY_COLORS.length]
                             return (
                                 <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '24px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ width: '52px', height: '52px', borderRadius: '16px', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
@@ -443,11 +446,10 @@ export default function RapportPage() {
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <p style={{ color: '#fff', fontSize: '15px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{meal.custom_name || 'Repas sans nom'}</p>
-                                        <p style={{ color: '#555', fontSize: '11px' }}>{formatTime(meal.logged_at)} · {Math.round(meal.portion_g)}g · {Math.round(meal.protein_g)}g prot.</p>
+                                        <p style={{ color: '#555', fontSize: '11px' }}>{formatTime(meal.logged_at)} · {Math.round(meal.portion_g)}g</p>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <p style={{ color: '#fff', fontSize: '16px', fontWeight: '800' }}>{Math.round(meal.calories)}</p>
-                                        <p style={{ color: '#333', fontSize: '9px', fontWeight: '600' }}>kcal</p>
+                                        <p style={{ color: ACCENT_COLOR, fontSize: '16px', fontWeight: '800' }}>{Math.round(meal.calories)}<span style={{ fontSize: '10px', color: '#333', marginLeft: '2px' }}>kcal</span></p>
                                     </div>
                                 </div>
                             )
