@@ -13,6 +13,9 @@ interface Proposal {
     slot: string
 }
 
+const toLocalDateString = (date = new Date()) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
 interface PlannerCardProps {
     hideDinnerActionLink?: boolean
 }
@@ -47,7 +50,10 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
-            const res = await fetch(`/api/planner?view=${view}`, {
+            const date = toLocalDateString()
+            const tzOffset = new Date().getTimezoneOffset()
+            const nowHour = new Date().getHours()
+            const res = await fetch(`/api/planner?view=${view}&date=${date}&tz_offset_min=${tzOffset}&now_hour=${nowHour}`, {
                 headers: { Authorization: `Bearer ${session.access_token}` }
             })
             const json = await res.json()
@@ -202,6 +208,21 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
+
+            // Garde-fou anti-double validation du même créneau le même jour.
+            const date = toLocalDateString()
+            const tzOffset = new Date().getTimezoneOffset()
+            const mealsRes = await fetch(`/api/meals?date=${date}&tz_offset_min=${tzOffset}`, {
+                headers: { Authorization: `Bearer ${session.access_token}` }
+            })
+            const mealsJson = await mealsRes.json()
+            const alreadyLogged = !!(mealsJson?.success && (mealsJson.data || []).some((m: any) => m.meal_type === proposal.slot))
+            if (alreadyLogged) {
+                alert("Ce créneau est déjà validé aujourd'hui. On passe au prochain repas.")
+                setIsRevealed(false)
+                await fetchPlan('today')
+                return
+            }
 
             const res = await fetch('/api/meals', {
                 method: 'POST',

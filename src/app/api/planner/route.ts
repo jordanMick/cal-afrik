@@ -10,6 +10,16 @@ const anthropic = new Anthropic({
 // Variable temporaire pour simuler les refus (en attendant une table DB si nécessaire)
 let skippedSlots: Record<string, string[]> = {} 
 
+function getUtcRangeForLocalDay(dateStr: string, tzOffsetMin: number) {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    const startUtcMs = Date.UTC(y, m - 1, d, 0, 0, 0, 0) + tzOffsetMin * 60 * 1000
+    const endUtcMs = Date.UTC(y, m - 1, d, 23, 59, 59, 999) + tzOffsetMin * 60 * 1000
+    return {
+        start: new Date(startUtcMs).toISOString(),
+        end: new Date(endUtcMs).toISOString(),
+    }
+}
+
 export async function POST(req: Request) {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -69,7 +79,11 @@ export async function GET(req: Request) {
     }
     const tier = getEffectiveTier(profile)
     const viewsToday = profile?.planner_views_today || 0
-    const view = new URL(req.url).searchParams.get('view') || 'today'
+    const searchParams = new URL(req.url).searchParams
+    const view = searchParams.get('view') || 'today'
+    const tzOffsetMin = Number(searchParams.get('tz_offset_min') || '0')
+    const localDate = searchParams.get('date') || new Date().toISOString().split('T')[0]
+    const localHour = Number(searchParams.get('now_hour') || new Date().getHours())
     const todayStr = new Date().toISOString().split('T')[0]
 
     // 1. Vérifier les plans VERROUILLÉS
@@ -98,13 +112,18 @@ export async function GET(req: Request) {
     }
 
     // 2. Sinon, suggestions standard
-    const { data: todayMeals } = await supabase.from('meals').select('logged_at, meal_type').eq('user_id', user.id).gte('logged_at', todayStr)
+    const { start: dayStart, end: dayEnd } = getUtcRangeForLocalDay(localDate, tzOffsetMin)
+    const { data: todayMeals } = await supabase
+        .from('meals')
+        .select('logged_at, meal_type')
+        .eq('user_id', user.id)
+        .gte('logged_at', dayStart)
+        .lte('logged_at', dayEnd)
     const recordedSlots = todayMeals?.map(m => m.meal_type || getMealSlot(new Date(m.logged_at).getHours())) || []
     const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
     const slotTimes: Record<string, number> = { 'petit_dejeuner': 0, 'dejeuner': 12, 'collation': 16, 'diner': 19 }
 
-    const todayStr_ = new Date().toISOString().split('T')[0]
-    const currentSkipped = skippedSlots[`${user.id}_${todayStr_}`] || []
+    const currentSkipped = skippedSlots[`${user.id}_${localDate}`] || []
     const occupiedSlots = [...new Set([...recordedSlots, ...currentSkipped])]
     const nextSlot = slotsOrder.find(s => !occupiedSlots.includes(s))
 
@@ -179,7 +198,7 @@ export async function GET(req: Request) {
             }
             return NextResponse.json({
                 success: true, completed: false, locked: false, tier, slot: nextSlot,
-                can_log_now: new Date().getHours() >= slotTimes[nextSlot as string], start_hour: slotTimes[nextSlot as string],
+                can_log_now: localHour >= slotTimes[nextSlot as string], start_hour: slotTimes[nextSlot as string],
                 next_meal: { name: '[MOCK] Repas Équilibré Standard', kcal: 600, protein: 30, carbs: 70, fat: 20, slot: nextSlot }
             })
         }
@@ -204,7 +223,7 @@ export async function GET(req: Request) {
             tier,
             next_meal: { ...selected, slot: nextSlot },
             slot: nextSlot,
-            can_log_now: new Date().getHours() >= slotTimes[nextSlot as string],
+            can_log_now: localHour >= slotTimes[nextSlot as string],
             start_hour: slotTimes[nextSlot as string]
         })
     } catch (aiErr) {
