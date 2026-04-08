@@ -4,17 +4,16 @@ import { scanMealFromImage } from '@/lib/anthropic'
 import type { ScanApiResponse, ScanComponent } from '@/types'
 
 // ─── NORMALIZE ───────────────────────────────────────────────
-function normalize(text: string) {
+function normalize(text?: string | null) {
     return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        ? text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        : ""
 }
 
 // ─── SCORE ───────────────────────────────────────────────────
 function scoreFood(itemName: string, food: any) {
     const input = normalize(itemName)
-    const names = [food.name_fr, food.name_local, food.name_en]
+    const names = [food.name_standard, food.name_en]
         .filter(Boolean)
         .map(normalize)
 
@@ -34,7 +33,8 @@ function scoreFood(itemName: string, food: any) {
 
 // ─── TOP 3 MATCHES ───────────────────────────────────────────
 function getTopMatches(itemName: string, foods: any[]) {
-    return foods
+    const safeFoods = (foods || []).filter(item => !!item?.name_standard)
+    return safeFoods
         .map(food => ({ food, score: scoreFood(itemName, food) }))
         .filter(s => s.score > 0)
         .sort((a, b) => b.score - a.score)
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
         const { data: foodItems } = await supabaseAdmin
             .from('food_items')
-            .select('id, name_fr, name_local, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g')
+            .select('id, name_standard, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g')
 
         const results = []
 
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
                 // ✅ Suggestions BD avec calories recalculées pour la même portion
                 suggestions: topMatches.map(m => ({
                     id: m.food.id,
-                    name: m.food.name_fr,
+                    name: m.food.name_standard || m.food.name_en,
                     score: m.score,
                     calories: Math.round((m.food.calories_per_100g * portion) / 100),
                     protein_g: Math.round((m.food.protein_per_100g * portion) / 100 * 10) / 10,
