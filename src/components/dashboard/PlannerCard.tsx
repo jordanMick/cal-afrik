@@ -109,7 +109,9 @@ export default function PlannerCard() {
         }
     }
 
-    if (tier === 'free') return null
+    if (loading && activeTab === 'today') return (
+        <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', marginBottom: '24px', height: '120px', animation: 'pulse 1.5s infinite' }} />
+    )
 
     return (
         <div style={{ marginBottom: '24px' }}>
