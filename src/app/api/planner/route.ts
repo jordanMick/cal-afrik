@@ -56,7 +56,7 @@ export async function GET(req: Request) {
     const { data: { user } } = await supabase.auth.getUser(token)
     if (!user) return NextResponse.json({ error: "No user" }, { status: 401 })
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('user_profiles').select('*').eq('user_id', user.id).single()
     const tier = getEffectiveTier(profile)
     const viewsToday = profile?.planner_views_today || 0
     const view = new URL(req.url).searchParams.get('view') || 'today'
@@ -106,12 +106,17 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: true, completed: true, message: "Bravo ! Journée terminée ✨" })
     }
 
-    if (view === 'tomorrow' && tier === 'free') {
-        return NextResponse.json({ success: false, error: "Planning réservé aux membres PRO.", code: "PRO_ONLY" }, { status: 403 })
+    // Sécurité de Tier
+    if (view === 'tomorrow') {
+        if (tier === 'free') {
+            return NextResponse.json({ success: false, error: "Le menu de demain est réservé aux membres PRO.", code: "PRO_ONLY" }, { status: 403 })
+        }
     }
     
-    if (view === 'week' && tier !== 'premium') {
-        return NextResponse.json({ success: false, error: "Planning hebdomadaire réservé aux membres Premium.", code: "PREMIUM_ONLY" }, { status: 403 })
+    if (view === 'week') {
+        if (tier !== 'premium') {
+            return NextResponse.json({ success: false, error: "Le planning hebdomadaire est réservé aux membres Premium.", code: "PREMIUM_ONLY" }, { status: 403 })
+        }
     }
 
     // 3. Mode Hybride avec CLAUDE (Anthropic)

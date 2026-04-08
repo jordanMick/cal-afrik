@@ -23,9 +23,9 @@ export const SUBSCRIPTION_RULES = {
     }
 }
 
-export function getEffectiveTier(profile: UserProfile | null): SubscriptionTier {
+export function getEffectiveTier(profile: any | null): SubscriptionTier {
     if (!profile) return 'free'
-    const tier = profile.subscription_tier || 'free'
+    const tier = (profile.subscription_tier || 'free').toLowerCase() as SubscriptionTier
     if (tier === 'free') return 'free'
     
     // Vérification de la date d'expiration

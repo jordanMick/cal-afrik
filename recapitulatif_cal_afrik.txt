@@ -50,28 +50,35 @@ Le moteur qui assure la précision, l'économie et la monétisation.
   - Tracking des Pesées : Consolidation mensuelle (dernière pesée du mois) pour les graphiques.
 
 --------------------------------------------
-ÉTAT DU PROJET : Prêt pour lancement / Bêta
-DERNIÈRE MISE À JOUR : 07/04/2026
+ÉTAT DU PROJET : Architecture Planner & Hybride OK
+DERNIÈRE MISE À JOUR : 08/04/2026
 --------------------------------------------
 
 3. ÉVOLUTIONS ET FONCTIONNALITÉS CIBLES
 --------------------------------------
 * LOGIQUE DES TIERS ET LIMITES :
   - PLAN FREE (Calcul du "Combo 2") :
-    * L'utilisateur dispose de 2 jetons d'action par jour au total.
-    * 1 Action = 1 Scan (Code-barres ou IA) OU 1 Suggestion Coach Yao (Planner).
-    * Exemple : 1 Scan + 1 Suggestion = Limite atteinte.
+    * 2 Révélations de suggestions (Curiosité) gratuites/jour.
+    * 2 Actions réelles par jour (1 Scan ou 1 Validation de plat Planner).
+    * "Sauter" un plat est possible 2 fois sans consommer d'action.
   
   - PLAN PRO :
-    * Scans et Suggestions du jour ILLIMITÉS.
-    * Menu complet du LENDEMAIN : Débloqué uniquement APRÈS l'enregistrement du Dîner du jour actuel.
+    * Révélations et Actions quotidiennes ILLIMITÉES.
+    * 3 Changements/Régénérations max par repas pour éviter les abus.
+    * Menu DEMAIN débloqué après enregistrement du Dîner du jour.
     
   - PLAN PREMIUM :
     * Tout le contenu PRO illimité.
-    * Planification de la SEMAINE ENTIÈRE : Accessible à n'importe quel moment.
-    * Liste de courses intelligente associée.
+    * Menu SEMAINE ENTIÈRE débloqué (7 jours).
+    * Validation et Verrouillage des menus pour persistance.
 
-* PLANIFICATION ALIMENTAIRE IA (COACH YAO PLANNER) :
-  - Emplacement : Intégré au Dashboard (Mode "GPS Nutritionnel").
-  - Fonctionnalité "Changer" : Permet de demander une autre suggestion si le plat ne convient pas (Payant).
-  - Validation instantanée : Enregistrement direct dans le journal en un clic.
+* COACH YAO PLANNER (HYBRIDE) :
+  - Emplacement : Page /scanner (Priorité haute).
+  - Moteur : Claude 3 (Cerveau) + Table 'recipes' (Authenticité).
+  - Validation : Verrouillage des plans dans 'user_plans' pour les abonnés.
+
+4. PROCHAINES ÉTAPES (TODO)
+--------------------------------------
+[ ] LISTE DE COURSES (SHOPPING LIST) : Génération automatique basée sur les menus verrouillés (Semaine/Demain).
+[ ] AUTOMATISATION EXPIRATION : Script de vérification pour repasser les abonnés PRO/PREMIUM en FREE à date d'échéance.
+[ ] BILAN NUTRITIONNEL AMÉLIORÉ : Analyse comparative par le Coach Yao (Planner vs Consommation réelle).
