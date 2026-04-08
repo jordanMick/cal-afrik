@@ -141,7 +141,7 @@ export async function POST(req: Request) {
     // ─── VÉRIFICATION ABONNEMENT ──────────────────────────────
     const { data: profile } = await supabase
         .from('user_profiles')
-        .select('subscription_tier, subscription_expires_at')
+        .select('subscription_tier, subscription_expires_at, scan_feedbacks_today')
         .eq('user_id', user.id)
         .single()
     
@@ -154,20 +154,13 @@ export async function POST(req: Request) {
     }
 
     if (tier === 'free') {
-        const today = new Date().toISOString().split('T')[0]
-        const { count, error: countError } = await supabase
-            .from('meals')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .gte('logged_at', `${today}T00:00:00.000Z`)
-            .lte('logged_at', `${today}T23:59:59.999Z`)
-            .gt('ai_confidence', 0)
+        const actionsUsed = (profile?.scan_feedbacks_today || 0)
 
-        // Limite passée à 2 scans gratuits par jour
-        if (count !== null && count >= 2) {
+        // Limite de 2 actions (Scan + Suggestions) par jour en mode gratuit
+        if (actionsUsed >= 2) {
             return new Response(JSON.stringify({ 
                 success: false, 
-                error: "Limite de scan atteinte (2/jour en mode gratuit)", 
+                error: "Limite d'actions gratuite atteinte (2/jour). Passez au plan Pro !", 
                 code: "LIMIT_REACHED" 
             }), { status: 403 })
         }
@@ -216,6 +209,11 @@ export async function POST(req: Request) {
                     fat_g: Math.round((m.food.fat_per_100g * component.estimated_portion_g) / 100 * 10) / 10
                 }))
             })
+        }
+
+        // ✅ Décompte du jeton pour les gratuits
+        if (tier === 'free') {
+            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
         }
 
         return NextResponse.json({
@@ -331,6 +329,11 @@ export async function POST(req: Request) {
             || components.reduce((sum, c) => sum + c.calories, 0)
 
         console.log("✅ RESULTS:", JSON.stringify(results))
+
+        // ✅ Décompte du jeton pour les gratuits
+        if (tier === 'free') {
+            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
+        }
 
         return NextResponse.json({
             success: true,

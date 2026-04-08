@@ -24,20 +24,11 @@ export async function GET(req: Request) {
     
     const tier = getEffectiveTier(profile)
     
-    // Si Free, on ne donne pas accès au planning
-    if (tier === 'free') {
-        return NextResponse.json({ 
-            success: false, 
-            error: "Upgrade required", 
-            code: "PREMIUM_ONLY" 
-        }, { status: 403 })
-    }
-
     // 2. Récupérer les repas déjà pris aujourd'hui
     const today = new Date().toISOString().split('T')[0]
     const { data: todayMeals } = await supabase
         .from('meals')
-        .select('logged_at')
+        .select('*')
         .eq('user_id', user.id)
         .gte('logged_at', `${today}T00:00:00.000Z`)
         .lte('logged_at', `${today}T23:59:59.999Z`)
@@ -50,32 +41,86 @@ export async function GET(req: Request) {
         return 'diner'
     }
 
-    // 3. Déterminer le prochain créneau prioritaire
-    const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
-    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()) as typeof slotsOrder[number])
-    const slotTimes: Record<string, number> = {
-        'petit_dejeuner': 0,
-        'dejeuner': 12,
-        'collation': 16,
-        'diner': 19
+    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()))
+
+    // ─── LOGIQUE DE TIERS ───────────────────────────────────────
+    
+    // CAS FREE : Limite de 2 actions (Scan + Suggestions)
+    if (tier === 'free') {
+        const actionsUsed = (profile?.scan_feedbacks_today || 0)
+        if (actionsUsed >= 2) {
+            return NextResponse.json({ 
+                success: false, 
+                error: "Limite de 2 actions gratuites atteinte (Scans + Suggestions).",
+                code: "LIMIT_REACHED"
+            }, { status: 403 })
+        }
+        // Increment action count if accessing suggestion ? 
+        // On pourrait le faire ici, mais attention au refresh de page. 
+        // On va le décompter au moment du LOG du repas pour l'instant.
     }
 
-    const nextSlot = slotsOrder.find(s => !recordedSlots.includes(s))
+    // CAS PRO : Demain bloqué si pas de dîner
+    const hasDiner = recordedSlots.includes('diner')
+    const view = new URL(req.url).searchParams.get('view') || 'today' // 'today' | 'tomorrow' | 'week'
 
-    // Si tout est fini pour aujourd'hui
-    if (!nextSlot) {
+    if (view === 'tomorrow' && tier === 'pro' && !hasDiner) {
+        return NextResponse.json({ 
+            success: false, 
+            error: "Menu de demain débloqué après ton dîner !", 
+            code: "DINNER_REQUIRED" 
+        }, { status: 403 })
+    }
+
+    // CAS PRO/FREE : Semaine bloquée (Premium only)
+    if (view === 'week' && tier !== 'premium') {
+        return NextResponse.json({ 
+            success: false, 
+            error: "Planning hebdomadaire réservé aux membres Premium.", 
+            code: "PREMIUM_WEEKLY_ONLY" 
+        }, { status: 403 })
+    }
+
+    // 3. Déterminer le prochain créneau prioritaire pour 'today'
+    const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
+    const slotTimes: Record<string, number> = { 'petit_dejeuner': 0, 'dejeuner': 12, 'collation': 16, 'diner': 19 }
+
+    let nextSlot: string | undefined = slotsOrder.find(s => !recordedSlots.includes(s))
+    
+    // Si on regarde demain, on renvoie tout le menu de demain
+    if (view === 'tomorrow') {
         return NextResponse.json({
             success: true,
-            completed: true,
-            message: "Bravo ! Ta journée est bien remplie. On se retrouve demain pour un nouveau menu."
+            view: 'tomorrow',
+            menu: [
+                { slot: 'petit_dejeuner', name: 'Pain complet & œuf poché', kcal: 280 },
+                { slot: 'dejeuner', name: 'Yassa au poulet (portion équilibrée)', kcal: 580 },
+                { slot: 'collation', name: 'Yaourt nature & amandes', kcal: 150 },
+                { slot: 'diner', name: 'Poisson grillé & alloco grillé (peu d\'huile)', kcal: 450 }
+            ]
         })
     }
 
-    // Vérifier si le slot est "ouvert" (pas trop tôt)
+    // Si on regarde la semaine
+    if (view === 'week') {
+        return NextResponse.json({
+            success: true,
+            view: 'week',
+            days: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(d => ({
+                day: d,
+                main_dish: "Menu équilibré Coach Yao"
+            }))
+        })
+    }
+
+    // Logique standard 'today'
+    if (!nextSlot) {
+        return NextResponse.json({ success: true, completed: true, message: "Bravo ! Journée terminée ✨" })
+    }
+
     const currentHour = new Date().getHours()
     const canLogNow = currentHour >= slotTimes[nextSlot as string]
 
-    // 4. Propositions simulées
     const mockProposals: Record<string, any> = {
         'petit_dejeuner': { name: 'Bouillie de mil & une mangue', kcal: 320, protein: 6, carbs: 65, fat: 4 },
         'dejeuner': { name: 'Riz gras au poisson braisé', kcal: 650, protein: 35, carbs: 80, fat: 18 },
@@ -83,17 +128,13 @@ export async function GET(req: Request) {
         'collation': { name: 'Poignée d\'arachides grillées', kcal: 180, protein: 8, carbs: 6, fat: 14 }
     }
 
-    const proposal = mockProposals[nextSlot as keyof typeof mockProposals]
-
     return NextResponse.json({
         success: true,
         completed: false,
         tier,
-        next_meal: proposal,
-        slot: nextSlot as 'petit_dejeuner' | 'dejeuner' | 'collation' | 'diner',
+        next_meal: mockProposals[nextSlot],
+        slot: nextSlot,
         can_log_now: canLogNow,
-        start_hour: slotTimes[nextSlot],
-        can_see_tomorrow: tier === 'pro' || tier === 'premium',
-        can_see_week: tier === 'premium'
+        start_hour: slotTimes[nextSlot as string]
     })
 }

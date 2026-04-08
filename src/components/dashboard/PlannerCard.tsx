@@ -38,15 +38,18 @@ export default function PlannerCard() {
                     protein_g: proposal.protein,
                     carbs_g: proposal.carbs,
                     fat_g: proposal.fat,
-                    portion_g: 300, // Portion standard par défaut
+                    portion_g: 300, 
                     ai_confidence: 100,
                     coach_message: "Repas validé depuis ton planning Coach Yao."
                 })
             })
 
             if (res.ok) {
+                // ✅ Décompte du jeton pour les utilisateurs gratuits
+                if (tier === 'free') {
+                    await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
+                }
                 alert('✅ Repas ajouté à ton journal !')
-                // On pourrait ici rafraîchir le store global si nécessaire
                 window.location.reload() 
             }
         } catch (err) {

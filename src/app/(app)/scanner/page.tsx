@@ -160,6 +160,14 @@ export default function ScannerPage() {
             })
             const json = await res.json()
 
+            // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
+            const effectiveTier = profile?.subscription_tier || 'free';
+            if (effectiveTier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
+                alert("Tu as atteint ta limite de 2 actions gratuites pour aujourd'hui (Scans + Suggestions).")
+                router.push('/upgrade')
+                return
+            }
+
             if (json.error && json.code === 'LIMIT_REACHED') {
                 setIsAnalyzing(false)
                 alert("🚀 Limite de scan atteinte ! Passez au plan Pro pour scanner sans limite.")
@@ -227,23 +235,12 @@ export default function ScannerPage() {
     async function onScanSuccess(decodedText: string) {
         if (qrScannerRef.current) qrScannerRef.current.stop().catch(e => console.error(e));
         
-        // --- VÉRIFICATION LIMITE SCAN PRODUIT ---
+        // --- VÉRIFICATION LIMITE SCAN PRODUIT (COMBO 2) ---
         const { data: { session } } = await supabase.auth.getSession()
-        if (session && profile?.subscription_tier === 'free') {
-            const today = new Date().toISOString().split('T')[0]
-            const { count } = await supabase
-                .from('meals')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', session.user.id)
-                .eq('ai_confidence', -1) // Marqueur code-barres
-                .gte('logged_at', `${today}T00:00:00.000Z`)
-                .lte('logged_at', `${today}T23:59:59.999Z`)
-            
-            if (count !== null && count >= 5) {
-                alert("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit). Passez au plan Pro pour scanner sans limite !")
-                router.push('/upgrade')
-                return
-            }
+        if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
+            alert("Tu as atteint ta limite de 2 actions gratuites (Scans + Suggestions).")
+            router.push('/upgrade')
+            return
         }
 
         (window as any).isLastScanFromBarcode = true;
@@ -268,6 +265,11 @@ export default function ScannerPage() {
                 setMealName(detectedFood.name_fr);
                 setShowManualForm(true);
                 if (p.image_front_url) setImage(p.image_front_url);
+
+                // ✅ Décompte du jeton pour les gratuits
+                if (session && profile?.subscription_tier === 'free') {
+                    await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
+                }
             } else {
                 alert("Produit non trouvé.");
             }

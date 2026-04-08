@@ -56,11 +56,22 @@ DERNIÈRE MISE À JOUR : 07/04/2026
 
 3. ÉVOLUTIONS ET FONCTIONNALITÉS CIBLES
 --------------------------------------
-* PLANIFICATION ALIMENTAIRE IA (COACH YAO PLANNER) - [PRO / PREMIUM] :
+* LOGIQUE DES TIERS ET LIMITES :
+  - PLAN FREE (Calcul du "Combo 2") :
+    * L'utilisateur dispose de 2 jetons d'action par jour au total.
+    * 1 Action = 1 Scan (Code-barres ou IA) OU 1 Suggestion Coach Yao (Planner).
+    * Exemple : 1 Scan + 1 Suggestion = Limite atteinte.
+  
+  - PLAN PRO :
+    * Scans et Suggestions du jour ILLIMITÉS.
+    * Menu complet du LENDEMAIN : Débloqué uniquement APRÈS l'enregistrement du Dîner du jour actuel.
+    
+  - PLAN PREMIUM :
+    * Tout le contenu PRO illimité.
+    * Planification de la SEMAINE ENTIÈRE : Accessible à n'importe quel moment.
+    * Liste de courses intelligente associée.
+
+* PLANIFICATION ALIMENTAIRE IA (COACH YAO PLANNER) :
   - Emplacement : Intégré au Dashboard (Mode "GPS Nutritionnel").
-  - Plan PRO : Accès à la planification du lendemain (J+1 uniquement).
-  - Plan PREMIUM : Accès à la planification de la semaine entière (7 jours) + Liste de courses.
-  - Génération de menus personnalisés basés sur l'objectif santé et les préférences culinaires locales.
-  - Ajustement dynamique : Suggestions du "prochain repas" en fonction des calories déjà consommées et du budget restant.
-  - Validation instantanée : Possibilité d'enregistrer le repas prévu dans le journal en un clic.
-  - Mode "Frigo Vide" : Proposition de recettes basées uniquement sur les ingrédients disponibles chez l'utilisateur.
+  - Fonctionnalité "Changer" : Permet de demander une autre suggestion si le plat ne convient pas (Payant).
+  - Validation instantanée : Enregistrement direct dans le journal en un clic.
