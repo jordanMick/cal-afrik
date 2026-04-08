@@ -67,7 +67,7 @@ export async function GET(req: Request) {
     if (view === 'tomorrow' && (tier === 'free' || (tier === 'pro' && !hasDiner))) {
         return NextResponse.json({ 
             success: false, 
-            error: tier === 'free' ? "Le planning de demain est réservé aux membres Pro." : "Menu de demain débloqué après ton dîner !", 
+            error: tier === 'free' ? "Le planning de demain est réservé aux membres Pro & Premium." : "Menu de demain débloqué après ton dîner !", 
             code: tier === 'free' ? "PRO_ONLY" : "DINNER_REQUIRED" 
         }, { status: 403 })
     }

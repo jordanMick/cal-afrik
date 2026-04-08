@@ -156,7 +156,7 @@ export default function PlannerCard() {
                         onClick={() => router.push('/upgrade')}
                         style={{ color: '#6366f1', fontSize: '11px', fontWeight: '700', border: 'none', background: 'none', cursor: 'pointer', marginTop: '8px' }}
                     >
-                        Passer au Premium →
+                        {activeTab === 'tomorrow' ? "Débloquer le Plan Pro →" : "Débloquer le Plan Premium →"}
                     </button>
                 </div>
             ) : activeTab === 'today' ? (
