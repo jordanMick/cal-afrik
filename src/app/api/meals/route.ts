@@ -55,15 +55,15 @@ export async function GET(req: NextRequest) {
     if (date) {
         // Jour précis
         const { start, end } = getUtcRangeForLocalDay(date, tzOffsetMin)
-        query = query.gte('created_at', start).lte('created_at', end)
+        query = query.gte('logged_at', start).lte('logged_at', end)
     } else if (dateFrom && dateTo) {
         // Plage de dates (pour le rapport 7 jours et l'historique mois)
         const { start } = getUtcRangeForLocalDay(dateFrom, tzOffsetMin)
         const { end } = getUtcRangeForLocalDay(dateTo, tzOffsetMin)
-        query = query.gte('created_at', start).lte('created_at', end)
+        query = query.gte('logged_at', start).lte('logged_at', end)
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error } = await query.order('logged_at', { ascending: false })
 
     if (error) {
         console.log("❌ GET ERROR:", error)
@@ -104,11 +104,20 @@ export async function POST(req: NextRequest) {
 
     const mealData = {
         user_id: user.id,
-        // Schéma actuel DB: total_calories + created_at (+ meal_type, image_url, coach_message)
+        food_item_id: body.food_item_id || null,
+        custom_name: body.custom_name || "Repas",
+        portion_g: Number(body.portion_g || 0),
+        calories: Number(body.calories || 0),
+        protein_g: Number(body.protein_g || 0),
+        carbs_g: Number(body.carbs_g || 0),
+        fat_g: Number(body.fat_g || 0),
+        // Compatibilité avec anciennes vues qui lisent total_calories/created_at
         total_calories: Number(body.calories || 0),
         image_url: body.image_url || null,
+        ai_confidence: Number(body.ai_confidence || 0),
         meal_type: body.meal_type || null,
         coach_message: body.coach_message || null,
+        logged_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
     }
 
@@ -125,17 +134,17 @@ export async function POST(req: NextRequest) {
     const mapped = {
         id: (data as any).id,
         user_id: (data as any).user_id,
-        food_item_id: null,
-        custom_name: body.custom_name || 'Repas',
+        food_item_id: (data as any).food_item_id ?? null,
+        custom_name: (data as any).custom_name ?? body.custom_name ?? 'Repas',
         meal_type: (data as any).meal_type || null,
-        portion_g: Number(body.portion_g || 0),
-        calories: Number((data as any).total_calories ?? body.calories ?? 0),
-        protein_g: Number(body.protein_g || 0),
-        carbs_g: Number(body.carbs_g || 0),
-        fat_g: Number(body.fat_g || 0),
+        portion_g: Number((data as any).portion_g ?? body.portion_g ?? 0),
+        calories: Number((data as any).calories ?? (data as any).total_calories ?? body.calories ?? 0),
+        protein_g: Number((data as any).protein_g ?? body.protein_g ?? 0),
+        carbs_g: Number((data as any).carbs_g ?? body.carbs_g ?? 0),
+        fat_g: Number((data as any).fat_g ?? body.fat_g ?? 0),
         image_url: (data as any).image_url || null,
-        ai_confidence: Number(body.ai_confidence || 0),
-        logged_at: (data as any).created_at || new Date().toISOString(),
+        ai_confidence: Number((data as any).ai_confidence ?? body.ai_confidence ?? 0),
+        logged_at: (data as any).logged_at ?? (data as any).created_at ?? new Date().toISOString(),
         coach_message: (data as any).coach_message || null,
     }
 
