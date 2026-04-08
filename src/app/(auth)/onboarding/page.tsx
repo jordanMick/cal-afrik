@@ -216,7 +216,7 @@ export default function OnboardingPage() {
 
             const { data: updated, error } = await supabase
                 .from('user_profiles')
-                .upsert({ user_id: session.user.id, ...profileData })
+                .upsert({ user_id: session.user.id, ...profileData }, { onConflict: 'user_id' })
                 .select().single()
 
             if (error) throw error
