@@ -505,8 +505,12 @@ export default function ScannerPage() {
             const totals = getTotals()
             const res = await fetch('/api/meals', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ custom_name: mealName || selectedFoods.map(f => f.name).join(', '), portion_g: Math.round(totals.portion_g), calories: Math.round(totals.calories), protein_g: Math.round(totals.protein_g * 10) / 10, carbs_g: Math.round(totals.carbs_g * 10) / 10, fat_g: Math.round(totals.fat_g * 10) / 10, image_url: capturedImage, ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length), coach_message: coachMessage || null }) })
             const json = await res.json()
-            if (json.success && json.data) addMeal(json.data)
-            router.push('/journal')
+            if (json.success && json.data) {
+                addMeal(json.data)
+                router.push('/journal')
+            } else {
+                alert(`Erreur enregistrement repas: ${json?.error || 'Insertion échouée'}`)
+            }
         } catch (err) { console.error(err) }
         finally { setIsSaving(false) }
     }

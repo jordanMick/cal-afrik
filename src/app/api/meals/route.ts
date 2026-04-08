@@ -104,7 +104,6 @@ export async function POST(req: NextRequest) {
 
     const mealData = {
         user_id: user.id,
-        food_item_id: body.food_item_id || null,
         custom_name: body.custom_name || "Repas",
         portion_g: Number(body.portion_g || 0),
         calories: Number(body.calories || 0),
@@ -134,7 +133,7 @@ export async function POST(req: NextRequest) {
     const mapped = {
         id: (data as any).id,
         user_id: (data as any).user_id,
-        food_item_id: (data as any).food_item_id ?? null,
+        food_item_id: null,
         custom_name: (data as any).custom_name ?? body.custom_name ?? 'Repas',
         meal_type: (data as any).meal_type || null,
         portion_g: Number((data as any).portion_g ?? body.portion_g ?? 0),
