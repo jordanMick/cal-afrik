@@ -349,7 +349,7 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
                                     padding: '12px', cursor: canLogNow ? 'pointer' : 'default'
                                 }}
                             >
-                                {canLogNow ? <>✅ Valider</> : <>🕒 Demain à {startHour}:00</>}
+                                {canLogNow ? <>✅ Valider</> : <>🕒 Disponible à {startHour}:00</>}
                             </button>
                             {tier === 'free' ? (
                                 <button 
