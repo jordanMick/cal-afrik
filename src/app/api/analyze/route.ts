@@ -5,7 +5,7 @@ import type { ScanApiResponse } from "@/types"
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY as string,
-    httpOptions: { apiVersion: "v1" },
+    apiVersion: "v1",
 })
 
 const supabase = createClient(
@@ -103,8 +103,6 @@ Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le text
 const GEMINI_MODEL_CANDIDATES = [
     "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-flash",
 ]
 
 
