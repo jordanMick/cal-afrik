@@ -60,16 +60,26 @@ export async function GET(req: Request) {
         // On va le décompter au moment du LOG du repas pour l'instant.
     }
 
-    // CAS PRO : Demain bloqué si pas de dîner. CAS FREE : Demain bloqué totalement.
+    // CAS PRO & PREMIUM : Demain bloqué si pas de dîner. CAS FREE : Demain bloqué totalement.
     const hasDiner = recordedSlots.includes('diner')
     const view = new URL(req.url).searchParams.get('view') || 'today' // 'today' | 'tomorrow' | 'week'
 
-    if (view === 'tomorrow' && (tier === 'free' || (tier === 'pro' && !hasDiner))) {
-        return NextResponse.json({ 
-            success: false, 
-            error: tier === 'free' ? "Le planning de demain est réservé aux membres Pro & Premium." : "Menu de demain débloqué après ton dîner !", 
-            code: tier === 'free' ? "PRO_ONLY" : "DINNER_REQUIRED" 
-        }, { status: 403 })
+    if (view === 'tomorrow') {
+        if (tier === 'free') {
+            return NextResponse.json({ 
+                success: false, 
+                error: "Le planning de demain est réservé aux membres Pro & Premium.", 
+                code: "PRO_ONLY" 
+            }, { status: 403 })
+        }
+        
+        if (!hasDiner) {
+            return NextResponse.json({ 
+                success: false, 
+                error: "Menu de demain débloqué après ton dîner du jour !", 
+                code: "DINNER_REQUIRED" 
+            }, { status: 403 })
+        }
     }
 
     // CAS PRO/FREE : Semaine bloquée (Premium only)
