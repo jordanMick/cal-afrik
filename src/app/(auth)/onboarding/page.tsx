@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { calculateCalorieTarget } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
@@ -100,6 +100,8 @@ function WheelPicker({
 
 export default function OnboardingPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const isEditMode = searchParams.get('edit') === '1'
     const {
         profile, setProfile,
         onboardingStep: step, setOnboardingStep: setStep,
@@ -200,7 +202,7 @@ export default function OnboardingPage() {
                 goal_weight_kg: Number(form.target_weight_kg) || null,
                 country: form.country,
                 preferred_cuisines: form.preferred_cuisines,
-                subscription_tier: 'free',
+                subscription_tier: profile?.subscription_tier || 'free',
                 ...targets,
             }
 
@@ -226,6 +228,12 @@ export default function OnboardingPage() {
     }
 
     const liveResults = calculateSafeTargets()
+
+    useEffect(() => {
+        if (isEditMode && step > 10) {
+            setStep(10)
+        }
+    }, [isEditMode, step, setStep])
 
     return (
         <div style={{
@@ -457,13 +465,13 @@ export default function OnboardingPage() {
                         </div>
                     </div>
                     <div style={{ marginTop: '20px' }}>
-                        <NextButton label="Découvrir mon plan →" onClick={next} />
+                        <NextButton label={isEditMode ? "Terminer" : "Découvrir mon plan →"} onClick={isEditMode ? handleFinish : next} />
                     </div>
                 </StepWrapper>
             )}
 
             {/* 11. PAYWALL */}
-            {step === 11 && (
+            {!isEditMode && step === 11 && (
                 <StepWrapper key="step11" title="Libérez tout votre potentiel" icon="🚀">
                     <div style={{ padding: '24px', background: '#111', borderRadius: '20px', border: '1px solid #222', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>

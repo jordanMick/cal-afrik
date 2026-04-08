@@ -546,7 +546,7 @@ export default function ProfilPage() {
                 )}
 
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <button onClick={() => router.push('/onboarding')} style={{ flex: 1, height: '48px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/onboarding?edit=1')} style={{ flex: 1, height: '48px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>
                         ✏️ Modifier
                     </button>
                     <button onClick={handleLogout} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#ef4444', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
