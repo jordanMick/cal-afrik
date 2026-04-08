@@ -22,16 +22,32 @@ export async function POST(req: Request) {
 
             console.log(`[FedaPay Webhook] Validation paiement pour ${userId} - Plan: ${tier}`);
 
-            // Calcul de la date d'expiration (+30 jours)
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 30);
+            // 1. Récupération de l'ancienne date pour faire un CUMUL si nécessaire
+            const { data: currentProfile } = await supabase
+                .from('user_profiles')
+                .select('subscription_expires_at')
+                .eq('user_id', userId)
+                .single();
+
+            let baseDate = new Date();
+            
+            if (currentProfile?.subscription_expires_at) {
+                const currentExp = new Date(currentProfile.subscription_expires_at);
+                // Si l'ancienne expiration est encore dans le futur, on part de là.
+                if (currentExp > baseDate) {
+                    baseDate = currentExp;
+                }
+            }
+
+            // Calcul global de l'expiration (+30 jours)
+            baseDate.setDate(baseDate.getDate() + 30);
 
             // Mise à jour de l'abonnement dans Supabase
             const { error: updateError } = await supabase
                 .from('user_profiles')
                 .update({ 
                     subscription_tier: tier,
-                    subscription_expires_at: expiresAt.toISOString(),
+                    subscription_expires_at: baseDate.toISOString(),
                     updated_at: new Date().toISOString(),
                 })
                 .eq('user_id', userId);
