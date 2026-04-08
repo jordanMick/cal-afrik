@@ -81,20 +81,33 @@ function getTopMatches(itemName: string, foods: any[]) {
 const PROMPT = `
 Tu es un expert en nutrition.
 
-Analyse la photo et DÉCOMPOSE chaque aliment visible séparément avec sa portion et ses calories propres.
+Analyse la photo et DÉCOMPOSE chaque aliment visible séparément avec son poids et ses macronutriments.
 
 IMPORTANT :
 - Identifie EXACTEMENT les aliments visibles
 - Sépare l'accompagnement (tô, riz, fufu...) de la sauce ou du plat principal
-- Calcule les calories pour la portion estimée de chaque composant
+- Donne une estimation de poids en grammes pour chaque composant
+- Calcule calories, protéines, glucides et lipides pour chaque composant
 - Si incertain, propose des alternatives
 
 Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant les champs suivants :
 {
-  "plat_nom": "nom du repas complet",
   "items": [
-    { "label": "Nom de l'aliment", "volume_ml": nombre }
+    {
+      "name": "Nom de l'aliment",
+      "weight_g": 200,
+      "calories": 240,
+      "proteins": 5.2,
+      "carbs": 45.0,
+      "lipids": 1.5
+    }
   ],
+  "total_summary": {
+    "calories": 240,
+    "proteins": 5.2,
+    "carbs": 45.0,
+    "lipids": 1.5
+  },
   "coach_advice": "conseil bref du coach (max 2 phrases)"
 }
 Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le texte de secours fourni.
@@ -320,12 +333,12 @@ export async function POST(req: Request) {
         let totalCalories = 0
 
         for (const component of geminiResult.items) {
-            const label = String(component?.label || "aliment inconnu")
-            const volumeMl = Number(component?.volume_ml || 0)
-            if (!Number.isFinite(volumeMl) || volumeMl <= 0) {
+            const itemName = String(component?.name || component?.label || "aliment inconnu")
+            const aiWeight = Number(component?.weight_g || 0)
+            if (!Number.isFinite(aiWeight) || aiWeight <= 0) {
                 continue
             }
-            const normalizedLabel = normalize(label)
+            const normalizedLabel = normalize(itemName)
             const { data: aliasMatchRows } = await supabase
                 .from("food_aliases")
                 .select(`
@@ -343,7 +356,7 @@ export async function POST(req: Request) {
                         fat_per_100g
                     )
                 `)
-                .ilike("alias", label)
+                .ilike("alias", itemName)
                 .limit(1)
 
             const matchedByAlias = Array.isArray(aliasMatchRows) && aliasMatchRows.length > 0
@@ -355,7 +368,7 @@ export async function POST(req: Request) {
                 const { data: fuzzyByName } = await supabase
                     .from("food_items")
                     .select("id, name_standard, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
-                    .or(`name_standard.ilike.%${label}%,name_standard.ilike.%${normalizedForLike}%`)
+                    .or(`name_standard.ilike.%${itemName}%,name_standard.ilike.%${normalizedForLike}%`)
                     .limit(1)
                 matchedByNameIlike = Array.isArray(fuzzyByName) && fuzzyByName.length > 0
                     ? fuzzyByName[0]
@@ -370,19 +383,26 @@ export async function POST(req: Request) {
                     return names.some((name: string) => normalize(name) === normalizedLabel)
                 })
             console.log("🧪 FOOD ITEM MATCH:", matchedFood)
-            const topMatches = getTopMatches(label, foodItems || [])
-            const density = Number(matchedFood?.density_g_ml ?? 1.0)
-            const weight = volumeMl * (Number.isFinite(density) ? density : 1.0)
+            const topMatches = getTopMatches(itemName, foodItems || [])
+            const weight = aiWeight
 
-            const caloriesDetected = Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100)
+            const caloriesDetected = matchedFood
+                ? Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100)
+                : Math.round(Number(component?.calories) || 0)
             const proteinsPer100g = Number(matchedFood?.proteins_100g ?? matchedFood?.protein_per_100g) || 0
-            const proteinDetected = Math.round(((proteinsPer100g * weight) / 100) * 10) / 10
-            const carbsDetected = Math.round((((Number(matchedFood?.carbs_per_100g) || 0) * weight) / 100) * 10) / 10
-            const fatDetected = Math.round((((Number(matchedFood?.fat_per_100g) || 0) * weight) / 100) * 10) / 10
+            const proteinDetected = matchedFood
+                ? Math.round(((proteinsPer100g * weight) / 100) * 10) / 10
+                : Math.round((Number(component?.proteins) || 0) * 10) / 10
+            const carbsDetected = matchedFood
+                ? Math.round((((Number(matchedFood?.carbs_per_100g) || 0) * weight) / 100) * 10) / 10
+                : Math.round((Number(component?.carbs) || 0) * 10) / 10
+            const fatDetected = matchedFood
+                ? Math.round((((Number(matchedFood?.fat_per_100g) || 0) * weight) / 100) * 10) / 10
+                : Math.round((Number(component?.lipids) || 0) * 10) / 10
             totalCalories += caloriesDetected
 
             results.push({
-                detected: label,
+                detected: itemName,
                 portion_g: Math.round(weight),
                 calories_detected: caloriesDetected,
                 protein_detected: proteinDetected,
