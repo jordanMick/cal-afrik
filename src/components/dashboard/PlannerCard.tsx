@@ -15,6 +15,12 @@ interface Proposal {
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const addDaysToDateString = (dateStr: string, days: number) => {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    dt.setDate(dt.getDate() + days)
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
 
 interface PlannerCardProps {
     hideDinnerActionLink?: boolean
@@ -96,7 +102,7 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
 
             let items = []
             if (target === 'tomorrow' && tomorrowMenu) {
-                const date = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+                const date = addDaysToDateString(toLocalDateString(), 1)
                 items = tomorrowMenu.map(m => ({ ...m, date }))
             }
             if (target === 'week' && weekPlan) {
@@ -120,6 +126,37 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
             if (res.ok) {
                 setIsLocked(true)
                 alert('✅ Planning validé ! Coach Yao est fier de toi.')
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleUnlock = async (target: 'tomorrow' | 'week') => {
+        setLoading(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+            const date = toLocalDateString()
+            const res = await fetch('/api/planner', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ action: 'unlock', target, date })
+            })
+
+            if (res.ok) {
+                setIsLocked(false)
+                if (target === 'tomorrow') {
+                    setTomorrowRevealed(false)
+                } else {
+                    setWeekRevealed(false)
+                }
+                await fetchPlan(activeTab)
             }
         } catch (err) {
             console.error(err)
@@ -407,7 +444,15 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
                                 Valider mon menu de demain 🔒
                             </button>
                         ) : (
-                            <p style={{ textAlign: 'center', color: '#10b981', fontSize: '11px', fontWeight: '700', marginTop: '16px' }}>✅ Menu de demain verrouillé</p>
+                            <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <p style={{ textAlign: 'center', color: '#10b981', fontSize: '11px', fontWeight: '700' }}>✅ Menu de demain verrouillé</p>
+                                <button
+                                    onClick={() => handleUnlock('tomorrow')}
+                                    style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#f87171', fontSize: '12px', fontWeight: '700', padding: '10px', cursor: 'pointer' }}
+                                >
+                                    Supprimer le menu
+                                </button>
+                            </div>
                         )}
                     </div>
                 )
@@ -450,7 +495,15 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
                                 </div>
                             )
                         ) : (
-                            <p style={{ textAlign: 'center', color: '#10b981', fontSize: '11px', fontWeight: '700', marginTop: '16px' }}>✅ Planning hebdomadaire verrouillé</p>
+                            <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <p style={{ textAlign: 'center', color: '#10b981', fontSize: '11px', fontWeight: '700' }}>✅ Planning hebdomadaire verrouillé</p>
+                                <button
+                                    onClick={() => handleUnlock('week')}
+                                    style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#f87171', fontSize: '12px', fontWeight: '700', padding: '10px', cursor: 'pointer' }}
+                                >
+                                    Supprimer le menu
+                                </button>
+                            </div>
                         )}
                     </div>
                 )

@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     
     try {
-        const { action, slot, date, items } = await req.json()
+        const { action, slot, date, items, target } = await req.json()
         const token = authHeader.replace('Bearer ', '')
         const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
         const { data: { user } } = await supabase.auth.getUser(token)
@@ -50,6 +50,37 @@ export async function POST(req: Request) {
             }))
             await supabase.from('user_plans').insert(inserts)
             return NextResponse.json({ success: true, locked: true })
+        }
+
+        // ACTION: UNLOCK (Supprimer menu validé)
+        if (action === 'unlock') {
+            if (!date) {
+                return NextResponse.json({ error: "Missing date" }, { status: 400 })
+            }
+
+            if (target === 'tomorrow') {
+                const tomorrow = addDaysToDateString(date, 1)
+                await supabase
+                    .from('user_plans')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('is_locked', true)
+                    .eq('date', tomorrow)
+
+                return NextResponse.json({ success: true, unlocked: true })
+            }
+
+            // Par défaut (week/all): on supprime les entrées verrouillées de la semaine active
+            const weekEnd = addDaysToDateString(date, 6)
+            await supabase
+                .from('user_plans')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('is_locked', true)
+                .gte('date', date)
+                .lte('date', weekEnd)
+
+            return NextResponse.json({ success: true, unlocked: true })
         }
 
         // ACTION: SKIP (Refuser)
