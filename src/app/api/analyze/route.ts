@@ -84,11 +84,14 @@ Tu es un expert en nutrition.
 Analyse la photo et DÉCOMPOSE chaque aliment visible séparément avec son poids et ses macronutriments.
 
 IMPORTANT :
-- Identifie EXACTEMENT les aliments visibles
+- Identifie EXACTEMENT les aliments visibles UNIQUEMENT avec ton intelligence visuelle (image), sans te baser sur une base d'alias.
+- Priorité absolue à la vision: la couleur, la texture, la forme et la consistance priment sur les suppositions de nom.
+- Exemple de règle: si la pâte est rouge/tomate, ne la confonds pas avec une pâte blanche type Akoumé.
 - Sépare l'accompagnement (tô, riz, fufu...) de la sauce ou du plat principal
 - Donne une estimation de poids en grammes pour chaque composant
 - Calcule calories, protéines, glucides et lipides pour chaque composant
-- Si incertain, propose des alternatives
+- Si incertain, utilise le nom le plus générique et descriptif possible (ex: "Pâte de maïs à la tomate") au lieu d'un nom local potentiellement faux.
+- Ne bloque jamais la réponse: en cas d'hésitation, réponds avec des noms génériques fiables et des estimations prudentes.
 
 Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant les champs suivants :
 {
@@ -117,7 +120,7 @@ function buildPrompt(country?: string | null) {
     return `${PROMPT}
 
 Contexte géographique prioritaire: ${countryContext}.
-Privilégie les appellations locales et recettes courantes de ce pays.`
+Utilise ce contexte pour choisir le nom local le plus probable, mais seulement s'il est cohérent avec les indices visuels observés.`
 }
 
 const GEMINI_MODEL_CANDIDATES = [
