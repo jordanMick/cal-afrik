@@ -136,12 +136,13 @@ export async function GET(req: Request) {
         const prompt = `Tu es Coach Yao. Voici ma base de données d'aliments africains certifiés :
         ${foodsList}
 
-        Choisis ${view === 'week' ? '7 déjeuners' : view === 'tomorrow' ? '4 repas (1 par slot)' : 'le meilleur prochain repas'} parmi cette liste.
-        Propose des plats typiquement africains adaptés au moment de la journée (ex: bouillie le matin, riz gras à midi).
-        IMPORTANT : Pour chaque aliment choisi, calcule les calories et macros FINALES pour sa portion par défaut (default_portion_g).
+        Crée ${view === 'week' ? '7 déjeuners complets' : view === 'tomorrow' ? '4 repas complets' : 'le meilleur prochain repas équilibré'}.
+        CONSEIL DE COMPOSITION : Tu PEUX et dois COMBINER plusieurs lignes pour créer un repas équilibré (ex: Riz + Sauce + Viande). 
+        Additionne les calories et macros de chaque composant pour le résultat final.
+        Les repas doivent être cohérents : petit_dejeuner (léger/sucré/énergétique), dejeuner/diner (complet : Protéine + Accompagnement + Sauce).
         
         Format attendu (JSON uniquement, pas de texte avant/après) :
-        ${view === 'week' ? '{"days": [{"day": "Lundi", "main_dish": "..."}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "...", "kcal": 0}]}' : '{"name": "...", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
+        ${view === 'week' ? '{"days": [{"day": "Lundi", "main_dish": "Nom combiné (ex: Riz sauce graine et Poisson)"}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "Nom combiné", "kcal": 0}]}' : '{"name": "Nom combiné", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
 
         const msg = await anthropic.messages.create({
             model: "claude-3-haiku-20240307",
