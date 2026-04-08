@@ -42,23 +42,23 @@ export async function GET(req: Request) {
         .gte('logged_at', `${today}T00:00:00.000Z`)
         .lte('logged_at', `${today}T23:59:59.999Z`)
 
-    // Fonction pour déterminer le slot d'un repas selon l'heure
+    // Fonction pour déterminer le slot d'un repas selon l'heure (Sync avec useAppStore)
     const getSlotFromHour = (hour: number) => {
-        if (hour >= 5 && hour < 10) return 'petit_dejeuner'
-        if (hour >= 10 && hour < 15) return 'dejeuner'
-        if (hour >= 15 && hour < 18) return 'collation'
+        if (hour >= 0 && hour < 12) return 'petit_dejeuner'
+        if (hour >= 12 && hour < 16) return 'dejeuner'
+        if (hour >= 16 && hour < 19) return 'collation'
         return 'diner'
     }
 
-    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()) as 'petit_dejeuner' | 'dejeuner' | 'collation' | 'diner')
+    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()))
 
     // 3. Déterminer le prochain créneau prioritaire
     const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
     const slotTimes: Record<string, number> = {
-        'petit_dejeuner': 5,
-        'dejeuner': 10,
-        'collation': 15,
-        'diner': 18
+        'petit_dejeuner': 0,
+        'dejeuner': 12,
+        'collation': 16,
+        'diner': 19
     }
 
     let nextSlot = slotsOrder.find(s => !recordedSlots.includes(s))
