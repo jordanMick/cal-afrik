@@ -93,6 +93,14 @@ IMPORTANT :
 - Si incertain, utilise le nom le plus générique et descriptif possible (ex: "Pâte de maïs à la tomate") au lieu d'un nom local potentiellement faux.
 - Ne bloque jamais la réponse: en cas d'hésitation, réponds avec des noms génériques fiables et des estimations prudentes.
 
+"Protocole de Mesure Spatiale :"
+
+Priorité aux Objets Témoins : Si tu vois une pièce de monnaie, un téléphone ou un couvert, utilise-les pour estimer le diamètre de l'assiette.
+
+Estimation par Volume : Ne te contente pas de la surface. Calcule mentalement l'épaisseur (la hauteur) de la pâte. Une boule de pâte de 300g fait environ la taille d'un gros poing fermé.
+
+Vérification de Cohérence : Si ton calcul arrive à plus de 500g pour une seule portion de pâte ou plus de 400g de viande, revérifie ton échelle. Est-ce une assiette géante ou es-tu trop près ?
+
 Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant les champs suivants :
 {
   "items": [
