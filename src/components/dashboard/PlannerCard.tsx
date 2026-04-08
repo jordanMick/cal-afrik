@@ -211,6 +211,7 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
                 },
                 body: JSON.stringify({
                     custom_name: proposal.name,
+                    meal_type: proposal.slot,
                     calories: proposal.kcal,
                     protein_g: proposal.protein,
                     carbs_g: proposal.carbs,
