@@ -117,6 +117,19 @@ export async function POST(req: NextRequest) {
             canUseAI = (tier === 'premium') || (tier === 'pro' && isEndOfDay)
         }
 
+        // ─── RÉCUPÉRATION DES PLANS (ACCOUNTABILITY) ─────────
+        const todayStr = new Date().toISOString().split('T')[0]
+        let plannedMealsQuery = supabase.from('user_plans').select('recipe_name, slot, date').eq('user_id', user.id).eq('is_locked', true)
+        
+        if (type === 'creneau') plannedMealsQuery = plannedMealsQuery.eq('date', todayStr).eq('slot', slot)
+        if (type === 'journee') plannedMealsQuery = plannedMealsQuery.eq('date', todayStr)
+        if (type === 'mensuel') {
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            plannedMealsQuery = plannedMealsQuery.gte('date', thirtyDaysAgo)
+        }
+        
+        const { data: plans } = await plannedMealsQuery
+
         // ─── BILAN AUTOMATIQUE (sans IA) ─────────────────────
         if (!canUseAI) {
             if (tier === 'free') {
@@ -174,21 +187,27 @@ export async function POST(req: NextRequest) {
                 `- ${m.name} : ${m.calories} kcal`
             ).join('\n')
 
+            const plannedText = plans && plans.length > 0 ? plans[0].recipe_name : 'Aucun repas verrouillé dans le Planner.'
+
             prompt = `Tu es un coach nutritionnel bienveillant. L'utilisateur vient de terminer son créneau "${slotLabel}".
 
 Son objectif global est de ${goalLabel}.
 
-Repas consommés pendant ce créneau :
+Repas consommés (Réalité) :
 ${mealsText}
 
+Repas planifié (Engagement) :
+${plannedText}
+
 Calories du créneau : ${Math.round(slotConsumed)} kcal / ${slotTarget} kcal (${pct}%)
-${slotGoalReached ? '✅ Objectif du créneau atteint.' : slotExceeded ? '⚠️ Objectif du créneau dépassé.' : '📉 En dessous de l\'objectif du créneau.'}
+${slotGoalReached ? "✅ Objectif du créneau atteint." : slotExceeded ? "⚠️ Objectif du créneau dépassé." : "📉 En dessous de l'objectif du créneau."}
 
 ${nextSlotLabel ? `Le prochain créneau est : ${nextSlotLabel}.` : ''}
 
 Écris un message court (2-3 phrases max) qui :
-1. Fait un bref bilan de ce créneau (bien ou à améliorer)
-2. ${nextSlotLabel ? `Donne un conseil concret pour le ${nextSlotLabel} (ex: aliment recommandé, quantité, timing)` : 'Encourage pour la suite de la journée'}
+1. Fait un bref bilan de ce créneau (bien ou à améliorer).
+2. Vérifie la discipline : compare très brièvement ce qu'il a mangé avec ce qu'il avait planifié (s'il y a un plan). Félicite-le si ça correspond, ou encourage-le gentiment à suivre ses plans s'il a craqué.
+3. ${nextSlotLabel ? `Donne un conseil concret pour le ${nextSlotLabel} (ex: aliment recommandé, quantité, timing)` : 'Encourage pour la suite de la journée'}
 
 Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
 
@@ -221,12 +240,19 @@ Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
                 ? meals.map((m: { name: string; calories: number }) => `- ${m.name} : ${m.calories} kcal`).join('\n')
                 : 'Aucun repas enregistré.'
 
+            const plannedText = plans && plans.length > 0
+                ? plans.map((p: any) => `- ${p.slot} : ${p.recipe_name}`).join('\n')
+                : "Aucun repas verrouillé aujourd'hui."
+
             prompt = `Tu es un coach nutritionnel bienveillant. Voici le bilan de journée de l'utilisateur.
 
 Objectif : ${goalLabel}
 
-Repas de la journée :
+Repas de la journée (Réalité) :
 ${mealsText}
+
+Repas planifiés (Engagements de début de journée) :
+${plannedText}
 
 Résumé nutritionnel :
 - Calories : ${Math.round(dailyCalories)} / ${calorieTarget} kcal (${calPct}%) ${goalReached ? '✅' : exceeded ? '⚠️' : '📉'}
@@ -235,10 +261,10 @@ Résumé nutritionnel :
 - Lipides : ${Math.round(dailyFat)} / ${fatTarget}g ${fatOk ? '✅' : '📉'}
 
 Écris un message de bilan de journée (3-4 phrases max) qui :
-1. Dit clairement si l'objectif calorique est atteint, dépassé ou incomplet
-2. Mentionne les macros qui méritent attention (seulement si vraiment hors cible)
-3. Si l'objectif n'est pas atteint, donne UN conseil concret pour compenser avant minuit (ex: "mange encore X kcal avec un bol de X")
-4. Si l'objectif est atteint, félicite chaleureusement
+1. Dit clairement si l'objectif calorique est atteint, dépassé ou incomplet.
+2. Fait un commentaire sur la discipline : l'utilisateur a-t-il suivi les repas qu'il avait planifiés ou a-t-il improvisé ? (S'il avait un plan). Félicite sa rigueur ou motive-le.
+3. Mentionne les macros qui méritent attention (seulement si vraiment hors cible).
+4. Si l'objectif n'est pas atteint, donne UN conseil concret pour compenser avant minuit.
 
 Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
 
