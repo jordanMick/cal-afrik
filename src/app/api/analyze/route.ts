@@ -301,7 +301,7 @@ export async function POST(req: Request) {
         // ─── MATCHING BD ──────────────────────────────────────
         const { data: foodItems } = await supabase
             .from("food_items")
-            .select("id, name_standard, name_en, density_g_ml, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+            .select("id, name_standard, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
         const { data: foodAliases } = await supabase
             .from("food_aliases")
             .select("alias, food_item_id")
@@ -337,6 +337,7 @@ export async function POST(req: Request) {
                         name_en,
                         density_g_ml,
                         calories_per_100g,
+                        proteins_100g,
                         protein_per_100g,
                         carbs_per_100g,
                         fat_per_100g
@@ -348,19 +349,34 @@ export async function POST(req: Request) {
             const matchedByAlias = Array.isArray(aliasMatchRows) && aliasMatchRows.length > 0
                 ? (aliasMatchRows[0] as any).food_items
                 : null
+            const normalizedForLike = normalizedLabel.replace(/'/g, "''")
+            let matchedByNameIlike: any = null
+            if (!matchedByAlias && normalizedForLike) {
+                const { data: fuzzyByName } = await supabase
+                    .from("food_items")
+                    .select("id, name_standard, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+                    .or(`name_standard.ilike.%${label}%,name_standard.ilike.%${normalizedForLike}%`)
+                    .limit(1)
+                matchedByNameIlike = Array.isArray(fuzzyByName) && fuzzyByName.length > 0
+                    ? fuzzyByName[0]
+                    : null
+            }
 
             const matchedFood = matchedByAlias
+                || matchedByNameIlike
                 || aliasToFood.get(normalizedLabel)
                 || (foodItems || []).find((food: any) => {
                     const names = [food.name_standard, food.name_en].filter(Boolean)
                     return names.some((name: string) => normalize(name) === normalizedLabel)
                 })
+            console.log("🧪 FOOD ITEM MATCH:", matchedFood)
             const topMatches = getTopMatches(label, foodItems || [])
             const density = Number(matchedFood?.density_g_ml ?? 1.0)
             const weight = volumeMl * (Number.isFinite(density) ? density : 1.0)
 
             const caloriesDetected = Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100)
-            const proteinDetected = Math.round((((Number(matchedFood?.protein_per_100g) || 0) * weight) / 100) * 10) / 10
+            const proteinsPer100g = Number(matchedFood?.proteins_100g ?? matchedFood?.protein_per_100g) || 0
+            const proteinDetected = Math.round(((proteinsPer100g * weight) / 100) * 10) / 10
             const carbsDetected = Math.round((((Number(matchedFood?.carbs_per_100g) || 0) * weight) / 100) * 10) / 10
             const fatDetected = Math.round((((Number(matchedFood?.fat_per_100g) || 0) * weight) / 100) * 10) / 10
             totalCalories += caloriesDetected
@@ -378,7 +394,7 @@ export async function POST(req: Request) {
                     name: m.food.name_standard || m.food.name_en,
                     score: m.score,
                     calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
-                    protein_g: Math.round((((Number(m.food.protein_per_100g) || 0) * weight) / 100) * 10) / 10,
+                    protein_g: Math.round(((((Number(m.food.proteins_100g ?? m.food.protein_per_100g) || 0) * weight) / 100) * 10)) / 10,
                     carbs_g: Math.round((((Number(m.food.carbs_per_100g) || 0) * weight) / 100) * 10) / 10,
                     fat_g: Math.round((((Number(m.food.fat_per_100g) || 0) * weight) / 100) * 10) / 10,
                 }))
