@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import Anthropic from "@anthropic-ai/sdk"
-import type { ScanResultV2, ScanComponent, ScanApiResponse } from "@/types"
+import { GoogleGenerativeAI } from "@google/generative-ai"
+import type { ScanResultV2, ScanApiResponse } from "@/types"
 
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY!,
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -90,40 +88,22 @@ IMPORTANT :
 - Calcule les calories pour la portion estimée de chaque composant
 - Si incertain, propose des alternatives
 
-Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après :
+Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant les champs suivants :
 {
-  "meal_name": "nom du repas complet",
-  "components": [
-    {
-      "food_name": "Tô de maïs",
-      "estimated_portion_g": 300,
-      "calories": 310,
-      "protein_g": 6.0,
-      "carbs_g": 68.0,
-      "fat_g": 1.5,
-      "confidence": 88
-    },
-    {
-      "food_name": "Sauce feuilles au poisson fumé",
-      "estimated_portion_g": 250,
-      "calories": 310,
-      "protein_g": 22.5,
-      "carbs_g": 8.0,
-      "fat_g": 20.5,
-      "confidence": 80
-    }
+  "plat_nom": "nom du repas complet",
+  "items": [
+    { "label": "Nom de l'aliment", "volume_ml": nombre }
   ],
-  "total_calories": 620,
-  "alternatives": ["Fufu avec sauce égusi", "Banku avec sauce feuilles"],
-  "notes": "observations utiles"
+  "coach_advice": "conseil bref du coach (max 2 phrases)"
 }
+Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le texte de secours fourni.
 `
+
 
 // ─── ROUTE POST ───────────────────────────────────────────────
 export async function POST(req: Request) {
 
-    console.log("🔑 KEY EXISTS:", !!process.env.ANTHROPIC_API_KEY)
-    console.log("🔑 KEY LENGTH:", process.env.ANTHROPIC_API_KEY?.length)
+    // Gemini API key is accessed via process.env.GEMINI_API_KEY
 
     // Auth
     const authHeader = req.headers.get('authorization')
@@ -144,10 +124,10 @@ export async function POST(req: Request) {
         .select('subscription_tier, subscription_expires_at, scan_feedbacks_today')
         .eq('user_id', user.id)
         .single()
-    
+
     let tier = profile?.subscription_tier || 'free'
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
-    
+
     // Si l'abonnement est expiré, on force le mode free
     if (expiresAt && expiresAt < new Date()) {
         tier = 'free'
@@ -158,16 +138,16 @@ export async function POST(req: Request) {
 
         // Limite de 2 actions (Scan + Suggestions) par jour en mode gratuit
         if (actionsUsed >= 2) {
-            return new Response(JSON.stringify({ 
-                success: false, 
-                error: "Limite d'actions gratuite atteinte (2/jour). Passez au plan Pro !", 
-                code: "LIMIT_REACHED" 
+            return new Response(JSON.stringify({
+                success: false,
+                error: "Limite d'actions gratuite atteinte (2/jour). Passez au plan Pro !",
+                code: "LIMIT_REACHED"
             }), { status: 403 })
         }
     }
 
     // ─── MODE SIMULATION (POUR ÉCONOMISER LES TOKENS EN TEST) ───
-    const MOCK_MODE = true 
+    const MOCK_MODE = false
 
     if (MOCK_MODE) {
         console.log("🛠️ MOCK MODE: Simulation d'un scan (Garba Royal)")
@@ -187,7 +167,7 @@ export async function POST(req: Request) {
         const { data: foodItems } = await supabase
             .from("food_items")
             .select("id, name_fr, name_local, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
-        
+
         const results = []
         for (const component of components) {
             const topMatches = getTopMatches(component.food_name, foodItems || [])
@@ -236,97 +216,139 @@ export async function POST(req: Request) {
         console.log("📸 TYPE:", image.mimeType)
         console.log("📸 BASE64 SIZE:", image.data.length)
 
-        // ─── APPEL IA ─────────────────────────────────────────
-        const response = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 800,
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "image",
-                            source: {
-                                type: "base64",
-                                media_type: image.mimeType || "image/jpeg",
-                                data: image.data,
-                            },
-                        },
-                        {
-                            type: "text",
-                            text: PROMPT,
-                        },
-                    ],
+        // ─── APPEL IA (Gemini) ───────────────────────────────────────
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            generationConfig: {
+                responseMimeType: "application/json",
+                temperature: 0.7,
+                maxOutputTokens: 800,
+            },
+            systemInstruction: `Expert en nutrition d'Afrique de l'Ouest. Doit identifier les composants du plat avec leurs noms locaux. Doit estimer les volumes en ml (millilitres). Doit donner un conseil de coach court (2 phrases max).`,
+        });
+        const result = await model.generateContent([
+            {
+                inlineData: {
+                    mimeType: image.mimeType || "image/jpeg",
+                    data: image.data,
                 },
-            ],
-        })
+            },
+            { text: PROMPT },
+        ]);
+        const responseText = await result.response.text();
 
-        console.log("🔥 RAW RESPONSE:", JSON.stringify(response.content))
+        console.log("🔥 RAW RESPONSE:", responseText)
 
         // ─── PARSE JSON ───────────────────────────────────────
-        let scanResult: ScanResultV2 | null = null
-
+        // Parse Gemini JSON response
+        let geminiResult: any = null;
         try {
-            const textBlock = response.content.find(
-                (block) => block.type === "text" && "text" in block
-            ) as { type: "text"; text: string } | undefined
-
-            if (!textBlock) throw new Error("Aucun texte retourné par l'IA")
-
-            const text = textBlock.text
+            const cleaned = responseText
                 .replace(/```json\n?/g, "")
                 .replace(/```\n?/g, "")
-                .trim()
-
-            scanResult = JSON.parse(text) as ScanResultV2
-
+                .trim();
+            geminiResult = JSON.parse(cleaned);
         } catch (err) {
-            console.error("❌ JSON Claude invalide:", err)
+            console.error("❌ JSON Gemini invalide:", err);
         }
 
-        // ─── FALLBACK si l'IA échoue ──────────────────────────
-        const components: ScanComponent[] = scanResult?.components?.length
-            ? scanResult.components
-            : [
-                { food_name: "riz", estimated_portion_g: 200, calories: 260, protein_g: 5, carbs_g: 57, fat_g: 0.5, confidence: 50 },
-                { food_name: "poulet", estimated_portion_g: 150, calories: 248, protein_g: 30, carbs_g: 0, fat_g: 14, confidence: 50 }
-            ]
+        if (!geminiResult || !Array.isArray(geminiResult.items)) {
+            return NextResponse.json({
+                success: false,
+                meal_name: "",
+                total_calories: 0,
+                data: [],
+                error: "Réponse Gemini invalide",
+            }, { status: 422 })
+        }
 
         // ─── MATCHING BD ──────────────────────────────────────
         const { data: foodItems } = await supabase
             .from("food_items")
-            .select("id, name_fr, name_local, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+            .select("id, name_fr, name_local, name_en, density_g_ml, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+        const { data: foodAliases } = await supabase
+            .from("food_aliases")
+            .select("alias, food_item_id")
 
-        const results = []
+        const foodsById = new Map((foodItems || []).map((food: any) => [food.id, food]))
+        const aliasToFood = new Map<string, any>()
+        for (const aliasRow of foodAliases || []) {
+            const food = foodsById.get((aliasRow as any).food_item_id)
+            const alias = (aliasRow as any).alias
+            if (food && alias) {
+                aliasToFood.set(normalize(String(alias)), food)
+            }
+        }
 
-        for (const component of components) {
-            const topMatches = getTopMatches(component.food_name, foodItems || [])
-            const portion = component.estimated_portion_g
+        const results: any[] = []
+        let totalCalories = 0
+
+        for (const component of geminiResult.items) {
+            const label = String(component?.label || "aliment inconnu")
+            const volumeMl = Number(component?.volume_ml || 0)
+            if (!Number.isFinite(volumeMl) || volumeMl <= 0) {
+                continue
+            }
+            const normalizedLabel = normalize(label)
+            const { data: aliasMatchRows } = await supabase
+                .from("food_aliases")
+                .select(`
+                    alias,
+                    food_item_id,
+                    food_items (
+                        id,
+                        name_fr,
+                        name_local,
+                        name_en,
+                        density_g_ml,
+                        calories_per_100g,
+                        protein_per_100g,
+                        carbs_per_100g,
+                        fat_per_100g
+                    )
+                `)
+                .ilike("alias", label)
+                .limit(1)
+
+            const matchedByAlias = Array.isArray(aliasMatchRows) && aliasMatchRows.length > 0
+                ? (aliasMatchRows[0] as any).food_items
+                : null
+
+            const matchedFood = matchedByAlias
+                || aliasToFood.get(normalizedLabel)
+                || (foodItems || []).find((food: any) => {
+                    const names = [food.name_fr, food.name_local, food.name_en].filter(Boolean)
+                    return names.some((name: string) => normalize(name) === normalizedLabel)
+                })
+            const topMatches = getTopMatches(label, foodItems || [])
+            const density = Number(matchedFood?.density_g_ml ?? 1.0)
+            const weight = volumeMl * (Number.isFinite(density) ? density : 1.0)
+
+            const caloriesDetected = Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100)
+            const proteinDetected = Math.round((((Number(matchedFood?.protein_per_100g) || 0) * weight) / 100) * 10) / 10
+            const carbsDetected = Math.round((((Number(matchedFood?.carbs_per_100g) || 0) * weight) / 100) * 10) / 10
+            const fatDetected = Math.round((((Number(matchedFood?.fat_per_100g) || 0) * weight) / 100) * 10) / 10
+            totalCalories += caloriesDetected
 
             results.push({
-                detected: component.food_name,
-                portion_g: portion,
-                // ✅ Valeurs calculées par l'IA pour cette portion spécifique
-                calories_detected: component.calories,
-                protein_detected: component.protein_g,
-                carbs_detected: component.carbs_g,
-                fat_detected: component.fat_g,
-                confidence: component.confidence,
-                // ✅ Suggestions depuis ta BD avec calories recalculées pour la même portion
+                detected: label,
+                portion_g: Math.round(weight),
+                calories_detected: caloriesDetected,
+                protein_detected: proteinDetected,
+                carbs_detected: carbsDetected,
+                fat_detected: fatDetected,
+                confidence: Number(component?.confidence || 80),
                 suggestions: topMatches.map(m => ({
                     id: m.food.id,
-                    name: m.food.name_fr,
+                    name: m.food.name_fr || m.food.name_local || m.food.name_en,
                     score: m.score,
-                    calories: Math.round((m.food.calories_per_100g * portion) / 100),
-                    protein_g: Math.round((m.food.protein_per_100g * portion) / 100 * 10) / 10,
-                    carbs_g: Math.round((m.food.carbs_per_100g * portion) / 100 * 10) / 10,
-                    fat_g: Math.round((m.food.fat_per_100g * portion) / 100 * 10) / 10,
+                    calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
+                    protein_g: Math.round((((Number(m.food.protein_per_100g) || 0) * weight) / 100) * 10) / 10,
+                    carbs_g: Math.round((((Number(m.food.carbs_per_100g) || 0) * weight) / 100) * 10) / 10,
+                    fat_g: Math.round((((Number(m.food.fat_per_100g) || 0) * weight) / 100) * 10) / 10,
                 }))
             })
         }
-
-        const totalCalories = scanResult?.total_calories
-            || components.reduce((sum, c) => sum + c.calories, 0)
 
         console.log("✅ RESULTS:", JSON.stringify(results))
 
@@ -337,10 +359,11 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             success: true,
-            meal_name: scanResult?.meal_name || "Repas détecté",
+            meal_name: geminiResult.plat_nom || "Repas détecté",
             total_calories: totalCalories,
-            data: results
-        } satisfies ScanApiResponse)
+            data: results,
+            coach_message: geminiResult.coach_advice || null
+        })
 
     } catch (err: any) {
         console.error("❌ ERROR:", err)
