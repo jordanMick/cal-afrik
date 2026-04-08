@@ -18,6 +18,8 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
 }
 
 const DOT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
+const toLocalDateString = (date = new Date()) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
 function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () => void; onDelete: (id: string) => Promise<void> }) {
     const [showCoach, setShowCoach] = useState(false)
@@ -100,7 +102,7 @@ export default function HistoriquePage() {
     const now = new Date()
     const [year, setYear] = useState(now.getFullYear())
     const [month, setMonth] = useState(now.getMonth())
-    const [selectedDate, setSelectedDate] = useState<string | null>(now.toISOString().split('T')[0])
+    const [selectedDate, setSelectedDate] = useState<string | null>(toLocalDateString(now))
     const [mealsForDate, setMealsForDate] = useState<Meal[]>([])
     const [daysWithMeals, setDaysWithMeals] = useState<Set<string>>(new Set())
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
@@ -114,7 +116,7 @@ export default function HistoriquePage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
             const firstDay = `${year}-${String(month + 1).padStart(2, '0')}-01`
-            const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0]
+            const lastDay = toLocalDateString(new Date(year, month + 1, 0))
             const tzOffset = new Date().getTimezoneOffset()
             const res = await fetch(`/api/meals?date_from=${firstDay}&date_to=${lastDay}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
@@ -145,7 +147,7 @@ export default function HistoriquePage() {
 
     const firstDayOfMonth = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const todayStr = now.toISOString().split('T')[0]
+    const todayStr = toLocalDateString(now)
 
     const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }
     const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }

@@ -8,8 +8,10 @@ import { calculateCalorieTarget } from '@/lib/nutrition'
 import { checkPermission } from '@/lib/subscription'
 import type { Meal } from '@/types'
 
-const getLast7Days = () => Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return d.toISOString().split('T')[0] }).reverse()
-const today = () => new Date().toISOString().split('T')[0]
+const toLocalDateString = (date = new Date()) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const getLast7Days = () => Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return toLocalDateString(d) }).reverse()
+const today = () => toLocalDateString()
 const formatDay = (dateStr: string) => new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 3)
 const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 const MEAL_TYPE_EMOJIS: Record<string, string> = { petit_dejeuner: '🌅', dejeuner: '☀️', diner: '🌙', collation: '🥜' }
@@ -79,7 +81,7 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
     }
 
     const prog = getProgressionInfo()
-    const lastWeightDate = entries[entries.length - 1]?.date || new Date().toISOString().split('T')[0]
+    const lastWeightDate = entries[entries.length - 1]?.date || toLocalDateString()
     const daysSince = Math.floor((Date.now() - new Date(lastWeightDate).getTime()) / 86400000)
     const daysLeft = Math.max(0, 30 - daysSince)
     const pct = Math.round((daysSince / 30) * 100)

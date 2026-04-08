@@ -5,6 +5,8 @@ import { useAppStore } from '@/store/useAppStore'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
+const toLocalDateString = (date = new Date()) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const { setProfile, setTodayMeals } = useAppStore()
@@ -80,7 +82,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             // On ne recharge depuis Supabase qu'au premier démarrage ou après login
             if (!mealsLoaded.current) {
                 mealsLoaded.current = true
-                const today = new Date().toISOString().split('T')[0]
+                const today = toLocalDateString()
                 const tzOffset = new Date().getTimezoneOffset()
                 const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, {
                     headers: { Authorization: `Bearer ${session.access_token}` }

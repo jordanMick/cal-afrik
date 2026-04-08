@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 
+const toLocalDateString = (date = new Date()) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
 function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: string }) {
     const router = useRouter()
     const [weeklyData, setWeeklyData] = useState<{ date: string, calories: number }[]>([])
@@ -22,8 +25,8 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                 const sevenDaysAgo = new Date(today)
                 sevenDaysAgo.setDate(today.getDate() - 6)
 
-                const dateFrom = sevenDaysAgo.toISOString().split('T')[0]
-                const dateTo = today.toISOString().split('T')[0]
+                const dateFrom = toLocalDateString(sevenDaysAgo)
+                const dateTo = toLocalDateString(today)
                 const tzOffset = new Date().getTimezoneOffset()
 
                 const res = await fetch(`/api/meals?date_from=${dateFrom}&date_to=${dateTo}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
@@ -36,7 +39,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     for (let i = 6; i >= 0; i--) {
                         const d = new Date(today)
                         d.setDate(today.getDate() - i)
-                        dailyTotals[d.toISOString().split('T')[0]] = 0
+                        dailyTotals[toLocalDateString(d)] = 0
                     }
 
                     // Somme des calories
@@ -100,7 +103,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                                     opacity: day.calories === 0 ? 0 : 1
                                 }} />
                             </div>
-                            <span style={{ color: day.date === new Date().toISOString().split('T')[0] ? '#fff' : '#555', fontSize: '11px', fontWeight: '600' }}>{dayLabel}</span>
+                            <span style={{ color: day.date === toLocalDateString() ? '#fff' : '#555', fontSize: '11px', fontWeight: '600' }}>{dayLabel}</span>
                         </div>
                     )
                 })}
@@ -262,7 +265,7 @@ export default function DashboardPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const today = new Date().toISOString().split('T')[0]
+            const today = toLocalDateString()
             const tzOffset = new Date().getTimezoneOffset()
             const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
