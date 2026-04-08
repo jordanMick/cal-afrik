@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAppStore, getMealSlot, SLOT_LABELS } from '@/store/useAppStore'
+import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
+import PlannerCard from '@/components/dashboard/PlannerCard'
 import { supabase } from '@/lib/supabase'
 import { checkPermission } from '@/lib/subscription'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
@@ -507,6 +508,9 @@ export default function ScannerPage() {
                     🏷️ Code-barres
                 </button>
             </div>
+
+            {/* PLANNER (GUIDE) */}
+            {!image && !isAnalyzing && <PlannerCard />}
 
             {/* AI SCAN VIEW */}
             {scanMode === 'ai' && !image && (
