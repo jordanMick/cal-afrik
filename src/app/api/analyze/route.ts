@@ -99,6 +99,13 @@ Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant 
 }
 Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le texte de secours fourni.
 `
+function buildPrompt(country?: string | null) {
+    const countryContext = (country || "").trim() || "Afrique de l'Ouest"
+    return `${PROMPT}
+
+Contexte géographique prioritaire: ${countryContext}.
+Privilégie les appellations locales et recettes courantes de ce pays si l'image est ambiguë.`
+}
 
 const GEMINI_MODEL_CANDIDATES = [
     "gemini-2.5-flash",
@@ -127,7 +134,7 @@ export async function POST(req: Request) {
     // ─── VÉRIFICATION ABONNEMENT ──────────────────────────────
     const { data: profile } = await supabase
         .from('user_profiles')
-        .select('subscription_tier, subscription_expires_at, scan_feedbacks_today')
+        .select('subscription_tier, subscription_expires_at, scan_feedbacks_today, country')
         .eq('user_id', user.id)
         .single()
 
@@ -172,7 +179,7 @@ export async function POST(req: Request) {
                     data: image.data,
                 },
             },
-            { text: PROMPT },
+            { text: buildPrompt(profile?.country) },
         ]
         let responseText = ""
         let generationError: any = null
