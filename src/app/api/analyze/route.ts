@@ -317,13 +317,13 @@ export async function POST(req: Request) {
             .select("id, name_standard, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
         const { data: foodAliases } = await supabase
             .from("food_aliases")
-            .select("alias, food_item_id")
+            .select("alias_name, food_item_id")
 
         const foodsById = new Map((foodItems || []).map((food: any) => [food.id, food]))
         const aliasToFood = new Map<string, any>()
         for (const aliasRow of foodAliases || []) {
             const food = foodsById.get((aliasRow as any).food_item_id)
-            const alias = (aliasRow as any).alias
+            const alias = (aliasRow as any).alias_name
             if (food && alias) {
                 aliasToFood.set(normalize(String(alias)), food)
             }
@@ -339,29 +339,12 @@ export async function POST(req: Request) {
                 continue
             }
             const normalizedLabel = normalize(itemName)
-            const { data: aliasMatchRows } = await supabase
-                .from("food_aliases")
-                .select(`
-                    alias,
-                    food_item_id,
-                    food_items (
-                        id,
-                        name_standard,
-                        name_en,
-                        density_g_ml,
-                        calories_per_100g,
-                        proteins_100g,
-                        protein_per_100g,
-                        carbs_per_100g,
-                        fat_per_100g
-                    )
-                `)
-                .ilike("alias", itemName)
-                .limit(1)
-
-            const matchedByAlias = Array.isArray(aliasMatchRows) && aliasMatchRows.length > 0
-                ? (aliasMatchRows[0] as any).food_items
-                : null
+            // Recherche alias d'abord sur une clé normalisée (minuscules + sans accents)
+            const matchedByAliasExact = aliasToFood.get(normalizedLabel)
+            const matchedByAliasFuzzyEntry = Array.from(aliasToFood.entries()).find(([aliasNorm]) =>
+                aliasNorm.includes(normalizedLabel) || normalizedLabel.includes(aliasNorm)
+            )
+            const matchedByAlias = matchedByAliasExact || matchedByAliasFuzzyEntry?.[1] || null
             const normalizedForLike = normalizedLabel.replace(/'/g, "''")
             let matchedByNameIlike: any = null
             if (!matchedByAlias && normalizedForLike) {
