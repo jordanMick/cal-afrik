@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getEffectiveTier } from "@/lib/subscription"
+import Anthropic from "@anthropic-ai/sdk"
+
+const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY!,
+})
 
 // Variable temporaire pour simuler les refus (en attendant une table DB si nécessaire)
 let skippedSlots: Record<string, string[]> = {} 
@@ -109,7 +114,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: false, error: "Planning hebdomadaire réservé aux membres Premium.", code: "PREMIUM_ONLY" }, { status: 403 })
     }
 
-    // 3. Mode Hybride : L'IA choisit dans ton catalogue RECIPES
+    // 3. Mode Hybride avec CLAUDE (Anthropic)
     try {
         const { data: allRecipes } = await supabase.from('recipes').select('*')
         const recipesList = allRecipes?.map(r => `${r.name} (${r.kcal}kcal, P:${r.protein}g, G:${r.carbs}g, L:${r.fat}g, slot:${r.slot})`).join('\n')
@@ -119,20 +124,17 @@ export async function GET(req: Request) {
 
         Choisis ${view === 'week' ? '7 déjeuners' : view === 'tomorrow' ? '4 repas (1 par slot)' : 'le meilleur prochain repas'} parmi cette liste.
         Respecte scrupuleusement les noms et les macros du catalogue.
-        Format attendu (JSON uniquement) :
+        Format attendu (JSON uniquement, pas de texte avant/après) :
         ${view === 'week' ? '{"days": [{"day": "Lundi", "main_dish": "..."}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "...", "kcal": 0}]}' : '{"name": "...", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { response_mime_type: "application/json" }
-            })
+        const msg = await anthropic.messages.create({
+            model: "claude-3-haiku-20240307",
+            max_tokens: 1024,
+            messages: [{ role: "user", content: prompt }],
         })
 
-        const aiData = await res.json()
-        const selected = JSON.parse(aiData.candidates[0].content.parts[0].text)
+        const rawText = (msg.content[0] as any).text
+        const selected = JSON.parse(rawText)
 
         if (view === 'tomorrow') return NextResponse.json({ success: true, tier, menu: selected.menu, locked: false })
         if (view === 'week') return NextResponse.json({ success: true, tier, days: selected.days, locked: false })
