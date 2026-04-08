@@ -27,7 +27,17 @@ export async function POST(req: NextRequest) {
 
         if (!profile) return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 })
 
-        const tier = profile.subscription_tier || 'free'
+        let tier = profile.subscription_tier || 'free'
+        const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
+        if (expiresAt && expiresAt < new Date()) {
+            tier = 'free'
+            if (profile.subscription_tier !== 'free') {
+                await supabase
+                    .from('user_profiles')
+                    .update({ subscription_tier: 'free' })
+                    .eq('user_id', user.id)
+            }
+        }
         
         // 2. Gestion des quotas
         const limits: Record<string, number> = {

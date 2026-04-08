@@ -168,6 +168,12 @@ export async function POST(req: Request) {
     // Si l'abonnement est expiré, on force le mode free
     if (expiresAt && expiresAt < new Date()) {
         tier = 'free'
+        if (profile?.subscription_tier && profile.subscription_tier !== 'free') {
+            await supabase
+                .from('user_profiles')
+                .update({ subscription_tier: 'free' })
+                .eq('user_id', user.id)
+        }
     }
 
     if (tier === 'free') {

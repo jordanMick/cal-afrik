@@ -57,6 +57,16 @@ export async function GET(req: Request) {
     if (!user) return NextResponse.json({ error: "No user" }, { status: 401 })
 
     const { data: profile } = await supabase.from('user_profiles').select('*').eq('user_id', user.id).single()
+    if (profile?.subscription_tier && profile.subscription_tier !== 'free' && profile?.subscription_expires_at) {
+        const expiresAt = new Date(profile.subscription_expires_at)
+        if (expiresAt < new Date()) {
+            await supabase
+                .from('user_profiles')
+                .update({ subscription_tier: 'free' })
+                .eq('user_id', user.id)
+            profile.subscription_tier = 'free'
+        }
+    }
     const tier = getEffectiveTier(profile)
     const viewsToday = profile?.planner_views_today || 0
     const view = new URL(req.url).searchParams.get('view') || 'today'
