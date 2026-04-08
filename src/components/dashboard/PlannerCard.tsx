@@ -58,6 +58,8 @@ export default function PlannerCard() {
 
     const [completed, setCompleted] = useState(false)
     const [completedMsg, setCompletedMsg] = useState('')
+    const [canLogNow, setCanLogNow] = useState(true)
+    const [startHour, setStartHour] = useState(0)
 
     useEffect(() => {
         const fetchPlan = async () => {
@@ -77,6 +79,8 @@ export default function PlannerCard() {
                     } else {
                         setProposal(json.next_meal)
                         setCompleted(false)
+                        setCanLogNow(json.can_log_now)
+                        setStartHour(json.start_hour)
                     }
                     setTier(json.tier)
                 } else if (json.code === 'PREMIUM_ONLY') {
@@ -144,7 +148,8 @@ export default function PlannerCard() {
     return (
         <div style={{ 
             background: '#141414', borderRadius: '24px', padding: '20px', marginBottom: '24px', 
-            border: '0.5px solid #222', borderLeft: '4px solid #6366f1'
+            border: '0.5px solid #222', borderLeft: '4px solid #6366f1',
+            opacity: canLogNow ? 1 : 0.8
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
@@ -163,14 +168,30 @@ export default function PlannerCard() {
             </div>
 
             <button 
-                onClick={handleAccept}
+                onClick={canLogNow ? handleAccept : undefined}
+                disabled={!canLogNow}
                 style={{ 
-                    width: '100%', background: '#1e1e1e', border: '0.5px solid #333', 
-                    borderRadius: '12px', color: '#fff', fontSize: '12px', fontWeight: '600', 
-                    padding: '10px', cursor: 'pointer', transition: 'all 0.2s'
+                    width: '100%', 
+                    background: canLogNow ? '#1e1e1e' : '#111', 
+                    border: '0.5px solid #333', 
+                    borderRadius: '12px', 
+                    color: canLogNow ? '#fff' : '#444', 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    padding: '10px', 
+                    cursor: canLogNow ? 'pointer' : 'default',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
                 }}
             >
-                ✅ Accepter & Enregistrer
+                {canLogNow ? (
+                    <>✅ Accepter & Enregistrer</>
+                ) : (
+                    <>🕒 Disponible à {startHour}:00</>
+                )}
             </button>
         </div>
     )

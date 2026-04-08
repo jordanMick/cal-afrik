@@ -50,10 +50,17 @@ export async function GET(req: Request) {
         return 'diner'
     }
 
-    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()))
+    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()) as 'petit_dejeuner' | 'dejeuner' | 'collation' | 'diner')
 
     // 3. Déterminer le prochain créneau prioritaire
     const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
+    const slotTimes: Record<string, number> = {
+        'petit_dejeuner': 5,
+        'dejeuner': 10,
+        'collation': 15,
+        'diner': 18
+    }
+
     let nextSlot = slotsOrder.find(s => !recordedSlots.includes(s))
 
     // Si tout est fini pour aujourd'hui
@@ -64,6 +71,10 @@ export async function GET(req: Request) {
             message: "Bravo ! Ta journée est bien remplie. On se retrouve demain pour un nouveau menu."
         })
     }
+
+    // Vérifier si le slot est "ouvert" (pas trop tôt)
+    const currentHour = new Date().getHours()
+    const canLogNow = currentHour >= slotTimes[nextSlot]
 
     // 4. Propositions simulées
     const mockProposals: Record<string, any> = {
@@ -81,6 +92,8 @@ export async function GET(req: Request) {
         tier,
         next_meal: proposal,
         slot: nextSlot as 'petit_dejeuner' | 'dejeuner' | 'collation' | 'diner',
+        can_log_now: canLogNow,
+        start_hour: slotTimes[nextSlot],
         can_see_tomorrow: tier === 'pro' || tier === 'premium',
         can_see_week: tier === 'premium'
     })
