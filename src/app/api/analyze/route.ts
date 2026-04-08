@@ -3,7 +3,10 @@ import { createClient } from "@supabase/supabase-js"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import type { ScanApiResponse } from "@/types"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string)
+const genAI = new (GoogleGenerativeAI as any)(
+    process.env.GEMINI_API_KEY as string,
+    { apiVersion: "v1" }
+) as GoogleGenerativeAI
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -166,31 +169,20 @@ export async function POST(req: Request) {
             },
             { text: PROMPT },
         ]
-        const modelNames = ["gemini-1.5-flash", "gemini-1.5-flash-latest"]
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
         let responseText = ""
-        let generationError: any = null
-
-        for (const modelName of modelNames) {
-            try {
-                const model = genAI.getGenerativeModel({ model: modelName })
-                const result = await model.generateContent(inputParts)
-                responseText = await result.response.text()
-                generationError = null
-                break
-            } catch (err: any) {
-                generationError = err
-                console.error(err)
-                console.error(`❌ Gemini generateContent échoue avec ${modelName}`)
-            }
-        }
-
-        if (generationError) {
+        try {
+            const result = await model.generateContent(inputParts)
+            responseText = await result.response.text()
+        } catch (err: any) {
+            console.error(err)
+            console.error("❌ Gemini generateContent échoue avec gemini-1.5-flash")
             return NextResponse.json({
                 success: false,
                 meal_name: "",
                 total_calories: 0,
                 data: [],
-                error: generationError?.message || "Gemini generateContent error",
+                error: err?.message || "Gemini generateContent error",
             }, { status: 502 })
         }
 
