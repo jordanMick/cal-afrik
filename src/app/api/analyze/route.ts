@@ -100,6 +100,13 @@ Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant 
 Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le texte de secours fourni.
 `
 
+const GEMINI_MODEL_CANDIDATES = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
+]
+
 
 // ─── ROUTE POST ───────────────────────────────────────────────
 export async function POST(req: Request) {
@@ -170,23 +177,34 @@ export async function POST(req: Request) {
             { text: PROMPT },
         ]
         let responseText = ""
-        try {
-            const result = await genAI.models.generateContent({
-                model: "gemini-1.5-flash",
-                contents: inputParts as any,
-            })
-            responseText = typeof (result as any).text === "function"
-                ? (result as any).text()
-                : String((result as any).text || "")
-        } catch (err: any) {
-            console.error(err)
-            console.error("❌ Gemini generateContent échoue avec gemini-1.5-flash")
+        let generationError: any = null
+
+        for (const modelName of GEMINI_MODEL_CANDIDATES) {
+            try {
+                const result = await genAI.models.generateContent({
+                    model: modelName,
+                    contents: inputParts as any,
+                })
+                responseText = typeof (result as any).text === "function"
+                    ? (result as any).text()
+                    : String((result as any).text || "")
+                generationError = null
+                console.log(`✅ Gemini modèle utilisé: ${modelName}`)
+                break
+            } catch (err: any) {
+                generationError = err
+                console.error(err)
+                console.error(`❌ Gemini generateContent échoue avec ${modelName}`)
+            }
+        }
+
+        if (generationError) {
             return NextResponse.json({
                 success: false,
                 meal_name: "",
                 total_calories: 0,
                 data: [],
-                error: err?.message || "Gemini generateContent error",
+                error: generationError?.message || "Gemini generateContent error",
             }, { status: 502 })
         }
 
