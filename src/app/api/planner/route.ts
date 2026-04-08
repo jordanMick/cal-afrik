@@ -50,10 +50,9 @@ export async function GET(req: Request) {
         return 'diner'
     }
 
-    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()))
-
     // 3. Déterminer le prochain créneau prioritaire
-    const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
+    const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
+    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()) as typeof slotsOrder[number])
     const slotTimes: Record<string, number> = {
         'petit_dejeuner': 0,
         'dejeuner': 12,
@@ -61,7 +60,7 @@ export async function GET(req: Request) {
         'diner': 19
     }
 
-    let nextSlot = slotsOrder.find(s => !recordedSlots.includes(s))
+    const nextSlot = slotsOrder.find(s => !recordedSlots.includes(s))
 
     // Si tout est fini pour aujourd'hui
     if (!nextSlot) {
@@ -74,7 +73,7 @@ export async function GET(req: Request) {
 
     // Vérifier si le slot est "ouvert" (pas trop tôt)
     const currentHour = new Date().getHours()
-    const canLogNow = currentHour >= slotTimes[nextSlot]
+    const canLogNow = currentHour >= slotTimes[nextSlot as string]
 
     // 4. Propositions simulées
     const mockProposals: Record<string, any> = {
