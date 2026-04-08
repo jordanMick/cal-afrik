@@ -1,84 +1,90 @@
-ARCHITECTURE ET FONCTIONNEMENT DE CAL-AFRIK
-============================================
+=========================================================
+BIBLE ARCHITECTURALE DÉTAILLÉE - CAL-AFRIK (V1)
+=========================================================
+Application SAAS de Nutrition Africaine Propulsée par IA.
+Archivé et documenté pour la V1 Commerciale.
 
-1. EXPÉRIENCE UTILISATEUR (FRONT-END)
---------------------------------------
-Conçue pour être premium, intuitive et orientée vers la motivation.
+---------------------------------------------------------
+1. STRUCTURE DE LA BASE DE DONNÉES (SUPABASE)
+---------------------------------------------------------
+L'application repose sur 4 piliers relationnels :
+- `user_profiles` : Table utilisateur centrale. 
+    > Colonnes clés : `user_id`, `subscription_tier` ('free', 'pro', 'premium'), `subscription_expires_at` (géré en cumulatif), macros cibles (`calorie_target`, `protein_target_g`, etc.) et `goal` (perdre/maintenir/prendre).
+- `food_items` : Le dictionnaire encyclopédique de Cal-Afrik. 
+    > Contient tous les aliments africains certifiés, leurs portions par défaut et leurs macros exacts pour les 100g. Base de vérité absolue pour l'IA (Coach Yao).
+- `meals` : Le journal de bord de l'utilisateur. 
+    > Enregistre chaque scan validé avec son nom custom, son heure (`logged_at`), le slot associé (dejeuner, diner...) et ses macros.
+- `user_plans` : Le carnet d'engagements. 
+    > Stocke les repas générés par Coach Yao puis VERROUILLÉS par le membre (colonne `is_locked`: true). Essentiel pour la feature d'Accountability.
 
-* DASHBOARD DYNAMIQUE :
-  - Visualisation du solde calorique en temps réel (Cible vs Consommé).
-  - Graphique de progression du poids (mensuel) et suivi hebdomadaire.
-  - Motivation par IA : Messages contextuels basés sur les pesées (Félicitations ou conseils si stagnation).
+---------------------------------------------------------
+2. LE CŒUR INTELLIGENT (Back-end / `src/app/api/`)
+---------------------------------------------------------
+Ce dossier contient tous les "cerveaux" de l'application (Endpoints Next.js).
 
-* LE SCANNEUR HYBRIDE :
-  - Mode Photo : Analyse visuelle par IA (Claude 3.5 Haiku). Décompose les plats (ex: Garba, Riz Gras) en composants, estime les portions et les calories.
-  - Mode Code-barres : Scan en temps réel de produits industriels avec récupération des données exactes via OpenFoodFacts.
-  - Scan Galerie : Possibilité d'importer des photos pour analyse IA ou décodage de code-barres.
+A. /api/analyze (`route.ts`)
+   - Moteur de Scan : Reçoit les requêtes d'ajout de repas (soit via description textuelle, soit par image).
+   - Fait appel à Anthropic pour identifier l'aliment, estimer son poids et calculer les macros en fonction de la taille de l'assiette. C'est le cœur d'acquisition de données.
 
-* JOURNAL ALIMENTAIRE :
-  - Organisation par créneaux (Petit-déjeuner, Déjeuner, Dîner, Collation).
-  - Design system de macros : Vert (Protéines), Indigo (Glucides), Ambre (Lipides).
-  - Recap instantané : Conseil du "Coach Yao" sur la qualité nutritionnelle de chaque repas enregistré.
+B. /api/planner (`route.ts`)
+   - Moteur du Coach Yao Planificateur : Combine plusieurs aliments de `food_items` (ex: Riz + Sauce + Viande) pour générer des plannings ('Demain' ou 'Semaine').
+   - Logique Restrictive : Vérifie que le dîner du jour a été enregistré avant de débloquer le planning du lendemain (Levier de rétention).
+   - Protection de Coût : Inclut un `MOCK_MODE` pour les tests (zéro appel vers Anthropic).
 
-* COACH YAO & PROFIL :
-  - Chat IA disponible pour des conseils nutritionnels personnalisés.
-  - Badge Premium et compte à rebours avant le prochain "Bilan Mensuel" automatique.
+C. /api/bilan (`route.ts`)
+   - Moteur de Responsabilisation (Accountability) : Compare les repas réellement mangés (`meals`) avec les engagements verrouillés (`user_plans`).
+   - Génère un bilan personnalisé ou purement mathématique (selon le tier free/pro/premium). Tutoie l'utilisateur et le pousse à tenir ses micros-objectifs.
 
----
+D. /api/coach/ et /api/chat/ (`route.ts`)
+   - Cerveau conversationnel : Permet au membre Premium de dialoguer librement avec Coach Yao pour des conseils (ex: "Quel poisson manger ce soir ?").
+   - Modèle orienté culture africaine et bienveillance.
 
-2. LOGIQUE ET INFRASTRUCTURE (BACKEND)
---------------------------------------
-Le moteur qui assure la précision, l'économie et la monétisation.
+E. /api/payments/checkout/ (`route.ts`)
+   - Générateur de liens de facturation FedaPay dynamiques en fonction de l'email de l'utilisateur et du palier choisi (Pro ou Premium).
 
-* MOTEUR D'INTELLIGENCE ARTIFICIELLE :
-  - Claude 3.5 Haiku (Vision) : Analyse les images pour extraire des objets JSON structurés (noms, portions, macros).
-  - Client-Side Compression : Réduit la taille des images avant envoi pour diviser les coûts d'API par 3.
-  - Matching SQL : Algorithme de recherche par score pour lier les détections IA aux aliments réels de la base de données.
+F. /api/payments/webhook/ (`route.ts`)
+   - Le caissier du système : Reçoit le ping de FedaPay post-achat.
+   - CUMUL INTELLIGENT : N'écrase pas la date de fin. Si le membre renouvelle 7 jours en avance, le webhook ajoute +30 jours au solde restant. Parfait pour la fidélisation.
 
-* GESTION COMMERCIALE (PAYWALL) :
-  - Vérification des droits en temps réel (Supabase Auth + Database).
-  - Limites Free : Bloque à 2 scans photo/jour et 5 scans code-barres/jour.
-  - Redirection automatique vers /upgrade en cas de limite atteinte.
+G. /api/foods/ (`route.ts`)
+   - Route utilitaire retournant les aliments locaux.
 
-* BASE DE DONNÉES (SUPABASE) :
-  - Table 'user_profiles' : Gère les objectifs santé, le niveau d'activité et le statut de l'abonnement.
-  - Table 'meals' : Enregistre l'historique avec marquage de la source (AI, Barcode, Manuel) pour le tracking.
-  - Table 'food_items' : Base de données centrale de la composition des aliments africains.
+---------------------------------------------------------
+3. L'INTERFACE UTILISATEUR (Front-end / `src/app/(app)/`)
+---------------------------------------------------------
+L'interface mobile First, gérée par React/Next.js.
 
-* LOGIQUE AUTOMATISÉE :
-  - Bilan Mensuel : Analyse IA déclenchée chaque mois pour évaluer les progrès de l'utilisateur.
-  - Tracking des Pesées : Consolidation mensuelle (dernière pesée du mois) pour les graphiques.
+A. /scanner/ (`page.tsx`)
+   - Page d'accueil prioritaire. 
+   - Contient le `PlannerCard` en haut de la page pour une visibilité immanquable.
+   - Contient la logique d'upload photo et caméra pour envoyer à `/api/analyze`.
 
---------------------------------------------
-ÉTAT DU PROJET : Architecture Planner & Hybride OK
-DERNIÈRE MISE À JOUR : 08/04/2026
---------------------------------------------
+B. /profil/ (`page.tsx`)
+   - Dashboard Personnel : Affiche les macros cibles dans un format visuel (cercles concentriques ou barres de progression).
+   - Alerte Expiration Anti-Churn : Calcule si J-7 avant fin d'abonnement. Si oui, remplace la bannière douce par une grosse bannière rouge "⚠️ Expiration imminente" avec compte à rebours, pointant vers l'Upgrade.
 
-3. ÉVOLUTIONS ET FONCTIONNALITÉS CIBLES
---------------------------------------
-* LOGIQUE DES TIERS ET LIMITES :
-  - PLAN FREE (Calcul du "Combo 2") :
-    * 2 Révélations de suggestions (Curiosité) gratuites/jour.
-    * 2 Actions réelles par jour (1 Scan ou 1 Validation de plat Planner).
-    * "Sauter" un plat est possible 2 fois sans consommer d'action.
-  
-  - PLAN PRO :
-    * Révélations et Actions quotidiennes ILLIMITÉES.
-    * 3 Changements/Régénérations max par repas pour éviter les abus.
-    * Menu DEMAIN débloqué après enregistrement du Dîner du jour.
-    
-  - PLAN PREMIUM :
-    * Tout le contenu PRO illimité.
-    * Menu SEMAINE ENTIÈRE débloqué (7 jours).
-    * Validation et Verrouillage des menus pour persistance.
+C. /journal/ & /historique/ (`page.tsx`)
+   - Le registre visuel des plats. Permet de voir le passé de ses assiettes et supprimer une entrée erronée si besoin.
 
-* COACH YAO PLANNER (HYBRIDE) :
-  - Emplacement : Page /scanner (Priorité haute).
-  - Moteur : Claude 3 (Cerveau) + Table 'recipes' (Authenticité).
-  - Validation : Verrouillage des plans dans 'user_plans' pour les abonnés.
+D. /coach/ (`page.tsx`)
+   - La fenêtre de Chat dynamique UI pour interagir avec Coach Yao (Réservé Premium).
 
-4. PROCHAINES ÉTAPES (TODO)
---------------------------------------
-[ ] LISTE DE COURSES (SHOPPING LIST) : Génération automatique basée sur les menus verrouillés (Semaine/Demain).
-[ ] AUTOMATISATION EXPIRATION : Script de vérification pour repasser les abonnés PRO/PREMIUM en FREE à date d'échéance.
-[ ] BILAN NUTRITIONNEL AMÉLIORÉ : Analyse comparative par le Coach Yao (Planner vs Consommation réelle).
+E. /upgrade/ (`page.tsx`)
+   - Page de Tarification (Paywall) détaillant clairement les fonctions Free vs Pro vs Premium.
+
+---------------------------------------------------------
+4. GESTION D'ÉTAT ET LOGIQUE SÉCURITAIRE (`src/lib/` & `src/store/`)
+---------------------------------------------------------
+A. src/lib/subscription.ts
+   - Le gardien de but. Contient la fonction cruciale `getEffectiveTier()`.
+   - Au lieu d'avoir un "Cron Job" externe permanent qui ralentit le serveur, cette fonction vérifie à la volée la date de `subscription_expires_at`. Dès que minuit passe, le système lit l'abonnement comme 'free' partout dans l'appli. Discret, infaillible et gratuit à héberger.
+   - Gère `checkPermission()` pour cacher/afficher des boutons au vol.
+
+B. src/store/useAppStore.ts
+   - Redux/Zustand de l'app : Conserve en cache l'état local (calories de la journée, objectifs...) pour éviter de re-télécharger la base de données Supabase à chaque changement de page. La navigation se veut instantanée.
+
+---------------------------------------------------------
+5. ÉVOLUTIONS FUTURES (Archivées)
+---------------------------------------------------------
+- **Shopping List (Liste de Courses)** : Le code AI a été pensé pour croiser les plans de la semaine avec 'food_items' pour générer par catégories (Légumes, Épicerie) sans hallucination. Code de côté, prêt à être ré-inséré au besoin.
+- **Application Mobile Native (React Native)** : Grâce à l'architecture API complètement détachée, l'app peut être portée sur stores App Store / Play Store en quelques semaines.
