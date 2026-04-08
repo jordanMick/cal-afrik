@@ -151,7 +151,8 @@ export async function GET(req: Request) {
         })
 
         const rawText = (msg.content[0] as any).text
-        const selected = JSON.parse(rawText)
+        const jsonMatch = rawText.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
+        const selected = JSON.parse(jsonMatch ? jsonMatch[0] : rawText)
 
         if (view === 'tomorrow') return NextResponse.json({ success: true, tier, menu: selected.menu, locked: false })
         if (view === 'week') return NextResponse.json({ success: true, tier, days: selected.days, locked: false })
@@ -168,6 +169,15 @@ export async function GET(req: Request) {
         })
     } catch (aiErr) {
         console.error("Chef Yao error:", aiErr)
+        
+        // Fallbacks pour éviter un écran vide en cas de crash
+        if (view === 'week') {
+            return NextResponse.json({ success: true, tier, days: Array.from({length: 7}).map((_, i) => ({ day: `Jour ${i+1}`, main_dish: 'Foutou sauce graine' })), locked: false })
+        }
+        if (view === 'tomorrow') {
+            return NextResponse.json({ success: true, tier, menu: ['petit_dejeuner', 'dejeuner', 'collation', 'diner'].map(s => ({ slot: s, name: 'Repas de secours', kcal: 500 })), locked: false })
+        }
+        
         return NextResponse.json({ success: true, next_meal: { name: 'Riz gras au poisson', kcal: 650, protein: 35, carbs: 80, fat: 18, slot: nextSlot }, slot: nextSlot })
     }
 }

@@ -1,0 +1,15 @@
+﻿52397e8 refactor: removed AI shopping list feature logic and UI from PlannerCard
+3f52af9 fix: added error handling for DB insertion in Planner to surface missing table errors
+bd26fd7 feat: relaxed AI constraints for shopping list to use its culinary expertise first
+6ddee13 fix: injected food_items db into shopping list prompt to prevent ai hallucinations
+d7f5fed feat: implemented AI-powered Shopping List for Premium users
+3ea4dcf feat: enabled Coach Yao to combine multiple food items for balanced meal suggestions
+d7a27de refactor: migrated planner to use existing food_items table for authentic suggestions
+2605307 feat: re-enabled dinner lock for tomorrow's planner access
+6db5208 fix: corrected profile table name in planner API to enable premium access
+b758b9b style: moved planner card to the top of scan page for better accessibility
+0c6c9da fix: switched from Gemini to Anthropic Claude for the planner hybrid logic
+ef4f2a0 feat: transitioned to Hybrid AI-DB Planner (AI selects from DB recipes)
+9709ac4 feat: connected Coach Yao AI (Gemini) to the whole planner with smart batching
+67836f3 feat: implemented locked plans persistence and random recipe selection from DB
+a8f898e feat: enabled plan regeneration for tomorrow and week tabs with 3-change limit for paid users
