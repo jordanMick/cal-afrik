@@ -33,16 +33,39 @@ export async function GET(req: Request) {
         }, { status: 403 })
     }
 
-    // 2. Déterminer le prochain créneau (Next Slot)
-    const hour = new Date().getHours()
-    let nextSlot = 'collation'
-    if (hour >= 5 && hour < 10) nextSlot = 'dejeuner'
-    else if (hour >= 10 && hour < 15) nextSlot = 'collation'
-    else if (hour >= 15 && hour < 20) nextSlot = 'diner'
-    else nextSlot = 'petit_dejeuner'
+    // 2. Récupérer les repas déjà pris aujourd'hui
+    const today = new Date().toISOString().split('T')[0]
+    const { data: todayMeals } = await supabase
+        .from('meals')
+        .select('logged_at')
+        .eq('user_id', user.id)
+        .gte('logged_at', `${today}T00:00:00.000Z`)
+        .lte('logged_at', `${today}T23:59:59.999Z`)
 
-    // 3. Simuler une proposition depuis la base (en attendant d'avoir la table recipes)
-    // Plus tard, on fera une requête SQL ou un appel IA ici.
+    // Fonction pour déterminer le slot d'un repas selon l'heure
+    const getSlotFromHour = (hour: number) => {
+        if (hour >= 5 && hour < 10) return 'petit_dejeuner'
+        if (hour >= 10 && hour < 15) return 'dejeuner'
+        if (hour >= 15 && hour < 18) return 'collation'
+        return 'diner'
+    }
+
+    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()))
+
+    // 3. Déterminer le prochain créneau prioritaire
+    const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
+    let nextSlot = slotsOrder.find(s => !recordedSlots.includes(s))
+
+    // Si tout est fini pour aujourd'hui
+    if (!nextSlot) {
+        return NextResponse.json({
+            success: true,
+            completed: true,
+            message: "Bravo ! Ta journée est bien remplie. On se retrouve demain pour un nouveau menu."
+        })
+    }
+
+    // 4. Propositions simulées
     const mockProposals: Record<string, any> = {
         'petit_dejeuner': { name: 'Bouillie de mil & une mangue', kcal: 320, protein: 6, carbs: 65, fat: 4 },
         'dejeuner': { name: 'Riz gras au poisson braisé', kcal: 650, protein: 35, carbs: 80, fat: 18 },
@@ -54,6 +77,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
         success: true,
+        completed: false,
         tier,
         next_meal: proposal,
         slot: nextSlot,

@@ -56,6 +56,9 @@ export default function PlannerCard() {
         }
     }
 
+    const [completed, setCompleted] = useState(false)
+    const [completedMsg, setCompletedMsg] = useState('')
+
     useEffect(() => {
         const fetchPlan = async () => {
             try {
@@ -68,7 +71,13 @@ export default function PlannerCard() {
                 const json = await res.json()
 
                 if (json.success) {
-                    setProposal(json.next_meal)
+                    if (json.completed) {
+                        setCompleted(true)
+                        setCompletedMsg(json.message)
+                    } else {
+                        setProposal(json.next_meal)
+                        setCompleted(false)
+                    }
                     setTier(json.tier)
                 } else if (json.code === 'PREMIUM_ONLY') {
                     setTier('free')
@@ -85,8 +94,20 @@ export default function PlannerCard() {
     }, [])
 
     if (loading) return (
-        <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', marginBottom: '24px', height: '120px', animation: 'pulse 2s infinite' }} />
+        <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', marginBottom: '24px', height: '120px', animation: 'pulse 1.5s infinite' }} />
     )
+
+    if (completed) {
+        return (
+            <div style={{ 
+                background: 'rgba(16,185,129,0.05)', borderRadius: '24px', padding: '20px', marginBottom: '24px', 
+                border: '0.5px solid rgba(16,185,129,0.2)', textAlign: 'center'
+            }}>
+                <p style={{ fontSize: '24px', marginBottom: '8px' }}>🎉</p>
+                <p style={{ fontSize: '13px', fontWeight: '600', color: '#10b981' }}>{completedMsg}</p>
+            </div>
+        )
+    }
 
     if (tier === 'free') {
         return (
