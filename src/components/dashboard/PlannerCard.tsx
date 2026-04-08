@@ -13,7 +13,11 @@ interface Proposal {
     slot: string
 }
 
-export default function PlannerCard() {
+interface PlannerCardProps {
+    hideDinnerActionLink?: boolean
+}
+
+export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCardProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week'>('today')
@@ -33,10 +37,12 @@ export default function PlannerCard() {
     const [changeCount, setChangeCount] = useState(0)
     const [tomorrowChangeCount, setTomorrowChangeCount] = useState(0)
     const [weekChangeCount, setWeekChangeCount] = useState(0)
+    const [errorCode, setErrorCode] = useState<string | null>(null)
 
     const fetchPlan = async (view: string) => {
         setLoading(true)
         setError(null)
+        setErrorCode(null)
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
@@ -66,6 +72,7 @@ export default function PlannerCard() {
                 setTier(json.tier)
             } else {
                 setError(json.error)
+                setErrorCode(json.code || null)
             }
         } catch (err) {
             console.error(err)
@@ -260,12 +267,14 @@ export default function PlannerCard() {
                 <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', border: '0.5px solid #222', textAlign: 'center' }}>
                     <p style={{ fontSize: '20px', marginBottom: '8px' }}>🔒</p>
                     <p style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '4px' }}>{error}</p>
-                    <button 
-                        onClick={() => router.push('/upgrade')}
-                        style={{ color: '#6366f1', fontSize: '11px', fontWeight: '700', border: 'none', background: 'none', cursor: 'pointer', marginTop: '8px' }}
-                    >
-                        {error.includes("dîner") ? "Enregistrer mon Dîner →" : activeTab === 'tomorrow' ? "Activer le Plan Pro →" : "Passer au Premium →"}
-                    </button>
+                    {!(hideDinnerActionLink && errorCode === 'DINNER_REQUIRED') && (
+                        <button
+                            onClick={() => router.push('/upgrade')}
+                            style={{ color: '#6366f1', fontSize: '11px', fontWeight: '700', border: 'none', background: 'none', cursor: 'pointer', marginTop: '8px' }}
+                        >
+                            {activeTab === 'tomorrow' ? "Activer le Plan Pro →" : "Passer au Premium →"}
+                        </button>
+                    )}
                 </div>
             ) : activeTab === 'today' ? (
                 completed ? (

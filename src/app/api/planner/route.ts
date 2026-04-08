@@ -98,8 +98,8 @@ export async function GET(req: Request) {
     }
 
     // 2. Sinon, suggestions standard
-    const { data: todayMeals } = await supabase.from('meals').select('logged_at').eq('user_id', user.id).gte('logged_at', todayStr)
-    const recordedSlots = todayMeals?.map(m => getMealSlot(new Date(m.logged_at).getHours())) || []
+    const { data: todayMeals } = await supabase.from('meals').select('logged_at, meal_type').eq('user_id', user.id).gte('logged_at', todayStr)
+    const recordedSlots = todayMeals?.map(m => m.meal_type || getMealSlot(new Date(m.logged_at).getHours())) || []
     const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
     const slotTimes: Record<string, number> = { 'petit_dejeuner': 0, 'dejeuner': 12, 'collation': 16, 'diner': 19 }
 

@@ -464,6 +464,7 @@ export default function ScannerPage() {
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
                 body: JSON.stringify({ 
                     custom_name: mealName || allFoods.map(f => f.name).join(', '), 
+                    meal_type: currentSlotKey,
                     portion_g: Math.round(finalTotals.portion_g), 
                     calories: Math.round(finalTotals.calories), 
                     protein_g: Math.round(finalTotals.protein_g * 10) / 10, 
@@ -503,7 +504,7 @@ export default function ScannerPage() {
             const aiFoods = selectedFoods.filter(f => f.fromAI)
             if (aiFoods.length > 0) await Promise.all(aiFoods.map(food => saveAIFoodToDB(food, session)))
             const totals = getTotals()
-            const res = await fetch('/api/meals', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ custom_name: mealName || selectedFoods.map(f => f.name).join(', '), portion_g: Math.round(totals.portion_g), calories: Math.round(totals.calories), protein_g: Math.round(totals.protein_g * 10) / 10, carbs_g: Math.round(totals.carbs_g * 10) / 10, fat_g: Math.round(totals.fat_g * 10) / 10, image_url: capturedImage, ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length), coach_message: coachMessage || null }) })
+            const res = await fetch('/api/meals', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ custom_name: mealName || selectedFoods.map(f => f.name).join(', '), meal_type: currentSlotKey, portion_g: Math.round(totals.portion_g), calories: Math.round(totals.calories), protein_g: Math.round(totals.protein_g * 10) / 10, carbs_g: Math.round(totals.carbs_g * 10) / 10, fat_g: Math.round(totals.fat_g * 10) / 10, image_url: capturedImage, ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length), coach_message: coachMessage || null }) })
             const json = await res.json()
             if (json.success && json.data) {
                 addMeal(json.data)
@@ -552,7 +553,7 @@ export default function ScannerPage() {
             </div>
 
             {/* PLANNER (GUIDE) - En priorité haute */}
-            {!image && !isAnalyzing && <PlannerCard />}
+            {!image && !isAnalyzing && <PlannerCard hideDinnerActionLink />}
 
             {/* SWITCH MODE SCAN */}
             <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>
