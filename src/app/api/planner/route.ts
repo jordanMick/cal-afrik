@@ -10,16 +10,31 @@ export async function POST(req: Request) {
     if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     
     try {
-        const { slot, date } = await req.json()
+        const { action, slot, date, items } = await req.json()
         const token = authHeader.replace('Bearer ', '')
         const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
         const { data: { user } } = await supabase.auth.getUser(token)
         
         if (!user) return NextResponse.json({ error: "No user" }, { status: 401 })
 
+        // ACTION: LOCK (Valider Demain ou Semaine)
+        if (action === 'lock') {
+            const inserts = items.map((it: any) => ({
+                user_id: user.id,
+                date: it.date,
+                slot: it.slot,
+                recipe_name: it.name,
+                is_locked: true
+            }))
+            await supabase.from('user_plans').insert(inserts)
+            return NextResponse.json({ success: true, locked: true })
+        }
+
+        // ACTION: SKIP (Refuser)
         const key = `${user.id}_${date}`
         if (!skippedSlots[key]) skippedSlots[key] = []
         skippedSlots[key].push(slot)
+        await supabase.rpc('increment_planner_view', { user_id_input: user.id })
 
         return NextResponse.json({ success: true, skipped: skippedSlots[key] })
     } catch (err) {
@@ -27,163 +42,88 @@ export async function POST(req: Request) {
     }
 }
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function GET(req: Request) {
-    const authHeader = req.headers.get('authorization')
+    const authHeader = req.headers.get('Authorization')
     if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
+    
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (!user || authError) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+    const { data: { user } } = await supabase.auth.getUser(token)
+    if (!user) return NextResponse.json({ error: "No user" }, { status: 401 })
 
-    // 1. Récupérer le profil et le tier
-    const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-    
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     const tier = getEffectiveTier(profile)
-    
-    // 2. Récupérer les repas déjà pris aujourd'hui
-    const today = new Date().toISOString().split('T')[0]
-    const { data: todayMeals } = await supabase
-        .from('meals')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('logged_at', `${today}T00:00:00.000Z`)
-        .lte('logged_at', `${today}T23:59:59.999Z`)
+    const viewsToday = profile?.planner_views_today || 0
+    const view = new URL(req.url).searchParams.get('view') || 'today'
+    const todayStr = new Date().toISOString().split('T')[0]
 
-    // Fonction pour déterminer le slot d'un repas selon l'heure (Sync avec useAppStore)
-    const getSlotFromHour = (hour: number) => {
-        if (hour >= 0 && hour < 12) return 'petit_dejeuner'
-        if (hour >= 12 && hour < 16) return 'dejeuner'
-        if (hour >= 16 && hour < 19) return 'collation'
-        return 'diner'
-    }
+    // 1. Vérifier les plans VERROUILLÉS
+    if (view === 'tomorrow' || view === 'week') {
+        const queryDate = view === 'tomorrow' 
+            ? new Date(Date.now() + 86400000).toISOString().split('T')[0]
+            : todayStr
+            
+        const { data: lockedPlans } = await supabase.from('user_plans')
+            .select('*')
+            .eq('user_id', user.id)
+            .gte('date', todayStr)
+            .eq('is_locked', true)
 
-    const recordedSlots = (todayMeals || []).map(m => getSlotFromHour(new Date(m.logged_at).getHours()))
-
-    // ─── LOGIQUE DE TIERS ───────────────────────────────────────
-    
-    // CAS FREE : Limite de 2 actions (Scan + Suggestions)
-    if (tier === 'free') {
-        const actionsUsed = (profile?.scan_feedbacks_today || 0)
-        if (actionsUsed >= 2) {
-            return NextResponse.json({ 
-                success: false, 
-                error: "Limite de 2 actions gratuites atteinte (Scans + Suggestions).",
-                code: "LIMIT_REACHED"
-            }, { status: 403 })
-        }
-        // Increment action count if accessing suggestion ? 
-        // On pourrait le faire ici, mais attention au refresh de page. 
-        // On va le décompter au moment du LOG du repas pour l'instant.
-    }
-
-    // CAS PRO & PREMIUM : Demain bloqué si pas de dîner. CAS FREE : Demain bloqué totalement.
-    const hasDiner = recordedSlots.includes('diner')
-    const view = new URL(req.url).searchParams.get('view') || 'today' // 'today' | 'tomorrow' | 'week'
-
-    if (view === 'tomorrow') {
-        if (tier === 'free') {
-            return NextResponse.json({ 
-                success: false, 
-                error: "Le planning de demain est réservé aux membres Pro & Premium.", 
-                code: "PRO_ONLY" 
-            }, { status: 403 })
-        }
-        
-        if (!hasDiner) {
-            return NextResponse.json({ 
-                success: false, 
-                error: "Menu de demain débloqué après ton dîner du jour !", 
-                code: "DINNER_REQUIRED" 
-            }, { status: 403 })
+        if (lockedPlans && lockedPlans.length > 0) {
+            if (view === 'tomorrow') {
+                const tmr = lockedPlans.filter(p => p.date === queryDate)
+                if (tmr.length > 0) {
+                    return NextResponse.json({ success: true, locked: true, tier, menu: tmr.map(t => ({ slot: t.slot, name: t.recipe_name, kcal: 0 })) })
+                }
+            }
+            if (view === 'week') {
+                return NextResponse.json({ success: true, locked: true, tier, days: lockedPlans.map(p => ({ day: p.date, main_dish: p.recipe_name })) })
+            }
         }
     }
 
-    // CAS PRO/FREE : Semaine bloquée (Premium only)
-    if (view === 'week' && tier !== 'premium') {
-        return NextResponse.json({ 
-            success: false, 
-            error: "Planning hebdomadaire réservé aux membres Premium.", 
-            code: "PREMIUM_WEEKLY_ONLY" 
-        }, { status: 403 })
-    }
-
-    // 3. Déterminer le prochain créneau prioritaire pour 'today'
+    // 2. Sinon, suggestions standard
+    const { data: todayMeals } = await supabase.from('meals').select('logged_at').eq('user_id', user.id).gte('logged_at', todayStr)
+    const recordedSlots = todayMeals?.map(m => getMealSlot(new Date(m.logged_at).getHours())) || []
     const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
     const slotTimes: Record<string, number> = { 'petit_dejeuner': 0, 'dejeuner': 12, 'collation': 16, 'diner': 19 }
 
-    // On retire les slots déjà enregistrés OU refusés
-    const todayStr = new Date().toISOString().split('T')[0]
-    const currentSkipped = skippedSlots[`${user.id}_${todayStr}`] || []
+    const todayStr_ = new Date().toISOString().split('T')[0]
+    const currentSkipped = skippedSlots[`${user.id}_${todayStr_}`] || []
     const occupiedSlots = [...new Set([...recordedSlots, ...currentSkipped])]
     const nextSlot = slotsOrder.find(s => !occupiedSlots.includes(s))
-    
-    // Si on regarde demain, on renvoie tout le menu de demain
-    if (view === 'tomorrow') {
-        return NextResponse.json({
-            success: true,
-            view: 'tomorrow',
-            menu: [
-                { slot: 'petit_dejeuner', name: 'Pain complet & œuf poché', kcal: 280 },
-                { slot: 'dejeuner', name: 'Yassa au poulet (portion équilibrée)', kcal: 580 },
-                { slot: 'collation', name: 'Yaourt nature & amandes', kcal: 150 },
-                { slot: 'diner', name: 'Poisson grillé & alloco grillé (peu d\'huile)', kcal: 450 }
-            ]
-        })
-    }
 
-    // Si on regarde la semaine
-    if (view === 'week') {
-        return NextResponse.json({
-            success: true,
-            view: 'week',
-            days: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(d => ({
-                day: d,
-                main_dish: "Menu équilibré Coach Yao"
-            }))
-        })
-    }
-
-    const viewsToday = profile?.planner_views_today || 0
-    
-    // Pour aujourd'hui, on ne charge les métadonnées que si on a encore des jetons de vue
     if (view === 'today' && tier === 'free' && viewsToday >= 2) {
-        return NextResponse.json({ 
-            success: false, 
-            error: "Tu as déjà profité de tes 2 suggestions gratuites. Reviens demain ou passe au Plan Pro !",
-            code: "LIMIT_REACHED"
-        }, { status: 403 })
+        return NextResponse.json({ success: false, error: "Limite de 2 suggestions gratuites atteinte.", code: "LIMIT_REACHED" }, { status: 403 })
     }
 
-    if (!nextSlot) {
-        return NextResponse.json({ success: true, completed: true, message: "Bravo ! Journée terminée ✨" })
+    if (view === 'tomorrow') {
+        if (tier === 'free') return NextResponse.json({ success: false, error: "Planning réservé aux membres PRO.", code: "PRO_ONLY" }, { status: 403 })
     }
 
-    const currentHour = new Date().getHours()
-    const canLogNow = currentHour >= slotTimes[nextSlot as string]
+    if (!nextSlot) return NextResponse.json({ success: true, completed: true, message: "Bravo ! Journée terminée ✨" })
 
-    const mockProposals: Record<string, any> = {
-        'petit_dejeuner': { name: 'Bouillie de mil & une mangue', kcal: 320, protein: 6, carbs: 65, fat: 4 },
-        'dejeuner': { name: 'Riz gras au poisson braisé', kcal: 650, protein: 35, carbs: 80, fat: 18 },
-        'diner': { name: 'Attiéké thon & crudités', kcal: 480, protein: 28, carbs: 60, fat: 12 },
-        'collation': { name: 'Poignée d\'arachides grillées', kcal: 180, protein: 8, carbs: 6, fat: 14 }
-    }
+    // 3. Tirage au sort dans la table RECIPES
+    const { data: recipes } = await supabase.from('recipes').select('*').eq('slot', nextSlot)
+    const recipe = recipes && recipes.length > 0 
+        ? recipes[Math.floor(Math.random() * recipes.length)]
+        : { name: 'Plat équilibré Coach Yao', kcal: 500, protein: 30, carbs: 60, fat: 15 }
 
     return NextResponse.json({
         success: true,
         completed: false,
+        locked: false,
         tier,
-        next_meal: mockProposals[nextSlot as string],
+        next_meal: { ...recipe, slot: nextSlot },
         slot: nextSlot,
-        can_log_now: canLogNow,
+        can_log_now: new Date().getHours() >= slotTimes[nextSlot as string],
         start_hour: slotTimes[nextSlot as string]
     })
+}
+
+function getMealSlot(hour: number): string {
+    if (hour >= 5 && hour < 11) return 'petit_dejeuner'
+    if (hour >= 11 && hour < 15) return 'dejeuner'
+    if (hour >= 15 && hour < 18) return 'collation'
+    return 'diner'
 }

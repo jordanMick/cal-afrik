@@ -29,6 +29,7 @@ export default function PlannerCard() {
     const [completedMsg, setCompletedMsg] = useState('')
     const [canLogNow, setCanLogNow] = useState(true)
     const [startHour, setStartHour] = useState(0)
+    const [isLocked, setIsLocked] = useState(false)
     const [changeCount, setChangeCount] = useState(0)
     const [tomorrowChangeCount, setTomorrowChangeCount] = useState(0)
     const [weekChangeCount, setWeekChangeCount] = useState(0)
@@ -46,6 +47,7 @@ export default function PlannerCard() {
             const json = await res.json()
 
             if (json.success) {
+                setIsLocked(json.locked || false)
                 if (view === 'today') {
                     if (json.completed) {
                         setCompleted(true)
@@ -68,6 +70,46 @@ export default function PlannerCard() {
         } catch (err) {
             console.error(err)
             setError("Erreur de connexion")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleLock = async (target: 'tomorrow' | 'week') => {
+        setLoading(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            let items = []
+            if (target === 'tomorrow' && tomorrowMenu) {
+                const date = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+                items = tomorrowMenu.map(m => ({ ...m, date }))
+            }
+            if (target === 'week' && weekPlan) {
+                // Simplifié pour l'exemple
+                items = weekPlan.map((w, i) => {
+                   const d = new Date()
+                   d.setDate(d.getDate() + i)
+                   return { name: w.main_dish, slot: 'dejeuner', date: d.toISOString().split('T')[0] }
+                })
+            }
+
+            const res = await fetch('/api/planner', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ action: 'lock', items })
+            })
+
+            if (res.ok) {
+                setIsLocked(true)
+                alert('✅ Planning validé ! Coach Yao est fier de toi.')
+            }
+        } catch (err) {
+            console.error(err)
         } finally {
             setLoading(false)
         }
@@ -311,7 +353,7 @@ export default function PlannerCard() {
                                         Regénérer ({3 - tomorrowChangeCount})
                                     </span>
                                 )}
-                                <span onClick={() => setTomorrowRevealed(false)} style={{ fontSize: '10px', color: '#555', cursor: 'pointer' }}>Masquer</span>
+                                <span onClick={() => setTomorrowRevealed(false)} style={{ display: 'none' }}>Masquer</span>
                             </div>
                         </div>
                         {tomorrowMenu?.map((m, idx) => (
@@ -323,6 +365,16 @@ export default function PlannerCard() {
                                 <p style={{ fontSize: '12px', color: '#aaa', fontWeight: '700' }}>{m.kcal} kcal</p>
                             </div>
                         ))}
+                        {!isLocked ? (
+                            <button 
+                                onClick={() => handleLock('tomorrow')}
+                                style={{ width: '100%', background: 'linear-gradient(135deg, #6366f1, #818cf8)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px', fontWeight: '700', marginTop: '16px', padding: '12px', cursor: 'pointer' }}
+                            >
+                                Valider mon menu de demain 🔒
+                            </button>
+                        ) : (
+                            <p style={{ textAlign: 'center', color: '#10b981', fontSize: '11px', fontWeight: '700', marginTop: '16px' }}>✅ Menu de demain verrouillé</p>
+                        )}
                     </div>
                 )
             ) : (
@@ -337,7 +389,6 @@ export default function PlannerCard() {
                     <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                             <p style={{ fontSize: '11px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase' }}>Ta semaine</p>
-                            <span onClick={() => setWeekRevealed(false)} style={{ fontSize: '10px', color: '#555', cursor: 'pointer' }}>Masquer</span>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                             {weekPlan?.map((w, idx) => (
@@ -347,13 +398,25 @@ export default function PlannerCard() {
                                 </div>
                             ))}
                         </div>
-                        {tier !== 'free' && (
-                            <button 
-                                onClick={() => handleChange('week')} 
-                                style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#fff', fontSize: '11px', fontWeight: '700', marginTop: '16px', padding: '10px' }}
-                            >
-                                Refaire mon planning ({3 - weekChangeCount} restants)
-                            </button>
+                        {!isLocked ? (
+                            tier !== 'free' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                                    <button 
+                                        onClick={() => handleLock('week')}
+                                        style={{ width: '100%', background: 'linear-gradient(135deg, #6366f1, #818cf8)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px', fontWeight: '700', padding: '12px' }}
+                                    >
+                                        Valider mon planning hebdo 📅
+                                    </button>
+                                    <button 
+                                        onClick={() => handleChange('week')} 
+                                        style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#666', fontSize: '11px', fontWeight: '700', padding: '8px' }}
+                                    >
+                                        Refaire mon planning ({3 - weekChangeCount} restants)
+                                    </button>
+                                </div>
+                            )
+                        ) : (
+                            <p style={{ textAlign: 'center', color: '#10b981', fontSize: '11px', fontWeight: '700', marginTop: '16px' }}>✅ Planning hebdomadaire verrouillé</p>
                         )}
                     </div>
                 )
