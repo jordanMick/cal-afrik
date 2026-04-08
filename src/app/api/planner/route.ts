@@ -128,22 +128,24 @@ export async function GET(req: Request) {
         }
     }
 
-    // 3. Mode Hybride avec CLAUDE (Anthropic)
+    // 3. Mode Hybride avec CLAUDE (Anthropic) - Utilisation de food_items
     try {
-        const { data: allRecipes } = await supabase.from('recipes').select('*')
-        const recipesList = allRecipes?.map(r => `${r.name} (${r.kcal}kcal, P:${r.protein}g, G:${r.carbs}g, L:${r.fat}g, slot:${r.slot})`).join('\n')
+        const { data: allFoods } = await supabase.from('food_items').select('*')
+        const foodsList = allFoods?.map(f => `${f.name_fr} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.protein_per_100g}g, G: ${f.carbs_per_100g}g, L: ${f.fat_per_100g}g, portion: ${f.default_portion_g}g)`).join('\n')
 
-        const prompt = `Tu es Coach Yao. Voici mon catalogue de plats africains réels :
-        ${recipesList}
+        const prompt = `Tu es Coach Yao. Voici ma base de données d'aliments africains certifiés :
+        ${foodsList}
 
         Choisis ${view === 'week' ? '7 déjeuners' : view === 'tomorrow' ? '4 repas (1 par slot)' : 'le meilleur prochain repas'} parmi cette liste.
-        Respecte scrupuleusement les noms et les macros du catalogue.
+        Propose des plats typiquement africains adaptés au moment de la journée (ex: bouillie le matin, riz gras à midi).
+        IMPORTANT : Pour chaque aliment choisi, calcule les calories et macros FINALES pour sa portion par défaut (default_portion_g).
+        
         Format attendu (JSON uniquement, pas de texte avant/après) :
         ${view === 'week' ? '{"days": [{"day": "Lundi", "main_dish": "..."}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "...", "kcal": 0}]}' : '{"name": "...", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
 
         const msg = await anthropic.messages.create({
             model: "claude-3-haiku-20240307",
-            max_tokens: 1024,
+            max_tokens: 1500,
             messages: [{ role: "user", content: prompt }],
         })
 
@@ -165,7 +167,7 @@ export async function GET(req: Request) {
         })
     } catch (aiErr) {
         console.error("Chef Yao error:", aiErr)
-        return NextResponse.json({ success: true, next_meal: { name: 'Thon & Alloco', kcal: 520, protein: 32, carbs: 45, fat: 18, slot: nextSlot }, slot: nextSlot })
+        return NextResponse.json({ success: true, next_meal: { name: 'Riz gras au poisson', kcal: 650, protein: 35, carbs: 80, fat: 18, slot: nextSlot }, slot: nextSlot })
     }
 }
 
