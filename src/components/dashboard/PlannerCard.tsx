@@ -216,7 +216,10 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
                 headers: { Authorization: `Bearer ${session.access_token}` }
             })
             const mealsJson = await mealsRes.json()
-            const alreadyLogged = !!(mealsJson?.success && (mealsJson.data || []).some((m: any) => m.meal_type === proposal.slot))
+            const alreadyLogged = !!(mealsJson?.success && (mealsJson.data || []).some((m: any) =>
+                m.meal_type === proposal.slot &&
+                String(m.coach_message || '').includes('Repas validé depuis ton planning Coach Yao.')
+            ))
             if (alreadyLogged) {
                 alert("Ce créneau est déjà validé aujourd'hui. On passe au prochain repas.")
                 setIsRevealed(false)

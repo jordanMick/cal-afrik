@@ -115,11 +115,14 @@ export async function GET(req: Request) {
     const { start: dayStart, end: dayEnd } = getUtcRangeForLocalDay(localDate, tzOffsetMin)
     const { data: todayMeals } = await supabase
         .from('meals')
-        .select('logged_at, meal_type')
+        .select('logged_at, meal_type, coach_message')
         .eq('user_id', user.id)
         .gte('logged_at', dayStart)
         .lte('logged_at', dayEnd)
-    const recordedSlots = todayMeals?.map(m => m.meal_type || getMealSlot(new Date(m.logged_at).getHours())) || []
+    const plannerMeals = (todayMeals || []).filter((m: any) =>
+        String(m?.coach_message || '').includes('Repas validé depuis ton planning Coach Yao.')
+    )
+    const recordedSlots = plannerMeals.map((m: any) => m.meal_type || getMealSlot(new Date(m.logged_at).getHours()))
     const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
     const slotTimes: Record<string, number> = { 'petit_dejeuner': 0, 'dejeuner': 12, 'collation': 16, 'diner': 19 }
 
