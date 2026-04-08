@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { calculateCalorieTarget } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
@@ -100,8 +100,7 @@ function WheelPicker({
 
 export default function OnboardingPage() {
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const isEditMode = searchParams.get('edit') === '1'
+    const [isEditMode, setIsEditMode] = useState(false)
     const {
         profile, setProfile,
         onboardingStep: step, setOnboardingStep: setStep,
@@ -131,6 +130,13 @@ export default function OnboardingPage() {
     const form = onboardingForm || initialForm
 
     // Migration safety: if old form doesn't have birth_year but has age
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const edit = new URLSearchParams(window.location.search).get('edit') === '1'
+            setIsEditMode(edit)
+        }
+    }, [])
+
     useEffect(() => {
         if (onboardingForm && !onboardingForm.birth_year && onboardingForm.age) {
             update('birth_year', currentYear - onboardingForm.age)
