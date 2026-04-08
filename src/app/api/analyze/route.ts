@@ -117,7 +117,7 @@ function buildPrompt(country?: string | null) {
     return `${PROMPT}
 
 Contexte géographique prioritaire: ${countryContext}.
-Privilégie les appellations locales et recettes courantes de ce pays si l'image est ambiguë.`
+Privilégie les appellations locales et recettes courantes de ce pays.`
 }
 
 const GEMINI_MODEL_CANDIDATES = [
