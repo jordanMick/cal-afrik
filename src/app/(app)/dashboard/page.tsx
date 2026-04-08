@@ -398,9 +398,6 @@ export default function DashboardPage() {
                 <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>{coachMsg.text}</p>
             </div>
 
-            {/* PLANNER SUGGESTION */}
-            <PlannerCard />
-
             {/* MACROS REDESIGNED AS PILLS */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '10px' }}>
                 {[
@@ -420,6 +417,9 @@ export default function DashboardPage() {
 
             {/* GRAPHIQUE 7 DERNIERS JOURS */}
             <WeeklyProgressChart targetKcal={calorieTarget} tier={effectiveTier} />
+
+            {/* PLANNER SUGGESTION */}
+            <PlannerCard />
 
             {/* REPAS GROUPÉS PAR SLOTS */}
             <div style={{ marginBottom: '32px' }}>
