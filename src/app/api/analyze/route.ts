@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import type { ScanResultV2, ScanApiResponse } from "@/types"
+import type { ScanApiResponse } from "@/types"
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -144,64 +144,6 @@ export async function POST(req: Request) {
         }
     }
 
-    // ─── MODE SIMULATION (POUR ÉCONOMISER LES TOKENS EN TEST) ───
-    const MOCK_MODE = false
-
-    if (MOCK_MODE) {
-        console.log("🛠️ MOCK MODE: Simulation d'un scan (Garba Royal)")
-        const mockResult: ScanResultV2 = {
-            meal_name: "Garba Royal (Attiéké & Thon)",
-            total_calories: 880,
-            components: [
-                { food_name: "attieke", estimated_portion_g: 300, calories: 560, protein_g: 4, carbs_g: 130, fat_g: 2, confidence: 95 },
-                { food_name: "thon", estimated_portion_g: 100, calories: 190, protein_g: 25, carbs_g: 0, fat_g: 10, confidence: 95 },
-                { food_name: "huile", estimated_portion_g: 15, calories: 130, protein_g: 0, carbs_g: 0, fat_g: 14, confidence: 90 }
-            ],
-            alternatives: []
-        }
-
-        // Simuler le reste de la logique avec le mockResult
-        const components = mockResult.components
-        const { data: foodItems } = await supabase
-            .from("food_items")
-            .select("id, name_standard, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
-
-        const results = []
-        for (const component of components) {
-            const topMatches = getTopMatches(component.food_name, foodItems || [])
-            results.push({
-                detected: component.food_name,
-                portion_g: component.estimated_portion_g,
-                calories_detected: component.calories,
-                protein_detected: component.protein_g,
-                carbs_detected: component.carbs_g,
-                fat_detected: component.fat_g,
-                confidence: component.confidence,
-                suggestions: topMatches.map(m => ({
-                    id: m.food.id,
-                    name: m.food.name_standard || m.food.name_en,
-                    score: m.score,
-                    calories: Math.round((m.food.calories_per_100g * component.estimated_portion_g) / 100),
-                    protein_g: Math.round((m.food.protein_per_100g * component.estimated_portion_g) / 100 * 10) / 10,
-                    carbs_g: Math.round((m.food.carbs_per_100g * component.estimated_portion_g) / 100 * 10) / 10,
-                    fat_g: Math.round((m.food.fat_per_100g * component.estimated_portion_g) / 100 * 10) / 10
-                }))
-            })
-        }
-
-        // ✅ Décompte du jeton pour les gratuits
-        if (tier === 'free') {
-            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
-        }
-
-        return NextResponse.json({
-            success: true,
-            meal_name: mockResult.meal_name,
-            total_calories: mockResult.total_calories,
-            data: results
-        })
-    }
-
     try {
         const { images } = await req.json()
         const image = images?.[0]
@@ -248,7 +190,15 @@ export async function POST(req: Request) {
             geminiResult = JSON.parse(cleaned);
         } catch (err) {
             console.error("❌ JSON Gemini invalide:", err);
+            return NextResponse.json({
+                success: false,
+                meal_name: "",
+                total_calories: 0,
+                data: [],
+                error: `Gemini JSON invalide: ${responseText}`,
+            }, { status: 422 })
         }
+        console.log("Gemini a détecté :", geminiResult)
 
         if (!geminiResult || !Array.isArray(geminiResult.items)) {
             return NextResponse.json({
@@ -256,7 +206,7 @@ export async function POST(req: Request) {
                 meal_name: "",
                 total_calories: 0,
                 data: [],
-                error: "Réponse Gemini invalide",
+                error: `Réponse Gemini invalide: ${responseText}`,
             }, { status: 422 })
         }
 

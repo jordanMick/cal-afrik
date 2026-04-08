@@ -156,7 +156,10 @@ export default function ScannerPage() {
             setCapturedImage(uploadedUrl)
             const base64Image = await toBase64(compressedFile)
             const { data: { session } } = await supabase.auth.getSession()
-            if (!session) { simulateAI(); return }
+            if (!session) {
+                alert("Session expirée. Reconnecte-toi pour lancer l'analyse IA.")
+                return
+            }
             const res = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
@@ -179,7 +182,11 @@ export default function ScannerPage() {
                 return
             }
 
-            if (!json.success || !json.data) { simulateAI(); return }
+            if (!json.success || !json.data) {
+                const errorMessage = json?.error || "Analyse Gemini échouée."
+                alert(`Erreur analyse: ${errorMessage}`)
+                return
+            }
             setMealName(json.meal_name || 'Repas détecté')
             setTotalCaloriesAI(json.total_calories || 0)
             const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[]).flatMap((item): EnrichedSuggestion[] => {
@@ -189,7 +196,10 @@ export default function ScannerPage() {
             })
             setSuggestions(enriched)
             if (json.data[0]) { const first = json.data[0] as ScanResultItem; setManualFood({ name_fr: json.meal_name || first.detected, portion_g: first.portion_g, calories: first.calories_detected, protein_g: first.protein_detected, carbs_g: first.carbs_detected, fat_g: first.fat_detected, category: 'plats_composes' }) }
-        } catch (err) { console.error(err); simulateAI() }
+        } catch (err: any) {
+            console.error(err)
+            alert(`Erreur analyse: ${err?.message || "Erreur inconnue"}`)
+        }
         finally { setIsAnalyzing(false) }
     }
 
