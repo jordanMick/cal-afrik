@@ -115,7 +115,8 @@ export default function HistoriquePage() {
             if (!session) return
             const firstDay = `${year}-${String(month + 1).padStart(2, '0')}-01`
             const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0]
-            const res = await fetch(`/api/meals?date_from=${firstDay}&date_to=${lastDay}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+            const tzOffset = new Date().getTimezoneOffset()
+            const res = await fetch(`/api/meals?date_from=${firstDay}&date_to=${lastDay}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
             if (json.success) setDaysWithMeals(new Set<string>((json.data as Meal[]).map(m => m.logged_at.split('T')[0])))
         } catch (err) { console.error(err) }
@@ -126,7 +127,8 @@ export default function HistoriquePage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const res = await fetch(`/api/meals?date=${date}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+            const tzOffset = new Date().getTimezoneOffset()
+            const res = await fetch(`/api/meals?date=${date}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
             if (json.success) setMealsForDate(json.data)
         } catch (err) { console.error(err) }

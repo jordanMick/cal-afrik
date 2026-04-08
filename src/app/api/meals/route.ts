@@ -22,6 +22,16 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+function getUtcRangeForLocalDay(dateStr: string, tzOffsetMin: number) {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    const startUtcMs = Date.UTC(y, m - 1, d, 0, 0, 0, 0) + tzOffsetMin * 60 * 1000
+    const endUtcMs = Date.UTC(y, m - 1, d, 23, 59, 59, 999) + tzOffsetMin * 60 * 1000
+    return {
+        start: new Date(startUtcMs).toISOString(),
+        end: new Date(endUtcMs).toISOString(),
+    }
+}
+
 // 🔥 GET
 export async function GET(req: NextRequest) {
     const supabase = createUserClient(req)
@@ -35,6 +45,7 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get('date')           // un jour précis
     const dateFrom = searchParams.get('date_from')  // plage de dates début
     const dateTo = searchParams.get('date_to')      // plage de dates fin
+    const tzOffsetMin = Number(searchParams.get('tz_offset_min') || '0')
 
     let query = supabaseAdmin
         .from('meals')
@@ -43,13 +54,12 @@ export async function GET(req: NextRequest) {
 
     if (date) {
         // Jour précis
-        const start = `${date}T00:00:00.000Z`
-        const end = `${date}T23:59:59.999Z`
+        const { start, end } = getUtcRangeForLocalDay(date, tzOffsetMin)
         query = query.gte('logged_at', start).lte('logged_at', end)
     } else if (dateFrom && dateTo) {
         // Plage de dates (pour le rapport 7 jours et l'historique mois)
-        const start = `${dateFrom}T00:00:00.000Z`
-        const end = `${dateTo}T23:59:59.999Z`
+        const { start } = getUtcRangeForLocalDay(dateFrom, tzOffsetMin)
+        const { end } = getUtcRangeForLocalDay(dateTo, tzOffsetMin)
         query = query.gte('logged_at', start).lte('logged_at', end)
     }
 

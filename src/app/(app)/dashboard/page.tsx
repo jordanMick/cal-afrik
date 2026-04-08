@@ -24,8 +24,9 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
 
                 const dateFrom = sevenDaysAgo.toISOString().split('T')[0]
                 const dateTo = today.toISOString().split('T')[0]
+                const tzOffset = new Date().getTimezoneOffset()
 
-                const res = await fetch(`/api/meals?date_from=${dateFrom}&date_to=${dateTo}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+                const res = await fetch(`/api/meals?date_from=${dateFrom}&date_to=${dateTo}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
                 const json = await res.json()
                 if (json.success) {
                     const meals = json.data as { logged_at: string, calories: number }[]
@@ -262,7 +263,8 @@ export default function DashboardPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
             const today = new Date().toISOString().split('T')[0]
-            const res = await fetch(`/api/meals?date=${today}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+            const tzOffset = new Date().getTimezoneOffset()
+            const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const json = await res.json()
             if (json.success) setTodayMeals(json.data)
         } catch (err) { console.error(err) }

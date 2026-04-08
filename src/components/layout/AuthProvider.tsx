@@ -81,7 +81,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             if (!mealsLoaded.current) {
                 mealsLoaded.current = true
                 const today = new Date().toISOString().split('T')[0]
-                const res = await fetch(`/api/meals?date=${today}`, {
+                const tzOffset = new Date().getTimezoneOffset()
+                const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, {
                     headers: { Authorization: `Bearer ${session.access_token}` }
                 })
                 const json = await res.json()

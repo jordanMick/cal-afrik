@@ -334,7 +334,8 @@ export default function RapportPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
             // 1. Récupérer les repas (existant)
-            const resMeals = await fetch(`/api/meals?date_from=${last7[0]}&date_to=${todayStr}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+            const tzOffset = new Date().getTimezoneOffset()
+            const resMeals = await fetch(`/api/meals?date_from=${last7[0]}&date_to=${todayStr}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
             const jsonMeals = await resMeals.json()
             if (jsonMeals.success) setMeals7days(jsonMeals.data)
 
