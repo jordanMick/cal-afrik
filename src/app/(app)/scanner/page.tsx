@@ -499,8 +499,11 @@ export default function ScannerPage() {
                 </div>
             </div>
 
+            {/* PLANNER (GUIDE) - En priorité haute */}
+            {!image && !isAnalyzing && <PlannerCard />}
+
             {/* SWITCH MODE SCAN */}
-            <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>
                 <button onClick={() => { setScanMode('ai'); (window as any).isLastScanFromBarcode = false; }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? '#1e1e1e' : 'transparent', color: scanMode === 'ai' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
                     📸 Photo
                 </button>
@@ -508,9 +511,6 @@ export default function ScannerPage() {
                     🏷️ Code-barres
                 </button>
             </div>
-
-            {/* PLANNER (GUIDE) */}
-            {!image && !isAnalyzing && <PlannerCard />}
 
             {/* AI SCAN VIEW */}
             {scanMode === 'ai' && !image && (
