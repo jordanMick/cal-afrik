@@ -166,6 +166,7 @@ export default function ScannerPage() {
                 body: JSON.stringify({ images: [{ data: base64Image, mimeType: file.type }] })
             })
             const json = await res.json()
+            console.log("🤖 Réponse IA (/api/analyze):", json)
 
             // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
             const effectiveTier = profile?.subscription_tier || 'free';
