@@ -77,9 +77,13 @@ export default function PlannerCard() {
 
     const handleReveal = async () => {
         const { data: { session } } = await supabase.auth.getSession()
-        if (session && tier === 'free' && activeTab === 'today') {
-            await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
+        if (!session) return
+
+        if (tier === 'free' && activeTab === 'today') {
+            // On incrémente la vue dès la révélation
+            await supabase.rpc('increment_planner_view', { user_id_input: session.user.id })
         }
+        
         if (activeTab === 'today') {
             setIsRevealed(true)
             setChangeCount(0)
@@ -152,6 +156,10 @@ export default function PlannerCard() {
             })
 
             if (res.ok) {
+                // On consomme un jeton d'action Combo 2
+                if (tier === 'free') {
+                    await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
+                }
                 alert('✅ Repas ajouté à ton journal !')
                 window.location.reload() 
             }

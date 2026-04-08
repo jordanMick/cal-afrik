@@ -152,7 +152,17 @@ export async function GET(req: Request) {
         })
     }
 
-    // Logique standard 'today'
+    const viewsToday = profile?.planner_views_today || 0
+    
+    // Pour aujourd'hui, on ne charge les métadonnées que si on a encore des jetons de vue
+    if (view === 'today' && tier === 'free' && viewsToday >= 2) {
+        return NextResponse.json({ 
+            success: false, 
+            error: "Tu as déjà profité de tes 2 suggestions gratuites. Reviens demain ou passe au Plan Pro !",
+            code: "LIMIT_REACHED"
+        }, { status: 403 })
+    }
+
     if (!nextSlot) {
         return NextResponse.json({ success: true, completed: true, message: "Bravo ! Journée terminée ✨" })
     }
@@ -171,7 +181,7 @@ export async function GET(req: Request) {
         success: true,
         completed: false,
         tier,
-        next_meal: mockProposals[nextSlot],
+        next_meal: mockProposals[nextSlot as string],
         slot: nextSlot,
         can_log_now: canLogNow,
         start_hour: slotTimes[nextSlot as string]
