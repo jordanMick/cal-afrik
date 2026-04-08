@@ -97,28 +97,95 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: false, error: "Limite de 2 suggestions gratuites atteinte.", code: "LIMIT_REACHED" }, { status: 403 })
     }
 
+    // CAS DEMAIN : Génération groupée par IA
     if (view === 'tomorrow') {
         if (tier === 'free') return NextResponse.json({ success: false, error: "Planning réservé aux membres PRO.", code: "PRO_ONLY" }, { status: 403 })
+        try {
+            const prompt = `Tu es Coach Yao. Génère un menu complet pour DEMAIN (4 repas : petit_dejeuner, dejeuner, collation, diner).
+            Cuisine africaine saine. Format JSON uniquement :
+            {"menu": [ {"slot": "petit_dejeuner", "name": "...", "kcal": 0}, ... ]}`
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { response_mime_type: "application/json" } })
+            })
+            const aiData = await res.json()
+            const menu = JSON.parse(aiData.candidates[0].content.parts[0].text)
+            return NextResponse.json({ success: true, tier, menu: menu.menu, locked: false })
+        } catch (e) {
+             return NextResponse.json({ success: true, tier, menu: slotsOrder.map(s => ({ slot: s, name: "Plat Coach Yao " + s, kcal: 450 })) })
+        }
+    }
+
+    // CAS SEMAINE : Génération groupée par IA
+    if (view === 'week') {
+        if (tier !== 'premium') return NextResponse.json({ success: false, error: "Planning hebdomadaire réservé aux membres Premium.", code: "PREMIUM_ONLY" }, { status: 403 })
+        try {
+            const prompt = `Tu es Coach Yao. Génère 7 plats principaux (déjeuner) pour la SEMAINE PROCHAINE.
+            Cuisine africaine saine. Format JSON uniquement :
+            {"days": [ {"day": "Lundi", "main_dish": "..."}, ... ] }`
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { response_mime_type: "application/json" } })
+            })
+            const aiData = await res.json()
+            const week = JSON.parse(aiData.candidates[0].content.parts[0].text)
+            return NextResponse.json({ success: true, tier, days: week.days, locked: false })
+        } catch (e) {
+            return NextResponse.json({ success: true, tier, days: Array.from({length:7}, (_,i)=>({day: "Jour "+(i+1), main_dish: "Poisson Braisé"})) })
+        }
     }
 
     if (!nextSlot) return NextResponse.json({ success: true, completed: true, message: "Bravo ! Journée terminée ✨" })
 
-    // 3. Tirage au sort dans la table RECIPES
-    const { data: recipes } = await supabase.from('recipes').select('*').eq('slot', nextSlot)
-    const recipe = recipes && recipes.length > 0 
-        ? recipes[Math.floor(Math.random() * recipes.length)]
-        : { name: 'Plat équilibré Coach Yao', kcal: 500, protein: 30, carbs: 60, fat: 15 }
+    // 3. Appel à Coach Yao (IA Gemini) pour une suggestion UNIQUE
+    try {
+        const prompt = `Tu es Coach Yao, l'expert en nutrition africaine de Cal-Afrik. 
+        Génère une proposition de repas unique pour le : ${nextSlot.replace('_', ' ')}.
+        Le plat doit être typiquement africain ou avec une touche africaine, sain et équilibré.
+        Format attendu (JSON uniquement) :
+        {
+          "name": "Nom du plat court (ex: Garba équilibré)",
+          "kcal": calories_approximatives,
+          "protein": grammes_proteines,
+          "carbs": grammes_glucides,
+          "fat": grammes_lipides
+        }`
 
-    return NextResponse.json({
-        success: true,
-        completed: false,
-        locked: false,
-        tier,
-        next_meal: { ...recipe, slot: nextSlot },
-        slot: nextSlot,
-        can_log_now: new Date().getHours() >= slotTimes[nextSlot as string],
-        start_hour: slotTimes[nextSlot as string]
-    })
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { response_mime_type: "application/json" }
+            })
+        })
+
+        const aiData = await res.json()
+        const recipe = JSON.parse(aiData.candidates[0].content.parts[0].text)
+
+        return NextResponse.json({
+            success: true,
+            completed: false,
+            locked: false,
+            tier,
+            next_meal: { ...recipe, slot: nextSlot },
+            slot: nextSlot,
+            can_log_now: new Date().getHours() >= slotTimes[nextSlot as string],
+            start_hour: slotTimes[nextSlot as string]
+        })
+    } catch (aiErr) {
+        console.error("Coach Yao error:", aiErr)
+        // Fallback si l'IA sature
+        return NextResponse.json({ 
+            success: true, 
+            next_meal: { name: 'Thon grillé & Alloco sauté', kcal: 520, protein: 32, carbs: 45, fat: 18, slot: nextSlot }, 
+            slot: nextSlot 
+        })
+    }
 }
 
 function getMealSlot(hour: number): string {
