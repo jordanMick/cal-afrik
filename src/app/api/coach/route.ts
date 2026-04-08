@@ -51,6 +51,16 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        const {
+            selectedFoods,
+            totals,
+            slotLabel,
+            slotTarget,
+            slotConsumed,
+            calorieTarget,
+            preferredCoachMessage,
+        } = await req.json()
+
         // ─── MODE SIMULATION ──────────────────────────────────────────
         const MOCK_MODE = true
         if (MOCK_MODE) {
@@ -63,20 +73,11 @@ export async function POST(req: NextRequest) {
             }
             return NextResponse.json({
                 success: true,
-                message: "[Mode TEST 🔧] Excellent choix ! Ce repas est bien équilibré en macros. Pense à bien t'hydrater et à faire une petite marche après. Continue comme ça ! 💪",
+                message: preferredCoachMessage || "[Mode TEST 🔧] Excellent choix ! Ce repas est bien équilibré en macros. Pense à bien t'hydrater et à faire une petite marche après. Continue comme ça ! 💪",
                 exceeded: false,
                 remainingAfter: 200
             })
         }
-        // 3. Lire les données du repas
-        const {
-            selectedFoods,
-            totals,
-            slotLabel,
-            slotTarget,
-            slotConsumed,
-            calorieTarget,
-        } = await req.json()
 
         const newSlotConsumed = slotConsumed + totals.calories
         const exceeded = newSlotConsumed > slotTarget
@@ -104,15 +105,18 @@ Donne un conseil court (2-3 phrases max) en français. ${exceeded
         }
 Termine par une phrase d'encouragement courte et utilise 1 émoji africain/alimentaire.`
 
-        const response = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 250,
-            messages: [{ role: 'user', content: prompt }]
-        })
+        let message = preferredCoachMessage || ''
+        if (!message) {
+            const response = await anthropic.messages.create({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 250,
+                messages: [{ role: 'user', content: prompt }]
+            })
 
-        const message = response.content[0].type === 'text'
-            ? response.content[0].text
-            : 'Bon repas ! Continue comme ça 💪'
+            message = response.content[0].type === 'text'
+                ? response.content[0].text
+                : 'Bon repas ! Continue comme ça 💪'
+        }
 
         // 5. Mettre à jour les quotas en base de données
         if (tier === 'free') {
