@@ -183,6 +183,10 @@ export default function ScannerPage() {
             }
 
             if (!json.success || !json.data) {
+                if (json?.code === 'GEMINI_QUOTA_EXCEEDED') {
+                    alert("Quota Gemini dépassé. Active la facturation Google AI Studio ou attends le reset du quota.")
+                    return
+                }
                 const errorMessage = json?.error || "Analyse Gemini échouée."
                 alert(`Erreur analyse: ${errorMessage}`)
                 return

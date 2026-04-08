@@ -197,12 +197,30 @@ export async function POST(req: Request) {
         }
 
         if (generationError) {
+            const rawError = generationError?.message || "Gemini generateContent error"
+            const isQuotaExceeded =
+                generationError?.status === 429
+                || String(rawError).includes("RESOURCE_EXHAUSTED")
+                || String(rawError).toLowerCase().includes("quota")
+
+            if (isQuotaExceeded) {
+                return NextResponse.json({
+                    success: false,
+                    meal_name: "",
+                    total_calories: 0,
+                    data: [],
+                    code: "GEMINI_QUOTA_EXCEEDED",
+                    error: "Quota Gemini dépassé. Vérifie ton plan/facturation Google AI Studio ou réessaie plus tard.",
+                    raw_error: rawError,
+                }, { status: 429 })
+            }
+
             return NextResponse.json({
                 success: false,
                 meal_name: "",
                 total_calories: 0,
                 data: [],
-                error: generationError?.message || "Gemini generateContent error",
+                error: rawError,
             }, { status: 502 })
         }
 
