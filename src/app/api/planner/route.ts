@@ -143,7 +143,19 @@ export async function GET(req: Request) {
                 }
             }
             if (view === 'week') {
-                return NextResponse.json({ success: true, locked: true, tier, days: lockedPlans.map(p => ({ day: p.date, main_dish: p.recipe_name })) })
+                const grouped = new Map<string, any[]>()
+                for (const p of lockedPlans) {
+                    if (!grouped.has(p.date)) grouped.set(p.date, [])
+                    grouped.get(p.date)!.push({ slot: p.slot, name: p.recipe_name, kcal: 0 })
+                }
+                const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
+                const days = Array.from(grouped.entries())
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([day, menu]) => ({
+                        day,
+                        menu: menu.sort((a: any, b: any) => slotsOrder.indexOf(a.slot as any) - slotsOrder.indexOf(b.slot as any)),
+                    }))
+                return NextResponse.json({ success: true, locked: true, tier, days })
             }
         }
     }
@@ -235,13 +247,13 @@ export async function GET(req: Request) {
         const prompt = `Tu es Coach Yao. Voici ma base de données d'aliments africains certifiés :
         ${foodsList}
 
-        Crée ${view === 'week' ? '7 déjeuners complets' : view === 'tomorrow' ? '4 repas complets' : 'le meilleur prochain repas équilibré'}.
+        Crée ${view === 'week' ? '7 jours complets (4 repas par jour)' : view === 'tomorrow' ? '4 repas complets' : 'le meilleur prochain repas équilibré'}.
         CONSEIL DE COMPOSITION : Tu PEUX et dois COMBINER plusieurs lignes pour créer un repas équilibré (ex: Riz + Sauce + Viande). 
         Additionne les calories et macros de chaque composant pour le résultat final.
         Les repas doivent être cohérents : petit_dejeuner (léger/sucré/énergétique), dejeuner/diner (complet : Protéine + Accompagnement + Sauce).
         
         Format attendu (JSON uniquement, pas de texte avant/après) :
-        ${view === 'week' ? '{"days": [{"day": "Lundi", "main_dish": "Nom combiné (ex: Riz sauce graine et Poisson)"}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "Nom combiné", "kcal": 0}]}' : '{"name": "Nom combiné", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
+        ${view === 'week' ? '{"days": [{"day": "Lundi", "menu": [{"slot":"petit_dejeuner","name":"Nom","kcal":0},{"slot":"dejeuner","name":"Nom","kcal":0},{"slot":"collation","name":"Nom","kcal":0},{"slot":"diner","name":"Nom","kcal":0}]}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "Nom combiné", "kcal": 0}]}' : '{"name": "Nom combiné", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
 
         const MOCK_MODE = true
 
@@ -257,23 +269,81 @@ export async function GET(req: Request) {
             }
             if (view === 'week') {
                 const days = [
-                    { day: "Lundi", main_dish: "[MOCK] Riz sauce graine" },
-                    { day: "Mardi", main_dish: "[MOCK] Foutou banane" },
-                    { day: "Mercredi", main_dish: "[MOCK] Attieké poisson" },
-                    { day: "Jeudi", main_dish: "[MOCK] Plaque au four" },
-                    { day: "Vendredi", main_dish: "[MOCK] Yassa poulet" },
-                    { day: "Samedi", main_dish: "[MOCK] Mafé boeuf" },
-                    { day: "Dimanche", main_dish: "[MOCK] Kedjenou" }
+                    {
+                        day: "Lundi",
+                        menu: [
+                            { slot: "petit_dejeuner", name: "[MOCK] Bouillie mil", kcal: 350 },
+                            { slot: "dejeuner", name: "[MOCK] Riz sauce graine", kcal: 780 },
+                            { slot: "collation", name: "[MOCK] Banane + arachides", kcal: 220 },
+                            { slot: "diner", name: "[MOCK] Poisson braisé attiéké", kcal: 640 },
+                        ],
+                    },
+                    {
+                        day: "Mardi",
+                        menu: [
+                            { slot: "petit_dejeuner", name: "[MOCK] Pain omelette", kcal: 420 },
+                            { slot: "dejeuner", name: "[MOCK] Foutou banane sauce claire", kcal: 760 },
+                            { slot: "collation", name: "[MOCK] Ananas frais", kcal: 160 },
+                            { slot: "diner", name: "[MOCK] Kedjenou poulet", kcal: 590 },
+                        ],
+                    },
+                    {
+                        day: "Mercredi",
+                        menu: [
+                            { slot: "petit_dejeuner", name: "[MOCK] Bouillie maïs", kcal: 340 },
+                            { slot: "dejeuner", name: "[MOCK] Attiéké poisson", kcal: 700 },
+                            { slot: "collation", name: "[MOCK] Yaourt nature", kcal: 180 },
+                            { slot: "diner", name: "[MOCK] Sauce gombo riz", kcal: 610 },
+                        ],
+                    },
+                    {
+                        day: "Jeudi",
+                        menu: [
+                            { slot: "petit_dejeuner", name: "[MOCK] Beignets haricot", kcal: 390 },
+                            { slot: "dejeuner", name: "[MOCK] Mafé boeuf", kcal: 820 },
+                            { slot: "collation", name: "[MOCK] Papaye", kcal: 150 },
+                            { slot: "diner", name: "[MOCK] Soupe légère igname", kcal: 520 },
+                        ],
+                    },
+                    {
+                        day: "Vendredi",
+                        menu: [
+                            { slot: "petit_dejeuner", name: "[MOCK] Crêpe millet", kcal: 360 },
+                            { slot: "dejeuner", name: "[MOCK] Yassa poulet", kcal: 740 },
+                            { slot: "collation", name: "[MOCK] Orange + noix", kcal: 210 },
+                            { slot: "diner", name: "[MOCK] Haricot rouge plantain", kcal: 600 },
+                        ],
+                    },
+                    {
+                        day: "Samedi",
+                        menu: [
+                            { slot: "petit_dejeuner", name: "[MOCK] Œufs brouillés pain", kcal: 430 },
+                            { slot: "dejeuner", name: "[MOCK] Garba complet", kcal: 850 },
+                            { slot: "collation", name: "[MOCK] Smoothie mangue", kcal: 200 },
+                            { slot: "diner", name: "[MOCK] Tilapia grillé", kcal: 560 },
+                        ],
+                    },
+                    {
+                        day: "Dimanche",
+                        menu: [
+                            { slot: "petit_dejeuner", name: "[MOCK] Bouillie sorgho", kcal: 330 },
+                            { slot: "dejeuner", name: "[MOCK] Tiep poisson", kcal: 790 },
+                            { slot: "collation", name: "[MOCK] Avocat + citron", kcal: 190 },
+                            { slot: "diner", name: "[MOCK] Sauce feuille + igname", kcal: 580 },
+                        ],
+                    },
                 ]
 
                 // Cache semaine en base (draft) pour cohérence avec l'onglet demain.
-                const draftItems = days.map((w, i) => ({
-                    user_id: user.id,
-                    date: addDaysToDateString(localDate, i),
-                    slot: 'dejeuner',
-                    recipe_name: w.main_dish,
-                    is_locked: false,
-                }))
+                const draftItems = days.flatMap((w, i) =>
+                    (w.menu || []).map((m: any) => ({
+                        user_id: user.id,
+                        date: addDaysToDateString(localDate, i),
+                        slot: m.slot,
+                        recipe_name: m.name,
+                        is_locked: false,
+                    }))
+                )
                 await supabase
                     .from('user_plans')
                     .delete()
@@ -304,14 +374,27 @@ export async function GET(req: Request) {
 
         if (view === 'tomorrow') return NextResponse.json({ success: true, tier, menu: selected.menu, locked: false })
         if (view === 'week') {
-            const days = selected.days || []
-            const draftItems = days.map((w: any, i: number) => ({
-                user_id: user.id,
-                date: addDaysToDateString(localDate, i),
-                slot: 'dejeuner',
-                recipe_name: w.main_dish,
-                is_locked: false,
-            }))
+            const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
+            const days = (selected.days || []).map((d: any) => {
+                if (Array.isArray(d?.menu)) return d
+                return {
+                    day: d?.day || '',
+                    menu: slotsOrder.map((slot) => ({
+                        slot,
+                        name: d?.main_dish || 'Repas équilibré',
+                        kcal: 0,
+                    })),
+                }
+            })
+            const draftItems = days.flatMap((w: any, i: number) =>
+                (w.menu || []).map((m: any) => ({
+                    user_id: user.id,
+                    date: addDaysToDateString(localDate, i),
+                    slot: m.slot,
+                    recipe_name: m.name,
+                    is_locked: false,
+                }))
+            )
             await supabase
                 .from('user_plans')
                 .delete()
@@ -340,14 +423,23 @@ export async function GET(req: Request) {
         
         // Fallbacks pour éviter un écran vide en cas de crash
         if (view === 'week') {
-            const days = Array.from({length: 7}).map((_, i) => ({ day: `Jour ${i+1}`, main_dish: 'Foutou sauce graine' }))
-            const draftItems = days.map((w, i) => ({
-                user_id: user.id,
-                date: addDaysToDateString(localDate, i),
-                slot: 'dejeuner',
-                recipe_name: w.main_dish,
-                is_locked: false,
+            const days = Array.from({length: 7}).map((_, i) => ({
+                day: `Jour ${i+1}`,
+                menu: ['petit_dejeuner', 'dejeuner', 'collation', 'diner'].map((slot) => ({
+                    slot,
+                    name: 'Foutou sauce graine',
+                    kcal: 500,
+                })),
             }))
+            const draftItems = days.flatMap((w, i) =>
+                (w.menu || []).map((m: any) => ({
+                    user_id: user.id,
+                    date: addDaysToDateString(localDate, i),
+                    slot: m.slot,
+                    recipe_name: m.name,
+                    is_locked: false,
+                }))
+            )
             await supabase
                 .from('user_plans')
                 .delete()

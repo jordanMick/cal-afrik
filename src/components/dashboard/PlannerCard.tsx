@@ -106,11 +106,14 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
                 items = tomorrowMenu.map(m => ({ ...m, date }))
             }
             if (target === 'week' && weekPlan) {
-                // Simplifié pour l'exemple
-                items = weekPlan.map((w, i) => {
-                   const d = new Date()
-                   d.setDate(d.getDate() + i)
-                   return { name: w.main_dish, slot: 'dejeuner', date: d.toISOString().split('T')[0] }
+                items = weekPlan.flatMap((w, i) => {
+                    const date = w?.date || addDaysToDateString(toLocalDateString(), i)
+                    const menus = Array.isArray(w?.menu) ? w.menu : []
+                    return menus.map((m: any) => ({
+                        name: m.name,
+                        slot: m.slot,
+                        date,
+                    }))
                 })
             }
 
@@ -473,7 +476,11 @@ export default function PlannerCard({ hideDinnerActionLink = false }: PlannerCar
                             {weekPlan?.map((w, idx) => (
                                 <div key={idx} style={{ background: '#1a1a1a', padding: '12px', borderRadius: '12px', border: '0.5px solid #333' }}>
                                     <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '800' }}>{w.day}</p>
-                                    <p style={{ fontSize: '11px', color: '#fff', marginTop: '4px' }}>{w.main_dish}</p>
+                                    {(Array.isArray(w.menu) ? w.menu : []).map((m: any) => (
+                                        <p key={`${w.day}-${m.slot}`} style={{ fontSize: '10px', color: '#fff', marginTop: '4px' }}>
+                                            <span style={{ color: '#888', textTransform: 'capitalize' }}>{String(m.slot || '').replace('_', ' ')}:</span> {m.name}
+                                        </p>
+                                    ))}
                                 </div>
                             ))}
                         </div>
