@@ -144,6 +144,36 @@ export async function GET(req: Request) {
         Format attendu (JSON uniquement, pas de texte avant/après) :
         ${view === 'week' ? '{"days": [{"day": "Lundi", "main_dish": "Nom combiné (ex: Riz sauce graine et Poisson)"}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "Nom combiné", "kcal": 0}]}' : '{"name": "Nom combiné", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
 
+        const MOCK_MODE = true
+
+        if (MOCK_MODE) {
+            console.log("🛠️ MOCK MODE: Simulation de Coach Yao (Zéro coût API)")
+            if (view === 'tomorrow') {
+                return NextResponse.json({ success: true, tier, locked: false, menu: [
+                    { slot: "petit_dejeuner", name: "[MOCK] Bouillie et Beignets", kcal: 450 },
+                    { slot: "dejeuner", name: "[MOCK] Garba complet", kcal: 850 },
+                    { slot: "collation", name: "[MOCK] Fruits tropicaux", kcal: 150 },
+                    { slot: "diner", name: "[MOCK] Soupe légère", kcal: 300 }
+                ]})
+            }
+            if (view === 'week') {
+                return NextResponse.json({ success: true, tier, locked: false, days: [
+                    { day: "Lundi", main_dish: "[MOCK] Riz sauce graine" },
+                    { day: "Mardi", main_dish: "[MOCK] Foutou banane" },
+                    { day: "Mercredi", main_dish: "[MOCK] Attieké poisson" },
+                    { day: "Jeudi", main_dish: "[MOCK] Plaque au four" },
+                    { day: "Vendredi", main_dish: "[MOCK] Yassa poulet" },
+                    { day: "Samedi", main_dish: "[MOCK] Mafé boeuf" },
+                    { day: "Dimanche", main_dish: "[MOCK] Kedjenou" }
+                ]})
+            }
+            return NextResponse.json({
+                success: true, completed: false, locked: false, tier, slot: nextSlot,
+                can_log_now: new Date().getHours() >= slotTimes[nextSlot as string], start_hour: slotTimes[nextSlot as string],
+                next_meal: { name: '[MOCK] Repas Équilibré Standard', kcal: 600, protein: 30, carbs: 70, fat: 20, slot: nextSlot }
+            })
+        }
+
         const msg = await anthropic.messages.create({
             model: "claude-3-haiku-20240307",
             max_tokens: 1500,
