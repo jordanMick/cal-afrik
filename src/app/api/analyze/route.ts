@@ -157,8 +157,7 @@ export async function POST(req: Request) {
         console.log("📸 BASE64 SIZE:", image.data.length)
 
         // ─── APPEL IA (Gemini) ───────────────────────────────────────
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent([
+        const inputParts = [
             {
                 inlineData: {
                     mimeType: image.mimeType || "image/jpeg",
@@ -166,8 +165,34 @@ export async function POST(req: Request) {
                 },
             },
             { text: PROMPT },
-        ]);
-        const responseText = await result.response.text();
+        ]
+        const modelNames = ["gemini-1.5-flash", "gemini-1.5-flash-latest"]
+        let responseText = ""
+        let generationError: any = null
+
+        for (const modelName of modelNames) {
+            try {
+                const model = genAI.getGenerativeModel({ model: modelName })
+                const result = await model.generateContent(inputParts)
+                responseText = await result.response.text()
+                generationError = null
+                break
+            } catch (err: any) {
+                generationError = err
+                console.error(err)
+                console.error(`❌ Gemini generateContent échoue avec ${modelName}`)
+            }
+        }
+
+        if (generationError) {
+            return NextResponse.json({
+                success: false,
+                meal_name: "",
+                total_calories: 0,
+                data: [],
+                error: generationError?.message || "Gemini generateContent error",
+            }, { status: 502 })
+        }
 
         console.log("🔥 RAW RESPONSE:", responseText)
 
