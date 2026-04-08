@@ -30,6 +30,8 @@ export default function PlannerCard() {
     const [canLogNow, setCanLogNow] = useState(true)
     const [startHour, setStartHour] = useState(0)
     const [changeCount, setChangeCount] = useState(0)
+    const [tomorrowChangeCount, setTomorrowChangeCount] = useState(0)
+    const [weekChangeCount, setWeekChangeCount] = useState(0)
 
     const fetchPlan = async (view: string) => {
         setLoading(true)
@@ -88,8 +90,14 @@ export default function PlannerCard() {
             setIsRevealed(true)
             setChangeCount(0)
         }
-        if (activeTab === 'tomorrow') setTomorrowRevealed(true)
-        if (activeTab === 'week') setWeekRevealed(true)
+        if (activeTab === 'tomorrow') {
+            setTomorrowRevealed(true)
+            setTomorrowChangeCount(0)
+        }
+        if (activeTab === 'week') {
+            setWeekRevealed(true)
+            setWeekChangeCount(0)
+        }
     }
 
     const handleRefuse = async () => {
@@ -120,14 +128,23 @@ export default function PlannerCard() {
         }
     }
 
-    const handleChange = async () => {
-        if (changeCount >= 3) {
-            alert("Limite de changements atteinte pour ce repas (3 max).")
-            return
+    const handleChange = async (target: 'today' | 'tomorrow' | 'week') => {
+        if (target === 'today') {
+            if (changeCount >= 3) return alert("Limite de changements atteinte (3 max).")
+            setChangeCount(prev => prev + 1)
+            setIsRevealed(false)
+            setTimeout(() => setIsRevealed(true), 300)
         }
-        setChangeCount(prev => prev + 1)
-        setIsRevealed(false)
-        setTimeout(() => setIsRevealed(true), 300)
+        if (target === 'tomorrow') {
+            if (tomorrowChangeCount >= 3) return alert("Limite de changements atteinte (3 max).")
+            setTomorrowChangeCount(prev => prev + 1)
+            await fetchPlan('tomorrow')
+        }
+        if (target === 'week') {
+            if (weekChangeCount >= 3) return alert("Limite de changements atteinte (3 max).")
+            setWeekChangeCount(prev => prev + 1)
+            await fetchPlan('week')
+        }
     }
 
     const handleAccept = async () => {
@@ -267,7 +284,7 @@ export default function PlannerCard() {
                                 </button>
                             ) : (
                                 <button 
-                                    onClick={handleChange}
+                                    onClick={() => handleChange('today')}
                                     style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#888', fontSize: '12px', fontWeight: '600' }}
                                 >
                                     Changer ({3 - changeCount})
@@ -288,7 +305,14 @@ export default function PlannerCard() {
                     <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                             <p style={{ fontSize: '11px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase' }}>Menu de demain</p>
-                            <span onClick={() => setTomorrowRevealed(false)} style={{ fontSize: '10px', color: '#555', cursor: 'pointer' }}>Masquer</span>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                {tier !== 'free' && (
+                                    <span onClick={() => handleChange('tomorrow')} style={{ fontSize: '10px', color: '#6366f1', cursor: 'pointer', fontWeight: '700' }}>
+                                        Regénérer ({3 - tomorrowChangeCount})
+                                    </span>
+                                )}
+                                <span onClick={() => setTomorrowRevealed(false)} style={{ fontSize: '10px', color: '#555', cursor: 'pointer' }}>Masquer</span>
+                            </div>
                         </div>
                         {tomorrowMenu?.map((m, idx) => (
                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx < 3 ? '0.5px solid #222' : 'none' }}>
@@ -323,9 +347,14 @@ export default function PlannerCard() {
                                 </div>
                             ))}
                         </div>
-                        <button onClick={() => setWeekRevealed(false)} style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#555', fontSize: '11px', marginTop: '16px', padding: '8px' }}>
-                            Refaire le planning
-                        </button>
+                        {tier !== 'free' && (
+                            <button 
+                                onClick={() => handleChange('week')} 
+                                style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#fff', fontSize: '11px', fontWeight: '700', marginTop: '16px', padding: '10px' }}
+                            >
+                                Refaire mon planning ({3 - weekChangeCount} restants)
+                            </button>
+                        )}
                     </div>
                 )
             )}
