@@ -339,12 +339,33 @@ export async function POST(req: Request) {
                 continue
             }
             const normalizedLabel = normalize(itemName)
-            // Recherche alias d'abord sur une clé normalisée (minuscules + sans accents)
-            const matchedByAliasExact = aliasToFood.get(normalizedLabel)
-            const matchedByAliasFuzzyEntry = Array.from(aliasToFood.entries()).find(([aliasNorm]) =>
-                aliasNorm.includes(normalizedLabel) || normalizedLabel.includes(aliasNorm)
-            )
-            const matchedByAlias = matchedByAliasExact || matchedByAliasFuzzyEntry?.[1] || null
+            // PRIORITE ABSOLUE SQL: LOWER(alias_name) = LOWER(nom_ia)
+            const { data: sqlAliasMatchRows } = await supabase
+                .from("food_aliases")
+                .select(`
+                    alias_name,
+                    food_item_id,
+                    food_items (
+                        id,
+                        name_standard,
+                        name_en,
+                        density_g_ml,
+                        calories_per_100g,
+                        proteins_100g,
+                        protein_per_100g,
+                        carbs_per_100g,
+                        fat_per_100g
+                    )
+                `)
+                .ilike("alias_name", itemName)
+                .limit(1)
+            const matchedByAliasSql = Array.isArray(sqlAliasMatchRows) && sqlAliasMatchRows.length > 0
+                ? (sqlAliasMatchRows[0] as any).food_items
+                : null
+            console.log("Match trouvé en BD ?:", !!matchedByAliasSql)
+
+            // Fallback normalisé si aucun match SQL exact sur alias_name
+            const matchedByAlias = matchedByAliasSql || aliasToFood.get(normalizedLabel) || null
             const normalizedForLike = normalizedLabel.replace(/'/g, "''")
             let matchedByNameIlike: any = null
             if (!matchedByAlias && normalizedForLike) {
