@@ -16,6 +16,7 @@ export default function PlannerCard() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week'>('today')
+    const [isRevealed, setIsRevealed] = useState(false)
     const [proposal, setProposal] = useState<Proposal | null>(null)
     const [tomorrowMenu, setTomorrowMenu] = useState<any[] | null>(null)
     const [weekPlan, setWeekPlan] = useState<any[] | null>(null)
@@ -26,7 +27,7 @@ export default function PlannerCard() {
     const [canLogNow, setCanLogNow] = useState(true)
     const [startHour, setStartHour] = useState(0)
 
-    const fetchPlan = async (view: string) => {
+    const fetchPlan = async (view: string, reveal = false) => {
         setLoading(true)
         setError(null)
         try {
@@ -48,6 +49,7 @@ export default function PlannerCard() {
                         setCompleted(false)
                         setCanLogNow(json.can_log_now)
                         setStartHour(json.start_hour)
+                        if (reveal) setIsRevealed(true)
                     }
                 } else if (view === 'tomorrow') {
                     setTomorrowMenu(json.menu)
@@ -67,8 +69,21 @@ export default function PlannerCard() {
     }
 
     useEffect(() => {
-        fetchPlan(activeTab)
+        if (activeTab === 'today') {
+            // Pour aujourd'hui, on ne charge les métadonnées sans révéler
+            fetchPlan('today', false)
+        } else {
+            fetchPlan(activeTab, true)
+        }
     }, [activeTab])
+
+    const handleReveal = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session && tier === 'free') {
+            await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
+        }
+        setIsRevealed(true)
+    }
 
     const handleAccept = async () => {
         if (!proposal) return
@@ -96,9 +111,6 @@ export default function PlannerCard() {
             })
 
             if (res.ok) {
-                if (tier === 'free') {
-                    await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
-                }
                 alert('✅ Repas ajouté à ton journal !')
                 window.location.reload() 
             }
@@ -109,18 +121,13 @@ export default function PlannerCard() {
         }
     }
 
-    if (loading && activeTab === 'today') return (
-        <div style={{ background: '#141414', borderRadius: '20px', padding: '20px', marginBottom: '24px', height: '120px', animation: 'pulse 1.5s infinite' }} />
-    )
-
     return (
         <div style={{ marginBottom: '24px' }}>
-            {/* Tabs Navigation */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                 {(['today', 'tomorrow', 'week'] as const).map(tab => (
                     <button
                         key={tab}
-                        onClick={() => setActiveTab(tab)}
+                        onClick={() => { setActiveTab(tab); setIsRevealed(false); }}
                         style={{
                             background: activeTab === tab ? '#6366f1' : '#1a1a1a',
                             border: '0.5px solid #333',
@@ -157,6 +164,21 @@ export default function PlannerCard() {
                     <div style={{ background: 'rgba(16,185,129,0.05)', borderRadius: '24px', padding: '20px', border: '0.5px solid rgba(16,185,129,0.2)', textAlign: 'center' }}>
                         <p style={{ fontSize: '24px', marginBottom: '8px' }}>🎉</p>
                         <p style={{ fontSize: '13px', fontWeight: '600', color: '#10b981' }}>{completedMsg}</p>
+                    </div>
+                ) : !isRevealed ? (
+                    <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', border: '0.5px solid #222', textAlign: 'center' }}>
+                        <p style={{ fontSize: '13px', color: '#fff', fontWeight: '700', marginBottom: '12px' }}>Coach Yao a une idée pour ton prochain repas...</p>
+                        <button 
+                            onClick={handleReveal}
+                            style={{ 
+                                background: 'linear-gradient(135deg, #6366f1, #818cf8)', border: 'none', 
+                                borderRadius: '12px', color: '#fff', fontSize: '12px', fontWeight: '700', 
+                                padding: '10px 20px', cursor: 'pointer', transition: 'all 0.2s' 
+                            }}
+                        >
+                            Découvrir la suggestion
+                        </button>
+                        {tier === 'free' && <p style={{ fontSize: '10px', color: '#555', marginTop: '8px' }}>Ceci utilisera 1 de tes 2 jetons quotidiens</p>}
                     </div>
                 ) : (
                     <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222', borderLeft: '4px solid #6366f1', opacity: canLogNow ? 1 : 0.8 }}>
