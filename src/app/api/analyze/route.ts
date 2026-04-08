@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenAI } from "@google/genai"
 import type { ScanApiResponse } from "@/types"
 
-const genAI = new (GoogleGenerativeAI as any)(
-    process.env.GEMINI_API_KEY as string,
-    { apiVersion: "v1" }
-) as GoogleGenerativeAI
+const genAI = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY as string,
+    httpOptions: { apiVersion: "v1" },
+})
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -169,11 +169,15 @@ export async function POST(req: Request) {
             },
             { text: PROMPT },
         ]
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
         let responseText = ""
         try {
-            const result = await model.generateContent(inputParts)
-            responseText = await result.response.text()
+            const result = await genAI.models.generateContent({
+                model: "gemini-1.5-flash",
+                contents: inputParts as any,
+            })
+            responseText = typeof (result as any).text === "function"
+                ? (result as any).text()
+                : String((result as any).text || "")
         } catch (err: any) {
             console.error(err)
             console.error("❌ Gemini generateContent échoue avec gemini-1.5-flash")
