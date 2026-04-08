@@ -20,6 +20,13 @@ function getUtcRangeForLocalDay(dateStr: string, tzOffsetMin: number) {
     }
 }
 
+function addDaysToDateString(dateStr: string, days: number) {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    dt.setDate(dt.getDate() + days)
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+
 export async function POST(req: Request) {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -85,12 +92,11 @@ export async function GET(req: Request) {
     const localDate = searchParams.get('date') || new Date().toISOString().split('T')[0]
     const localHour = Number(searchParams.get('now_hour') || new Date().getHours())
     const todayStr = new Date().toISOString().split('T')[0]
+    const tomorrowLocalDate = addDaysToDateString(localDate, 1)
 
     // 1. Vérifier les plans VERROUILLÉS
     if (view === 'tomorrow' || view === 'week') {
-        const queryDate = view === 'tomorrow' 
-            ? new Date(Date.now() + 86400000).toISOString().split('T')[0]
-            : todayStr
+        const queryDate = view === 'tomorrow' ? tomorrowLocalDate : todayStr
             
         const { data: lockedPlans } = await supabase.from('user_plans')
             .select('*')
@@ -108,6 +114,29 @@ export async function GET(req: Request) {
             if (view === 'week') {
                 return NextResponse.json({ success: true, locked: true, tier, days: lockedPlans.map(p => ({ day: p.date, main_dish: p.recipe_name })) })
             }
+        }
+    }
+
+    // Si un planning "semaine" a déjà été généré (même non verrouillé),
+    // on réutilise "demain" depuis user_plans pour garder la cohérence.
+    if (view === 'tomorrow') {
+        const { data: plannedTomorrow } = await supabase
+            .from('user_plans')
+            .select('slot, recipe_name')
+            .eq('user_id', user.id)
+            .eq('date', tomorrowLocalDate)
+
+        if (plannedTomorrow && plannedTomorrow.length > 0) {
+            const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
+            const ordered = [...plannedTomorrow].sort((a: any, b: any) =>
+                slotsOrder.indexOf(a.slot as any) - slotsOrder.indexOf(b.slot as any)
+            )
+            return NextResponse.json({
+                success: true,
+                tier,
+                locked: false,
+                menu: ordered.map((m: any) => ({ slot: m.slot, name: m.recipe_name, kcal: 0 })),
+            })
         }
     }
 
@@ -189,7 +218,7 @@ export async function GET(req: Request) {
                 ]})
             }
             if (view === 'week') {
-                return NextResponse.json({ success: true, tier, locked: false, days: [
+                const days = [
                     { day: "Lundi", main_dish: "[MOCK] Riz sauce graine" },
                     { day: "Mardi", main_dish: "[MOCK] Foutou banane" },
                     { day: "Mercredi", main_dish: "[MOCK] Attieké poisson" },
@@ -197,7 +226,26 @@ export async function GET(req: Request) {
                     { day: "Vendredi", main_dish: "[MOCK] Yassa poulet" },
                     { day: "Samedi", main_dish: "[MOCK] Mafé boeuf" },
                     { day: "Dimanche", main_dish: "[MOCK] Kedjenou" }
-                ]})
+                ]
+
+                // Cache semaine en base (draft) pour cohérence avec l'onglet demain.
+                const draftItems = days.map((w, i) => ({
+                    user_id: user.id,
+                    date: addDaysToDateString(localDate, i),
+                    slot: 'dejeuner',
+                    recipe_name: w.main_dish,
+                    is_locked: false,
+                }))
+                await supabase
+                    .from('user_plans')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('is_locked', false)
+                    .gte('date', localDate)
+                    .lte('date', addDaysToDateString(localDate, 6))
+                await supabase.from('user_plans').insert(draftItems)
+
+                return NextResponse.json({ success: true, tier, locked: false, days })
             }
             return NextResponse.json({
                 success: true, completed: false, locked: false, tier, slot: nextSlot,
@@ -217,7 +265,27 @@ export async function GET(req: Request) {
         const selected = JSON.parse(jsonMatch ? jsonMatch[0] : rawText)
 
         if (view === 'tomorrow') return NextResponse.json({ success: true, tier, menu: selected.menu, locked: false })
-        if (view === 'week') return NextResponse.json({ success: true, tier, days: selected.days, locked: false })
+        if (view === 'week') {
+            const days = selected.days || []
+            const draftItems = days.map((w: any, i: number) => ({
+                user_id: user.id,
+                date: addDaysToDateString(localDate, i),
+                slot: 'dejeuner',
+                recipe_name: w.main_dish,
+                is_locked: false,
+            }))
+            await supabase
+                .from('user_plans')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('is_locked', false)
+                .gte('date', localDate)
+                .lte('date', addDaysToDateString(localDate, 6))
+            if (draftItems.length > 0) {
+                await supabase.from('user_plans').insert(draftItems)
+            }
+            return NextResponse.json({ success: true, tier, days, locked: false })
+        }
 
         return NextResponse.json({
             success: true,
@@ -234,7 +302,23 @@ export async function GET(req: Request) {
         
         // Fallbacks pour éviter un écran vide en cas de crash
         if (view === 'week') {
-            return NextResponse.json({ success: true, tier, days: Array.from({length: 7}).map((_, i) => ({ day: `Jour ${i+1}`, main_dish: 'Foutou sauce graine' })), locked: false })
+            const days = Array.from({length: 7}).map((_, i) => ({ day: `Jour ${i+1}`, main_dish: 'Foutou sauce graine' }))
+            const draftItems = days.map((w, i) => ({
+                user_id: user.id,
+                date: addDaysToDateString(localDate, i),
+                slot: 'dejeuner',
+                recipe_name: w.main_dish,
+                is_locked: false,
+            }))
+            await supabase
+                .from('user_plans')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('is_locked', false)
+                .gte('date', localDate)
+                .lte('date', addDaysToDateString(localDate, 6))
+            await supabase.from('user_plans').insert(draftItems)
+            return NextResponse.json({ success: true, tier, days, locked: false })
         }
         if (view === 'tomorrow') {
             return NextResponse.json({ success: true, tier, menu: ['petit_dejeuner', 'dejeuner', 'collation', 'diner'].map(s => ({ slot: s, name: 'Repas de secours', kcal: 500 })), locked: false })
