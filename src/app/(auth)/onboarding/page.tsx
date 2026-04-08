@@ -205,7 +205,6 @@ export default function OnboardingPage() {
                 height_cm: Number(form.height_cm),
                 activity_level: form.activity_level,
                 goal: form.goal,
-                goal_weight_kg: Number(form.target_weight_kg) || null,
                 country: form.country,
                 preferred_cuisines: form.preferred_cuisines,
                 subscription_tier: profile?.subscription_tier || 'free',
