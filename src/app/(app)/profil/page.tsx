@@ -297,8 +297,36 @@ export default function ProfilPage() {
                     </div>
                 </div>
 
+                {/* BANNIÈRE D'EXPIRATION IMMINENTE (J-7) */}
+                {isExpiringSoon && (
+                    <div
+                        onClick={() => router.push('/upgrade')}
+                        style={{
+                            marginBottom: '15px',
+                            padding: '16px',
+                            borderRadius: '20px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            cursor: 'pointer',
+                        }}>
+                        <div style={{ fontSize: '24px' }}>⚠️</div>
+                        <div>
+                            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '800', textTransform: 'uppercase' }}>
+                                Attention, expiration imminente !
+                            </p>
+                            <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '500', marginTop: '2px' }}>
+                                {daysLeft === 0 ? "Ton plan expire AUJOURD'HUI. " : `Plus que ${daysLeft} jour${daysLeft > 1 ? 's' : ''}. `}
+                                Renouvelle maintenant pour garder Coach Yao.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* BANNIÈRE UPGRADE DYNAMIQUE */}
-                {profile?.subscription_tier !== 'premium' && (
+                {profile?.subscription_tier !== 'premium' && !isExpiringSoon && (
                     <div
                         onClick={() => router.push('/upgrade')}
                         style={{
