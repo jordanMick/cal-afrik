@@ -55,22 +55,39 @@ export async function GET(req: NextRequest) {
     if (date) {
         // Jour précis
         const { start, end } = getUtcRangeForLocalDay(date, tzOffsetMin)
-        query = query.gte('logged_at', start).lte('logged_at', end)
+        query = query.gte('created_at', start).lte('created_at', end)
     } else if (dateFrom && dateTo) {
         // Plage de dates (pour le rapport 7 jours et l'historique mois)
         const { start } = getUtcRangeForLocalDay(dateFrom, tzOffsetMin)
         const { end } = getUtcRangeForLocalDay(dateTo, tzOffsetMin)
-        query = query.gte('logged_at', start).lte('logged_at', end)
+        query = query.gte('created_at', start).lte('created_at', end)
     }
 
-    const { data, error } = await query.order('logged_at', { ascending: false })
+    const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
         console.log("❌ GET ERROR:", error)
         return NextResponse.json({ success: false, error: error.message })
     }
 
-    return NextResponse.json({ success: true, data })
+    const mapped = (data || []).map((row: any) => ({
+        id: row.id,
+        user_id: row.user_id,
+        food_item_id: row.food_item_id ?? null,
+        custom_name: row.custom_name ?? row.name ?? row.meal_name ?? 'Repas',
+        meal_type: row.meal_type ?? null,
+        portion_g: Number(row.portion_g ?? 0),
+        calories: Number(row.calories ?? row.total_calories ?? 0),
+        protein_g: Number(row.protein_g ?? row.total_protein ?? 0),
+        carbs_g: Number(row.carbs_g ?? row.total_carbs ?? 0),
+        fat_g: Number(row.fat_g ?? row.total_fat ?? 0),
+        image_url: row.image_url ?? null,
+        ai_confidence: Number(row.ai_confidence ?? 0),
+        logged_at: row.logged_at ?? row.created_at ?? new Date().toISOString(),
+        coach_message: row.coach_message ?? null,
+    }))
+
+    return NextResponse.json({ success: true, data: mapped })
 }
 
 // 🔥 POST
@@ -87,18 +104,12 @@ export async function POST(req: NextRequest) {
 
     const mealData = {
         user_id: user.id,
-        food_item_id: body.food_item_id || null,
-        custom_name: body.custom_name || "Repas",
-        portion_g: Number(body.portion_g || 0),
-        calories: Number(body.calories || 0),
-        protein_g: Number(body.protein_g || 0),
-        carbs_g: Number(body.carbs_g || 0),
-        fat_g: Number(body.fat_g || 0),
+        // Schéma actuel DB: total_calories + created_at (+ meal_type, image_url, coach_message)
+        total_calories: Number(body.calories || 0),
         image_url: body.image_url || null,
-        ai_confidence: Number(body.ai_confidence || 0),
         meal_type: body.meal_type || null,
         coach_message: body.coach_message || null,
-        logged_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
     }
 
     const { data, error } = await supabaseAdmin
@@ -111,7 +122,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message })
     }
 
-    return NextResponse.json({ success: true, data })
+    const mapped = {
+        id: (data as any).id,
+        user_id: (data as any).user_id,
+        food_item_id: null,
+        custom_name: body.custom_name || 'Repas',
+        meal_type: (data as any).meal_type || null,
+        portion_g: Number(body.portion_g || 0),
+        calories: Number((data as any).total_calories ?? body.calories ?? 0),
+        protein_g: Number(body.protein_g || 0),
+        carbs_g: Number(body.carbs_g || 0),
+        fat_g: Number(body.fat_g || 0),
+        image_url: (data as any).image_url || null,
+        ai_confidence: Number(body.ai_confidence || 0),
+        logged_at: (data as any).created_at || new Date().toISOString(),
+        coach_message: (data as any).coach_message || null,
+    }
+
+    return NextResponse.json({ success: true, data: mapped })
 }
 
 // 🔥 DELETE
