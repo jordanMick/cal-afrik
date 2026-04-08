@@ -159,15 +159,22 @@ export async function GET(req: Request) {
 
         if (plannedTomorrow && plannedTomorrow.length > 0) {
             const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
-            const ordered = [...plannedTomorrow].sort((a: any, b: any) =>
-                slotsOrder.indexOf(a.slot as any) - slotsOrder.indexOf(b.slot as any)
-            )
-            return NextResponse.json({
-                success: true,
-                tier,
-                locked: false,
-                menu: ordered.map((m: any) => ({ slot: m.slot, name: m.recipe_name, kcal: 0 })),
-            })
+            const uniqueSlots = new Set((plannedTomorrow as any[]).map((m: any) => m.slot))
+            const hasFullDay = slotsOrder.every(s => uniqueSlots.has(s))
+
+            // On ne réutilise le cache que si demain contient bien les 4 repas.
+            // Sinon, on laisse la génération "tomorrow" produire un menu complet.
+            if (hasFullDay) {
+                const ordered = [...plannedTomorrow].sort((a: any, b: any) =>
+                    slotsOrder.indexOf(a.slot as any) - slotsOrder.indexOf(b.slot as any)
+                )
+                return NextResponse.json({
+                    success: true,
+                    tier,
+                    locked: false,
+                    menu: ordered.map((m: any) => ({ slot: m.slot, name: m.recipe_name, kcal: 0 })),
+                })
+            }
         }
     }
 
