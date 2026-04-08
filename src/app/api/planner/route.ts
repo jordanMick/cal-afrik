@@ -106,10 +106,19 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: true, completed: true, message: "Bravo ! Journée terminée ✨" })
     }
 
-    // Sécurité de Tier
+    // Sécurité de Tier et Règle du Dîner
     if (view === 'tomorrow') {
         if (tier === 'free') {
             return NextResponse.json({ success: false, error: "Le menu de demain est réservé aux membres PRO.", code: "PRO_ONLY" }, { status: 403 })
+        }
+        
+        const hasDiner = recordedSlots.includes('diner')
+        if (!hasDiner) {
+            return NextResponse.json({ 
+                success: false, 
+                error: "Menu de demain débloqué après ton dîner du jour ! Enregistre ton dîner pour le voir.", 
+                code: "DINNER_REQUIRED" 
+            }, { status: 403 })
         }
     }
     
