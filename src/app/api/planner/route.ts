@@ -144,7 +144,7 @@ export async function GET(req: Request) {
         Format attendu (JSON uniquement, pas de texte avant/après) :
         ${view === 'week' ? '{"days": [{"day": "Lundi", "main_dish": "Nom combiné (ex: Riz sauce graine et Poisson)"}]}' : view === 'tomorrow' ? '{"menu": [{"slot": "petit_dejeuner", "name": "Nom combiné", "kcal": 0}]}' : '{"name": "Nom combiné", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0}'}`
 
-        const MOCK_MODE = true
+        const MOCK_MODE = false
 
         if (MOCK_MODE) {
             console.log("🛠️ MOCK MODE: Simulation de Coach Yao (Zéro coût API)")

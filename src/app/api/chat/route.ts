@@ -70,7 +70,7 @@ Contexte actuel de l'utilisateur :
 Réponds avec un ton chaleureux, direct et motivant (pas trop long, 3-4 phrases max, comme dans un SMS). Utilise quelques émojis.`
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
-        const MOCK_MODE = true
+        const MOCK_MODE = false
 
         let aiMessage = ""
         
