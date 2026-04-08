@@ -18,8 +18,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         initAuth()
 
         const { data: listener } = supabase.auth.onAuthStateChange((_event) => {
-            // ✅ Ne recharger que sur login/logout réel
-            if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT') {
+            // On recharge aussi lors de l'initialisation et du refresh token,
+            // utile en PWA où la restauration de session peut arriver juste après le montage.
+            if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'INITIAL_SESSION' || _event === 'TOKEN_REFRESHED') {
                 mealsLoaded.current = false
                 initAuth()
             }
@@ -43,6 +44,34 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
             // 🔥 IMPORTANT
             if (!session) {
+                // En PWA, la session peut se restaurer légèrement après l'ouverture.
+                await new Promise(resolve => setTimeout(resolve, 350))
+                const { data: retryData } = await supabase.auth.getSession()
+                const retrySession = retryData?.session
+                if (retrySession) {
+                    const { data: profile, error: profileError } = await supabase
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('user_id', retrySession.user.id)
+                        .single()
+
+                    if (!profileError && profile) {
+                        setProfile(profile)
+                        if (!mealsLoaded.current) {
+                            mealsLoaded.current = true
+                            const today = toLocalDateString()
+                            const tzOffset = new Date().getTimezoneOffset()
+                            const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, {
+                                headers: { Authorization: `Bearer ${retrySession.access_token}` }
+                            })
+                            const json = await res.json()
+                            if (json.success) setTodayMeals(json.data)
+                        }
+                        setLoading(false)
+                        return
+                    }
+                }
+
                 // 👉 attendre un peu si on est sur reset-password
                 if (pathname.startsWith('/reset-password')) {
                     setLoading(false)
