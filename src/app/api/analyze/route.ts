@@ -183,6 +183,44 @@ export async function POST(req: Request) {
         }
     }
 
+    const MOCK_MODE = true
+    if (MOCK_MODE) {
+        const mockData = [
+            {
+                detected: "Pâte de maïs",
+                portion_g: 250,
+                calories_detected: 410,
+                protein_detected: 4.0,
+                carbs_detected: 90.0,
+                fat_detected: 1.2,
+                confidence: 92,
+                suggestions: [],
+            },
+            {
+                detected: "Sauce légumes",
+                portion_g: 220,
+                calories_detected: 260,
+                protein_detected: 8.5,
+                carbs_detected: 20.0,
+                fat_detected: 14.0,
+                confidence: 88,
+                suggestions: [],
+            }
+        ]
+
+        if (tier === 'free') {
+            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
+        }
+
+        return NextResponse.json({
+            success: true,
+            meal_name: "Repas détecté (MOCK)",
+            total_calories: mockData.reduce((sum, it) => sum + it.calories_detected, 0),
+            data: mockData,
+            coach_message: "Mode test: bon équilibre global, ajuste la portion selon ton objectif.",
+        })
+    }
+
     try {
         const { images } = await req.json()
         const image = images?.[0]

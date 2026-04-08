@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         } = await req.json()
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
-        const MOCK_MODE = false
+        const MOCK_MODE = true
         if (MOCK_MODE) {
             // Mise à jour des quotas comme si la vraie IA avait répondu
             if (tier === 'free') {
