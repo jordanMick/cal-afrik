@@ -102,7 +102,6 @@ Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le text
 
 const GEMINI_MODEL_CANDIDATES = [
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
 ]
 
 
@@ -176,8 +175,10 @@ export async function POST(req: Request) {
         ]
         let responseText = ""
         let generationError: any = null
+        let lastTriedModel = ""
 
         for (const modelName of GEMINI_MODEL_CANDIDATES) {
+            lastTriedModel = modelName
             try {
                 const result = await genAI.models.generateContent({
                     model: modelName,
@@ -210,7 +211,7 @@ export async function POST(req: Request) {
                     total_calories: 0,
                     data: [],
                     code: "GEMINI_QUOTA_EXCEEDED",
-                    error: "Quota Gemini dépassé. Vérifie ton plan/facturation Google AI Studio ou réessaie plus tard.",
+                    error: `Quota Gemini dépassé sur ${lastTriedModel}. Vérifie ton plan/facturation Google AI Studio ou réessaie plus tard.`,
                     raw_error: rawError,
                 }, { status: 429 })
             }
