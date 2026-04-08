@@ -114,35 +114,7 @@ export default function PlannerCard() {
     }
 
     if (tier === 'free') {
-        return (
-            <div style={{ 
-                background: '#141414', borderRadius: '24px', padding: '20px', marginBottom: '24px', 
-                border: '0.5px solid #222', position: 'relative', overflow: 'hidden' 
-            }}>
-                <div style={{ filter: 'blur(8px)', opacity: 0.3 }}>
-                    <p style={{ fontSize: '11px', color: '#6366f1', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Prochain Repas Suggeré</p>
-                    <p style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>Riz au gras et poulet...</p>
-                </div>
-                
-                <div style={{ 
-                    position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', 
-                    alignItems: 'center', justifyContent: 'center', background: 'rgba(10,10,10,0.4)', zIndex: 2 
-                }}>
-                    <p style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>GPS Nutritionnel 🚀</p>
-                    <p style={{ fontSize: '10px', color: '#aaa', marginBottom: '12px' }}>Ne réfléchis plus, Coach Yao planifie pour toi.</p>
-                    <button 
-                        onClick={() => router.push('/upgrade')}
-                        style={{ 
-                            background: 'linear-gradient(135deg, #6366f1, #818cf8)', border: 'none', 
-                            borderRadius: '8px', color: '#fff', fontSize: '11px', fontWeight: '700', 
-                            padding: '6px 14px', cursor: 'pointer' 
-                        }}
-                    >
-                        Débloquer
-                    </button>
-                </div>
-            </div>
-        )
+        return null // On ne pollue plus le dashboard, on laisse le graphique gérer l'upsell
     }
 
     return (
