@@ -73,14 +73,14 @@ export async function GET(req: Request) {
         'collation': { name: 'Poignée d\'arachides grillées', kcal: 180, protein: 8, carbs: 6, fat: 14 }
     }
 
-    const proposal = mockProposals[nextSlot]
+    const proposal = mockProposals[nextSlot as keyof typeof mockProposals]
 
     return NextResponse.json({
         success: true,
         completed: false,
         tier,
         next_meal: proposal,
-        slot: nextSlot,
+        slot: nextSlot as 'petit_dejeuner' | 'dejeuner' | 'collation' | 'diner',
         can_see_tomorrow: tier === 'pro' || tier === 'premium',
         can_see_week: tier === 'premium'
     })
