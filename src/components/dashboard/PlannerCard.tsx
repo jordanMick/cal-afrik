@@ -10,6 +10,7 @@ interface Proposal {
     protein: number
     carbs: number
     fat: number
+    slot: string
 }
 
 export default function PlannerCard() {
@@ -28,6 +29,7 @@ export default function PlannerCard() {
     const [completedMsg, setCompletedMsg] = useState('')
     const [canLogNow, setCanLogNow] = useState(true)
     const [startHour, setStartHour] = useState(0)
+    const [changeCount, setChangeCount] = useState(0)
 
     const fetchPlan = async (view: string) => {
         setLoading(true)
@@ -78,9 +80,50 @@ export default function PlannerCard() {
         if (session && tier === 'free' && activeTab === 'today') {
             await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
         }
-        if (activeTab === 'today') setIsRevealed(true)
+        if (activeTab === 'today') {
+            setIsRevealed(true)
+            setChangeCount(0)
+        }
         if (activeTab === 'tomorrow') setTomorrowRevealed(true)
         if (activeTab === 'week') setWeekRevealed(true)
+    }
+
+    const handleRefuse = async () => {
+        if (!proposal) return
+        setLoading(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            await fetch('/api/planner', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    slot: proposal.slot,
+                    date: new Date().toISOString().split('T')[0]
+                })
+            })
+            
+            setIsRevealed(false)
+            await fetchPlan('today')
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleChange = async () => {
+        if (changeCount >= 3) {
+            alert("Limite de changements atteinte pour ce repas (3 max).")
+            return
+        }
+        setChangeCount(prev => prev + 1)
+        setIsRevealed(false)
+        setTimeout(() => setIsRevealed(true), 300)
     }
 
     const handleAccept = async () => {
@@ -207,12 +250,21 @@ export default function PlannerCard() {
                             >
                                 {canLogNow ? <>✅ Valider</> : <>🕒 Demain à {startHour}:00</>}
                             </button>
-                            <button 
-                                onClick={() => setIsRevealed(false)}
-                                style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#888', fontSize: '12px', fontWeight: '600' }}
-                            >
-                                Changer
-                            </button>
+                            {tier === 'free' ? (
+                                <button 
+                                    onClick={handleRefuse}
+                                    style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#888', fontSize: '12px', fontWeight: '600' }}
+                                >
+                                    Sauter
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={handleChange}
+                                    style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#888', fontSize: '12px', fontWeight: '600' }}
+                                >
+                                    Changer ({3 - changeCount})
+                                </button>
+                            )}
                         </div>
                     </div>
                 )

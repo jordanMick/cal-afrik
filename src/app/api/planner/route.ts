@@ -2,6 +2,31 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getEffectiveTier } from "@/lib/subscription"
 
+// Variable temporaire pour simuler les refus (en attendant une table DB si nécessaire)
+let skippedSlots: Record<string, string[]> = {} 
+
+export async function POST(req: Request) {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    
+    try {
+        const { slot, date } = await req.json()
+        const token = authHeader.replace('Bearer ', '')
+        const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+        const { data: { user } } = await supabase.auth.getUser(token)
+        
+        if (!user) return NextResponse.json({ error: "No user" }, { status: 401 })
+
+        const key = `${user.id}_${date}`
+        if (!skippedSlots[key]) skippedSlots[key] = []
+        skippedSlots[key].push(slot)
+
+        return NextResponse.json({ success: true, skipped: skippedSlots[key] })
+    } catch (err) {
+        return NextResponse.json({ error: "Server error" }, { status: 500 })
+    }
+}
+
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -95,7 +120,11 @@ export async function GET(req: Request) {
     const slotsOrder = ['petit_dejeuner', 'dejeuner', 'collation', 'diner'] as const
     const slotTimes: Record<string, number> = { 'petit_dejeuner': 0, 'dejeuner': 12, 'collation': 16, 'diner': 19 }
 
-    let nextSlot: string | undefined = slotsOrder.find(s => !recordedSlots.includes(s))
+    // On retire les slots déjà enregistrés OU refusés
+    const todayStr = new Date().toISOString().split('T')[0]
+    const currentSkipped = skippedSlots[`${user.id}_${todayStr}`] || []
+    const occupiedSlots = [...new Set([...recordedSlots, ...currentSkipped])]
+    const nextSlot = slotsOrder.find(s => !occupiedSlots.includes(s))
     
     // Si on regarde demain, on renvoie tout le menu de demain
     if (view === 'tomorrow') {
