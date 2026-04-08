@@ -11,11 +11,10 @@ const supabase = createClient(
 )
 
 // ─── NORMALIZE ────────────────────────────────────────────────
-function normalize(text: string) {
+function normalize(text?: string | null) {
     return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+        ? text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        : ""
 }
 
 const SYNONYMS: Record<string, string[]> = {
@@ -35,8 +34,7 @@ function scoreFood(itemName: string, food: any) {
     const input = normalize(itemName)
 
     const names = [
-        food.name_fr,
-        food.name_local,
+        food.name_standard,
         food.name_en
     ].filter(Boolean).map(normalize)
 
@@ -166,7 +164,7 @@ export async function POST(req: Request) {
         const components = mockResult.components
         const { data: foodItems } = await supabase
             .from("food_items")
-            .select("id, name_fr, name_local, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+            .select("id, name_standard, name_en, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
 
         const results = []
         for (const component of components) {
@@ -181,7 +179,7 @@ export async function POST(req: Request) {
                 confidence: component.confidence,
                 suggestions: topMatches.map(m => ({
                     id: m.food.id,
-                    name: m.food.name_fr || m.food.name_local || m.food.name_en,
+                    name: m.food.name_standard || m.food.name_en,
                     score: m.score,
                     calories: Math.round((m.food.calories_per_100g * component.estimated_portion_g) / 100),
                     protein_g: Math.round((m.food.protein_per_100g * component.estimated_portion_g) / 100 * 10) / 10,
@@ -265,7 +263,7 @@ export async function POST(req: Request) {
         // ─── MATCHING BD ──────────────────────────────────────
         const { data: foodItems } = await supabase
             .from("food_items")
-            .select("id, name_fr, name_local, name_en, density_g_ml, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+            .select("id, name_standard, name_en, density_g_ml, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
         const { data: foodAliases } = await supabase
             .from("food_aliases")
             .select("alias, food_item_id")
@@ -297,8 +295,7 @@ export async function POST(req: Request) {
                     food_item_id,
                     food_items (
                         id,
-                        name_fr,
-                        name_local,
+                        name_standard,
                         name_en,
                         density_g_ml,
                         calories_per_100g,
@@ -317,7 +314,7 @@ export async function POST(req: Request) {
             const matchedFood = matchedByAlias
                 || aliasToFood.get(normalizedLabel)
                 || (foodItems || []).find((food: any) => {
-                    const names = [food.name_fr, food.name_local, food.name_en].filter(Boolean)
+                    const names = [food.name_standard, food.name_en].filter(Boolean)
                     return names.some((name: string) => normalize(name) === normalizedLabel)
                 })
             const topMatches = getTopMatches(label, foodItems || [])
@@ -340,7 +337,7 @@ export async function POST(req: Request) {
                 confidence: Number(component?.confidence || 80),
                 suggestions: topMatches.map(m => ({
                     id: m.food.id,
-                    name: m.food.name_fr || m.food.name_local || m.food.name_en,
+                    name: m.food.name_standard || m.food.name_en,
                     score: m.score,
                     calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
                     protein_g: Math.round((((Number(m.food.protein_per_100g) || 0) * weight) / 100) * 10) / 10,
