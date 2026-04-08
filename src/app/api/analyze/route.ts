@@ -103,6 +103,7 @@ Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le text
 const GEMINI_MODEL_CANDIDATES = [
     "gemini-2.5-flash",
 ]
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 
 // ─── ROUTE POST ───────────────────────────────────────────────
@@ -180,16 +181,33 @@ export async function POST(req: Request) {
         for (const modelName of GEMINI_MODEL_CANDIDATES) {
             lastTriedModel = modelName
             try {
-                const result = await genAI.models.generateContent({
-                    model: modelName,
-                    contents: inputParts as any,
-                })
-                responseText = typeof (result as any).text === "function"
-                    ? (result as any).text()
-                    : String((result as any).text || "")
-                generationError = null
-                console.log(`✅ Gemini modèle utilisé: ${modelName}`)
-                break
+                const maxAttempts = 3
+                for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                    try {
+                        const result = await genAI.models.generateContent({
+                            model: modelName,
+                            contents: inputParts as any,
+                        })
+                        responseText = typeof (result as any).text === "function"
+                            ? (result as any).text()
+                            : String((result as any).text || "")
+                        generationError = null
+                        console.log(`✅ Gemini modèle utilisé: ${modelName} (attempt ${attempt}/${maxAttempts})`)
+                        break
+                    } catch (err: any) {
+                        const rawErr = String(err?.message || "")
+                        const isUnavailable =
+                            err?.status === 503
+                            || rawErr.includes("UNAVAILABLE")
+                            || rawErr.toLowerCase().includes("high demand")
+                        generationError = err
+                        console.error(err)
+                        console.error(`❌ Gemini tentative ${attempt}/${maxAttempts} échouée avec ${modelName}`)
+                        if (!isUnavailable || attempt === maxAttempts) break
+                        await wait(800 * attempt)
+                    }
+                }
+                if (!generationError) break
             } catch (err: any) {
                 generationError = err
                 console.error(err)
@@ -203,6 +221,10 @@ export async function POST(req: Request) {
                 generationError?.status === 429
                 || String(rawError).includes("RESOURCE_EXHAUSTED")
                 || String(rawError).toLowerCase().includes("quota")
+            const isTemporarilyUnavailable =
+                generationError?.status === 503
+                || String(rawError).includes("UNAVAILABLE")
+                || String(rawError).toLowerCase().includes("high demand")
 
             if (isQuotaExceeded) {
                 return NextResponse.json({
@@ -214,6 +236,17 @@ export async function POST(req: Request) {
                     error: `Quota Gemini dépassé sur ${lastTriedModel}. Vérifie ton plan/facturation Google AI Studio ou réessaie plus tard.`,
                     raw_error: rawError,
                 }, { status: 429 })
+            }
+            if (isTemporarilyUnavailable) {
+                return NextResponse.json({
+                    success: false,
+                    meal_name: "",
+                    total_calories: 0,
+                    data: [],
+                    code: "GEMINI_TEMP_UNAVAILABLE",
+                    error: `Gemini temporairement indisponible sur ${lastTriedModel}. Réessaie dans quelques secondes.`,
+                    raw_error: rawError,
+                }, { status: 503 })
             }
 
             return NextResponse.json({

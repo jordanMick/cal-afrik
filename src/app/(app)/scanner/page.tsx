@@ -187,6 +187,10 @@ export default function ScannerPage() {
                     alert("Quota Gemini dépassé. Active la facturation Google AI Studio ou attends le reset du quota.")
                     return
                 }
+                if (json?.code === 'GEMINI_TEMP_UNAVAILABLE') {
+                    alert("Gemini est temporairement surchargé. Réessaie dans quelques secondes.")
+                    return
+                }
                 const errorMessage = json?.error || "Analyse Gemini échouée."
                 alert(`Erreur analyse: ${errorMessage}`)
                 return
