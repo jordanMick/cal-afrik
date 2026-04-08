@@ -19,7 +19,9 @@ export default function PlannerCard() {
     const [isRevealed, setIsRevealed] = useState(false)
     const [proposal, setProposal] = useState<Proposal | null>(null)
     const [tomorrowMenu, setTomorrowMenu] = useState<any[] | null>(null)
+    const [tomorrowRevealed, setTomorrowRevealed] = useState(false)
     const [weekPlan, setWeekPlan] = useState<any[] | null>(null)
+    const [weekRevealed, setWeekRevealed] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [tier, setTier] = useState<string>('free')
     const [completed, setCompleted] = useState(false)
@@ -27,7 +29,7 @@ export default function PlannerCard() {
     const [canLogNow, setCanLogNow] = useState(true)
     const [startHour, setStartHour] = useState(0)
 
-    const fetchPlan = async (view: string, reveal = false) => {
+    const fetchPlan = async (view: string) => {
         setLoading(true)
         setError(null)
         try {
@@ -49,7 +51,6 @@ export default function PlannerCard() {
                         setCompleted(false)
                         setCanLogNow(json.can_log_now)
                         setStartHour(json.start_hour)
-                        if (reveal) setIsRevealed(true)
                     }
                 } else if (view === 'tomorrow') {
                     setTomorrowMenu(json.menu)
@@ -69,20 +70,17 @@ export default function PlannerCard() {
     }
 
     useEffect(() => {
-        if (activeTab === 'today') {
-            // Pour aujourd'hui, on ne charge les métadonnées sans révéler
-            fetchPlan('today', false)
-        } else {
-            fetchPlan(activeTab, true)
-        }
+        fetchPlan(activeTab)
     }, [activeTab])
 
     const handleReveal = async () => {
         const { data: { session } } = await supabase.auth.getSession()
-        if (session && tier === 'free') {
+        if (session && tier === 'free' && activeTab === 'today') {
             await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
         }
-        setIsRevealed(true)
+        if (activeTab === 'today') setIsRevealed(true)
+        if (activeTab === 'tomorrow') setTomorrowRevealed(true)
+        if (activeTab === 'week') setWeekRevealed(true)
     }
 
     const handleAccept = async () => {
@@ -127,7 +125,7 @@ export default function PlannerCard() {
                 {(['today', 'tomorrow', 'week'] as const).map(tab => (
                     <button
                         key={tab}
-                        onClick={() => { setActiveTab(tab); setIsRevealed(false); }}
+                        onClick={() => { setActiveTab(tab); }}
                         style={{
                             background: activeTab === tab ? '#6366f1' : '#1a1a1a',
                             border: '0.5px solid #333',
@@ -156,7 +154,7 @@ export default function PlannerCard() {
                         onClick={() => router.push('/upgrade')}
                         style={{ color: '#6366f1', fontSize: '11px', fontWeight: '700', border: 'none', background: 'none', cursor: 'pointer', marginTop: '8px' }}
                     >
-                        {activeTab === 'tomorrow' ? "Débloquer le Plan Pro →" : "Débloquer le Plan Premium →"}
+                        {error.includes("dîner") ? "Enregistrer mon Dîner →" : activeTab === 'tomorrow' ? "Activer le Plan Pro →" : "Passer au Premium →"}
                     </button>
                 </div>
             ) : activeTab === 'today' ? (
@@ -167,7 +165,8 @@ export default function PlannerCard() {
                     </div>
                 ) : !isRevealed ? (
                     <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', border: '0.5px solid #222', textAlign: 'center' }}>
-                        <p style={{ fontSize: '13px', color: '#fff', fontWeight: '700', marginBottom: '12px' }}>Coach Yao a une idée pour ton prochain repas...</p>
+                        <p style={{ fontSize: '13px', color: '#fff', fontWeight: '700', marginBottom: '4px' }}>Besoin d'inspiration ?</p>
+                        <p style={{ fontSize: '11px', color: '#666', marginBottom: '16px' }}>Coach Yao a une idée pour ton prochain repas</p>
                         <button 
                             onClick={handleReveal}
                             style={{ 
@@ -178,13 +177,13 @@ export default function PlannerCard() {
                         >
                             Découvrir la suggestion
                         </button>
-                        {tier === 'free' && <p style={{ fontSize: '10px', color: '#555', marginTop: '8px' }}>Ceci utilisera 1 de tes 2 jetons quotidiens</p>}
+                        {tier === 'free' && <p style={{ fontSize: '10px', color: '#555', marginTop: '8px' }}>Consomme 1 jeton</p>}
                     </div>
                 ) : (
                     <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222', borderLeft: '4px solid #6366f1', opacity: canLogNow ? 1 : 0.8 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                             <div>
-                                <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase' }}>Prochain Repas</p>
+                                <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase' }}>Suggestion</p>
                                 <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', marginTop: '4px' }}>{proposal?.name}</h3>
                             </div>
                             <div style={{ background: 'rgba(99,102,241,0.1)', padding: '4px 8px', borderRadius: '6px' }}>
@@ -196,44 +195,79 @@ export default function PlannerCard() {
                             <div style={{ fontSize: '11px', color: '#555' }}>G: <span style={{ color: '#aaa' }}>{proposal?.carbs}g</span></div>
                             <div style={{ fontSize: '11px', color: '#555' }}>L: <span style={{ color: '#aaa' }}>{proposal?.fat}g</span></div>
                         </div>
-                        <button 
-                            onClick={canLogNow ? handleAccept : undefined}
-                            disabled={!canLogNow}
-                            style={{ 
-                                width: '100%', background: canLogNow ? '#1e1e1e' : '#111', border: '0.5px solid #333', 
-                                borderRadius: '12px', color: canLogNow ? '#fff' : '#444', fontSize: '12px', fontWeight: '600', 
-                                padding: '10px', cursor: canLogNow ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                            }}
-                        >
-                            {canLogNow ? <>✅ Valider ce repas</> : <>🕒 Disponible à {startHour}:00</>}
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                                onClick={canLogNow ? handleAccept : undefined}
+                                disabled={!canLogNow}
+                                style={{ 
+                                    flex: 2, background: canLogNow ? '#6366f1' : '#111', border: 'none', 
+                                    borderRadius: '12px', color: canLogNow ? '#fff' : '#444', fontSize: '12px', fontWeight: '600', 
+                                    padding: '12px', cursor: canLogNow ? 'pointer' : 'default'
+                                }}
+                            >
+                                {canLogNow ? <>✅ Valider</> : <>🕒 Demain à {startHour}:00</>}
+                            </button>
+                            <button 
+                                onClick={() => setIsRevealed(false)}
+                                style={{ flex: 1, background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#888', fontSize: '12px', fontWeight: '600' }}
+                            >
+                                Changer
+                            </button>
+                        </div>
                     </div>
                 )
             ) : activeTab === 'tomorrow' ? (
-                <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222' }}>
-                    <p style={{ fontSize: '11px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase', marginBottom: '16px' }}>Menu de demain</p>
-                    {tomorrowMenu?.map((m, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx < 3 ? '0.5px solid #222' : 'none' }}>
-                            <div>
-                                <p style={{ fontSize: '10px', color: '#888', textTransform: 'capitalize' }}>{m.slot.replace('_', ' ')}</p>
-                                <p style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{m.name}</p>
-                            </div>
-                            <p style={{ fontSize: '12px', color: '#aaa', fontWeight: '700' }}>{m.kcal} kcal</p>
+                !tomorrowRevealed ? (
+                    <div style={{ background: '#141414', borderRadius: '24px', padding: '32px', border: '0.5px solid #222', textAlign: 'center' }}>
+                        <p style={{ fontSize: '13px', color: '#fff', fontWeight: '700', marginBottom: '16px' }}>Voir le menu complet de demain ?</p>
+                        <button onClick={handleReveal} style={{ background: '#1e1e1e', border: '0.5px solid #333', borderRadius: '12px', color: '#fff', fontSize: '12px', fontWeight: '700', padding: '10px 20px', cursor: 'pointer' }}>
+                            Révéler le menu
+                        </button>
+                    </div>
+                ) : (
+                    <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <p style={{ fontSize: '11px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase' }}>Menu de demain</p>
+                            <span onClick={() => setTomorrowRevealed(false)} style={{ fontSize: '10px', color: '#555', cursor: 'pointer' }}>Masquer</span>
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222' }}>
-                    <p style={{ fontSize: '11px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase', marginBottom: '16px' }}>Ta semaine</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        {weekPlan?.map((w, idx) => (
-                            <div key={idx} style={{ background: '#1a1a1a', padding: '12px', borderRadius: '12px', border: '0.5px solid #333' }}>
-                                <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '800' }}>{w.day}</p>
-                                <p style={{ fontSize: '11px', color: '#fff', marginTop: '4px' }}>{w.main_dish}</p>
+                        {tomorrowMenu?.map((m, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: idx < 3 ? '0.5px solid #222' : 'none' }}>
+                                <div>
+                                    <p style={{ fontSize: '10px', color: '#888', textTransform: 'capitalize' }}>{m.slot.replace('_', ' ')}</p>
+                                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{m.name}</p>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#aaa', fontWeight: '700' }}>{m.kcal} kcal</p>
                             </div>
                         ))}
                     </div>
-                </div>
+                )
+            ) : (
+                !weekRevealed ? (
+                    <div style={{ background: '#141414', borderRadius: '24px', padding: '32px', border: '0.5px solid #222', textAlign: 'center' }}>
+                        <p style={{ fontSize: '13px', color: '#fff', fontWeight: '700', marginBottom: '16px' }}>Générer ton planning hebdomadaire ?</p>
+                        <button onClick={handleReveal} style={{ background: '#1e1e1e', border: '0.5px solid #333', borderRadius: '12px', color: '#fff', fontSize: '12px', fontWeight: '700', padding: '10px 20px', cursor: 'pointer' }}>
+                            Générer la semaine
+                        </button>
+                    </div>
+                ) : (
+                    <div style={{ background: '#141414', borderRadius: '24px', padding: '20px', border: '0.5px solid #222' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <p style={{ fontSize: '11px', color: '#6366f1', fontWeight: '800', textTransform: 'uppercase' }}>Ta semaine</p>
+                            <span onClick={() => setWeekRevealed(false)} style={{ fontSize: '10px', color: '#555', cursor: 'pointer' }}>Masquer</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            {weekPlan?.map((w, idx) => (
+                                <div key={idx} style={{ background: '#1a1a1a', padding: '12px', borderRadius: '12px', border: '0.5px solid #333' }}>
+                                    <p style={{ fontSize: '10px', color: '#6366f1', fontWeight: '800' }}>{w.day}</p>
+                                    <p style={{ fontSize: '11px', color: '#fff', marginTop: '4px' }}>{w.main_dish}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={() => setWeekRevealed(false)} style={{ width: '100%', background: '#1a1a1a', border: '0.5px solid #333', borderRadius: '12px', color: '#555', fontSize: '11px', marginTop: '16px', padding: '8px' }}>
+                            Refaire le planning
+                        </button>
+                    </div>
+                )
             )}
         </div>
     )
