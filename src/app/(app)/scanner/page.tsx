@@ -102,7 +102,7 @@ export default function ScannerPage() {
         reader.onerror = reject
     })
 
-    const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<File> => {
+    const compressImage = (file: File, maxWidth = 1200, quality = 0.9): Promise<File> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader()
             reader.readAsDataURL(file)
@@ -131,13 +131,16 @@ export default function ScannerPage() {
                     const ctx = canvas.getContext('2d')
                     ctx?.drawImage(img, 0, 0, width, height)
 
+                    const outputType = (file.type === 'image/png' || file.type === 'image/webp')
+                        ? file.type
+                        : 'image/jpeg'
                     canvas.toBlob((blob) => {
                         if (blob) {
-                            resolve(new File([blob], file.name, { type: 'image/jpeg' }))
+                            resolve(new File([blob], file.name, { type: outputType }))
                         } else {
                             reject(new Error('Canvas error'))
                         }
-                    }, 'image/jpeg', quality)
+                    }, outputType, quality)
                 }
             }
             reader.onerror = reject
