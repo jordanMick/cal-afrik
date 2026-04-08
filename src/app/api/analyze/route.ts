@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import type { ScanApiResponse } from "@/types"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string)
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -157,15 +157,7 @@ export async function POST(req: Request) {
         console.log("📸 BASE64 SIZE:", image.data.length)
 
         // ─── APPEL IA (Gemini) ───────────────────────────────────────
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
-            generationConfig: {
-                responseMimeType: "application/json",
-                temperature: 0.7,
-                maxOutputTokens: 800,
-            },
-            systemInstruction: `Expert en nutrition d'Afrique de l'Ouest. Doit identifier les composants du plat avec leurs noms locaux. Doit estimer les volumes en ml (millilitres). Doit donner un conseil de coach court (2 phrases max).`,
-        });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent([
             {
                 inlineData: {
