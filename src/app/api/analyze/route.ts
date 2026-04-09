@@ -120,6 +120,12 @@ Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant 
   "coach_advice": "conseil bref du coach (max 2 phrases)"
 }
 Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le texte de secours fourni.
+Si aucune image n'est fournie, si l'image est illisible, ou si l'image ne montre pas de nourriture, renvoie:
+{
+  "items": [],
+  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 },
+  "coach_advice": "Image non exploitable ou sans aliment détectable. Prends une photo plus claire de ton repas."
+}
 `
 function buildPrompt(country?: string | null, technicalProfiles: string[] = []) {
     const countryContext = (country || "").trim() || "Afrique de l'Ouest"
@@ -237,7 +243,13 @@ export async function POST(req: Request) {
 
         if (!image || !image.data) {
             console.error("❌ IMAGE INVALID:", image)
-            return NextResponse.json({ success: false, error: "Image invalide ou vide" })
+            return NextResponse.json({
+                success: true,
+                meal_name: "Aucun aliment détecté",
+                total_calories: 0,
+                data: [],
+                coach_message: "Aucune image exploitable n'a été reçue. Prends une photo plus claire de ton repas.",
+            })
         }
 
         console.log("📸 TYPE:", image.mimeType)
@@ -274,6 +286,9 @@ export async function POST(req: Request) {
                         const result = await genAI.models.generateContent({
                             model: modelName,
                             contents: inputParts as any,
+                            config: {
+                                temperature: 0.2,
+                            },
                         })
                         responseText = typeof (result as any).text === "function"
                             ? (result as any).text()
