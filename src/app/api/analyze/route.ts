@@ -460,7 +460,7 @@ export async function POST(req: Request) {
                         fat_per_100g
                     )
                 `)
-                .ilike("alias_name", itemName)
+                .ilike("alias_name", detectedName)
                 .limit(1)
             const matchedByAliasSql = Array.isArray(sqlAliasMatchRows) && sqlAliasMatchRows.length > 0
                 ? (sqlAliasMatchRows[0] as any).food_items
