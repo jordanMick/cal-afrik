@@ -251,7 +251,7 @@ export async function POST(req: Request) {
         }
     }
 
-    const MOCK_MODE = false
+    const MOCK_MODE = true
     if (MOCK_MODE) {
         console.log("[ANALYZE] MOCK MODE ACTIVE - no Gemini call")
         const mockData = [
