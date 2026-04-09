@@ -84,14 +84,12 @@ Tu es un expert en nutrition.
 Analyse la photo et DÉCOMPOSE chaque aliment visible séparément avec son poids et ses macronutriments.
 
 IMPORTANT :
-- Identifie EXACTEMENT les aliments visibles UNIQUEMENT avec ton intelligence visuelle (image), sans te baser sur une base d'alias.
-- Priorité absolue à la vision: la couleur, la texture, la forme et la consistance priment sur les suppositions de nom.
-- Exemple de règle: si la pâte est rouge/tomate, ne la confonds pas avec une pâte blanche type Akoumé.
-- Sépare l'accompagnement (tô, riz, fufu...) de la sauce ou du plat principal
-- Donne une estimation de poids en grammes pour chaque composant
-- Calcule calories, protéines, glucides et lipides pour chaque composant
-- Si incertain, utilise le nom le plus générique et descriptif possible (ex: "Pâte de maïs à la tomate") au lieu d'un nom local potentiellement faux.
-- Ne bloque jamais la réponse: en cas d'hésitation, réponds avec des noms génériques fiables et des estimations prudentes.
+- Identifie EXACTEMENT les aliments visibles UNIQUEMENT avec ton intelligence visuelle (image).
+- Priorité absolue à la vision: la couleur, la texture, la forme et la consistance priment sur les suppositions.
+- Sépare l'accompagnement (tô, riz, fufu...) de la sauce ou du plat principal.
+- Donne une estimation de poids en grammes pour chaque composant.
+- Fournis un technical_match en choisissant uniquement un identifiant parmi la liste fournie plus bas.
+- Si tu hésites, choisis le technical_match le plus proche et remplis fallback_data avec des valeurs réalistes.
 
 "Protocole de Mesure Spatiale :"
 
@@ -105,30 +103,36 @@ Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant 
 {
   "items": [
     {
-      "name": "Nom de l'aliment",
-      "weight_g": 200,
-      "calories": 240,
-      "proteins": 5.2,
-      "carbs": 45.0,
-      "lipids": 1.5
+      "detected_name": "Nom local identifié",
+      "technical_match": "nom_standard_issu_de_la_liste",
+      "confidence": 0.95,
+      "estimated_weight_g": 250,
+      "fallback_data": {
+        "calories_per_100g": 120,
+        "proteins_100g": 2.5,
+        "lipids_100g": 0.5,
+        "carbs_100g": 28.0,
+        "density_g_ml": 1.1
+      }
     }
   ],
-  "total_summary": {
-    "calories": 240,
-    "proteins": 5.2,
-    "carbs": 45.0,
-    "lipids": 1.5
-  },
+  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 },
   "coach_advice": "conseil bref du coach (max 2 phrases)"
 }
 Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le texte de secours fourni.
 `
-function buildPrompt(country?: string | null) {
+function buildPrompt(country?: string | null, technicalProfiles: string[] = []) {
     const countryContext = (country || "").trim() || "Afrique de l'Ouest"
+    const profileList = technicalProfiles.length > 0
+        ? technicalProfiles.join(", ")
+        : "aucun_profil_fourni"
     return `${PROMPT}
 
 Contexte géographique prioritaire: ${countryContext}.
-Utilise ce contexte pour choisir le nom local le plus probable, mais seulement s'il est cohérent avec les indices visuels observés.`
+Utilise ce contexte pour choisir le nom local le plus probable, mais seulement s'il est cohérent avec les indices visuels observés.
+
+Liste des technical_match autorisés (utilise uniquement ces identifiants) :
+${profileList}`
 }
 
 const GEMINI_MODEL_CANDIDATES = [
@@ -239,6 +243,14 @@ export async function POST(req: Request) {
         console.log("📸 TYPE:", image.mimeType)
         console.log("📸 BASE64 SIZE:", image.data.length)
 
+        // Préchargement SQL: source de vérité nutritionnelle
+        const { data: foodItems } = await supabase
+            .from("food_items")
+            .select("id, name_standard, display_name, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+        const { data: foodAliases } = await supabase
+            .from("food_aliases")
+            .select("alias_name, food_item_id")
+
         // ─── APPEL IA (Gemini) ───────────────────────────────────────
         const inputParts = [
             {
@@ -247,7 +259,7 @@ export async function POST(req: Request) {
                     data: image.data,
                 },
             },
-            { text: buildPrompt(profile?.country) },
+            { text: buildPrompt(profile?.country, (foodItems || []).map((f: any) => String(f.name_standard || "")).filter(Boolean)) },
         ]
         let responseText = ""
         let generationError: any = null
@@ -367,13 +379,6 @@ export async function POST(req: Request) {
         }
 
         // ─── MATCHING BD ──────────────────────────────────────
-        const { data: foodItems } = await supabase
-            .from("food_items")
-            .select("id, name_standard, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
-        const { data: foodAliases } = await supabase
-            .from("food_aliases")
-            .select("alias_name, food_item_id")
-
         const foodsById = new Map((foodItems || []).map((food: any) => [food.id, food]))
         const aliasToFood = new Map<string, any>()
         for (const aliasRow of foodAliases || []) {
@@ -388,13 +393,16 @@ export async function POST(req: Request) {
         let totalCalories = 0
 
         for (const component of geminiResult.items) {
-            const itemName = String(component?.name || component?.label || "aliment inconnu")
-            const aiWeight = Number(component?.weight_g || 0)
+            const detectedName = String(component?.detected_name || component?.name || component?.label || "aliment inconnu")
+            const technicalMatch = String(component?.technical_match || "").trim()
+            const fallbackData = component?.fallback_data || {}
+            const aiWeight = Number(component?.estimated_weight_g || component?.weight_g || 0)
             if (!Number.isFinite(aiWeight) || aiWeight <= 0) {
                 continue
             }
-            const normalizedLabel = normalize(itemName)
-            // PRIORITE ABSOLUE SQL: LOWER(alias_name) = LOWER(nom_ia)
+            const normalizedLabel = normalize(detectedName)
+
+            // 1) Recherche Alias
             const { data: sqlAliasMatchRows } = await supabase
                 .from("food_aliases")
                 .select(`
@@ -403,6 +411,7 @@ export async function POST(req: Request) {
                     food_items (
                         id,
                         name_standard,
+                        display_name,
                         name_en,
                         density_g_ml,
                         calories_per_100g,
@@ -417,51 +426,95 @@ export async function POST(req: Request) {
             const matchedByAliasSql = Array.isArray(sqlAliasMatchRows) && sqlAliasMatchRows.length > 0
                 ? (sqlAliasMatchRows[0] as any).food_items
                 : null
-            console.log("Match trouvé en BD ?:", !!matchedByAliasSql)
 
-            // Fallback normalisé si aucun match SQL exact sur alias_name
-            const matchedByAlias = matchedByAliasSql || aliasToFood.get(normalizedLabel) || null
-            const normalizedForLike = normalizedLabel.replace(/'/g, "''")
-            let matchedByNameIlike: any = null
-            if (!matchedByAlias && normalizedForLike) {
-                const { data: fuzzyByName } = await supabase
-                    .from("food_items")
-                    .select("id, name_standard, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
-                    .or(`name_standard.ilike.%${itemName}%,name_standard.ilike.%${normalizedForLike}%`)
+            // 2) Recherche unknown_logs
+            let unknownLogMatch: any = null
+            if (!matchedByAliasSql) {
+                const { data: unknownRows } = await supabase
+                    .from("unknown_logs")
+                    .select("*")
+                    .ilike("detected_name", detectedName)
                     .limit(1)
-                matchedByNameIlike = Array.isArray(fuzzyByName) && fuzzyByName.length > 0
-                    ? fuzzyByName[0]
-                    : null
+                unknownLogMatch = Array.isArray(unknownRows) && unknownRows.length > 0 ? unknownRows[0] : null
             }
 
-            const matchedFood = matchedByAlias
-                || matchedByNameIlike
-                || aliasToFood.get(normalizedLabel)
-                || (foodItems || []).find((food: any) => {
-                    const names = [food.name_standard, food.name_en].filter(Boolean)
-                    return names.some((name: string) => normalize(name) === normalizedLabel)
-                })
+            // 3) Recherche standard via technical_match -> name_standard
+            let matchedByTechnical: any = null
+            if (!matchedByAliasSql && !unknownLogMatch && technicalMatch) {
+                const normalizedTechnical = normalize(technicalMatch)
+                matchedByTechnical = (foodItems || []).find((food: any) => normalize(food?.name_standard) === normalizedTechnical) || null
+            }
+
+            // unknown_logs peut stocker un technical_match réutilisable
+            let matchedViaUnknownTechnical: any = null
+            if (!matchedByAliasSql && !matchedByTechnical && unknownLogMatch?.technical_match) {
+                const normalizedUnknownTechnical = normalize(String(unknownLogMatch.technical_match))
+                matchedViaUnknownTechnical = (foodItems || []).find((food: any) => normalize(food?.name_standard) === normalizedUnknownTechnical) || null
+            }
+
+            const matchedByAlias = matchedByAliasSql || aliasToFood.get(normalizedLabel) || null
+            const matchedFood = matchedByAlias || matchedViaUnknownTechnical || matchedByTechnical || null
             console.log("🧪 FOOD ITEM MATCH:", matchedFood)
-            const topMatches = getTopMatches(itemName, foodItems || [])
+            console.log("Match trouvé en BD ?:", !!matchedFood)
+            const topMatches = getTopMatches(detectedName, foodItems || [])
             const weight = aiWeight
 
             const caloriesDetected = matchedFood
                 ? Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100)
-                : Math.round(Number(component?.calories) || 0)
+                : Math.round((Number(fallbackData?.calories_per_100g) || 0) * weight / 100)
             const proteinsPer100g = Number(matchedFood?.proteins_100g ?? matchedFood?.protein_per_100g) || 0
             const proteinDetected = matchedFood
                 ? Math.round(((proteinsPer100g * weight) / 100) * 10) / 10
-                : Math.round((Number(component?.proteins) || 0) * 10) / 10
+                : Math.round(((Number(fallbackData?.proteins_100g) || 0) * weight / 100) * 10) / 10
             const carbsDetected = matchedFood
                 ? Math.round((((Number(matchedFood?.carbs_per_100g) || 0) * weight) / 100) * 10) / 10
-                : Math.round((Number(component?.carbs) || 0) * 10) / 10
+                : Math.round(((Number(fallbackData?.carbs_100g) || 0) * weight / 100) * 10) / 10
             const fatDetected = matchedFood
                 ? Math.round((((Number(matchedFood?.fat_per_100g) || 0) * weight) / 100) * 10) / 10
-                : Math.round((Number(component?.lipids) || 0) * 10) / 10
+                : Math.round(((Number(fallbackData?.lipids_100g) || 0) * weight / 100) * 10) / 10
             totalCalories += caloriesDetected
 
+            // 4) Fallback + auto-apprentissage si aucun match SQL
+            if (!matchedFood) {
+                try {
+                    const { data: existingUnknownRows } = await supabase
+                        .from("unknown_logs")
+                        .select("id, occurrence_count")
+                        .ilike("detected_name", detectedName)
+                        .limit(1)
+                    const existingUnknown = Array.isArray(existingUnknownRows) && existingUnknownRows.length > 0
+                        ? existingUnknownRows[0] as any
+                        : null
+                    if (existingUnknown?.id) {
+                        await supabase
+                            .from("unknown_logs")
+                            .update({
+                                technical_match: technicalMatch || null,
+                                fallback_data: fallbackData || {},
+                                occurrence_count: Number(existingUnknown.occurrence_count || 0) + 1,
+                            })
+                            .eq("id", existingUnknown.id)
+                    } else {
+                        await supabase
+                            .from("unknown_logs")
+                            .insert({
+                                detected_name: detectedName,
+                                technical_match: technicalMatch || null,
+                                fallback_data: fallbackData || {},
+                                occurrence_count: 1,
+                            })
+                    }
+                } catch (logErr) {
+                    console.error("⚠️ unknown_logs upsert error:", logErr)
+                }
+            }
+
+            const displayDetected = matchedFood
+                ? (matchedFood?.display_name || detectedName)
+                : detectedName
+
             results.push({
-                detected: itemName,
+                detected: displayDetected,
                 portion_g: Math.round(weight),
                 calories_detected: caloriesDetected,
                 protein_detected: proteinDetected,
@@ -470,7 +523,7 @@ export async function POST(req: Request) {
                 confidence: Number(component?.confidence || 80),
                 suggestions: topMatches.map(m => ({
                     id: m.food.id,
-                    name: m.food.name_standard || m.food.name_en,
+                    name: m.food.display_name || m.food.name_en || m.food.name_standard,
                     score: m.score,
                     calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
                     protein_g: Math.round(((((Number(m.food.proteins_100g ?? m.food.protein_per_100g) || 0) * weight) / 100) * 10)) / 10,
