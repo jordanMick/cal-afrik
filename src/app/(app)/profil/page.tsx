@@ -62,7 +62,6 @@ export default function ProfilPage() {
     // Calcul de l'urgence d'expiration (J-7)
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
     const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
-    const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0
 
     const activeSlot = getActiveBilanSlot(hour, minutes)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
@@ -276,64 +275,18 @@ export default function ProfilPage() {
                                         Fin le {new Date(profile.subscription_expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                                     </p>
 
-                                    {isExpiringSoon && (
-                                        <button
-                                            onClick={handleRenew}
-                                            disabled={isRenewing}
-                                            style={{
-                                                marginTop: '12px',
-                                                padding: '8px 16px',
-                                                background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.1)',
-                                                border: '1px solid rgba(239,68,68,0.3)',
-                                                borderRadius: '10px',
-                                                color: '#ef4444',
-                                                fontSize: '12px',
-                                                fontWeight: '700',
-                                                cursor: isRenewing ? 'default' : 'pointer'
-                                            }}>
-                                            {isRenewing ? 'Initialisation...' : 'Renouveler mon plan ⏳'}
-                                        </button>
-                                    )}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* BANNIÈRE D'EXPIRATION IMMINENTE (J-7) */}
-                {isExpiringSoon && (
-                    <div
-                        onClick={() => router.push('/upgrade')}
-                        style={{
-                            marginBottom: '15px',
-                            padding: '16px',
-                            borderRadius: '20px',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.4)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            cursor: 'pointer',
-                        }}>
-                        <div style={{ fontSize: '24px' }}>⚠️</div>
-                        <div>
-                            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '800', textTransform: 'uppercase' }}>
-                                Attention, expiration imminente !
-                            </p>
-                            <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '500', marginTop: '2px' }}>
-                                {daysLeft === 0 ? "Ton plan expire AUJOURD'HUI. " : `Plus que ${daysLeft} jour${daysLeft > 1 ? 's' : ''}. `}
-                                Renouvelle maintenant pour garder Coach Yao.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
                 {/* BANNIÈRE UPGRADE DYNAMIQUE */}
-                {profile?.subscription_tier !== 'premium' && !isExpiringSoon && (
+                {profile?.subscription_tier !== 'premium' && (
                     <div
                         onClick={() => router.push('/upgrade')}
                         style={{
-                            marginBottom: '15px',
+                            marginBottom: '20px',
                             padding: '18px',
                             borderRadius: '24px',
                             background: profile?.subscription_tier === 'pro'
