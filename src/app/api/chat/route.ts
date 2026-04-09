@@ -152,34 +152,51 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        const todayStr = new Date().toISOString().split('T')[0]
+        const tomDate = new Date()
+        tomDate.setDate(tomDate.getDate() + 1)
+        const tomorrowStr = tomDate.toISOString().split('T')[0]
+
+        const { data: userPlans } = await supabase
+            .from('user_plans')
+            .select('*')
+            .eq('user_id', user.id)
+            .gte('date', todayStr)
+
+        let plannerContext = "L'utilisateur n'a PAS de repas planifiés."
+        if (userPlans && userPlans.length > 0) {
+            plannerContext = "L'utilisateur A DÉJÀ ces repas confirmés dans son planning :\n"
+            const grouped: Record<string, string[]> = {}
+            for (const p of userPlans) {
+                if (!grouped[p.date]) grouped[p.date] = []
+                grouped[p.date].push(`- ${p.slot} : ${p.recipe_name}`)
+            }
+            for (const [d, meals] of Object.entries(grouped)) {
+                plannerContext += `Date: ${d} (Aujourd'hui=${todayStr}, Demain=${tomorrowStr})\n${meals.join('\n')}\n`
+            }
+        }
+
         const systemPrompt = `Tu es Coach Yao, coach nutrition africain bienveillant et concret.
 L'utilisateur s'appelle ${profile.name || 'mon ami'}.
 
 RÈGLES STRICTES :
 1) Utilise d'abord les données de contexte fournies par l'application. Ne demande pas "qu'as-tu mangé ?" si le contexte contient déjà calories/objectifs.
-2) Longueur adaptative :
-   - Question simple/rapide -> 1 à 2 phrases.
-   - Question complexe (plan, stratégie, comparaison, correction) -> 3 à 5 phrases.
-   - Ne dépasse jamais 6 phrases.
-   - Réponse courte mais complète: pas de phrase coupée, pas de fin abrupte.
-3) Français simple, ton chaleureux, sans artefacts (pas de texte tronqué, pas de symbole parasite, pas de "Dis-").
-4) Donne au moins 1 recommandation pratique liée à des aliments locaux (ex: haricots, poisson, igname, légumes-feuilles).
-5) Si le contexte est insuffisant, pose UNE seule question précise.
-6) Si l'utilisateur demande un menu, la réponse DOIT commencer exactement par l'un de ces préfixes (en minuscules) :
-   - "menu creneau petit_dejeuner:"
-   - "menu creneau dejeuner:"
-   - "menu creneau collation:"
-   - "menu creneau diner:"
-   - "menu demain:"
-   - "menu semaine:"
-   Ensuite seulement, donne le contenu du menu.
-7) Si le préfixe est "menu semaine:", structure obligatoirement le menu sur 7 jours datés, du lendemain (J+1) à J+7, avec des dates explicites (format JJ/MM), dans l'ordre chronologique.
-8) Pour "menu semaine:", reste compact pour éviter la troncature: 4 lignes par jour maximum (Petit-déj, Déjeuner, Collation, Dîner), pas de phrase d'introduction ni de conclusion.
+2) Longueur adaptative : 1 à 6 phrases max.
+3) Français simple, chaleureux, pas d'artefacts.
+4) Recommandation locale concrète.
+5) RÈGLE DE PLANNING CRITIQUE : Si l'utilisateur te demande de générer un menu (demain, semaine, ou un créneau), analyse d'abord les "Repas planifiés" en bas.
+   - S'il a DÉJÀ un menu pour cette date/créneau précis et qu'il n'a pas explicitement dit "oui" ou demandé de le remplacer : NE GÉNÈRE PAS LE PLANNING. Dis-lui calmement quel menu il a déjà prévu et demande-lui : "Veux-tu réécrire ou modifier ce menu ?". Si tu fais ça, termine ta phrase par un point d'interrogation (?) et ne mets AUCUN préfixe technique.
+   - S'il n'a rien prévu, ou s'il confirme vouloir modifier (ex: 'oui', 'change le'), ALORS génère le menu.
+6) QUAND TU GÉNÈRES EFFECTIVEMENT UN MENU, ta réponse DOIT obligatoirement commencer par l'un de ces préfixes : "menu creneau petit_dejeuner:", "menu creneau dejeuner:", "menu creneau collation:", "menu creneau diner:", "menu demain:", "menu semaine:". Ne mets CE PREFIXE que si tu crées le menu !
+7) Si le préfixe est "menu semaine:", format JJ/MM, dans l'ordre chronologique (4 lignes par jour max).
 
 Contexte utilisateur :
 - Objectif : ${profile.goal || 'rester en forme'}
 - Poids : ${profile.weight_kg || '?'} kg
-- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}${foodsContext}`
+- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}
+
+=== PLANNING DES REPAS DE L'UTILISATEUR ===
+${plannerContext}${foodsContext}`
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
         const MOCK_MODE = false
@@ -226,11 +243,12 @@ Contexte utilisateur :
             }
 
             // Garde-fou: si l'utilisateur demande un menu mais que le modèle n'a pas mis
-            // le préfixe attendu, on le rajoute automatiquement.
+            // le préfixe attendu, on le rajoute automatiquement (sauf si c'est une question de confirmation du Coach).
             const hasMenuPrefix = /^menu\s+(creneau\s+(petit_dejeuner|dejeuner|collation|diner)|demain|semaine)\s*:/i.test(aiMessage)
             const hasExplicitTarget = wantsWeek || wantsTomorrow || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
+            const isConfirmationPrompt = aiMessage.includes('?') && aiMessage.length < 250
 
-            if (wantsMenu && hasExplicitTarget && !hasMenuPrefix) {
+            if (wantsMenu && hasExplicitTarget && !hasMenuPrefix && !isConfirmationPrompt) {
                 let prefix = 'menu demain:'
                 if (wantsWeek) prefix = 'menu semaine:'
                 else if (wantsTomorrow) prefix = 'menu demain:'
