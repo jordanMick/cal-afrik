@@ -385,6 +385,38 @@ export default function CoachChatPage() {
             {/* INPUT AREA (FIXED BOTTOM) */}
             <div style={{ padding: '16px 20px', background: '#0a0a0a', borderTop: '0.5px solid #222', paddingBottom: '100px' }}>
 
+                {/* SUGGESTIONS DE QUESTIONS (Principalement Menu) */}
+                {!activeThreadLimitReached && (
+                    <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '16px', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
+                        {[
+                            "Fais-moi un menu pour demain",
+                            "Génère un menu pour la semaine",
+                            "Que manger au dîner ce soir ?",
+                            "Idée de petit-déjeuner africain ?"
+                        ].map((suggestion, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setInput(suggestion)}
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: '16px',
+                                    background: '#1a1a1a',
+                                    border: '0.5px solid #333',
+                                    color: '#ccc',
+                                    fontSize: '12px',
+                                    whiteSpace: 'nowrap',
+                                    cursor: 'pointer',
+                                    transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = '#2a2a2a'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = '#1a1a1a'}
+                            >
+                                {suggestion}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* JAUGE DE QUOTA */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
 

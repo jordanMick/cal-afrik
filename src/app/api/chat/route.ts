@@ -141,6 +141,17 @@ export async function POST(req: NextRequest) {
             }, { status: 403 })
         }
 
+        const wantsMenuAny = /\bmenu\b/.test(normalizedUserMessage)
+        let foodsContext = ""
+        
+        if (wantsMenuAny) {
+            const { data: allFoods } = await supabase.from('food_items').select('*')
+            if (allFoods && allFoods.length > 0) {
+                const foodsList = allFoods.map((f: any) => `- ${f.name_fr} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.protein_per_100g}g, G: ${f.carbs_per_100g}g, L: ${f.fat_per_100g}g)`).join('\n')
+                foodsContext = `\n\n=== BASE DE DONNÉES DES ALIMENTS ===\nVoici la liste STRICTE des aliments autorisés dans notre système :\n${foodsList}\n\nRÈGLE DU MENU : Tu DOIS obligatoirement combiner ces ingrédients pour construire tes menus (ex: Riz + Viande + Sauce). Additionne leurs calories et macros. N'invente AUCUN plat qui n'est pas directement issu de cette liste ou une combinaison de cette liste.`
+            }
+        }
+
         const systemPrompt = `Tu es Coach Yao, coach nutrition africain bienveillant et concret.
 L'utilisateur s'appelle ${profile.name || 'mon ami'}.
 
@@ -168,7 +179,7 @@ RÈGLES STRICTES :
 Contexte utilisateur :
 - Objectif : ${profile.goal || 'rester en forme'}
 - Poids : ${profile.weight_kg || '?'} kg
-- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}`
+- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}${foodsContext}`
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
         const MOCK_MODE = false
