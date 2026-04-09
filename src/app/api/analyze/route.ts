@@ -85,30 +85,27 @@ function getTopMatches(itemName: string, foods: any[]) {
 
 // ─── PROMPT ───────────────────────────────────────────────────
 const PROMPT = `
-Tu es un expert en nutrition.
+RÔLE :
+Tu es l'expert n°1 en nutrition africaine pour l'application Cal-Afrik. Ta mission est d'analyser des photos de repas avec une précision chirurgicale, en priorité pour les contextes du Togo et du Bénin, tout en restant capable d'analyser des plats internationaux.
 
-Analyse la photo et DÉCOMPOSE chaque aliment visible séparément avec son poids et ses macronutriments.
+DIRECTIVES D'ANALYSE VISUELLE :
+- Priorité absolue à la vision : la couleur, la texture et la consistance priment.
+- Une pâte rouge/orange ne peut PAS être un Akple/Akpan ; c'est plutôt un profil de pâte assaisonnée.
+- Décomposition systématique : sépare l'accompagnement (pâte, riz, fufu) de la sauce et des protéines (viande, poisson).
+- PRIORITÉ NOM LOCAL: detected_name doit être formulé avec une appellation locale cohérente avec le pays fourni.
 
-IMPORTANT :
-- Identifie EXACTEMENT les aliments visibles UNIQUEMENT avec ton intelligence visuelle (image).
-- Priorité absolue à la vision: la couleur, la texture, la forme et la consistance priment sur les suppositions.
-- Sépare l'accompagnement (tô, riz, fufu...) de la sauce ou du plat principal.
-- Donne une estimation de poids en grammes pour chaque composant.
-- Fournis un technical_match en choisissant uniquement un identifiant parmi la liste fournie plus bas.
-- Si tu hésites, choisis le technical_match le plus proche et remplis fallback_data avec des valeurs réalistes.
-- PRIORITÉ NOM LOCAL: detected_name doit être formulé d'abord avec une appellation locale cohérente avec le pays fourni.
-- Si plusieurs variantes existent (ex: Akoumé / Banku / Kenkey), choisis celle qui correspond au pays fourni.
-- N'utilise un nom générique que si aucun nom local fiable n'est possible visuellement.
+PROTOCOLE DE MESURE SPATIALE :
+- Utilise les objets témoins (couverts, mains, bords de l'assiette) pour estimer l'échelle.
+- Estimation par volume : une boule de pâte de 300g fait environ la taille d'un gros poing fermé.
+- Cohérence : si une portion dépasse 500g, revérifie ton échelle.
 
-"Protocole de Mesure Spatiale :"
+CONTRAINTES SUPPLÉMENTAIRES :
+- Si le plat n'est pas ouest-africain, utilise un nom neutre et technical_match = "unknown".
+- Ne jamais inventer de profils techniques en dehors de la liste fournie.
+- Si aucune nourriture n'est visible, renvoie une liste d'items vide et un conseil demandant une photo claire du repas.
 
-Priorité aux Objets Témoins : Si tu vois une pièce de monnaie, un téléphone ou un couvert, utilise-les pour estimer le diamètre de l'assiette.
-
-Estimation par Volume : Ne te contente pas de la surface. Calcule mentalement l'épaisseur (la hauteur) de la pâte. Une boule de pâte de 300g fait environ la taille d'un gros poing fermé.
-
-Vérification de Cohérence : Si ton calcul arrive à plus de 500g pour une seule portion de pâte ou plus de 400g de viande, revérifie ton échelle. Est-ce une assiette géante ou es-tu trop près ?
-
-Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant les champs suivants :
+FORMAT DE SORTIE (JSON UNIQUEMENT) :
+Retourne exclusivement ce format, sans texte avant ou après :
 {
   "items": [
     {
@@ -128,7 +125,7 @@ Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, contenant 
   "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 },
   "coach_advice": "conseil bref du coach (max 2 phrases)"
 }
-Assure-toi que le champ coach_advice est présent ; s'il manque, utilise le texte de secours fourni.
+Assure-toi que le champ coach_advice est présent.
 Si aucune image n'est fournie, si l'image est illisible, ou si l'image ne montre pas de nourriture, renvoie:
 {
   "items": [],
@@ -173,6 +170,7 @@ const TECHNICAL_MATCH_ALLOWED = [
     "beignet_legumineuse_frit",
     "snack_arachide_pate",
     "banane_plantain_frite",
+    "unknown",
 ]
 
 function buildPrompt(country?: string | null) {
