@@ -237,7 +237,7 @@ export default function CoachChatPage() {
                     const next = [...prev, {
                         id: `menu-tier-${Date.now()}`,
                         role: 'coach' as const,
-                        content: 'Les menus Demain et Semaine sont réservés aux plans Pro et Premium.',
+                        content: data.message || 'Passez au plan pro et premium pour avoir le menu du lendemain et de la semaine',
                         timestamp: new Date()
                     }]
                     persistMessagesForThread(activeThreadDate, next)

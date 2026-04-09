@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
                 success: false, 
                 error: 'Limite de messages atteinte', 
                 code: 'LIMIT_REACHED' 
-            }, { status: 403 })
+            }, { status: 200 })
         }
 
         // 3. Traiter la requête de l'utilisateur
@@ -137,8 +137,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: false,
                 code: 'MENU_TIER_REQUIRED',
-                error: 'Les menus Demain et Semaine sont réservés aux plans Pro et Premium.',
-            }, { status: 403 })
+                message: 'Passez au plan pro et premium pour avoir le menu du lendemain et de la semaine',
+            }, { status: 200 })
         }
 
         const wantsMenuAny = /\bmenu\b/.test(normalizedUserMessage)
