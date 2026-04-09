@@ -71,9 +71,32 @@ export async function POST(req: NextRequest) {
             preferredCoachMessage,
         } = await req.json()
 
+        const newSlotConsumed = slotConsumed + totals.calories
+        const exceeded = newSlotConsumed > slotTarget
+        const exceedAmount = Math.round(newSlotConsumed - slotTarget)
+        const remainingAfter = Math.max(0, slotTarget - newSlotConsumed)
+
         // ─── MODE SIMULATION ──────────────────────────────────────────
         const MOCK_MODE = true
         if (MOCK_MODE) {
+            const protein = Number(totals?.protein_g || 0)
+            const carbs = Number(totals?.carbs_g || 0)
+            const fat = Number(totals?.fat_g || 0)
+            let macroAdvice = "Bon équilibre global, continue comme ça."
+            if (protein < 20) {
+                macroAdvice = "Ajoute une source de protéines (oeuf, poisson, haricots) pour mieux soutenir ce créneau."
+            } else if (carbs > protein * 3) {
+                macroAdvice = "Repas très riche en glucides: complète avec une protéine maigre pour stabiliser l'énergie."
+            } else if (fat > 35) {
+                macroAdvice = "Lipides élevés: allège la prochaine préparation (moins d'huile, cuisson grillée/vapeur)."
+            }
+
+            const slotFeedback = exceeded
+                ? `Tu dépasses l'objectif du créneau ${slotLabel} de ${exceedAmount} kcal.`
+                : `Tu restes dans l'objectif du créneau ${slotLabel} (${remainingAfter} kcal restants).`
+            const mealContext = `Repas scanné: ${(selectedFoods || []).join(', ') || 'Repas détecté'}.`
+            const message = `${mealContext} ${slotFeedback} ${macroAdvice} Garde le cap, tu progresses bien 💪`
+
             // Mise à jour des quotas comme si la vraie IA avait répondu
             if (tier === 'free') {
                 await supabase.from('user_profiles').update({ has_used_free_lifetime_feedback: true }).eq('user_id', user.id)
@@ -83,16 +106,11 @@ export async function POST(req: NextRequest) {
             }
             return NextResponse.json({
                 success: true,
-                message: preferredCoachMessage || "[Mode TEST 🔧] Excellent choix ! Ce repas est bien équilibré en macros. Pense à bien t'hydrater et à faire une petite marche après. Continue comme ça ! 💪",
-                exceeded: false,
-                remainingAfter: 200
+                message,
+                exceeded,
+                remainingAfter
             })
         }
-
-        const newSlotConsumed = slotConsumed + totals.calories
-        const exceeded = newSlotConsumed > slotTarget
-        const exceedAmount = Math.round(newSlotConsumed - slotTarget)
-        const remainingAfter = Math.max(0, slotTarget - newSlotConsumed)
 
         // 4. Générer le conseil IA
         const prompt = `Tu es Coach Yao, un nutritionniste africain bienveillant et enthousiaste. Ton ton est chaleureux, direct et positif.
