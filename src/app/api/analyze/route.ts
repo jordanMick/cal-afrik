@@ -644,6 +644,17 @@ export async function POST(req: Request) {
             const displayDetected = matchedFood
                 ? (matchedFood?.display_name || detectedName)
                 : detectedName
+            const finalResolvedSuggestion = matchedFood
+                ? [{
+                    id: matchedFood.id,
+                    name: matchedFood.display_name || matchedFood.name_standard,
+                    score: 100,
+                    calories: Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100),
+                    protein_g: Math.round((((Number(matchedFood?.proteins_100g) || 0) * weight) / 100) * 10) / 10,
+                    carbs_g: Math.round((((Number(matchedFood?.carbs_100g) || 0) * weight) / 100) * 10) / 10,
+                    fat_g: Math.round((((Number(matchedFood?.lipids_100g) || 0) * weight) / 100) * 10) / 10,
+                }]
+                : []
 
             results.push({
                 detected: displayDetected,
@@ -653,7 +664,7 @@ export async function POST(req: Request) {
                 carbs_detected: carbsDetected,
                 fat_detected: fatDetected,
                 confidence: Number(component?.confidence || 80),
-                suggestions: topMatches.map(m => ({
+                suggestions: finalResolvedSuggestion.length > 0 ? finalResolvedSuggestion : topMatches.map(m => ({
                     id: m.food.id,
                     name: m.food.display_name || m.food.name_standard,
                     score: m.score,
