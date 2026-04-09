@@ -315,7 +315,7 @@ export async function POST(req: Request) {
         // Préchargement SQL: source de vérité nutritionnelle
         const { data: foodItems, error: foodItemsError } = await supabase
             .from("food_items")
-            .select("id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+            .select("id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, lipids_100g, carbs_100g")
         const { data: foodAliases, error: foodAliasesError } = await supabase
             .from("food_aliases")
             .select("alias_name, food_item_id")
@@ -512,9 +512,8 @@ export async function POST(req: Request) {
                         density_g_ml,
                         calories_per_100g,
                         proteins_100g,
-                        protein_per_100g,
-                        carbs_per_100g,
-                        fat_per_100g
+                        lipids_100g,
+                        carbs_100g
                     )
                 `)
                 .ilike("alias_name", detectedName)
@@ -583,15 +582,15 @@ export async function POST(req: Request) {
             const caloriesDetected = matchedFood
                 ? Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100)
                 : Math.round((Number(fallbackData?.calories_per_100g) || 0) * weight / 100)
-            const proteinsPer100g = Number(matchedFood?.proteins_100g ?? matchedFood?.protein_per_100g) || 0
+            const proteinsPer100g = Number(matchedFood?.proteins_100g) || 0
             const proteinDetected = matchedFood
                 ? Math.round(((proteinsPer100g * weight) / 100) * 10) / 10
                 : Math.round(((Number(fallbackData?.proteins_100g) || 0) * weight / 100) * 10) / 10
             const carbsDetected = matchedFood
-                ? Math.round((((Number(matchedFood?.carbs_per_100g) || 0) * weight) / 100) * 10) / 10
+                ? Math.round((((Number(matchedFood?.carbs_100g) || 0) * weight) / 100) * 10) / 10
                 : Math.round(((Number(fallbackData?.carbs_100g) || 0) * weight / 100) * 10) / 10
             const fatDetected = matchedFood
-                ? Math.round((((Number(matchedFood?.fat_per_100g) || 0) * weight) / 100) * 10) / 10
+                ? Math.round((((Number(matchedFood?.lipids_100g) || 0) * weight) / 100) * 10) / 10
                 : Math.round(((Number(fallbackData?.lipids_100g) || 0) * weight / 100) * 10) / 10
             totalCalories += caloriesDetected
 
@@ -659,9 +658,9 @@ export async function POST(req: Request) {
                     name: m.food.display_name || m.food.name_standard,
                     score: m.score,
                     calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
-                    protein_g: Math.round(((((Number(m.food.proteins_100g ?? m.food.protein_per_100g) || 0) * weight) / 100) * 10)) / 10,
-                    carbs_g: Math.round((((Number(m.food.carbs_per_100g) || 0) * weight) / 100) * 10) / 10,
-                    fat_g: Math.round((((Number(m.food.fat_per_100g) || 0) * weight) / 100) * 10) / 10,
+                    protein_g: Math.round(((((Number(m.food.proteins_100g) || 0) * weight) / 100) * 10)) / 10,
+                    carbs_g: Math.round((((Number(m.food.carbs_100g) || 0) * weight) / 100) * 10) / 10,
+                    fat_g: Math.round((((Number(m.food.lipids_100g) || 0) * weight) / 100) * 10) / 10,
                 }))
             })
         }
