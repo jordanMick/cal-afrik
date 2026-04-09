@@ -126,12 +126,18 @@ Retourne exclusivement ce format, sans texte avant ou après :
   "coach_advice": "conseil bref du coach (max 2 phrases)"
 }
 Assure-toi que le champ coach_advice est présent.
+Vérifie deux fois la structure syntaxique de ton JSON. Chaque objet dans "items" doit être parfaitement fermé par une virgule ou un crochet.
 Si aucune image n'est fournie, si l'image est illisible, ou si l'image ne montre pas de nourriture, renvoie:
 {
   "items": [],
   "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 },
   "coach_advice": "Image non exploitable ou sans aliment détectable. Prends une photo plus claire de ton repas."
 }
+
+ERREUR DE POIDS CRITIQUE :
+- Une portion normale de pâte pèse entre 250g et 400g.
+- Une portion de viande/poulet dans une assiette pèse entre 150g et 250g.
+- Si tes estimations dépassent ces valeurs, réduis-les fortement (divise par 2 ou 3), car tu surestimes probablement la profondeur de l'assiette.
 `
 const TECHNICAL_MATCH_ALLOWED = [
     "pate_mais_fermente",
