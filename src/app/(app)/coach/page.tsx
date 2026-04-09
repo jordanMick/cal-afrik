@@ -94,6 +94,10 @@ export default function CoachChatPage() {
     const [isTyping, setIsTyping] = useState(false)
     const [messagesUsedToday, setMessagesUsedToday] = useState(initialMessagesUsed)
 
+    // Clé dynamique par utilisateur pour isoler l'historique
+    const userId = profile?.user_id || profile?.id || 'guest'
+    const userStorageKey = `${CHAT_THREADS_STORAGE_KEY}-${userId}`
+
     // Synchroniser si le profil change en arrière-plan
     useEffect(() => {
         setMessagesUsedToday(profile?.last_usage_reset_date === todayDate ? (profile?.chat_messages_today || 0) : 0)
@@ -101,7 +105,7 @@ export default function CoachChatPage() {
 
     // Historique persistant: 3 discussions max, 1 discussion/jour
     useEffect(() => {
-        const storedRaw = localStorage.getItem(CHAT_THREADS_STORAGE_KEY)
+        const storedRaw = localStorage.getItem(userStorageKey)
         let stored: ChatThread[] = []
         if (storedRaw) {
             try {
@@ -131,10 +135,10 @@ export default function CoachChatPage() {
         }
 
         const trimmed = sanitizeThreads(stored)
-        localStorage.setItem(CHAT_THREADS_STORAGE_KEY, JSON.stringify(trimmed))
+        localStorage.setItem(userStorageKey, JSON.stringify(trimmed))
         setThreads(trimmed)
         setActiveThreadDate(todayDate)
-    }, [todayDate, profile?.name, maxMessages])
+    }, [todayDate, profile?.name, maxMessages, userStorageKey])
 
     useEffect(() => {
         const thread = threads.find(t => t.date === activeThreadDate)
@@ -187,7 +191,7 @@ export default function CoachChatPage() {
                     updatedAt: new Date().toISOString(),
                 }]
             const trimmed = sanitizeThreads(updated)
-            localStorage.setItem(CHAT_THREADS_STORAGE_KEY, JSON.stringify(trimmed))
+            localStorage.setItem(userStorageKey, JSON.stringify(trimmed))
             return trimmed
         })
     }
