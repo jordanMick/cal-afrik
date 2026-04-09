@@ -90,7 +90,7 @@ IMPORTANT :
 - Donne une estimation de poids en grammes pour chaque composant.
 - Fournis un technical_match en choisissant uniquement un identifiant parmi la liste fournie plus bas.
 - Si tu hésites, choisis le technical_match le plus proche et remplis fallback_data avec des valeurs réalistes.
-- PRIORITÉ NOM LOCAL: detected_name doit être formulé d'abord avec l'appellation locale la plus utilisée dans le pays fourni.
+- PRIORITÉ NOM LOCAL: detected_name doit être formulé d'abord avec une appellation locale cohérente avec le pays fourni.
 - Si plusieurs variantes existent (ex: Akoumé / Banku / Kenkey), choisis celle qui correspond au pays fourni.
 - N'utilise un nom générique que si aucun nom local fiable n'est possible visuellement.
 
@@ -469,6 +469,11 @@ export async function POST(req: Request) {
             const matchedByAliasSql = Array.isArray(sqlAliasMatchRows) && sqlAliasMatchRows.length > 0
                 ? (sqlAliasMatchRows[0] as any).food_items
                 : null
+            console.log("[ANALYZE][PIPELINE] alias_lookup", {
+                detectedName,
+                matched: !!matchedByAliasSql,
+                matchedName: matchedByAliasSql?.display_name || matchedByAliasSql?.name_standard || null,
+            })
 
             // 2) Recherche unknown_logs
             let unknownLogMatch: any = null
@@ -479,6 +484,12 @@ export async function POST(req: Request) {
                     .ilike("detected_name", detectedName)
                     .limit(1)
                 unknownLogMatch = Array.isArray(unknownRows) && unknownRows.length > 0 ? unknownRows[0] : null
+                console.log("[ANALYZE][PIPELINE] unknown_logs_lookup", {
+                    detectedName,
+                    matched: !!unknownLogMatch,
+                    technicalMatchFromLog: unknownLogMatch?.technical_match || null,
+                    occurrenceCount: unknownLogMatch?.occurrence_count ?? null,
+                })
             }
 
             // 3) Recherche standard via technical_match -> name_standard
@@ -486,6 +497,11 @@ export async function POST(req: Request) {
             if (!matchedByAliasSql && !unknownLogMatch && technicalMatch) {
                 const normalizedTechnical = normalize(technicalMatch)
                 matchedByTechnical = (foodItems || []).find((food: any) => normalize(food?.name_standard) === normalizedTechnical) || null
+                console.log("[ANALYZE][PIPELINE] technical_match_lookup", {
+                    technicalMatch,
+                    matched: !!matchedByTechnical,
+                    matchedName: matchedByTechnical?.display_name || matchedByTechnical?.name_standard || null,
+                })
             }
 
             // unknown_logs peut stocker un technical_match réutilisable
@@ -493,6 +509,11 @@ export async function POST(req: Request) {
             if (!matchedByAliasSql && !matchedByTechnical && unknownLogMatch?.technical_match) {
                 const normalizedUnknownTechnical = normalize(String(unknownLogMatch.technical_match))
                 matchedViaUnknownTechnical = (foodItems || []).find((food: any) => normalize(food?.name_standard) === normalizedUnknownTechnical) || null
+                console.log("[ANALYZE][PIPELINE] technical_from_unknown_lookup", {
+                    technicalMatch: unknownLogMatch?.technical_match || null,
+                    matched: !!matchedViaUnknownTechnical,
+                    matchedName: matchedViaUnknownTechnical?.display_name || matchedViaUnknownTechnical?.name_standard || null,
+                })
             }
 
             const matchedByAlias = matchedByAliasSql || aliasToFood.get(normalizedLabel) || null
@@ -556,6 +577,13 @@ export async function POST(req: Request) {
                     console.error("⚠️ unknown_logs upsert error:", logErr)
                 }
             }
+            console.log("[ANALYZE][PIPELINE] final_resolution", {
+                detectedName,
+                source: matchedByAlias ? "alias" : matchedViaUnknownTechnical ? "unknown_logs->technical_match" : matchedByTechnical ? "technical_match" : "fallback_data",
+                shownName: matchedFood?.display_name || detectedName,
+                weight,
+                caloriesDetected,
+            })
 
             const displayDetected = matchedFood
                 ? (matchedFood?.display_name || detectedName)
