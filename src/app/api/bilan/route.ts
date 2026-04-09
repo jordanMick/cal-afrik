@@ -138,40 +138,15 @@ export async function POST(req: NextRequest) {
         
         const { data: plans } = await plannedMealsQuery
 
-        // ─── BILAN AUTOMATIQUE (sans IA) ─────────────────────
+        // ─── PAS DE DROIT : NE PAS GÉNÉRER ───────────────────
         if (!canUseAI) {
-            if (tier === 'free') {
-                return NextResponse.json({
-                    success: false,
-                    reason: 'upgrade_required',
-                    message: 'Passe en Pro pour débloquer tes bilans quotidiens 🔥',
-                    upgrade: true
-                })
-            }
-            const calPct = Math.round((slotConsumed / slotTarget) * 100)
-            let autoMsg = ''
-
-            if (isEndOfDay) {
-                const dayPct = Math.round((dailyCalories / calorieTarget) * 100)
-                if (dayPct >= 85 && dayPct <= 115) autoMsg = '🎯 Belle journée ! Objectif calorique atteint. Repose-toi bien. 🌙'
-                else if (dayPct > 115) autoMsg = '⚠️ Budget calories dépassé aujourd\'hui. Compensez demain avec un repas plus léger.'
-                else autoMsg = '📉 Journée incomplète. Pensez à combler vos calories avant minuit.'
-            } else {
-                if (calPct >= 80 && calPct <= 120) autoMsg = `✅ Bon créneau ${slotLabel} ! Continue sur ta lancée.`
-                else if (calPct > 120) autoMsg = `⚠️ Tu as légèrement dépassé sur le ${slotLabel}. Pense à alléger le prochain créneau.`
-                else autoMsg = `💡 Il te reste encore de la marge sur le ${slotLabel}. Ajoute un aliment léger si tu as faim.`
-            }
-
             return NextResponse.json({
-                success: true,
-                message: autoMsg,
-                goalReached: isEndOfDay
-                    ? Math.round((dailyCalories / calorieTarget) * 100) >= 85
-                    : (calPct >= 80 && calPct <= 120),
-                exceeded: isEndOfDay
-                    ? Math.round((dailyCalories / calorieTarget) * 100) > 115
-                    : calPct > 120,
-                isAutomatic: true
+                success: false,
+                reason: tier === 'free' ? 'upgrade_required' : 'plan_restriction',
+                message: tier === 'free'
+                    ? 'Passe en Pro pour débloquer tes bilans quotidiens 🔥'
+                    : 'Le bilan par créneau est réservé au plan Premium.',
+                upgrade: true
             })
         }
 

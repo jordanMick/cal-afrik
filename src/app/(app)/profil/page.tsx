@@ -67,13 +67,16 @@ export default function ProfilPage() {
     const activeSlot = getActiveBilanSlot(hour, minutes)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
     const existingBilan = activeSlot ? slotBilans[activeSlot] : null
+    const canUseAIBilanForActiveSlot = !!activeSlot && (
+        effectiveTier === 'premium' || (effectiveTier === 'pro' && activeSlot === 'diner')
+    )
 
     // VALIDITÉ : On ajoute un check sur le message si l'utilisateur est Premium
     const needsYaoMessage = profile?.subscription_tier === 'premium' && (!existingBilan?.message || existingBilan.message === "")
     const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh && !needsYaoMessage
 
-    const shouldGenerate = !!activeSlot && !bilanIsValid
-    const shouldShowExisting = !!activeSlot && bilanIsValid
+    const shouldGenerate = !!activeSlot && canUseAIBilanForActiveSlot && !bilanIsValid
+    const shouldShowExisting = !!activeSlot && canUseAIBilanForActiveSlot && bilanIsValid
 
     // Déterminer le statut initial si on a déjà un bilan
     const getInitialStatus = () => {
@@ -378,8 +381,26 @@ export default function ProfilPage() {
                 </p>
             </div>
 
-            {/* SECTION BILAN - TOTALEMENT RÉSERVÉE PRO/PREMIUM */}
-            {profile?.subscription_tier !== 'free' && activeSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') && (
+            {/* MESSAGE PRO (creneaux) : pas de génération ni affichage bilan */}
+            {effectiveTier === 'pro' && activeSlot && activeSlot !== 'diner' && (
+                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', margin: '0 20px 20px' }}>
+                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
+                        📌 Bilan de journée disponible à 23h00 dans cette section Profil.
+                    </p>
+                    <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.6', marginBottom: '12px' }}>
+                        En plan Pro, tu reçois un bilan IA de fin de journée. Pour un bilan à chaque créneau, passe au Premium.
+                    </p>
+                    <div
+                        onClick={() => router.push('/upgrade')}
+                        style={{ display: 'inline-block', padding: '8px 12px', background: 'rgba(99,102,241,0.15)', border: '0.5px solid rgba(99,102,241,0.35)', borderRadius: '10px', color: '#818cf8', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                    >
+                        Passer au Premium →
+                    </div>
+                </div>
+            )}
+
+            {/* SECTION BILAN IA (uniquement quand le plan y a droit) */}
+            {canUseAIBilanForActiveSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') && (
                 <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : (bilanColor + '40')}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
                     {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
