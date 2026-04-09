@@ -61,7 +61,6 @@ export default function ProfilPage() {
 
     // Calcul de l'urgence d'expiration (J-7)
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
-    const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
 
     const activeSlot = getActiveBilanSlot(hour, minutes)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
@@ -261,15 +260,14 @@ export default function ProfilPage() {
                             {profile?.subscription_expires_at && effectiveTier !== 'free' && (
                                 <div style={{ marginTop: '10px' }}>
                                     <p style={{
-                                        color: isExpiringSoon ? '#ef4444' : '#444',
+                                        color: '#444',
                                         fontSize: '11px',
-                                        fontWeight: isExpiringSoon ? '700' : '400',
+                                        fontWeight: '400',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '6px'
                                     }}>
-                                        {isExpiringSoon && <span>⚠️</span>}
-                                        {isExpiringSoon ? 'Attention : Expire bientôt' : 'Abonnement valide'}
+                                        Abonnement valide
                                     </p>
                                     <p style={{ color: '#666', fontSize: '13px', marginTop: '2px' }}>
                                         Fin le {new Date(profile.subscription_expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
