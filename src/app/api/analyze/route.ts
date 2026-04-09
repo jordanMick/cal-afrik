@@ -130,11 +130,48 @@ Si aucune image n'est fournie, si l'image est illisible, ou si l'image ne montre
   "coach_advice": "Image non exploitable ou sans aliment détectable. Prends une photo plus claire de ton repas."
 }
 `
-function buildPrompt(country?: string | null, technicalProfiles: string[] = []) {
+const TECHNICAL_MATCH_ALLOWED = [
+    "pate_mais_fermente",
+    "pate_mais_non_fermente",
+    "pate_mais_assaisonnee",
+    "pate_igname_pilee",
+    "pate_mil_sorgho",
+    "pate_manioc_fermente",
+    "semoule_manioc_vapeur",
+    "riz_blanc_vapeur",
+    "riz_gras_jollof",
+    "riz_legumineuse_mix",
+    "pain_mais_vapeur",
+    "igname_bouillie",
+    "manioc_bouilli",
+    "patate_douce_bouillie",
+    "sauce_gluante_legere",
+    "sauce_feuille_grasse",
+    "sauce_noix_palme_dense",
+    "sauce_noix_palme_claire",
+    "sauce_arachide_pate",
+    "sauce_legumes_claire",
+    "sauce_tomate_friture",
+    "sauce_piment_frais",
+    "viande_rouge_braisee",
+    "viande_rouge_frite",
+    "volaille_braisee",
+    "volaille_frite",
+    "poisson_frit",
+    "poisson_fume",
+    "oeuf_bouilli",
+    "oeuf_frit",
+    "fromage_traditionnel_frit",
+    "puree_legumineuse_vapeur",
+    "beignet_farine_sucre",
+    "beignet_legumineuse_frit",
+    "snack_arachide_pate",
+    "banane_plantain_frite",
+]
+
+function buildPrompt(country?: string | null) {
     const countryContext = (country || "").trim() || "Afrique de l'Ouest"
-    const profileList = technicalProfiles.length > 0
-        ? technicalProfiles.join(", ")
-        : "aucun_profil_fourni"
+    const profileList = TECHNICAL_MATCH_ALLOWED.join(", ")
     return `${PROMPT}
 
 Contexte géographique prioritaire: ${countryContext}.
@@ -289,7 +326,7 @@ export async function POST(req: Request) {
                     data: image.data,
                 },
             },
-            { text: buildPrompt(profile?.country, (foodItems || []).map((f: any) => String(f.name_standard || "")).filter(Boolean)) },
+            { text: buildPrompt(profile?.country) },
         ]
         let responseText = ""
         let generationError: any = null
