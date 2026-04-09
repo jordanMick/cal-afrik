@@ -307,7 +307,7 @@ export default function ProfilPage() {
             </div>
 
             <div style={{
-                margin: '20px 20px 10px',
+                margin: '8px 20px 10px',
                 padding: '10px 16px',
                 background: 'rgba(255,255,255,0.03)',
                 borderRadius: '12px',
