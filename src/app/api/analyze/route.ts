@@ -313,16 +313,27 @@ export async function POST(req: Request) {
         console.log("📸 BASE64 SIZE:", image.data.length)
 
         // Préchargement SQL: source de vérité nutritionnelle
-        const { data: foodItems } = await supabase
+        const { data: foodItems, error: foodItemsError } = await supabase
             .from("food_items")
             .select("id, name_standard, display_name, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
-        const { data: foodAliases } = await supabase
+        const { data: foodAliases, error: foodAliasesError } = await supabase
             .from("food_aliases")
             .select("alias_name, food_item_id")
         console.log("[ANALYZE] SQL preload", {
             foodItems: (foodItems || []).length,
             foodAliases: (foodAliases || []).length,
+            foodItemsError: foodItemsError?.message || null,
+            foodAliasesError: foodAliasesError?.message || null,
         })
+        if (foodItemsError || foodAliasesError) {
+            return NextResponse.json({
+                success: false,
+                meal_name: "",
+                total_calories: 0,
+                data: [],
+                error: `SQL preload failed: ${foodItemsError?.message || foodAliasesError?.message}`,
+            }, { status: 500 })
+        }
 
         // ─── APPEL IA (Gemini) ───────────────────────────────────────
         const inputParts = [
