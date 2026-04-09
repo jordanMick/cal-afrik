@@ -44,7 +44,7 @@ function scoreFood(itemName: string, food: any) {
 
     const names = [
         food.name_standard,
-        food.name_en
+        food.display_name
     ].filter(Boolean).map(normalize)
 
     let score = 0
@@ -315,7 +315,7 @@ export async function POST(req: Request) {
         // Préchargement SQL: source de vérité nutritionnelle
         const { data: foodItems, error: foodItemsError } = await supabase
             .from("food_items")
-            .select("id, name_standard, display_name, name_en, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
+            .select("id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, protein_per_100g, carbs_per_100g, fat_per_100g")
         const { data: foodAliases, error: foodAliasesError } = await supabase
             .from("food_aliases")
             .select("alias_name, food_item_id")
@@ -509,7 +509,6 @@ export async function POST(req: Request) {
                         id,
                         name_standard,
                         display_name,
-                        name_en,
                         density_g_ml,
                         calories_per_100g,
                         proteins_100g,
@@ -657,7 +656,7 @@ export async function POST(req: Request) {
                 confidence: Number(component?.confidence || 80),
                 suggestions: topMatches.map(m => ({
                     id: m.food.id,
-                    name: m.food.display_name || m.food.name_en || m.food.name_standard,
+                    name: m.food.display_name || m.food.name_standard,
                     score: m.score,
                     calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
                     protein_g: Math.round(((((Number(m.food.proteins_100g ?? m.food.protein_per_100g) || 0) * weight) / 100) * 10)) / 10,
