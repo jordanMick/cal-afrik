@@ -1,0 +1,168 @@
+CAL-AFRIK - RECAP FONCTIONNALITES ET DISPONIBILITE PAR PLAN
+Date de reference: 2026-04-08
+
+Plans:
+- FREE
+- PRO
+- PREMIUM
+
+Note importante:
+- Si un abonnement Pro/Premium est expire, l'utilisateur repasse en "free" (tier effectif).
+- Ce recap suit les regles actuellement codees dans l'application.
+
+================================================================
+1) SCAN REPAS (PHOTO / ANALYSE IA)
+================================================================
+Description:
+- Analyse d'une photo de repas via IA nutrition.
+- Detection aliments + estimation calories/macros + enregistrement journal.
+
+Disponibilite:
+- FREE: OUI, limite 2 actions/jour (scan + suggestions planner), puis blocage.
+- PRO: OUI, quasi illimite (maxScansPerDay configure a 1000).
+- PREMIUM: OUI, quasi illimite (maxScansPerDay configure a 1000).
+
+Codes de blocage courants:
+- LIMIT_REACHED (scan/planner)
+- GEMINI_QUOTA_EXCEEDED
+- GEMINI_TEMP_UNAVAILABLE
+
+================================================================
+2) SCAN CODE-BARRES PRODUIT
+================================================================
+Description:
+- Lecture code-barres (camera/fichier), recuperation nutriments OpenFoodFacts.
+
+Disponibilite:
+- FREE: OUI (avec limites operationnelles selon logique scanner).
+- PRO: OUI.
+- PREMIUM: OUI.
+
+================================================================
+3) CONSEIL COACH SUR REPAS SCANNE (/api/coach)
+================================================================
+Description:
+- Feedback nutrition du creneau (slot) apres scan.
+
+Disponibilite actuelle:
+- FREE: 1 essai a vie (has_used_free_lifetime_feedback), puis bloque.
+- PRO: 1 conseil/jour.
+- PREMIUM: illimite (maxCoachFeedbackPerDay = Infinity).
+
+Codes:
+- FREE_LIFETIME_USED
+- PRO_DAILY_LIMIT
+
+================================================================
+4) CHAT COACH YAO (/api/chat)
+================================================================
+Description:
+- Conversation texte avec Coach Yao.
+- Historique local par discussion/jour (3 discussions max, rotation de la plus ancienne).
+
+Quota messages chat (par jour / par discussion selon l'UI actuelle):
+- FREE: 2
+- PRO: 10
+- PREMIUM: 30
+
+Quand quota atteint:
+- FREE/PRO: affichage bloc limite + orientation upgrade.
+- PREMIUM: message simple "Limite atteinte, reviens demain."
+
+================================================================
+5) MENUS IA DANS LE CHAT
+================================================================
+Types:
+- menu creneau ... (aujourd'hui)
+- menu demain
+- menu semaine
+
+Disponibilite:
+- FREE:
+  - menu creneau: OUI
+  - menu demain: NON (reserve Pro/Premium)
+  - menu semaine: NON (reserve Pro/Premium)
+- PRO:
+  - menu creneau: OUI
+  - menu demain: OUI
+  - menu semaine: OUI
+- PREMIUM:
+  - menu creneau: OUI
+  - menu demain: OUI
+  - menu semaine: OUI
+
+Code API si Free tente menu demain/semaine:
+- MENU_TIER_REQUIRED (403)
+
+================================================================
+6) AFFICHAGE MENUS DANS SCANNER (ONGLETS)
+================================================================
+Onglets:
+- Aujourd'hui
+- Demain
+- Semaine
+
+Regles:
+- FREE: onglets Demain/Semaine verrouilles avec badge "🔒", non ouvrables.
+- PRO/PREMIUM: acces complet.
+- Onglet Semaine: carte compacte + bouton fleche "→" pour popup complete.
+
+================================================================
+7) PLANNER (SUGGESTIONS PLAN REPAS)
+================================================================
+Description:
+- Suggestion de menus/plans par l'API planner (demain/semaine).
+
+Disponibilite:
+- FREE: limite de suggestions (code LIMIT_REACHED cote planner).
+- PRO: disponible.
+- PREMIUM: disponible.
+
+Note:
+- Le scanner affiche maintenant surtout les menus issus du chat par onglets.
+
+================================================================
+8) BILANS IA (PROFIL)
+================================================================
+Description:
+- Bilan nutritionnel selon creneau/journee/mensuel.
+
+Disponibilite:
+- FREE: pas de bilan IA creneau.
+- PRO: bilan IA de fin de journee (diner / 23h), pas de bilan creneau complet.
+- PREMIUM: bilan IA complet (creneaux + journee selon logique active).
+
+================================================================
+9) GRAPHIQUES / FONCTIONS AVANCEES
+================================================================
+Selon SUBSCRIPTION_RULES:
+- hasGraph:
+  - FREE: NON
+  - PRO: OUI
+  - PREMIUM: OUI
+- hasAutomaticRecalculation:
+  - FREE: NON
+  - PRO: OUI
+  - PREMIUM: OUI
+- hasCoachYao:
+  - FREE: NON
+  - PRO: OUI
+  - PREMIUM: OUI
+
+================================================================
+10) RESUME ULTRA RAPIDE
+================================================================
+FREE:
+- Scan limite (2 actions/jour scan+planner), chat 2 msgs/jour, coach scan 1 essai a vie.
+- Menus "demain" et "semaine" non accessibles.
+
+PRO:
+- Scan quasi illimite, chat 10 msgs/jour, coach scan 1/jour.
+- Menus aujourd'hui/demain/semaine accessibles.
+- Bilan IA fin de journee.
+
+PREMIUM:
+- Scan quasi illimite, chat 30 msgs/jour, coach scan illimite.
+- Menus aujourd'hui/demain/semaine accessibles.
+- Bilans IA les plus complets.
+

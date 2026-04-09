@@ -74,6 +74,12 @@ interface AppState {
 
     lastCoachMessage: string | null
     setLastCoachMessage: (msg: string) => void
+    chatSuggestedMenus: {
+        today: string | null
+        tomorrow: string | null
+        week: string | null
+    }
+    setChatSuggestedMenu: (kind: 'today' | 'tomorrow' | 'week', message: string) => void
 
     // ─── Bilans par créneau ──────────────────────────────────
     slotBilans: Partial<Record<MealSlotKey, SlotBilan>>
@@ -236,6 +242,18 @@ export const useAppStore = create<AppState>()(
 
             lastCoachMessage: null,
             setLastCoachMessage: (msg) => set({ lastCoachMessage: msg }),
+            chatSuggestedMenus: {
+                today: null,
+                tomorrow: null,
+                week: null,
+            },
+            setChatSuggestedMenu: (kind, message) =>
+                set((state) => ({
+                    chatSuggestedMenus: {
+                        ...state.chatSuggestedMenus,
+                        [kind]: message,
+                    },
+                })),
 
             slotBilans: {},
             setSlotBilan: (slot, bilan) =>
@@ -290,6 +308,7 @@ export const useAppStore = create<AppState>()(
                 slotBilans: state.slotBilans,
                 onboardingStep: state.onboardingStep,
                 onboardingForm: state.onboardingForm,
+                chatSuggestedMenus: state.chatSuggestedMenus,
             }),
         }
     )

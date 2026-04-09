@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
-import { getEffectiveTier } from '@/lib/subscription'
+import { getEffectiveTier, SUBSCRIPTION_RULES } from '@/lib/subscription'
 import { supabase } from '@/lib/supabase'
 
 type Role = 'user' | 'coach'
@@ -15,27 +15,81 @@ interface Message {
     timestamp: Date;
 }
 
+interface PersistedMessage {
+    id: string;
+    role: Role;
+    content: string;
+    timestamp: string;
+}
+
+interface ChatThread {
+    date: string; // YYYY-MM-DD
+    messages: PersistedMessage[];
+    messagesUsed: number;
+    maxMessages: number;
+    updatedAt: string;
+}
+
+const CHAT_THREADS_STORAGE_KEY = 'coach-chat-threads-v1'
+
+function toLocalDateKey(d = new Date()): string {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+}
+
+function getWelcomeMessage(name?: string | null): PersistedMessage {
+    return {
+        id: 'welcome',
+        role: 'coach',
+        content: `Bonjour ${name || 'mon ami'} ! Je suis ton coach Yao 🤖. Nutritionniste et expert en plats africains. Que puis-je faire pour t'aider à atteindre ton objectif aujourd'hui ?`,
+        timestamp: new Date().toISOString(),
+    }
+}
+
+function sanitizeThreads(threads: ChatThread[]): ChatThread[] {
+    const valid = (threads || [])
+        .filter(t => !!t?.date && Array.isArray(t?.messages))
+        .map(t => ({
+            date: t.date,
+            messages: t.messages,
+            messagesUsed: Number(t.messagesUsed || 0),
+            maxMessages: Number(t.maxMessages || 0),
+            updatedAt: t.updatedAt || t.date,
+        }))
+        .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))
+    return valid.slice(-3)
+}
+
+function detectMenuKind(message: string): 'today' | 'tomorrow' | 'week' | null {
+    const normalized = message
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase()
+
+    const hasMealContent = /(petit[- ]?dej|dejeuner|collation|diner)/.test(normalized)
+    if (normalized.startsWith('menu semaine:') && hasMealContent) return 'week'
+    if (normalized.startsWith('menu demain:') && hasMealContent) return 'tomorrow'
+    if (normalized.startsWith('menu creneau ') && hasMealContent) return 'today'
+    return null
+}
+
 export default function CoachChatPage() {
     const router = useRouter()
-    const { profile, slots } = useAppStore()
+    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu } = useAppStore()
     const effectiveTier = getEffectiveTier(profile)
 
-    // Limites en fonction du plan
-    const limits = {
-        free: 1,
-        pro: 10,
-        premium: 30
-    }
+    const maxMessages = Number(SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay || 2)
 
-    const maxMessages = limits[effectiveTier] || 1
-
-    const todayDate = new Date().toISOString().split('T')[0]
+    const todayDate = toLocalDateKey()
     const isToday = profile?.last_usage_reset_date === todayDate
     const initialMessagesUsed = isToday ? (profile?.chat_messages_today || 0) : 0
 
-    const [messages, setMessages] = useState<Message[]>([
-        { id: '1', role: 'coach', content: `Bonjour ${profile?.name || 'mon ami'} ! Je suis ton coach Yao 🤖. Nutritionniste et expert en plats africains. Que puis-je faire pour t'aider à atteindre ton objectif aujourd'hui ?`, timestamp: new Date() }
-    ])
+    const [threads, setThreads] = useState<ChatThread[]>([])
+    const [activeThreadDate, setActiveThreadDate] = useState<string>(todayDate)
+    const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [isTyping, setIsTyping] = useState(false)
     const [messagesUsedToday, setMessagesUsedToday] = useState(initialMessagesUsed)
@@ -44,6 +98,59 @@ export default function CoachChatPage() {
     useEffect(() => {
         setMessagesUsedToday(profile?.last_usage_reset_date === todayDate ? (profile?.chat_messages_today || 0) : 0)
     }, [profile, todayDate])
+
+    // Historique persistant: 3 discussions max, 1 discussion/jour
+    useEffect(() => {
+        const storedRaw = localStorage.getItem(CHAT_THREADS_STORAGE_KEY)
+        let stored: ChatThread[] = []
+        if (storedRaw) {
+            try {
+                stored = sanitizeThreads(JSON.parse(storedRaw))
+            } catch {
+                stored = []
+            }
+        }
+
+        const todayThread = stored.find(t => t.date === todayDate)
+        if (!todayThread) {
+            stored.push({
+                date: todayDate,
+                messages: [getWelcomeMessage(profile?.name)],
+                messagesUsed: 0,
+                maxMessages,
+                updatedAt: new Date().toISOString(),
+            })
+        } else if (todayThread.messages.length === 0) {
+            todayThread.messages = [getWelcomeMessage(profile?.name)]
+            todayThread.updatedAt = new Date().toISOString()
+        }
+
+        // Toujours synchroniser le max avec le plan actuel
+        if (todayThread) {
+            todayThread.maxMessages = maxMessages
+        }
+
+        const trimmed = sanitizeThreads(stored)
+        localStorage.setItem(CHAT_THREADS_STORAGE_KEY, JSON.stringify(trimmed))
+        setThreads(trimmed)
+        setActiveThreadDate(todayDate)
+    }, [todayDate, profile?.name, maxMessages])
+
+    useEffect(() => {
+        const thread = threads.find(t => t.date === activeThreadDate)
+        if (!thread) {
+            setMessages([])
+            return
+        }
+        setMessages(
+            thread.messages.map(m => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+                timestamp: new Date(m.timestamp),
+            }))
+        )
+    }, [threads, activeThreadDate])
 
     const endOfMessagesRef = useRef<HTMLDivElement>(null)
 
@@ -55,13 +162,49 @@ export default function CoachChatPage() {
         scrollToBottom()
     }, [messages, isTyping])
 
+    const persistMessagesForThread = (threadDate: string, nextMessages: Message[], incrementUsage: boolean = false) => {
+        const persisted: PersistedMessage[] = nextMessages.map(m => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp.toISOString(),
+        }))
+
+        setThreads(prev => {
+            const existing = prev.find(t => t.date === threadDate)
+            const updated = existing
+                ? prev.map(t => (t.date === threadDate ? {
+                    ...t,
+                    messages: persisted,
+                    messagesUsed: incrementUsage ? Math.min(t.maxMessages, (t.messagesUsed || 0) + 1) : t.messagesUsed,
+                    updatedAt: new Date().toISOString(),
+                } : t))
+                : [...prev, {
+                    date: threadDate,
+                    messages: persisted,
+                    messagesUsed: incrementUsage ? 1 : 0,
+                    maxMessages,
+                    updatedAt: new Date().toISOString(),
+                }]
+            const trimmed = sanitizeThreads(updated)
+            localStorage.setItem(CHAT_THREADS_STORAGE_KEY, JSON.stringify(trimmed))
+            return trimmed
+        })
+    }
+
     const handleSendMessage = async () => {
+        const activeThread = threads.find(t => t.date === activeThreadDate)
         if (!input.trim()) return
-        if (messagesUsedToday >= maxMessages) return
+        if (!activeThread) return
+        if ((activeThread.messagesUsed || 0) >= (activeThread.maxMessages || maxMessages)) {
+            alert("Limite de messages atteinte pour cette discussion.")
+            return
+        }
 
         const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() }
         const newMessagesContext = [...messages, userMsg]
         setMessages(newMessagesContext)
+        persistMessagesForThread(activeThreadDate, newMessagesContext)
         setInput('')
         setIsTyping(true)
 
@@ -85,27 +228,59 @@ export default function CoachChatPage() {
                 setIsTyping(false)
                 return
             }
+            if (data.code === 'MENU_TIER_REQUIRED') {
+                setMessages(prev => {
+                    const next = [...prev, {
+                        id: `menu-tier-${Date.now()}`,
+                        role: 'coach' as const,
+                        content: 'Les menus Demain et Semaine sont réservés aux plans Pro et Premium.',
+                        timestamp: new Date()
+                    }]
+                    persistMessagesForThread(activeThreadDate, next)
+                    return next
+                })
+                setIsTyping(false)
+                return
+            }
 
             if (data.success) {
                 setMessagesUsedToday(maxMessages - data.usageRemaining)
-                setMessages(prev => [...prev, {
+                setLastCoachMessage(data.message)
+                const menuKind = detectMenuKind(data.message)
+                if (menuKind) setChatSuggestedMenu(menuKind, data.message)
+                const coachReply: Message = {
                     id: (Date.now() + 1).toString(),
                     role: 'coach',
                     content: data.message,
                     timestamp: new Date()
-                }])
+                }
+                setMessages(prev => {
+                    const next = [...prev, coachReply]
+                    persistMessagesForThread(activeThreadDate, next, true)
+                    return next
+                })
             } else {
-                setMessages(prev => [...prev, { id: 'err', role: 'coach', content: 'Désolé, une erreur technique est survenue.', timestamp: new Date() }])
+                setMessages(prev => {
+                    const next = [...prev, { id: `err-${Date.now()}`, role: 'coach' as const, content: 'Désolé, une erreur technique est survenue.', timestamp: new Date() }]
+                    persistMessagesForThread(activeThreadDate, next)
+                    return next
+                })
             }
         } catch (err) {
             console.error(err)
-            setMessages(prev => [...prev, { id: 'err2', role: 'coach', content: 'Impossible de joindre le serveur.', timestamp: new Date() }])
+            setMessages(prev => {
+                const next = [...prev, { id: `err2-${Date.now()}`, role: 'coach' as const, content: 'Impossible de joindre le serveur.', timestamp: new Date() }]
+                persistMessagesForThread(activeThreadDate, next)
+                return next
+            })
         } finally {
             setIsTyping(false)
         }
     }
 
     const limitReached = messagesUsedToday >= maxMessages
+    const activeThread = threads.find(t => t.date === activeThreadDate)
+    const activeThreadLimitReached = !!activeThread && (activeThread.messagesUsed >= activeThread.maxMessages)
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
@@ -128,6 +303,40 @@ export default function CoachChatPage() {
                     <p style={{ color: '#10b981', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>En ligne</p>
                 </div>
             </div>
+
+            {/* Historique 3 discussions max */}
+            <div style={{ display: 'flex', gap: '8px', padding: '10px 20px 0', overflowX: 'auto' }}>
+                {[...threads].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).map(thread => {
+                    const active = thread.date === activeThreadDate
+                    const label = thread.date === todayDate ? "Aujourd'hui" : thread.date
+                    return (
+                        <button
+                            key={thread.date}
+                            onClick={() => setActiveThreadDate(thread.date)}
+                            style={{
+                                border: active ? '0.5px solid #6366f1' : '0.5px solid #222',
+                                background: active ? 'rgba(99,102,241,0.14)' : '#141414',
+                                color: active ? '#c7d2fe' : '#777',
+                                borderRadius: '10px',
+                                padding: '7px 10px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                            }}
+                        >
+                            {label}
+                        </button>
+                    )
+                })}
+            </div>
+            {activeThread && (
+                <div style={{ padding: '8px 20px 0' }}>
+                    <p style={{ color: '#666', fontSize: '11px', fontWeight: '600' }}>
+                        Messages discussion: {activeThread.messagesUsed} / {activeThread.maxMessages}
+                    </p>
+                </div>
+            )}
 
             {/* MESSAGES AREA */}
             <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '30px' }}>
@@ -186,21 +395,38 @@ export default function CoachChatPage() {
                     </div>
                 </div>
 
-                {limitReached ? (
-                    <div
-                        onClick={() => router.push('/upgrade')}
-                        style={{
-                            width: '100%', padding: '16px', borderRadius: '16px',
-                            background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(245,158,11,0.1))',
-                            border: '1px solid rgba(245,158,11,0.3)',
-                            textAlign: 'center', cursor: 'pointer'
-                        }}>
-                        <p style={{ color: '#fff', fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>Limite atteinte 🔒</p>
-                        <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '12px' }}>Passez au plan supérieur pour continuer à discuter avec Yao.</p>
-                        <button style={{ padding: '8px 20px', background: '#f59e0b', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
-                            Voir les plans →
-                        </button>
-                    </div>
+                {activeThreadLimitReached ? (
+                    effectiveTier === 'premium' ? (
+                        <div
+                            style={{
+                                width: '100%',
+                                padding: '14px',
+                                borderRadius: '12px',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '0.5px solid #2a2a2a',
+                                textAlign: 'center'
+                            }}
+                        >
+                            <p style={{ color: '#aaa', fontSize: '13px', fontWeight: '600' }}>
+                                Limite atteinte, reviens demain.
+                            </p>
+                        </div>
+                    ) : (
+                        <div
+                            onClick={() => router.push('/upgrade')}
+                            style={{
+                                width: '100%', padding: '16px', borderRadius: '16px',
+                                background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(245,158,11,0.1))',
+                                border: '1px solid rgba(245,158,11,0.3)',
+                                textAlign: 'center', cursor: 'pointer'
+                            }}>
+                            <p style={{ color: '#fff', fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>Limite atteinte 🔒</p>
+                            <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '12px' }}>Passez au plan supérieur pour continuer à discuter avec Yao.</p>
+                            <button style={{ padding: '8px 20px', background: '#f59e0b', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+                                Voir les plans →
+                            </button>
+                        </div>
+                    )
                 ) : (
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <input

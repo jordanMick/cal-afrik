@@ -217,7 +217,7 @@ export default function ProfilPage() {
             <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            <div style={{ padding: '52px 20px 24px' }}>
+            <div style={{ padding: `52px 20px ${isExpiringSoon ? '8px' : '6px'}` }}>
                 <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', marginBottom: '24px', letterSpacing: '-0.5px' }}>Mon Profil</h1>
 
                 {/* BLOC PROFIL CONSOLIDÉ */}
@@ -225,7 +225,7 @@ export default function ProfilPage() {
                     background: '#141414',
                     borderRadius: '24px',
                     padding: '20px',
-                    marginBottom: '20px',
+                    marginBottom: isExpiringSoon ? '8px' : '6px',
                     border: '0.5px solid #222',
                     position: 'relative',
                     overflow: 'hidden',
@@ -284,7 +284,7 @@ export default function ProfilPage() {
 
             {isExpiringSoon && (
                 <div style={{
-                    margin: '0 20px 10px',
+                    margin: '0 20px 8px',
                     padding: '10px 12px',
                     borderRadius: '12px',
                     background: 'rgba(239,68,68,0.08)',
@@ -318,7 +318,7 @@ export default function ProfilPage() {
             )}
 
             <div style={{
-                margin: '8px 20px 10px',
+                margin: '0 20px 10px',
                 padding: '10px 16px',
                 background: 'rgba(255,255,255,0.03)',
                 borderRadius: '12px',

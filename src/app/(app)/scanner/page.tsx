@@ -3,9 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
-import PlannerCard from '@/components/dashboard/PlannerCard'
 import { supabase } from '@/lib/supabase'
-import { checkPermission } from '@/lib/subscription'
+import { getEffectiveTier } from '@/lib/subscription'
 import type { ScanResultItem, FoodSuggestion } from '@/types'
 import { Html5Qrcode } from 'html5-qrcode'
 
@@ -33,9 +32,116 @@ const LAST_SLOT = 'diner'
 const ACCENT_COLOR = '#6366f1'
 const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
 
+function normalizeMenuText(raw: string, mode: 'today' | 'tomorrow' | 'week' = 'today'): string {
+    const base = raw
+        .replace(/\*\*/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s*(\d{1,2}\/\d{1,2})/gi, '\n$1 $2')
+        .replace(/\s+(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+(\d{1,2}\/\d{1,2})/gi, '\n$1 $2')
+        .replace(/((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*:\s*/gi, '\n$1:\n')
+        .replace(/((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]/gi, '\n$1:\n$3: ')
+        .replace(/((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:)\s*(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner:)/gi, '\n$1\n$3')
+        .replace(/\s*-\s*(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]/gi, '\n$1: ')
+        .replace(/\s*(\d+\.\s*(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*[:：]?/gi, '\n$1:')
+        .replace(/\s*((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*[:：]?/gi, '\n$1:')
+        .replace(/\s*(menu\s+(?:creneau\s+\w+|demain|semaine)\s*:)/i, '$1\n')
+        .replace(/a definir/gi, 'Repas local équilibré')
+        .trim()
+
+    if (mode === 'tomorrow') {
+        return base
+            // Nouveau créneau à la ligne même avec "(700 kcal)" entre le titre et ":"
+            .replace(/\s+(Petit-déjeuner|Petit-dejeuner|Petit-déj|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*(\([^)]*\))?\s*[:：]/gi, '\n$1$2: ')
+            // Fallback: si pas de ":" explicite, on coupe quand même avant le nom du créneau
+            .replace(/\s+(Petit-déjeuner|Petit-dejeuner|Petit-déj|Déjeuner|Dejeuner|Collation|Dîner|Diner)\b/gi, '\n$1')
+    }
+
+    return base
+}
+
+function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week') {
+    const normalized = normalizeMenuText(menuText, mode)
+    const lines = normalized
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean)
+
+    const rows: React.ReactNode[] = []
+    let currentDayBlock: React.ReactNode[] = []
+    let currentDayKey = ''
+
+    const flushDayBlock = () => {
+        if (!currentDayKey || currentDayBlock.length === 0) return
+        rows.push(
+            <div key={`day-${currentDayKey}`} style={{ marginTop: '10px', padding: '10px', background: 'rgba(255,255,255,0.02)', border: '0.5px solid #242424', borderRadius: '12px' }}>
+                {currentDayBlock}
+            </div>
+        )
+        currentDayBlock = []
+        currentDayKey = ''
+    }
+
+    lines.forEach((line, idx) => {
+        const isHeader = /^(menu\s+)/i.test(line) || /^(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:/i.test(line)
+        const isMealLine = /^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner):/i.test(line)
+
+        if (isHeader) {
+            if (/^menu\s+/i.test(line)) {
+                flushDayBlock()
+                rows.push(
+                    <p key={`menu-line-${idx}`} style={{ color: '#c7d2fe', fontSize: '12px', fontWeight: '800', marginTop: idx === 0 ? '0' : '12px', letterSpacing: '0.2px' }}>
+                        {line}
+                    </p>
+                )
+            } else {
+                flushDayBlock()
+                const forcedSplit = line.match(/^((?:\d+\.\s*)?(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:)\s*(.*)$/i)
+                const dateTitle = forcedSplit ? forcedSplit[1] : line
+                const trailing = forcedSplit ? forcedSplit[2] : ''
+                currentDayKey = `${idx}-${dateTitle}`
+                currentDayBlock.push(
+                    <p key={`menu-line-${idx}`} style={{ color: '#f59e0b', fontSize: '12px', fontWeight: '800', marginTop: '0', marginBottom: '6px', letterSpacing: '0.2px' }}>
+                        {dateTitle}
+                    </p>
+                )
+                if (trailing) {
+                    currentDayBlock.push(
+                        <p key={`menu-line-trailing-${idx}`} style={{ color: '#e5e7eb', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
+                            {trailing}
+                        </p>
+                    )
+                }
+            }
+            return
+        }
+
+        if (isMealLine) {
+            const node = (
+                <p key={`menu-line-${idx}`} style={{ color: '#e5e7eb', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
+                    {line}
+                </p>
+            )
+            if (currentDayKey) currentDayBlock.push(node)
+            else rows.push(node)
+            return
+        }
+
+        const node = (
+            <p key={`menu-line-${idx}`} style={{ color: '#ddd', fontSize: '12px', lineHeight: '1.55', marginTop: '6px', wordBreak: 'break-word' }}>
+                {line}
+            </p>
+        )
+        if (currentDayKey) currentDayBlock.push(node)
+        else rows.push(node)
+    })
+
+    flushDayBlock()
+    return rows
+}
+
 export default function ScannerPage() {
     const router = useRouter()
-    const { addMeal, profile, slots, dailyCalories, setLastCoachMessage } = useAppStore()
+    const { addMeal, profile, slots, dailyCalories, setLastCoachMessage, chatSuggestedMenus } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const [image, setImage] = useState<string | null>(null)
@@ -55,6 +161,8 @@ export default function ScannerPage() {
     const [isLoadingCoach, setIsLoadingCoach] = useState(false)
     const [scanMode, setScanMode] = useState<'ai' | 'barcode'>('ai')
     const [isScanningBarcode, setIsScanningBarcode] = useState(false)
+    const [menuTab, setMenuTab] = useState<'today' | 'tomorrow' | 'week'>('today')
+    const [showWeekMenuPopup, setShowWeekMenuPopup] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
 
     const currentHour = new Date().getHours()
@@ -63,6 +171,20 @@ export default function ScannerPage() {
     const slotLabel = SLOT_LABELS[currentSlotKey]
     const isLastSlot = currentSlotKey === LAST_SLOT
     const slotColor = ACCENT_COLOR
+    const effectiveTier = getEffectiveTier(profile)
+    const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
+    const activeMenuText =
+        menuTab === 'today'
+            ? chatSuggestedMenus.today
+            : menuTab === 'tomorrow'
+                ? chatSuggestedMenus.tomorrow
+                : chatSuggestedMenus.week
+
+    useEffect(() => {
+        if (!canAccessFutureMenus && (menuTab === 'tomorrow' || menuTab === 'week')) {
+            setMenuTab('today')
+        }
+    }, [canAccessFutureMenus, menuTab])
 
     const calorieTarget = profile?.calorie_target ?? 0
     const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
@@ -550,8 +672,120 @@ export default function ScannerPage() {
                 </div>
             </div>
 
-            {/* PLANNER (GUIDE) - En priorité haute */}
-            {!image && !isAnalyzing && <PlannerCard hideDinnerActionLink />}
+            {/* Menus suggérés par Yao (via chat) */}
+            {!image && !isAnalyzing && (
+                <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '10px' }}>
+                        <button onClick={() => setMenuTab('today')} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'today' ? '#1e1e1e' : 'transparent', color: menuTab === 'today' ? '#fff' : '#555', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}>
+                            Aujourd'hui
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (!canAccessFutureMenus) {
+                                    alert("Menu Demain réservé aux plans Pro et Premium.")
+                                    return
+                                }
+                                setMenuTab('tomorrow')
+                            }}
+                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'tomorrow' ? '#1e1e1e' : 'transparent', color: menuTab === 'tomorrow' ? '#fff' : '#555', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                        >
+                            Demain {!canAccessFutureMenus ? '🔒' : ''}
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (!canAccessFutureMenus) {
+                                    alert("Menu Semaine réservé aux plans Pro et Premium.")
+                                    return
+                                }
+                                setMenuTab('week')
+                            }}
+                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'week' ? '#1e1e1e' : 'transparent', color: menuTab === 'week' ? '#fff' : '#555', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                        >
+                            Semaine {!canAccessFutureMenus ? '🔒' : ''}
+                        </button>
+                    </div>
+
+                    <div style={{ background: '#141414', border: `0.5px solid ${slotColor}30`, borderRadius: '16px', padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                            <p style={{ color: slotColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                                Menu suggéré par Yao
+                            </p>
+                            {menuTab === 'week' && activeMenuText && (
+                                <button
+                                    onClick={() => setShowWeekMenuPopup(true)}
+                                    style={{
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '999px',
+                                        border: `0.5px solid ${slotColor}50`,
+                                        background: 'transparent',
+                                        color: slotColor,
+                                        fontSize: '16px',
+                                        fontWeight: '700',
+                                        lineHeight: 1,
+                                        cursor: 'pointer',
+                                        flexShrink: 0,
+                                    }}
+                                    aria-label="Afficher le menu semaine en popup"
+                                    title="Voir tout"
+                                >
+                                    →
+                                </button>
+                            )}
+                        </div>
+                        {activeMenuText ? (
+                            <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '180px' : 'none', overflow: menuTab === 'week' ? 'hidden' : 'visible' }}>
+                                {renderMenuBlock(activeMenuText, menuTab)}
+                            </div>
+                        ) : (
+                            <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
+                                Tu verras le menu suggerer par Yao ici. demande un menu depuis le chat
+                            </p>
+                        )}
+                        <button
+                            onClick={() => router.push('/coach')}
+                            style={{ marginTop: '10px', padding: '8px 10px', borderRadius: '10px', border: `0.5px solid ${slotColor}50`, background: 'transparent', color: slotColor, fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                        >
+                            Ouvrir le chat
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {showWeekMenuPopup && (
+                <>
+                    <div
+                        onClick={() => setShowWeekMenuPopup(false)}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1200 }}
+                    />
+                    <div style={{
+                        position: 'fixed',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 'calc(100% - 32px)',
+                        maxWidth: '460px',
+                        maxHeight: '82vh',
+                        overflowY: 'auto',
+                        background: '#111',
+                        border: '0.5px solid #252525',
+                        borderRadius: '18px',
+                        padding: '14px',
+                        zIndex: 1210,
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <p style={{ color: '#f59e0b', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase' }}>Menu semaine</p>
+                            <button
+                                onClick={() => setShowWeekMenuPopup(false)}
+                                style={{ background: 'transparent', border: '0.5px solid #333', borderRadius: '8px', color: '#aaa', cursor: 'pointer', width: '28px', height: '28px' }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div>{activeMenuText ? renderMenuBlock(activeMenuText, 'week') : null}</div>
+                    </div>
+                </>
+            )}
 
             {/* SWITCH MODE SCAN */}
             <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>

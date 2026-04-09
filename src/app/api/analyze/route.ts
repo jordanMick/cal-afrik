@@ -677,10 +677,55 @@ export async function POST(req: Request) {
         }
 
         console.log("✅ RESULTS:", JSON.stringify(results))
+        const candidateMealName = String(
+            geminiResult?.meal_name ||
+            geminiResult?.plat_nom ||
+            geminiResult?.dish_name ||
+            ''
+        ).trim()
+        const fallbackMealName = (() => {
+            const unique = Array.from(new Set(
+                (results || [])
+                    .map((r: any) => String(r?.detected || '').trim())
+                    .filter(Boolean)
+            ))
+            if (unique.length === 0) return "Repas détecté"
+            if (unique.length === 1) return unique[0]
+
+            // Fallback intelligent (scanner Gemini): reconstruire un nom de plat
+            // à partir des composants détectés (base + accompagnement/protéine + sauce).
+            const normalizeText = (v: string) => v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            const hasAny = (value: string, keywords: string[]) => keywords.some(k => value.includes(k))
+            const tokens = unique.map(name => ({ raw: name, n: normalizeText(name) }))
+
+            const baseKeywords = [
+                "riz", "pate", "akoume", "akume", "akassa", "fufu", "igname", "manioc", "plantain",
+                "patate", "semoule", "couscous", "mil", "mais", "fonio", "haricot", "lentille"
+            ]
+            const proteinKeywords = [
+                "poulet", "poisson", "viande", "boeuf", "oeuf", "thon", "dinde", "mouton", "crevette"
+            ]
+            const sauceKeywords = ["sauce", "gombo", "arachide", "tomate", "piment", "legume", "feuille", "epinard"]
+
+            const base = tokens.find(t => hasAny(t.n, baseKeywords))?.raw
+            const protein = tokens.find(t => hasAny(t.n, proteinKeywords))?.raw
+            const sauce = tokens.find(t => hasAny(t.n, sauceKeywords) && t.raw !== base && t.raw !== protein)?.raw
+
+            if (base && protein && sauce) return `${base} + ${protein} + ${sauce}`
+            if (base && protein) return `${base} + ${protein}`
+            if (base && sauce) return `${base} + ${sauce}`
+            if (protein && sauce) return `${protein} + ${sauce}`
+
+            return `${unique[0]} + ${unique[1]}`
+        })()
+        const finalMealName = candidateMealName && candidateMealName.toLowerCase() !== 'repas détecté'
+            ? candidateMealName
+            : fallbackMealName
+
         console.log("[ANALYZE] Final response", {
             totalCalories,
             componentsReturned: results.length,
-            mealName: geminiResult.plat_nom || "Repas détecté",
+            mealName: finalMealName,
         })
 
         // ✅ Décompte du jeton pour les gratuits
@@ -690,7 +735,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             success: true,
-            meal_name: geminiResult.plat_nom || "Repas détecté",
+            meal_name: finalMealName,
             total_calories: totalCalories,
             data: results,
         })
