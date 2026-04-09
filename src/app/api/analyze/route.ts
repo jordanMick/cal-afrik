@@ -149,12 +149,14 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // ─── ROUTE POST ───────────────────────────────────────────────
 export async function POST(req: Request) {
+    console.log("=== [ANALYZE] START ===")
 
     // Gemini API key is accessed via process.env.GEMINI_API_KEY
 
     // Auth
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
+        console.log("[ANALYZE] Missing Authorization header")
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
 
@@ -162,6 +164,7 @@ export async function POST(req: Request) {
     const { data: { user }, error } = await supabase.auth.getUser(token)
 
     if (!user || error) {
+        console.log("[ANALYZE] Unauthorized user from token")
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
 
@@ -191,6 +194,7 @@ export async function POST(req: Request) {
 
         // Limite de 2 actions (Scan + Suggestions) par jour en mode gratuit
         if (actionsUsed >= 2) {
+            console.log("[ANALYZE] Free limit reached", { userId: user.id, actionsUsed })
             return new Response(JSON.stringify({
                 success: false,
                 error: "Limite d'actions gratuite atteinte (2/jour). Passez au plan Pro !",
@@ -199,8 +203,9 @@ export async function POST(req: Request) {
         }
     }
 
-    const MOCK_MODE = true
+    const MOCK_MODE = false
     if (MOCK_MODE) {
+        console.log("[ANALYZE] MOCK MODE ACTIVE - no Gemini call")
         const mockData = [
             {
                 detected: "Pâte de maïs",
@@ -240,6 +245,11 @@ export async function POST(req: Request) {
     try {
         const { images } = await req.json()
         const image = images?.[0]
+        console.log("[ANALYZE] Request payload received", {
+            userId: user.id,
+            hasImages: Array.isArray(images),
+            imageCount: Array.isArray(images) ? images.length : 0,
+        })
 
         if (!image || !image.data) {
             console.error("❌ IMAGE INVALID:", image)
@@ -262,6 +272,10 @@ export async function POST(req: Request) {
         const { data: foodAliases } = await supabase
             .from("food_aliases")
             .select("alias_name, food_item_id")
+        console.log("[ANALYZE] SQL preload", {
+            foodItems: (foodItems || []).length,
+            foodAliases: (foodAliases || []).length,
+        })
 
         // ─── APPEL IA (Gemini) ───────────────────────────────────────
         const inputParts = [
@@ -279,10 +293,12 @@ export async function POST(req: Request) {
 
         for (const modelName of GEMINI_MODEL_CANDIDATES) {
             lastTriedModel = modelName
+            console.log("[ANALYZE] Trying Gemini model", modelName)
             try {
                 const maxAttempts = 3
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                     try {
+                        console.log("[ANALYZE] Gemini attempt", { modelName, attempt, maxAttempts })
                         const result = await genAI.models.generateContent({
                             model: modelName,
                             contents: inputParts as any,
@@ -382,6 +398,7 @@ export async function POST(req: Request) {
             }, { status: 422 })
         }
         console.log("Gemini a détecté :", geminiResult)
+        console.log("[ANALYZE] Gemini items count", Array.isArray(geminiResult?.items) ? geminiResult.items.length : 0)
 
         if (!geminiResult || !Array.isArray(geminiResult.items)) {
             return NextResponse.json({
@@ -412,7 +429,14 @@ export async function POST(req: Request) {
             const technicalMatch = String(component?.technical_match || "").trim()
             const fallbackData = component?.fallback_data || {}
             const aiWeight = Number(component?.estimated_weight_g || component?.weight_g || 0)
+            console.log("[ANALYZE] Component incoming", {
+                detectedName,
+                technicalMatch,
+                aiWeight,
+                confidence: component?.confidence,
+            })
             if (!Number.isFinite(aiWeight) || aiWeight <= 0) {
+                console.log("[ANALYZE] Skip component due to invalid weight", { detectedName, aiWeight })
                 continue
             }
             const normalizedLabel = normalize(detectedName)
@@ -491,6 +515,11 @@ export async function POST(req: Request) {
 
             // 4) Fallback + auto-apprentissage si aucun match SQL
             if (!matchedFood) {
+                console.log("[ANALYZE] FALLBACK MODE for component", {
+                    detectedName,
+                    technicalMatch,
+                    fallbackData,
+                })
                 try {
                     const { data: existingUnknownRows } = await supabase
                         .from("unknown_logs")
@@ -549,6 +578,11 @@ export async function POST(req: Request) {
         }
 
         console.log("✅ RESULTS:", JSON.stringify(results))
+        console.log("[ANALYZE] Final response", {
+            totalCalories,
+            componentsReturned: results.length,
+            mealName: geminiResult.plat_nom || "Repas détecté",
+        })
 
         // ✅ Décompte du jeton pour les gratuits
         if (tier === 'free') {
@@ -565,6 +599,7 @@ export async function POST(req: Request) {
 
     } catch (err: any) {
         console.error("❌ ERROR:", err)
+        console.log("=== [ANALYZE] END WITH ERROR ===")
         return NextResponse.json({
             success: false,
             meal_name: "",
@@ -572,5 +607,7 @@ export async function POST(req: Request) {
             data: [],
             error: err?.message || "Erreur serveur",
         } satisfies ScanApiResponse)
+    } finally {
+        console.log("=== [ANALYZE] END ===")
     }
 }
