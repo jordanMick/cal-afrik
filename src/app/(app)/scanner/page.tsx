@@ -52,7 +52,6 @@ export default function ScannerPage() {
     const [showRecap, setShowRecap] = useState(false)
     const [showCoach, setShowCoach] = useState(false)
     const [coachMessage, setCoachMessage] = useState('')
-    const [geminiCoachMessage, setGeminiCoachMessage] = useState('')
     const [isLoadingCoach, setIsLoadingCoach] = useState(false)
     const [scanMode, setScanMode] = useState<'ai' | 'barcode'>('ai')
     const [isScanningBarcode, setIsScanningBarcode] = useState(false)
@@ -151,7 +150,7 @@ export default function ScannerPage() {
     const processImage = async (file: File) => {
         setIsAnalyzing(true)
         setSelectedFoods([]); setSuggestions([]); setMealName('')
-        setTotalCaloriesAI(0); setShowManualForm(false); setShowRecap(false); setCoachMessage(''); setGeminiCoachMessage('')
+        setTotalCaloriesAI(0); setShowManualForm(false); setShowRecap(false); setCoachMessage('')
         try {
             // Compression prioritaire
             const compressedFile = await compressImage(file)
@@ -202,7 +201,6 @@ export default function ScannerPage() {
             }
             setMealName(json.meal_name || 'Repas détecté')
             setTotalCaloriesAI(json.total_calories || 0)
-            setGeminiCoachMessage(json.coach_message || '')
             const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[]).flatMap((item): EnrichedSuggestion[] => {
                 const suggs = item.suggestions ?? []
                 if (suggs.length > 0) return suggs.map((s): EnrichedSuggestion => ({ ...s, portion_g: item.portion_g ?? 0, calories_detected: item.calories_detected ?? 0, protein_detected: item.protein_detected ?? 0, carbs_detected: item.carbs_detected ?? 0, fat_detected: item.fat_detected ?? 0, confidence: item.confidence ?? 0, detected: item.detected ?? 'Inconnu', fromAI: false }))
@@ -388,7 +386,7 @@ export default function ScannerPage() {
             if (!session) return
             const storeState = useAppStore.getState()
             const freshSlot = storeState.slots[currentSlotKey]
-            const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ selectedFoods: selectedFoods.map(f => f.name), totals: { calories: Math.round(totals.calories), protein_g: Math.round(totals.protein_g * 10) / 10, carbs_g: Math.round(totals.carbs_g * 10) / 10, fat_g: Math.round(totals.fat_g * 10) / 10 }, slotLabel, slotTarget: isLastSlot ? calorieTarget : freshSlot.target, slotConsumed: isLastSlot ? dailyConsumed : freshSlot.consumed, slotRemaining: isLastSlot ? dailyRemainingNow : freshSlot.remaining, dailyCalories: storeState.dailyCalories, calorieTarget, preferredCoachMessage: geminiCoachMessage || null }) })
+            const res = await fetch('/api/coach', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ selectedFoods: selectedFoods.map(f => f.name), totals: { calories: Math.round(totals.calories), protein_g: Math.round(totals.protein_g * 10) / 10, carbs_g: Math.round(totals.carbs_g * 10) / 10, fat_g: Math.round(totals.fat_g * 10) / 10 }, slotLabel, slotTarget: isLastSlot ? calorieTarget : freshSlot.target, slotConsumed: isLastSlot ? dailyConsumed : freshSlot.consumed, slotRemaining: isLastSlot ? dailyRemainingNow : freshSlot.remaining, dailyCalories: storeState.dailyCalories, calorieTarget }) })
             const json = await res.json()
             if (json.code === 'FREE_LIFETIME_USED') {
                 setCoachMessage('__FREE_USED__')

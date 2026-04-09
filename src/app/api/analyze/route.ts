@@ -122,16 +122,13 @@ Retourne exclusivement ce format, sans texte avant ou après :
       }
     }
   ],
-  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 },
-  "coach_advice": "conseil bref du coach (max 2 phrases)"
+  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 }
 }
-Assure-toi que le champ coach_advice est présent.
 Vérifie deux fois la structure syntaxique de ton JSON. Chaque objet dans "items" doit être parfaitement fermé par une virgule ou un crochet.
 Si aucune image n'est fournie, si l'image est illisible, ou si l'image ne montre pas de nourriture, renvoie:
 {
   "items": [],
-  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 },
-  "coach_advice": "Image non exploitable ou sans aliment détectable. Prends une photo plus claire de ton repas."
+  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 }
 }
 
 ERREUR DE POIDS CRITIQUE :
@@ -289,7 +286,6 @@ export async function POST(req: Request) {
             meal_name: "Repas détecté (MOCK)",
             total_calories: mockData.reduce((sum, it) => sum + it.calories_detected, 0),
             data: mockData,
-            coach_message: "Mode test: bon équilibre global, ajuste la portion selon ton objectif.",
         })
     }
 
@@ -697,7 +693,6 @@ export async function POST(req: Request) {
             meal_name: geminiResult.plat_nom || "Repas détecté",
             total_calories: totalCalories,
             data: results,
-            coach_message: geminiResult.coach_advice || null
         })
 
     } catch (err: any) {

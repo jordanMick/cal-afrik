@@ -68,7 +68,6 @@ export async function POST(req: NextRequest) {
             slotTarget,
             slotConsumed,
             calorieTarget,
-            preferredCoachMessage,
         } = await req.json()
 
         const newSlotConsumed = slotConsumed + totals.calories
@@ -77,7 +76,7 @@ export async function POST(req: NextRequest) {
         const remainingAfter = Math.max(0, slotTarget - newSlotConsumed)
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
-        const MOCK_MODE = true
+        const MOCK_MODE = false
         if (MOCK_MODE) {
             const protein = Number(totals?.protein_g || 0)
             const carbs = Number(totals?.carbs_g || 0)
@@ -133,18 +132,15 @@ Donne un conseil court (2-3 phrases max) en français. ${exceeded
         }
 Termine par une phrase d'encouragement courte et utilise 1 émoji africain/alimentaire.`
 
-        let message = preferredCoachMessage || ''
-        if (!message) {
-            const response = await anthropic.messages.create({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: 250,
-                messages: [{ role: 'user', content: prompt }]
-            })
+        const response = await anthropic.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 250,
+            messages: [{ role: 'user', content: prompt }]
+        })
 
-            message = response.content[0].type === 'text'
-                ? response.content[0].text
-                : 'Bon repas ! Continue comme ça 💪'
-        }
+        const message = response.content[0].type === 'text'
+            ? response.content[0].text
+            : 'Bon repas ! Continue comme ça 💪'
 
         // 5. Mettre à jour les quotas en base de données
         if (tier === 'free') {
