@@ -274,53 +274,36 @@ export default function ProfilPage() {
                                     <p style={{ color: '#666', fontSize: '13px', marginTop: '2px' }}>
                                         Fin le {new Date(profile.subscription_expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                                     </p>
+                                    {isExpiringSoon && (
+                                        <>
+                                            <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '500', marginTop: '6px' }}>
+                                                {daysLeft === 0 ? "Ton plan expire aujourd'hui." : `Plus que ${daysLeft} jour${(daysLeft || 0) > 1 ? 's' : ''}.`}
+                                            </p>
+                                            <button
+                                                onClick={handleRenew}
+                                                disabled={isRenewing}
+                                                style={{
+                                                    marginTop: '8px',
+                                                    padding: '8px 12px',
+                                                    background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.2)',
+                                                    border: '1px solid rgba(239,68,68,0.5)',
+                                                    borderRadius: '10px',
+                                                    color: '#ef4444',
+                                                    fontSize: '12px',
+                                                    fontWeight: '700',
+                                                    cursor: isRenewing ? 'default' : 'pointer'
+                                                }}
+                                            >
+                                                {isRenewing ? 'Initialisation...' : 'Renouveler le plan'}
+                                            </button>
+                                        </>
+                                    )}
 
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-
-                {/* BANNIÈRE D'EXPIRATION IMMINENTE (J-7) */}
-                {isExpiringSoon && (
-                    <div
-                        style={{
-                            marginBottom: '20px',
-                            padding: '16px',
-                            borderRadius: '20px',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.4)',
-                        }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                            <div style={{ fontSize: '22px', marginTop: '2px' }}>⚠️</div>
-                            <div style={{ flex: 1 }}>
-                                <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '800', textTransform: 'uppercase' }}>
-                                    Attention, expiration imminente !
-                                </p>
-                                <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '500', marginTop: '2px' }}>
-                                    {daysLeft === 0 ? "Ton plan expire aujourd'hui." : `Plus que ${daysLeft} jour${(daysLeft || 0) > 1 ? 's' : ''}.`}
-                                </p>
-                                <button
-                                    onClick={handleRenew}
-                                    disabled={isRenewing}
-                                    style={{
-                                        marginTop: '10px',
-                                        padding: '8px 12px',
-                                        background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.2)',
-                                        border: '1px solid rgba(239,68,68,0.5)',
-                                        borderRadius: '10px',
-                                        color: '#ef4444',
-                                        fontSize: '12px',
-                                        fontWeight: '700',
-                                        cursor: isRenewing ? 'default' : 'pointer'
-                                    }}
-                                >
-                                    {isRenewing ? 'Initialisation...' : 'Renouveler le plan'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
 
             <div style={{
