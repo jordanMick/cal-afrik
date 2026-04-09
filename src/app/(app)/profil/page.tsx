@@ -274,30 +274,6 @@ export default function ProfilPage() {
                                     <p style={{ color: '#666', fontSize: '13px', marginTop: '2px' }}>
                                         Fin le {new Date(profile.subscription_expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                                     </p>
-                                    {isExpiringSoon && (
-                                        <>
-                                            <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '500', marginTop: '6px' }}>
-                                                {daysLeft === 0 ? "Ton plan expire aujourd'hui." : `Plus que ${daysLeft} jour${(daysLeft || 0) > 1 ? 's' : ''}.`}
-                                            </p>
-                                            <button
-                                                onClick={handleRenew}
-                                                disabled={isRenewing}
-                                                style={{
-                                                    marginTop: '8px',
-                                                    padding: '8px 12px',
-                                                    background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.2)',
-                                                    border: '1px solid rgba(239,68,68,0.5)',
-                                                    borderRadius: '10px',
-                                                    color: '#ef4444',
-                                                    fontSize: '12px',
-                                                    fontWeight: '700',
-                                                    cursor: isRenewing ? 'default' : 'pointer'
-                                                }}
-                                            >
-                                                {isRenewing ? 'Initialisation...' : 'Renouveler le plan'}
-                                            </button>
-                                        </>
-                                    )}
 
                                 </div>
                             )}
@@ -305,6 +281,41 @@ export default function ProfilPage() {
                     </div>
                 </div>
             </div>
+
+            {isExpiringSoon && (
+                <div style={{
+                    margin: '0 20px 10px',
+                    padding: '10px 12px',
+                    borderRadius: '12px',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                }}>
+                    <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '600' }}>
+                        {daysLeft === 0 ? "Expire aujourd'hui." : `Expiration imminente: ${daysLeft} jour${(daysLeft || 0) > 1 ? 's' : ''} restants.`}
+                    </p>
+                    <button
+                        onClick={handleRenew}
+                        disabled={isRenewing}
+                        style={{
+                            padding: '7px 10px',
+                            background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.2)',
+                            border: '1px solid rgba(239,68,68,0.5)',
+                            borderRadius: '8px',
+                            color: '#ef4444',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            cursor: isRenewing ? 'default' : 'pointer',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        {isRenewing ? '...' : 'Renouveler'}
+                    </button>
+                </div>
+            )}
 
             <div style={{
                 margin: '8px 20px 10px',
