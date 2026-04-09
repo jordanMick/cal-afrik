@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { SUBSCRIPTION_RULES, getEffectiveTier } from '@/lib/subscription'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -38,11 +39,12 @@ export async function POST(req: NextRequest) {
                     .eq('user_id', user.id)
             }
         }
+        const effectiveTier = getEffectiveTier(profile)
         const today = new Date().toISOString().split('T')[0]
         const isToday = profile.last_usage_reset_date === today
 
         // 2. Calcul des quotas de feedback scanner par tier
-        if (tier === 'free') {
+        if (effectiveTier === 'free') {
             if (profile.has_used_free_lifetime_feedback) {
                 return NextResponse.json({
                     success: false,
@@ -50,9 +52,10 @@ export async function POST(req: NextRequest) {
                     error: 'Vous avez déjà utilisé votre essai gratuit. Passez au Plan Pro pour des feedbacks quotidiens.',
                 }, { status: 403 })
             }
-        } else if (tier === 'pro') {
+        } else if (effectiveTier === 'pro') {
             const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
-            if (scanFeedbacksToday >= 1) {
+            const limit = Number(SUBSCRIPTION_RULES.pro.maxCoachFeedbackPerDay || 1)
+            if (scanFeedbacksToday >= limit) {
                 return NextResponse.json({
                     success: false,
                     code: 'PRO_DAILY_LIMIT',
@@ -97,9 +100,9 @@ export async function POST(req: NextRequest) {
             const message = `${mealContext} ${slotFeedback} ${macroAdvice} Garde le cap, tu progresses bien 💪`
 
             // Mise à jour des quotas comme si la vraie IA avait répondu
-            if (tier === 'free') {
+            if (effectiveTier === 'free') {
                 await supabase.from('user_profiles').update({ has_used_free_lifetime_feedback: true }).eq('user_id', user.id)
-            } else if (tier === 'pro') {
+            } else if (effectiveTier === 'pro') {
                 const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
                 await supabase.from('user_profiles').update({ scan_feedbacks_today: scanFeedbacksToday + 1, last_usage_reset_date: today }).eq('user_id', user.id)
             }
@@ -143,12 +146,12 @@ Termine par une phrase d'encouragement courte et utilise 1 émoji africain/alime
             : 'Bon repas ! Continue comme ça 💪'
 
         // 5. Mettre à jour les quotas en base de données
-        if (tier === 'free') {
+        if (effectiveTier === 'free') {
             await supabase
                 .from('user_profiles')
                 .update({ has_used_free_lifetime_feedback: true })
                 .eq('user_id', user.id)
-        } else if (tier === 'pro') {
+        } else if (effectiveTier === 'pro') {
             const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
             await supabase
                 .from('user_profiles')

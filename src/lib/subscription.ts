@@ -5,18 +5,21 @@ export type SubscriptionTier = 'free' | 'pro' | 'premium'
 export const SUBSCRIPTION_RULES = {
     free: {
         maxScansPerDay: 2,
+        maxCoachFeedbackPerDay: 0, // géré par has_used_free_lifetime_feedback
         hasGraph: false,
         hasAutomaticRecalculation: false,
         hasCoachYao: false,
     },
     pro: {
         maxScansPerDay: 1000, // Illimité en pratique
+        maxCoachFeedbackPerDay: 1,
         hasGraph: true,
         hasAutomaticRecalculation: true,
-        hasCoachYao: false,
+        hasCoachYao: true,
     },
     premium: {
         maxScansPerDay: 1000,
+        maxCoachFeedbackPerDay: Infinity,
         hasGraph: true,
         hasAutomaticRecalculation: true,
         hasCoachYao: true,
