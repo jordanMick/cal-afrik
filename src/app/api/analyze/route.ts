@@ -20,6 +20,12 @@ function normalize(text?: string | null) {
         : ""
 }
 
+function normalizeTechnicalKey(text?: string | null) {
+    return normalize(text)
+        .replace(/\s+/g, "_")
+        .replace(/-/g, "_")
+}
+
 const SYNONYMS: Record<string, string[]> = {
     spaghetti: ["pasta", "noodles", "nouilles"],
     riz: ["rice"],
@@ -532,8 +538,10 @@ export async function POST(req: Request) {
             // 3) Recherche standard via technical_match -> name_standard
             let matchedByTechnical: any = null
             if (!matchedByAliasSql && !unknownLogMatch && technicalMatch) {
-                const normalizedTechnical = normalize(technicalMatch)
-                matchedByTechnical = (foodItems || []).find((food: any) => normalize(food?.name_standard) === normalizedTechnical) || null
+                const normalizedTechnical = normalizeTechnicalKey(technicalMatch)
+                matchedByTechnical = (foodItems || []).find((food: any) =>
+                    normalizeTechnicalKey(food?.name_standard) === normalizedTechnical
+                ) || null
                 console.log("[ANALYZE][PIPELINE] technical_match_lookup", {
                     technicalMatch,
                     matched: !!matchedByTechnical,
@@ -544,8 +552,10 @@ export async function POST(req: Request) {
             // unknown_logs peut stocker un technical_match réutilisable
             let matchedViaUnknownTechnical: any = null
             if (!matchedByAliasSql && !matchedByTechnical && unknownLogMatch?.technical_match) {
-                const normalizedUnknownTechnical = normalize(String(unknownLogMatch.technical_match))
-                matchedViaUnknownTechnical = (foodItems || []).find((food: any) => normalize(food?.name_standard) === normalizedUnknownTechnical) || null
+                const normalizedUnknownTechnical = normalizeTechnicalKey(String(unknownLogMatch.technical_match))
+                matchedViaUnknownTechnical = (foodItems || []).find((food: any) =>
+                    normalizeTechnicalKey(food?.name_standard) === normalizedUnknownTechnical
+                ) || null
                 console.log("[ANALYZE][PIPELINE] technical_from_unknown_lookup", {
                     technicalMatch: unknownLogMatch?.technical_match || null,
                     matched: !!matchedViaUnknownTechnical,
