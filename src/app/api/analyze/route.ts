@@ -90,6 +90,9 @@ IMPORTANT :
 - Donne une estimation de poids en grammes pour chaque composant.
 - Fournis un technical_match en choisissant uniquement un identifiant parmi la liste fournie plus bas.
 - Si tu hésites, choisis le technical_match le plus proche et remplis fallback_data avec des valeurs réalistes.
+- PRIORITÉ NOM LOCAL: detected_name doit être formulé d'abord avec l'appellation locale la plus utilisée dans le pays fourni.
+- Si plusieurs variantes existent (ex: Akoumé / Banku / Kenkey), choisis celle qui correspond au pays fourni.
+- N'utilise un nom générique que si aucun nom local fiable n'est possible visuellement.
 
 "Protocole de Mesure Spatiale :"
 
@@ -136,6 +139,7 @@ function buildPrompt(country?: string | null, technicalProfiles: string[] = []) 
 
 Contexte géographique prioritaire: ${countryContext}.
 Utilise ce contexte pour choisir le nom local le plus probable, mais seulement s'il est cohérent avec les indices visuels observés.
+Règle stricte: detected_name doit refléter le vocabulaire local de ce pays en priorité.
 
 Liste des technical_match autorisés (utilise uniquement ces identifiants) :
 ${profileList}`
