@@ -61,6 +61,8 @@ export default function ProfilPage() {
 
     // Calcul de l'urgence d'expiration (J-7)
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
+    const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
+    const isExpiringSoon = effectiveTier !== 'free' && daysLeft !== null && daysLeft <= 7 && daysLeft >= 0
 
     const activeSlot = getActiveBilanSlot(hour, minutes)
     const bilanDate = activeSlot === 'diner' ? bilanDinerDate : today
@@ -260,14 +262,14 @@ export default function ProfilPage() {
                             {profile?.subscription_expires_at && effectiveTier !== 'free' && (
                                 <div style={{ marginTop: '10px' }}>
                                     <p style={{
-                                        color: '#444',
+                                        color: isExpiringSoon ? '#ef4444' : '#444',
                                         fontSize: '11px',
-                                        fontWeight: '400',
+                                        fontWeight: isExpiringSoon ? '700' : '400',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '6px'
                                     }}>
-                                        Abonnement valide
+                                        {isExpiringSoon ? '⚠️ Expiration imminente' : 'Abonnement valide'}
                                     </p>
                                     <p style={{ color: '#666', fontSize: '13px', marginTop: '2px' }}>
                                         Fin le {new Date(profile.subscription_expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
@@ -279,38 +281,44 @@ export default function ProfilPage() {
                     </div>
                 </div>
 
-                {/* BANNIÈRE UPGRADE DYNAMIQUE */}
-                {profile?.subscription_tier !== 'premium' && (
+                {/* BANNIÈRE D'EXPIRATION IMMINENTE (J-7) */}
+                {isExpiringSoon && (
                     <div
-                        onClick={() => router.push('/upgrade')}
                         style={{
                             marginBottom: '20px',
-                            padding: '18px',
-                            borderRadius: '24px',
-                            background: profile?.subscription_tier === 'pro'
-                                ? 'linear-gradient(135deg, #f59e0b, #6366f1)'
-                                : 'linear-gradient(135deg, #6366f1, #10b981)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            boxShadow: '0 12px 24px -10px rgba(99,102,241,0.5)',
-                            transition: 'all 0.2s ease',
+                            padding: '16px',
+                            borderRadius: '20px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
                         }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                                {profile?.subscription_tier === 'pro' ? '⭐' : '🚀'}
-                            </div>
-                            <div>
-                                <p style={{ color: '#fff', fontSize: '15px', fontWeight: '800' }}>
-                                    {profile?.subscription_tier === 'pro' ? 'Passez au Premium' : 'Débloquez vos bilans'}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                            <div style={{ fontSize: '22px', marginTop: '2px' }}>⚠️</div>
+                            <div style={{ flex: 1 }}>
+                                <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '800', textTransform: 'uppercase' }}>
+                                    Attention, expiration imminente !
                                 </p>
-                                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '500' }}>
-                                    {profile?.subscription_tier === 'pro' ? 'Débloquez Coach Yao' : 'Scans illimités & Bilans →'}
+                                <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '500', marginTop: '2px' }}>
+                                    {daysLeft === 0 ? "Ton plan expire aujourd'hui." : `Plus que ${daysLeft} jour${(daysLeft || 0) > 1 ? 's' : ''}.`}
                                 </p>
+                                <button
+                                    onClick={handleRenew}
+                                    disabled={isRenewing}
+                                    style={{
+                                        marginTop: '10px',
+                                        padding: '8px 12px',
+                                        background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.2)',
+                                        border: '1px solid rgba(239,68,68,0.5)',
+                                        borderRadius: '10px',
+                                        color: '#ef4444',
+                                        fontSize: '12px',
+                                        fontWeight: '700',
+                                        cursor: isRenewing ? 'default' : 'pointer'
+                                    }}
+                                >
+                                    {isRenewing ? 'Initialisation...' : 'Renouveler le plan'}
+                                </button>
                             </div>
                         </div>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>→</div>
                     </div>
                 )}
             </div>
