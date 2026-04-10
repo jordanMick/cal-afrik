@@ -124,22 +124,12 @@ export async function POST(req: NextRequest) {
 
         // 3. Traiter la requête de l'utilisateur
         const { messages, userContext } = await req.json()
-        const userMessage = String(messages?.[messages.length - 1]?.content || '')
-        const normalizedUserMessage = userMessage
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-        const wantsTomorrowMenu = /\bmenu\b/.test(normalizedUserMessage) && /\bdemain\b/.test(normalizedUserMessage)
-        const wantsWeekMenu = /\bmenu\b/.test(normalizedUserMessage) && /\bsemaine\b/.test(normalizedUserMessage)
-
-        // Menu demain/semaine réservé Pro/Premium
-        if ((wantsTomorrowMenu || wantsWeekMenu) && effectiveTier === 'free') {
-            return NextResponse.json({
-                success: false,
-                code: 'MENU_TIER_REQUIRED',
-                message: 'Passez au plan pro et premium pour avoir le menu du lendemain et de la semaine',
-            }, { status: 200 })
-        }
+        const messageContent = String(messages?.[messages.length - 1]?.content || '')
+        const normalizedUserMessage = messageContent.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        
+        const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)
+        const wantsWeek = (/\bsemaine\b/.test(normalizedUserMessage) || /\b7 jours\b/.test(normalizedUserMessage)) && /\bmenu\b/.test(normalizedUserMessage)
+        const isFreeLimited = (wantsTomorrow || wantsWeek) && effectiveTier === 'free'
 
         const messageLower = normalizedUserMessage
         const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit déjeuner') || messageLower.includes('déjeuner') || messageLower.includes('dîner')
@@ -246,10 +236,15 @@ Contexte utilisateur :
             }))
 
             try {
+                // Si l'utilisateur est gratuit et demande un menu restreint, on ajoute une consigne à l'IA
+                const tierInstruction = isFreeLimited 
+                    ? "\n\n[ALERTE PLAN]: L'utilisateur est en version GRATUITE. Il demande un menu (semaine ou demain) réservé aux membres PRO. NE GÉNÈRE PAS le menu demandé. Explique-lui chaleureusement que c'est une fonctionnalité PRO/PREMIUM et invite-le à s'abonner, mais propose-lui tout de même un menu pour AUJOURD'HUI pour qu'il ne reparte pas les mains vides."
+                    : ""
+
                 const response = await anthropic.messages.create({
                     model: 'claude-haiku-4-5-20251001',
-                    max_tokens: wantsWeek ? 1200 : 450,
-                    system: systemPrompt,
+                    max_tokens: wantsWeek ? 3000 : 600,
+                    system: systemPrompt + tierInstruction,
                     messages: formattedMessages
                 })
                 
