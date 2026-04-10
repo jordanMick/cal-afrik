@@ -72,6 +72,8 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     let pendingButtons: React.ReactNode[] = []
 
     const flushDayBlock = () => {
+        if (!currentDayKey || currentDayBlock.length === 0) return
+
         if (pendingButtons.length > 0) {
             currentDayBlock.push(
                 <div key="pending-btns-container" style={{ marginTop: '4px' }}>
@@ -80,7 +82,6 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
             )
             pendingButtons = []
         }
-        if (!currentDayKey || currentDayBlock.length === 0) return
         rows.push(
             <div key={`day-${currentDayKey}`} style={{ marginTop: '10px', padding: '10px', background: 'rgba(255,255,255,0.02)', border: '0.5px solid #242424', borderRadius: '12px' }}>
                 {currentDayBlock}
