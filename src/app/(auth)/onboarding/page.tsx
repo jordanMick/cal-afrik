@@ -19,6 +19,16 @@ const EATING_HABITS = [
 ]
 
 const CUISINES = ['Africaine (Générale)', 'Togolaise', 'Ivoirienne', 'Sénégalaise', 'Nigériane', 'Camerounaise', 'Internationale']
+const COUNTRIES = [
+    { code: 'TG', label: 'Togo 🇹🇬' },
+    { code: 'BJ', label: 'Bénin 🇧🇯' },
+    { code: 'CI', label: 'Côte d\'Ivoire 🇨🇮' },
+    { code: 'SN', label: 'Sénégal 🇸🇳' },
+    { code: 'ML', label: 'Mali 🇲l' },
+    { code: 'BF', label: 'Burkina Faso 🇧f' },
+    { code: 'NE', label: 'Niger 🇳e' },
+    { code: 'OTHER', label: 'Autre pays 🌍' },
+]
 
 // ─── COMPOSANTS AUXILIAIRES REUTILISABLES (PICKER WHEEL) ───────────
 
@@ -253,10 +263,10 @@ export default function OnboardingPage() {
             `}</style>
 
             {/* PROGRESS BAR */}
-            {step < 9 && (
+            {step < 10 && (
                 <div style={{ width: '100%', height: '4px', background: '#111', borderRadius: '2px', marginBottom: '40px' }}>
                     <div style={{
-                        width: `${(step / 9) * 100}%`, height: '100%',
+                        width: `${(step / 10) * 100}%`, height: '100%',
                         background: 'linear-gradient(90deg, #22c55e, #10b981)',
                         borderRadius: '2px', transition: 'width 0.4s ease'
                     }} />
@@ -278,8 +288,25 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 1. OBJECTIF */}
+            {/* 1. COUNTRY */}
             {step === 1 && (
+                <StepWrapper key="stepCountry" title="Dans quel pays habitez-vous ?" icon="🌍" sub="Yao adaptera ses conseils culinaires à votre région.">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {COUNTRIES.map(c => (
+                            <button key={c.code} onClick={() => { update('country', c.label); next(); }} style={{
+                                padding: '18px', background: form.country === c.label ? 'rgba(34,197,94,0.1)' : '#111',
+                                border: form.country === c.label ? '1px solid #22c55e' : '1.5px solid #222',
+                                borderRadius: '18px', cursor: 'pointer', textAlign: 'center', fontSize: '14px', fontWeight: '700', color: '#fff'
+                            }}>
+                                {c.label}
+                            </button>
+                        ))}
+                    </div>
+                </StepWrapper>
+            )}
+
+            {/* 2. OBJECTIF (Décalé de 1) */}
+            {step === 2 && (
                 <StepWrapper key="step1" title="Quel est votre objectif ?" icon="🎯">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {[
@@ -300,8 +327,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 2. POIDS */}
-            {step === 2 && (
+            {/* 3. POIDS (Décalé de 2) */}
+            {step === 3 && (
                 <StepWrapper key="step2" title="Quel est votre poids ?" sub="Une estimation suffit" icon="⚖️">
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={30} max={200} value={Number(form.weight_kg)} onChange={v => update('weight_kg', v)} unit="kg" />
@@ -312,8 +339,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 3. TAILLE */}
-            {step === 3 && (
+            {/* 4. TAILLE */}
+            {step === 4 && (
                 <StepWrapper key="step3" title="Quelle est votre taille ?" icon="📏">
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={100} max={250} value={Number(form.height_cm)} onChange={v => update('height_cm', v)} unit="cm" />
@@ -324,8 +351,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 4. ANNEE DE NAISSANCE */}
-            {step === 4 && (
+            {/* 5. ANNEE DE NAISSANCE */}
+            {step === 5 && (
                 <StepWrapper key="step4" title="Votre année de naissance" icon="📅">
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={1920} max={2015} value={Number(form.birth_year)} onChange={v => update('birth_year', v)} />
@@ -336,8 +363,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 5. ACTIVITÉ */}
-            {step === 5 && (
+            {/* 6. ACTIVITÉ */}
+            {step === 6 && (
                 <StepWrapper key="step5" title="Votre niveau d'activité ?" icon="⚡">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {[
@@ -359,8 +386,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 6. HABITUDES */}
-            {step === 6 && (
+            {/* 7. HABITUDES */}
+            {step === 7 && (
                 <StepWrapper key="step6" title="Vos habitudes ?" sub="Identifiez ce qui vous freine" icon="🍽️">
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                         {EATING_HABITS.map(h => (
@@ -380,8 +407,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 7. PRÉFÉRENCES */}
-            {step === 7 && (
+            {/* 8. PRÉFÉRENCES */}
+            {step === 8 && (
                 <StepWrapper key="step7" title="Vos préférences" sub="Pour personnaliser vos repas" icon="🌍">
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         {CUISINES.map(c => (
@@ -402,8 +429,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 8. PROJECTION */}
-            {step === 8 && (
+            {/* 9. PROJECTION */}
+            {step === 9 && (
                 <StepWrapper key="step8" title="Votre vision" icon="🎯">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                         {form.goal !== 'maintenir' && (
@@ -431,8 +458,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 9. ANALYSE */}
-            {step === 9 && (
+            {/* 10. ANALYSE */}
+            {step === 10 && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                     <div style={{ width: '120px', height: '120px', position: 'relative', marginBottom: '40px' }}>
                         <svg width="120" height="120">
@@ -446,8 +473,8 @@ export default function OnboardingPage() {
                 </div>
             )}
 
-            {/* 10. RESULTATS WOW */}
-            {step === 10 && (
+            {/* 11. RESULTATS WOW */}
+            {step === 11 && (
                 <StepWrapper key="step10" title="C'est prêt !" icon="🌟">
                     <div style={{ background: 'linear-gradient(135deg, #111, #080808)', border: '1.5px solid #222', borderRadius: '28px', padding: '40px 30px', textAlign: 'center' }}>
                         <div style={{ fontSize: '12px', color: '#22c55e', fontWeight: '800', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '12px' }}>Objectif Quotidien</div>
@@ -475,8 +502,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 11. PAYWALL */}
-            {!isEditMode && step === 11 && (
+            {/* 12. PAYWALL */}
+            {!isEditMode && step === 12 && (
                 <StepWrapper key="step11" title="Libérez tout votre potentiel" icon="🚀">
                     <div style={{ padding: '24px', background: '#111', borderRadius: '20px', border: '1px solid #222', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>

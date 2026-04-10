@@ -220,6 +220,7 @@ Ce combo est parfait pour ta prise de masse, Komlan ! Les glucides du fufu combi
 ${plannerContext}
 
 Contexte utilisateur :
+- Pays de résidence : ${profile.country || 'Afrique de l'Ouest'} (Priorise les noms locaux de ce pays)
 - Objectif : ${profile.goal || 'rester en forme'}
 - Poids : ${profile.weight_kg || '?'} kg
 - Suggestions déjà générées précédemment : ${suggestionsContext}
