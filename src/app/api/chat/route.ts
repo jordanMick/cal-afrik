@@ -249,8 +249,8 @@ Contexte utilisateur :
 
                 const response = await anthropic.messages.create({
                     model: 'claude-haiku-4-5-20251001',
-                    max_tokens: wantsWeek ? 3000 : 600,
-                    system: systemPrompt + tierInstruction,
+                    max_tokens: wantsWeek ? 4096 : 800,
+                    system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Sois synthétique pour que les 7 jours tiennent dans le message. Va à l'essentiel : Aliments, Portions et un bénéfice court." : "") + tierInstruction,
                     messages: formattedMessages
                 })
                 
