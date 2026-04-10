@@ -296,44 +296,9 @@ Contexte utilisateur :
                 aiMessage = `${prefix} ${aiMessage}`.trim()
             }
 
-            // Garde-fou menu semaine: imposer une structure propre J+1 -> J+7
-            if (wantsWeek && /^menu\s+semaine\s*:/i.test(aiMessage)) {
-                const weekDates = buildWeekDatesFromTomorrow()
-                const dateLines = weekDates.map((d, i) => `${i + 1}. ${d}`).join('\n')
-                const cleanedBase = aiMessage.trim()
-
-                const formattingPrompt = `Tu reçois un menu semaine brut. Réécris-le proprement.
-
-RÈGLES OBLIGATOIRES :
-- Commence EXACTEMENT par "menu semaine:".
-- Génère 7 sections datées, une par jour, dans cet ordre (J+1 -> J+7) :
-${dateLines}
-- Pour chaque jour, donne 4 lignes: Petit-déj, Déjeuner, Collation, Dîner (avec kcal approximatives).
-- Interdiction d'écrire "À définir", "a definir", "TBD" ou équivalent. Mets toujours un vrai repas concret.
-- Ne mets aucun texte hors de ces 7 jours.
-- Pas de markdown cassé, pas de liste parasite numérotée en fin.
-
-MENU BRUT :
-${cleanedBase}`
-
-                try {
-                    const formatted = await anthropic.messages.create({
-                        model: 'claude-haiku-4-5-20251001',
-                        max_tokens: 1200,
-                        messages: [{ role: 'user', content: formattingPrompt }]
-                    })
-                    const formattedText = formatted.content[0].type === 'text' ? formatted.content[0].text : cleanedBase
-                    aiMessage = formattedText.trim()
-                    aiMessage = fillUndefinedMeals(aiMessage)
-                } catch (formatErr) {
-                    console.error('⚠️ Week menu formatting fallback:', formatErr)
-                    // Fallback robuste: on conserve la réponse initiale sans planter l'API.
-                    aiMessage = fillUndefinedMeals(cleanedBase)
-                }
-
-                if (!/^menu\s+semaine\s*:/i.test(aiMessage)) {
-                    aiMessage = `menu semaine:\n${aiMessage}`.trim()
-                }
+            // On s'assure que le menu semaine est bien détecté et formaté par Yao directement
+            if (wantsWeek && !/^menu\s+semaine\s*:/i.test(aiMessage) && aiMessage.length > 300) {
+                 aiMessage = `menu semaine:\n${aiMessage}`.trim()
             }
         }
 
