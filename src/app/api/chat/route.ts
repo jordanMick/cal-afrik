@@ -129,13 +129,21 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. Traiter la requête de l'utilisateur
-        const { messages, userContext } = await req.json()
+        const { messages, userContext, currentSuggestions } = await req.json()
         const messageContent = String(messages?.[messages.length - 1]?.content || '')
         const normalizedUserMessage = messageContent.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
         
         const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)
         const wantsWeek = (/\bsemaine\b/.test(normalizedUserMessage) || /\b7 jours\b/.test(normalizedUserMessage)) && /\bmenu\b/.test(normalizedUserMessage)
         const isFreeLimited = (wantsTomorrow || wantsWeek) && effectiveTier === 'free'
+
+        // Contexte des suggestions actuelles pour la mémoire longue
+        let suggestionsContext = "Aucune suggestion de menu n'est active pour le moment."
+        if (currentSuggestions?.week) {
+            suggestionsContext = `Un menu SEMAINE est déjà actif :\n${currentSuggestions.week.substring(0, 500)}...`
+        } else if (currentSuggestions?.tomorrow) {
+            suggestionsContext = `Un menu pour DEMAIN est déjà actif : ${currentSuggestions.tomorrow.substring(0, 100)}...`
+        }
 
         const messageLower = normalizedUserMessage
         const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit déjeuner') || messageLower.includes('déjeuner') || messageLower.includes('dîner')
@@ -214,6 +222,7 @@ ${plannerContext}
 Contexte utilisateur :
 - Objectif : ${profile.goal || 'rester en forme'}
 - Poids : ${profile.weight_kg || '?'} kg
+- Suggestions déjà générées précédemment : ${suggestionsContext}
 - Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}`
 
         // ─── MODE SIMULATION ──────────────────────────────────────────

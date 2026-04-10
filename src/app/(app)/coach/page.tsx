@@ -81,7 +81,7 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
 
 export default function CoachChatPage() {
     const router = useRouter()
-    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu } = useAppStore()
+    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu, chatSuggestedMenus } = useAppStore()
     const effectiveTier = getEffectiveTier(profile)
 
     const maxMessages = Number(SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay || 2)
@@ -225,7 +225,11 @@ export default function CoachChatPage() {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                body: JSON.stringify({ messages: newMessagesContext, userContext: contextStr })
+                body: JSON.stringify({ 
+                    messages: newMessagesContext, 
+                    userContext: contextStr,
+                    currentSuggestions: chatSuggestedMenus
+                })
             })
 
             const data = await res.json()
