@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
         if (wantsMenuAny) {
             const { data: allFoods } = await supabase.from('food_items').select('*')
             if (allFoods && allFoods.length > 0) {
-                const foodsList = allFoods.map((f: any) => `- ${f.name_fr} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.protein_per_100g}g, G: ${f.carbs_per_100g}g, L: ${f.fat_per_100g}g)`).join('\n')
+                const foodsList = allFoods.map((f: any) => `- ${f.name_standard || f.display_name || f.name_fr} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`).join('\n')
                 foodsContext = `\n\n=== BASE DE DONNÉES DES ALIMENTS ===\nVoici la liste STRICTE des aliments autorisés dans notre système :\n${foodsList}\n\nRÈGLE DU MENU : Tu DOIS obligatoirement combiner ces ingrédients pour construire tes menus (ex: Riz + Viande + Sauce). Additionne leurs calories et macros. N'invente AUCUN plat qui n'est pas directement issu de cette liste ou une combinaison de cette liste.`
             }
         }

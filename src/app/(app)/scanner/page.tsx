@@ -252,11 +252,11 @@ export default function ScannerPage() {
 
         if (detectedInDB.length > 0) {
             detectedInDB.forEach(f => {
-                const portion = f.default_portion_g || 100
+                const portion = f.default_portion_g || 200
                 totalCals += (f.calories_per_100g * portion) / 100
-                totalProt += (f.protein_per_100g * portion) / 100
-                totalCarbs += (f.carbs_per_100g * portion) / 100
-                totalFat += (f.fat_per_100g * portion) / 100
+                totalProt += ((f.proteins_100g || 0) * portion) / 100
+                totalCarbs += ((f.carbs_100g || 0) * portion) / 100
+                totalFat += ((f.lipids_100g || 0) * portion) / 100
             })
         } else {
             // Fallback si aucun aliment n'est trouvé dans la BD par nom
