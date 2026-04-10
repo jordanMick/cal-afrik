@@ -267,7 +267,7 @@ export default function ScannerPage() {
 
         const virtualFood: EnrichedSuggestion = {
             id: `suggested-${slotKey}-${Date.now()}`,
-            name: cleanedLine,
+            name: displayLabel,
             score: 100,
             calories: Math.round(totalCals),
             protein_g: Math.round(totalProt * 10) / 10,
@@ -279,7 +279,7 @@ export default function ScannerPage() {
             carbs_detected: totalCarbs,
             fat_detected: totalFat,
             confidence: 100,
-            detected: cleanedLine,
+            detected: displayLabel,
             fromAI: false
         }
 
