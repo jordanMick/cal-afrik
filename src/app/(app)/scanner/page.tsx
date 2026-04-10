@@ -307,7 +307,7 @@ export default function ScannerPage() {
     const effectiveTier = getEffectiveTier(profile)
     const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
     const todayStr = new Date().toISOString().split('T')[0]
-    const activeMenuText =
+    let activeMenuText =
         chatSuggestedMenus.date === todayStr
             ? (menuTab === 'today'
                 ? chatSuggestedMenus.today[currentSlotKey]
@@ -315,6 +315,27 @@ export default function ScannerPage() {
                     ? chatSuggestedMenus.tomorrow
                     : chatSuggestedMenus.week)
             : null
+
+    // Fallback intelligent : si menuTab === 'tomorrow' est vide, on cherche dans 'week'
+    if (menuTab === 'tomorrow' && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+        const tomorrowDay = dayNames[tomorrow.getDay()]
+        const tomorrowDate = `${String(tomorrow.getDate()).padStart(2, '0')}/${String(tomorrow.getMonth() + 1).padStart(2, '0')}`
+        const dateKey = `${tomorrowDay} ${tomorrowDate}`
+        
+        const weekText = chatSuggestedMenus.week
+        const dateIdx = weekText.toLowerCase().indexOf(dateKey.toLowerCase())
+        if (dateIdx !== -1) {
+            const afterDate = weekText.substring(dateIdx)
+            // On cherche le début du jour suivant (Lundi, Mardi, ...) pour couper
+            const nextDayMatch = afterDate.substring(10).match(/(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}/i)
+            activeMenuText = nextDayMatch 
+                ? afterDate.substring(0, 10 + nextDayMatch.index!).trim()
+                : afterDate.trim()
+        }
+    }
 
     useEffect(() => {
         if (!canAccessFutureMenus && (menuTab === 'tomorrow' || menuTab === 'week')) {
