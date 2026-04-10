@@ -870,7 +870,7 @@ export default function ScannerPage() {
                             )}
                         </div>
                         {activeMenuText ? (
-                            <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '180px' : 'none', overflow: menuTab === 'week' ? 'hidden' : 'visible' }}>
+                            <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '450px' : 'none', overflowY: 'auto', paddingRight: '4px' }}>
                                 {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots)}
                             </div>
                         ) : (
