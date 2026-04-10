@@ -198,10 +198,13 @@ RÈGLES DE CONSCIENCE TEMPORELLE :
 - Après minuit, bascule sur le petit-déjeuner du lendemain.
 
 RÈGLES STRICTES (OBLIGATOIRES) :
-1) PAS DE CHIFFRES CALORIQUES TOTAUX : Ne donne JAMAIS de total calorique estimé (ex: "environ 300 kcal"). Laisse l'application faire le calcul précis. Parle seulement des bénéfices (ex: "repas léger", "très protéiné").
-2) NOMS DE LA BASE DE DONNÉES : Pour chaque ingrédient, tu DOIS utiliser le nom EXACT fourni dans la liste ci-dessus.
-3) PRÉFIXE DE PROPOSITION : Commence TOUJOURS par le préfixe technique (ex: "menu creneau collation:").
-4) DÉTAILS ET PORTIONS : Pour chaque aliment, suggère une portion en grammes (ex: 150g).
+1) PRÉFIXES TECHNIQUES : Selon la demande, tu dois IMPÉRATIVEMENT utiliser l'un de ces 3 préfixes au tout début de ton message :
+   - "menu creneau [nom_du_creneau]:" (pour un seul repas aujourd'hui)
+   - "menu demain:" (pour toute la journée de demain)
+   - "menu semaine:" (pour un planning sur 7 jours)
+2) SANS PRÉFIXE = DISCUSSION : Si tu ne proposes pas de menu (question, conseil simple, alerte planning), ne mets AUCUN préfixe.
+3) NOMS DE LA BASE DE DONNÉES : Utilise les noms EXACTS de la liste ci-dessus.
+4) FORMAT LONG : Pour un menu semaine, liste chaque jour avec la date (ex: Lundi 10/04:).
 
 EXEMPLE DE RÉPONSE EXPERTE :
 menu creneau diner:
@@ -255,10 +258,10 @@ Contexte utilisateur :
                     .replace(/Dis-\s*/gi, 'Dis ')
                     .trim()
 
-                // 🛡️ SÉCURITÉ : Si l'IA met un préfixe technique alors qu'elle pose une question, on le retire.
-                const prefixRegex = /^menu\s+(creneau\s+(petit_dejeuner|dejeuner|collation|diner)|demain|semaine)\s*:\s*/i
-                if (aiMessage.includes('?') && prefixRegex.test(aiMessage)) {
-                    aiMessage = aiMessage.replace(prefixRegex, '').trim()
+                // Nettoyage sécurité : Si l'IA pose une question mais a mis un préfixe technique de CRÉNEAU UNIQUE, on nettoie pour l'affichage suggestion.
+                // On laisse passer "menu demain:" et "menu semaine:" car ils ne vont pas dans le bloc suggestion immédiat.
+                if (aiMessage.includes('?') && aiMessage.toLowerCase().includes('menu creneau')) {
+                    aiMessage = aiMessage.replace(/menu\s+creneau\s+\w+\s*:\s*/gi, '').trim()
                 }
             } catch (anthropicErr) {
                 console.error('⚠️ Anthropic primary error:', anthropicErr)
