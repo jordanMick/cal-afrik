@@ -206,7 +206,15 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
 
 export default function ScannerPage() {
     const router = useRouter()
-    const { addMeal, profile, slots, dailyCalories, setLastCoachMessage, chatSuggestedMenus } = useAppStore()
+    const { 
+        addMeal, 
+        profile, 
+        slots, 
+        dailyCalories, 
+        setLastCoachMessage, 
+        chatSuggestedMenus, 
+        clearChatSuggestedMenu 
+    } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const [image, setImage] = useState<string | null>(null)
