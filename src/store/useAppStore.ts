@@ -257,15 +257,7 @@ export const useAppStore = create<AppState>()(
                     } else if (kind === 'today') {
                         // Fallback si pas de slot précis détecté
                         const slotMatch = message.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
-                        let s = slotMatch ? (slotMatch[1] as MealSlotKey) : 'unspecified' as any
-                        
-                        if (s === 'unspecified') {
-                            const low = message.toLowerCase()
-                            if (low.includes('collation')) s = 'collation'
-                            else if (low.includes('diner') || low.includes('dîner')) s = 'diner'
-                            else if (low.includes('dejeuner') || low.includes('déjeuner')) s = 'dejeuner'
-                            else if (low.includes('petit déjeuner') || low.includes('petit-déj')) s = 'petit_dejeuner'
-                        }
+                        const s = slotMatch ? (slotMatch[1] as MealSlotKey) : 'unspecified' as any
                         nextToday[s] = message
                     }
 
