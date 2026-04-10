@@ -251,6 +251,16 @@ export default function OnboardingPage() {
     const handleFinish = async () => {
         setIsSaving(true)
         try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) { router.push('/login'); return }
+
+            // 1. Récupérer le tier ACTUEL en base pour ne pas l'écraser par erreur
+            const { data: currentProfile } = await supabase
+                .from('user_profiles')
+                .select('subscription_tier, subscription_expires_at')
+                .eq('user_id', session.user.id)
+                .single()
+
             const age = currentYear - (form.birth_year || 1995)
             const targets = calculateSafeTargets()
 
@@ -264,12 +274,12 @@ export default function OnboardingPage() {
                 goal: form.goal,
                 country: form.country,
                 preferred_cuisines: form.preferred_cuisines,
-                subscription_tier: profile?.subscription_tier || 'free',
+                // On garde la version de la DB en priorité
+                subscription_tier: currentProfile?.subscription_tier || profile?.subscription_tier || 'free',
+                subscription_expires_at: currentProfile?.subscription_expires_at || profile?.subscription_expires_at,
+                onboarding_done: true,
                 ...targets,
             }
-
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) { router.push('/login'); return }
 
             const { data: updated, error } = await supabase
                 .from('user_profiles')
