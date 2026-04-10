@@ -183,6 +183,30 @@ export default function DashboardPage() {
     const remaining = Math.max(0, calorieTarget - dailyCalories)
     const exceeded = dailyCalories > calorieTarget
 
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+    const isPaymentSuccess = searchParams?.get('payment') === 'success'
+
+    useEffect(() => {
+        if (isPaymentSuccess) {
+            // Un petit délai pour laisser au webhook le temps de passer
+            const timer = setTimeout(() => {
+                fetchProfile()
+            }, 2000)
+            return () => clearTimeout(timer)
+        }
+    }, [isPaymentSuccess])
+
+    const fetchProfile = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+            const { data } = await supabase.from('user_profiles').select('*').eq('user_id', session.user.id).single()
+            if (data) useAppStore.getState().setProfile(data)
+        } catch (e) {
+            console.error('Erreur refresh profil:', e)
+        }
+    }
+
     const [isRenewing, setIsRenewing] = useState(false)
     const [isDismissed, setIsDismissed] = useState(false)
 
@@ -310,6 +334,30 @@ export default function DashboardPage() {
             {/* Halos d'ambiance */}
             <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            
+            {/* BANNIÈRE SUCCÈS PAIEMENT */}
+            {isPaymentSuccess && (
+                <div style={{ 
+                    background: 'linear-gradient(90deg, #10b981, #059669)',
+                    color: '#fff',
+                    padding: '12px 20px',
+                    borderRadius: '16px',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 8px 20px rgba(16,185,129,0.3)',
+                    animation: 'fadeIn 0.5s ease-out'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '20px' }}>🎉</span>
+                        <div>
+                            <p style={{ fontSize: '14px', fontWeight: '800' }}>Paiement réussi !</p>
+                            <p style={{ fontSize: '11px', opacity: 0.9 }}>Votre plan a été mis à jour avec succès.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* HEADER */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
