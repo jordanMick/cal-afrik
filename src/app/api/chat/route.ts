@@ -146,10 +146,14 @@ export async function POST(req: NextRequest) {
         let foodsContext = ""
         
         if (wantsMenuAny) {
-            const { data: allFoods } = await supabase.from('food_items').select('*')
+            console.log("🔍 Coach Yao interroge la BD food_items...")
+            const { data: allFoods, error: foodsError } = await supabase.from('food_items').select('*')
+            if (foodsError) console.error("❌ Erreur Supabase food_items:", foodsError)
+            console.log(`✅ ${allFoods?.length || 0} aliments trouvés dans la BD.`)
+
             if (allFoods && allFoods.length > 0) {
                 const foodsList = allFoods.map((f: any) => `- ${f.display_name || f.name_standard} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`).join('\n')
-                foodsContext = `\n\n=== BASE DE DONNÉES STRICTE (food_items) ===\nTu es INTERDIT de proposer un aliment qui n'est pas dans cette liste. Voici tes seules options :\n${foodsList}\n\nCONSIGNE : Pour chaque menu, cite EXACTEMENT le nom de l'aliment tel qu'écrit ci-dessus (ex: "Riz au gras" si c'est le nom exact). N'utilise JAMAIS de noms génériques si un nom spécifique existe dans la liste.`
+                foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste :\n${foodsList}\n\nCONSIGNE : Cite EXACTEMENT le nom de l'aliment de la liste. N'utilise JAMAIS de noms génériques.`
             }
         }
 
@@ -177,28 +181,22 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const systemPrompt = `Tu es Coach Yao, coach nutrition africain bienveillant et concret.
-L'utilisateur s'appelle ${profile.name || 'mon ami'}.
+        const systemPrompt = `Tu es Coach Yao, coach nutrition africain expert.
+${foodsContext || "[ALERTE : Base de données indisponible. Demande à l'utilisateur de charger ses aliments.]"}
 
 RÈGLES STRICTES :
-1) Utilise d'abord les données de contexte fournies par l'application. Ne demande pas "qu'as-tu mangé ?" si le contexte contient déjà calories/objectifs.
-2) Longueur adaptative : 1 à 6 phrases max.
-3) Français simple, chaleureux, pas d'artefacts.
-4) Recommandation locale concrète.
-5) RÈGLE DE PLANNING CRITIQUE : Si l'utilisateur te demande de générer un menu (demain, semaine, ou un créneau), analyse d'abord les "Repas planifiés" en bas.
-   - S'il a DÉJÀ un menu pour cette date/créneau précis et qu'il n'a pas explicitement répondu à ta question de modification : Dis-lui calmement quel menu il a déjà prévu et demande-lui : "Veux-tu réécrire ou modifier ce menu ?". Si tu fais ça, termine ta phrase par un point d'interrogation (?) et INTERDICTION ABSOLUE de mettre un préfixe technique (ex: "menu creneau...") au début de ton message.
-   - S'il répond qu'il NE VEUT PAS le modifier (ex: 'non', 'affiche le'), ALORS RE-AFFICHE simplement le menu qu'il avait DÉJÀ prévu en reprenant l'historique du planning. Tu DOIS obligatoirement utiliser le préfixe technique (ex: "menu demain:") dans ce cas pour l'afficher !
-   - S'il n'a rien prévu, ou s'il confirme vouloir modifier (ex: 'oui', 'change le'), ALORS génère un nouveau menu et utilise le préfixe technique.
-6) QUAND TU LIFTES/GÉNÈRES EFFECTIVEMENT LA LISTE DES ALIMENTS DU MENU, ta réponse DOIT obligatoirement commencer par l'un de ces préfixes : "menu creneau petit_dejeuner:", "menu creneau dejeuner:", "menu creneau collation:", "menu creneau diner:", "menu demain:", "menu semaine:". INTERDICTION D'UTILISER CE PREFIXE SI TU FAIS LA CONVERSATION OU POSES UNE QUESTION.
-7) Si le préfixe est "menu semaine:", format JJ/MM, dans l'ordre chronologique (4 lignes par jour max).
+1) Utilise UNIQUEMENT les aliments de la BASE DE DONNÉES CERTIFIÉE ci-dessus pour composer tes menus.
+2) Longueur : 1 à 6 phrases max.
+3) Français simple et chaleureux.
+4) PLANNING : Analyse d'abord le planning ci-dessous avant de proposer du nouveau.
+
+=== PLANNING ACTUEL ===
+${plannerContext}
 
 Contexte utilisateur :
 - Objectif : ${profile.goal || 'rester en forme'}
 - Poids : ${profile.weight_kg || '?'} kg
-- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}
-
-=== PLANNING DES REPAS DE L'UTILISATEUR ===
-${plannerContext}${foodsContext}`
+- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}`
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
         const MOCK_MODE = false
