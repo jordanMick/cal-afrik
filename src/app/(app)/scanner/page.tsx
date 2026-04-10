@@ -129,12 +129,12 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 }
                 const lineSlotKey = SLOT_MAP[slotPrefix]
                 const isCurrentSlot = lineSlotKey === currentSlotKey
-                
+
                 const SLOT_START_HOURS: Record<string, number> = { petit_dejeuner: 6, dejeuner: 11, collation: 15, diner: 18 }
                 const startHour = SLOT_START_HOURS[lineSlotKey] || 0
                 const currentHour = new Date().getHours()
                 const isFuture = currentHour < startHour
-                
+
                 const buttonDisabled = !isCurrentSlot || isSavingActivity
 
                 buttonNode = (
@@ -153,10 +153,11 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                             cursor: buttonDisabled ? 'default' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px'
+                            gap: '6px',
+                            transition: 'all 0.2s'
                         }}
                     >
-                        📥 {isSavingActivity ? 'Enregistrement...' : isCurrentSlot ? 'Ajouter au journal' : isFuture ? `Disponible à ${startHour}:00` : 'Déjà passé'}
+                        ✨ {isSavingActivity ? 'Chargement...' : isCurrentSlot ? 'Choisir ce menu' : isFuture ? `Disponible à ${startHour}:00` : 'Déjà passé'}
                     </button>
                 )
             }
@@ -213,47 +214,41 @@ export default function ScannerPage() {
     const [showWeekMenuPopup, setShowWeekMenuPopup] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
 
-    const handleLogSuggestion = async (line: string, slotKey: string) => {
+    const handleSelectSuggestion = (line: string, slotKey: string) => {
         if (!line) return
-        setIsSaving(true)
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) return
-            
-            const cleanedLine = line.replace(/^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]\s*/i, '').trim()
-            const mealNameLocal = cleanedLine.substring(0, 50) + (cleanedLine.length > 50 ? '...' : '')
-            
-            let calories = 500
-            if (slotKey === 'dejeuner' || slotKey === 'diner') calories = 700
-            if (slotKey === 'collation') calories = 250
+        
+        const cleanedLine = line.replace(/^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]\s*/i, '').trim()
+        const displayLabel = cleanedLine.substring(0, 50) + (cleanedLine.length > 50 ? '...' : '')
 
-            const res = await fetch('/api/meals', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                body: JSON.stringify({
-                    custom_name: mealNameLocal,
-                    meal_type: slotKey,
-                    portion_g: 250, 
-                    calories: calories,
-                    protein_g: 0,
-                    carbs_g: 0,
-                    fat_g: 0,
-                    image_url: null,
-                    ai_confidence: 100,
-                    coach_message: "Repas suggéré par Coach Yao"
-                })
-            })
-            const json = await res.json()
-            if (json.success) {
-                addMeal(json.data)
-                router.push('/journal')
-            }
-        } catch (err) {
-            console.error(err)
-            alert("Erreur lors de l'enregistrement.")
-        } finally {
-            setIsSaving(false)
+        // Estimation rapide des calories
+        let calories = 500
+        if (slotKey === 'dejeuner' || slotKey === 'diner') calories = 700
+        if (slotKey === 'collation') calories = 250
+
+        const virtualFood: EnrichedSuggestion = {
+            id: `suggested-${slotKey}-${Date.now()}`,
+            name: cleanedLine,
+            score: 100,
+            calories: calories,
+            protein_g: 0,
+            carbs_g: 0,
+            fat_g: 0,
+            portion_g: 250,
+            calories_detected: calories,
+            protein_detected: 0,
+            carbs_detected: 0,
+            fat_detected: 0,
+            confidence: 100,
+            detected: cleanedLine,
+            fromAI: false
         }
+
+        setMealName(displayLabel)
+        setSelectedFoods([virtualFood])
+        setTotalCaloriesAI(calories)
+        setShowRecap(true)
+        setShowCoach(false)
+        setCoachMessage('')
     }
 
     const currentHour = new Date().getHours()
@@ -829,7 +824,7 @@ export default function ScannerPage() {
                         </div>
                         {activeMenuText ? (
                             <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '180px' : 'none', overflow: menuTab === 'week' ? 'hidden' : 'visible' }}>
-                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleLogSuggestion)}
+                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion)}
                             </div>
                         ) : (
                             <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
@@ -1075,46 +1070,45 @@ export default function ScannerPage() {
                             ))}
                         </div>
 
-                        <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(245,158,11,0.08)' : 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
-                            {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
-                        </button>
-
-                        {showCoach && (
-                            <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
-                                {isLoadingCoach ? (
-                                    <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Yao analyse ton assiette...</p>
-                                ) : coachMessage === '__FREE_USED__' ? (
-                                    <div style={{ textAlign: 'center' }}>
-                                        <p style={{ fontSize: '24px', marginBottom: '8px' }}>🔒</p>
-                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Essai gratuit déjà utilisé</p>
-                                        <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Tu as déjà vu le talent de Coach Yao ! Passe au Plan Pro pour ses conseils chaque jour.</p>
-                                        <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: '#f59e0b', color: '#000', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Voir le Plan Pro →</div>
-                                    </div>
-                                ) : coachMessage === '__PRO_LIMIT__' ? (
-                                    <div style={{ textAlign: 'center' }}>
-                                        <p style={{ fontSize: '24px', marginBottom: '8px' }}>⏰</p>
-                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Conseil du jour déjà utilisé</p>
-                                        <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Yao vous a déjà conseillé aujourd'hui. Passez au Premium pour un accès illimité !</p>
-                                        <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: '#fff', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Débloquer le Premium →</div>
-                                    </div>
-                                ) : coachMessage ? (
-                                    <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                            <span style={{ fontSize: '18px' }}>🤖</span>
-                                            <span style={{ color: '#f59e0b', fontSize: '13px', fontWeight: '600' }}>Coach Yao</span>
-                                            {profile?.subscription_tier === 'free' && (
-                                                <span style={{ marginLeft: 'auto', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>
-                                            )}
-                                        </div>
-                                        <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
-                                        {profile?.subscription_tier === 'free' && (
-                                            <div onClick={() => router.push('/upgrade')} style={{ marginTop: '10px', padding: '6px 12px', background: 'rgba(245,158,11,0.1)', border: '0.5px dashed rgba(245,158,11,0.3)', borderRadius: '8px', color: '#f59e0b', fontSize: '11px', cursor: 'pointer' }}>
-                                                💡 Vous avez aimé ? Obtenez ce conseil chaque jour avec le Plan Pro →
+                        {/* On n'affiche le conseil du coach QUE si ce n'est pas un menu déjà suggéré par Yao */}
+                        {!selectedFoods.some(f => f.id.startsWith('suggested-')) && (
+                            <>
+                                <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(245,158,11,0.08)' : 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
+                                    {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
+                                </button>
+                                {showCoach && (
+                                    <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
+                                        {isLoadingCoach ? (
+                                            <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Yao analyse ton assiette...</p>
+                                        ) : coachMessage === '__FREE_USED__' ? (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ fontSize: '24px', marginBottom: '8px' }}>🔒</p>
+                                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Essai gratuit déjà utilisé</p>
+                                                <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Tu as déjà vu le talent de Coach Yao ! Passe au Plan Pro pour ses conseils chaque jour.</p>
+                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: '#f59e0b', color: '#000', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Voir le Plan Pro →</div>
                                             </div>
-                                        )}
+                                        ) : coachMessage === '__PRO_LIMIT__' ? (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ fontSize: '24px', marginBottom: '8px' }}>⏰</p>
+                                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Conseil du jour déjà utilisé</p>
+                                                <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Yao vous a déjà conseillé aujourd'hui. Passez au Premium pour un accès illimité !</p>
+                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: '#fff', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Débloquer le Premium →</div>
+                                            </div>
+                                        ) : coachMessage ? (
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                                    <span style={{ fontSize: '18px' }}>🤖</span>
+                                                    <span style={{ color: '#f59e0b', fontSize: '13px', fontWeight: '600' }}>Coach Yao</span>
+                                                    {profile?.subscription_tier === 'free' && (
+                                                        <span style={{ marginLeft: 'auto', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>
+                                                    )}
+                                                </div>
+                                                <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
+                                            </div>
+                                        ) : null}
                                     </div>
-                                ) : null}
-                            </div>
+                                )}
+                            </>
                         )}
 
                         <div style={{ display: 'flex', gap: '8px' }}>
