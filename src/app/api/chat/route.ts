@@ -198,10 +198,10 @@ RÈGLES DE CONSCIENCE TEMPORELLE :
 - Après minuit, bascule sur le petit-déjeuner du lendemain.
 
 RÈGLES STRICTES (OBLIGATOIRES) :
-1) NOMS DE LA BASE DE DONNÉES : Pour chaque ingrédient, tu DOIS utiliser le nom EXACT fourni dans la liste ci-dessus (ex: "Molou Zogbon (Bouillie de riz)"). N'abrège jamais les noms officiels.
-2) PRÉFIXE DE PROPOSITION : Commence TOUJOURS par le préfixe technique (ex: "menu creneau collation:").
-3) DÉTAILS ET PORTIONS : Pour chaque aliment, suggère une portion en grammes (ex: 150g). Explique les bénéfices pour l'utilisateur.
-4) FORMAT : Le titre du repas doit être seul sur sa ligne. Utilise des puces.
+1) PAS DE CHIFFRES CALORIQUES TOTAUX : Ne donne JAMAIS de total calorique estimé (ex: "environ 300 kcal"). Laisse l'application faire le calcul précis. Parle seulement des bénéfices (ex: "repas léger", "très protéiné").
+2) NOMS DE LA BASE DE DONNÉES : Pour chaque ingrédient, tu DOIS utiliser le nom EXACT fourni dans la liste ci-dessus.
+3) PRÉFIXE DE PROPOSITION : Commence TOUJOURS par le préfixe technique (ex: "menu creneau collation:").
+4) DÉTAILS ET PORTIONS : Pour chaque aliment, suggère une portion en grammes (ex: 150g).
 
 EXEMPLE DE RÉPONSE EXPERTE :
 menu creneau diner:
