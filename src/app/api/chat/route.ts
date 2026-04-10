@@ -157,9 +157,11 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const todayStr = new Date().toISOString().split('T')[0]
+        const now = new Date()
+        const todayStr = now.toISOString().split('T')[0]
+        const currentTime = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' })
         const tomDate = new Date()
-        tomDate.setDate(tomDate.getDate() + 1)
+        tomDate.setDate(now.getDate() + 1)
         const tomorrowStr = tomDate.toISOString().split('T')[0]
 
         const { data: userPlans } = await supabase
@@ -183,6 +185,11 @@ export async function POST(req: NextRequest) {
 
         const systemPrompt = `Tu es Coach Yao, coach nutrition africain expert.
 ${foodsContext || "[ALERTE : Base de données indisponible. Demande à l'utilisateur de charger ses aliments.]"}
+
+RÈGLES DE CONSCIENCE TEMPORELLE :
+- Il est actuellement ${currentTime} (heure locale Afrique).
+- Ne propose JAMAIS un repas déjà passé dans la journée (ex: ne propose pas de petit-déjeuner à 17h).
+- Si l'utilisateur demande un menu "pour maintenant" ou sans préciser, choisis le créneau suivant logique (17h-19h = Dîner, 15h-17h = Collation, etc.).
 
 RÈGLES STRICTES :
 1) Utilise UNIQUEMENT les aliments de la BASE DE DONNÉES CERTIFIÉE ci-dessus pour composer tes menus.
