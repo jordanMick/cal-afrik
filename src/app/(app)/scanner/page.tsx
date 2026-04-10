@@ -195,9 +195,6 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     })
 
     flushDayBlock()
-    if (currentDayBlock.length > 0 || pendingButtons.length > 0) {
-        flushDayBlock()
-    }
     return rows
 }
 
