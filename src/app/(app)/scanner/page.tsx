@@ -246,7 +246,7 @@ export default function ScannerPage() {
         // On cherche les aliments de la BD mentionnés dans la suggestion
         const cleanedLower = cleanedLine.toLowerCase()
         const detectedInDB = (foods || []).filter(f => {
-            const name = (f.name_fr || f.name_standard || "").toLowerCase()
+            const name = (f.display_name || f.name_standard || f.name_fr || "").toLowerCase()
             return name && name.length > 2 && cleanedLower.includes(name)
         })
 

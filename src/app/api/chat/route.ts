@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
         if (wantsMenuAny) {
             const { data: allFoods } = await supabase.from('food_items').select('*')
             if (allFoods && allFoods.length > 0) {
-                const foodsList = allFoods.map((f: any) => `- ${f.name_standard || f.display_name || f.name_fr} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`).join('\n')
+                const foodsList = allFoods.map((f: any) => `- ${f.display_name || f.name_standard} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`).join('\n')
                 foodsContext = `\n\n=== BASE DE DONNÉES STRICTE (food_items) ===\nTu es INTERDIT de proposer un aliment qui n'est pas dans cette liste. Voici tes seules options :\n${foodsList}\n\nCONSIGNE : Pour chaque menu, cite EXACTEMENT le nom de l'aliment tel qu'écrit ci-dessus (ex: "Riz au gras" si c'est le nom exact). N'utilise JAMAIS de noms génériques si un nom spécifique existe dans la liste.`
             }
         }
