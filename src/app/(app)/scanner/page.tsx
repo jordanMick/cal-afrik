@@ -874,9 +874,32 @@ export default function ScannerPage() {
                                 {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots)}
                             </div>
                         ) : (
-                            <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
-                                Tu verras le menu suggerer par Yao ici. demande un menu depuis le chat
-                            </p>
+                            <div style={{ marginTop: '8px' }}>
+                                {(() => {
+                                    const SLOT_ORDER: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
+                                    const SLOT_HOURS: Record<string, number> = { petit_dejeuner: 0, dejeuner: 12, collation: 16, diner: 19 }
+                                    const currentIndex = SLOT_ORDER.indexOf(currentSlotKey as MealSlotKey)
+                                    
+                                    // On cherche s'il y a un menu dans un créneau futur aujourd'hui
+                                    const futureSlot = SLOT_ORDER.slice(currentIndex + 1).find(sk => 
+                                        chatSuggestedMenus.today && chatSuggestedMenus.today[sk]
+                                    )
+
+                                    if (futureSlot) {
+                                        return (
+                                            <p style={{ color: '#6366f1', fontSize: '12px', lineHeight: '1.55', fontWeight: '500' }}>
+                                                ✨ Ta suggestion pour le <b>{SLOT_LABELS[futureSlot]}</b> est prête ! Elle sera disponible ici à <b>{SLOT_HOURS[futureSlot]}:00</b>.
+                                            </p>
+                                        )
+                                    }
+
+                                    return (
+                                        <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55' }}>
+                                            Tu verras le menu suggéré par Yao ici. Demande un menu depuis le chat.
+                                        </p>
+                                    )
+                                })()}
+                            </div>
                         )}
                         <button
                             onClick={() => router.push('/coach')}
