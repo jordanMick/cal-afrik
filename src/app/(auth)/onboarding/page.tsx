@@ -248,7 +248,7 @@ export default function OnboardingPage() {
         }
     }
 
-    const handleFinish = async () => {
+    const handleFinish = async (redirectPath = '/dashboard') => {
         setIsSaving(true)
         try {
             const { data: { session } } = await supabase.auth.getSession()
@@ -290,7 +290,7 @@ export default function OnboardingPage() {
             setProfile(updated)
             setStep(0)
             setOnboardingForm(null)
-            router.push('/dashboard')
+            router.push(redirectPath)
         } catch (err) {
             console.error(err)
             alert('Erreur lors de la sauvegarde')
@@ -583,7 +583,7 @@ export default function OnboardingPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <button
                             disabled={isSaving}
-                            onClick={() => router.push('/upgrade?hideFree=true')}
+                            onClick={() => handleFinish('/upgrade?hideFree=true')}
                             style={{ width: '100%', height: '56px', background: 'linear-gradient(90deg, #22c55e, #10b981)', color: '#000', borderRadius: '18px', fontWeight: '900', border: 'none', cursor: 'pointer', fontSize: '16px' }}>
                             Voir les offres Premium
                         </button>
