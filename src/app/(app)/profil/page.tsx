@@ -247,9 +247,14 @@ export default function ProfilPage() {
                         </div>
                         <div style={{ flex: 1 }}>
                             <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
-                            <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ opacity: 0.7 }}>🎯</span> {GOAL_LABELS[profile?.goal || ''] || 'Définir un objectif'}
-                            </p>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                                <p style={{ color: '#666', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ opacity: 0.7 }}>🌍</span> {profile?.country || 'Afrique de l\'Ouest'}
+                                </p>
+                                <p style={{ color: '#666', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ opacity: 0.7 }}>🎯</span> {GOAL_LABELS[profile?.goal || ''] || 'Définir un objectif'}
+                                </p>
+                            </div>
                             <div style={{
                                 display: 'inline-flex', padding: '4px 10px', borderRadius: '10px',
                                 background: effectiveTier === 'pro' ? 'rgba(99,102,241,0.15)' : effectiveTier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
@@ -488,6 +493,7 @@ export default function ProfilPage() {
                 <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', marginBottom: '16px', overflow: 'hidden' }}>
                     {[
                         { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—', icon: '👤' },
+                        { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
                         { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—', icon: '⚖️' },
                         { label: 'Taille', value: profile?.height_cm ? `${profile.height_cm} cm` : '—', icon: '📏' },
                         { label: 'Activité', value: profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—', icon: '⚡' },
