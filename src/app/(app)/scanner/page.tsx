@@ -155,7 +155,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 buttonNode = (
                     <button
                         disabled={buttonDisabled}
-                        onClick={() => onLogSuggestion(activeMenuText, lineSlotKey)}
+                        onClick={() => onLogSuggestion(menuText, lineSlotKey)}
                         style={{
                             marginTop: '8px',
                             padding: '6px 12px',
