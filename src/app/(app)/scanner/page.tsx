@@ -155,7 +155,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 buttonNode = (
                     <button
                         disabled={buttonDisabled}
-                        onClick={() => onLogSuggestion(line, lineSlotKey)}
+                        onClick={() => onLogSuggestion(activeMenuText, lineSlotKey)}
                         style={{
                             marginTop: '8px',
                             padding: '6px 12px',
@@ -229,11 +229,11 @@ export default function ScannerPage() {
     const [showWeekMenuPopup, setShowWeekMenuPopup] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
 
-    const handleSelectSuggestion = (line: string, slotKey: string) => {
-        if (!line) return
+    const handleSelectSuggestion = (fullText: string, slotKey: string) => {
+        if (!fullText) return
         
-        const cleanedLine = line.replace(/^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]\s*/i, '').trim()
-        const displayLabel = cleanedLine.substring(0, 50) + (cleanedLine.length > 50 ? '...' : '')
+        // On affiche un label court pour l'UI
+        const displayLabel = `Menu ${SLOT_LABELS[slotKey as MealSlotKey] || slotKey}`
 
         // --- LOGIQUE DE CALCUL VIA TA BASE DE DONNÉES ---
         let totalCals = 0;
@@ -241,8 +241,7 @@ export default function ScannerPage() {
         let totalCarbs = 0;
         let totalFat = 0;
         
-        // On cherche les aliments de la BD mentionnés dans la suggestion
-        const cleanedLower = cleanedLine.toLowerCase()
+        const cleanedLower = fullText.toLowerCase()
         const detectedInDB = (foods || []).filter(f => {
             const name = (f.display_name || f.name_standard || f.name_fr || "").toLowerCase()
             return name && name.length > 2 && cleanedLower.includes(name)
@@ -250,14 +249,19 @@ export default function ScannerPage() {
 
         if (detectedInDB.length > 0) {
             detectedInDB.forEach(f => {
-                const portion = f.default_portion_g || 200
+                // On essaie d'extraire la portion spécifique à cet aliment dans le texte (ex: "Nom (150g)")
+                const nameEscaped = (f.display_name || f.name_standard || f.name_fr || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                const portionRegex = new RegExp(`${nameEscaped}.*?\\(?(\\d+)\\s*g\\)?`, 'i')
+                const portionMatch = fullText.match(portionRegex)
+                
+                const portion = portionMatch ? parseInt(portionMatch[1]) : (f.default_portion_g || 200)
+                
                 totalCals += (f.calories_per_100g * portion) / 100
                 totalProt += ((f.proteins_100g || 0) * portion) / 100
                 totalCarbs += ((f.carbs_100g || 0) * portion) / 100
                 totalFat += ((f.lipids_100g || 0) * portion) / 100
             })
         } else {
-            // Fallback si aucun aliment n'est trouvé dans la BD par nom
             totalCals = slotKey === 'dejeuner' || slotKey === 'diner' ? 700 : (slotKey === 'collation' ? 250 : 500)
         }
 
