@@ -93,7 +93,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
 
     lines.forEach((line, idx) => {
         const isHeader = /^(menu\s+)/i.test(line) || /^(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:/i.test(line)
-        const isMealLine = /^(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i.test(line)
+        const isMealLine = /^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i.test(line)
 
         if (isHeader) {
             if (/^menu\s+/i.test(line)) {
@@ -126,7 +126,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
         }
 
         if (isMealLine) {
-            const mealMatch = line.match(/^(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i)
+            const mealMatch = line.match(/^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i)
             let buttonNode = null
 
             if (mealMatch && mode === 'today' && onLogSuggestion) {
@@ -195,12 +195,8 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     })
 
     flushDayBlock()
-    if (pendingButtons.length > 0) {
-        rows.push(
-            <div key="final-btns-container" style={{ marginTop: '4px', marginBottom: '12px' }}>
-                {pendingButtons.map((b, i) => <div key={`fb-${i}`} style={{ marginTop: '8px' }}>{b}</div>)}
-            </div>
-        )
+    if (currentDayBlock.length > 0 || pendingButtons.length > 0) {
+        flushDayBlock()
     }
     return rows
 }

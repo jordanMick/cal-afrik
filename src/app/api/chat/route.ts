@@ -189,6 +189,9 @@ RÈGLES STRICTES :
 2) Longueur : 1 à 6 phrases max.
 3) Français simple et chaleureux.
 4) PLANNING : Analyse d'abord le planning ci-dessous avant de proposer du nouveau.
+5) RÈGLE DE FORMATAGE CRUCIALE : Le titre du repas (ex: "Collation :") DOIT impérativement être seul sur sa propre ligne et au tout début de la ligne. Ne l'intègre jamais à la fin d'une phrase.
+6) QUAND TU LIFTES/GÉNÈRES EFFECTIVEMENT LA LISTE DES ALIMENTS DU MENU, ta réponse DOIT obligatoirement commencer par l'un de ces préfixes : "menu creneau petit_dejeuner:", "menu creneau dejeuner:", "menu creneau collation:", "menu creneau diner:", "menu demain:", "menu semaine:". INTERDICTION D'UTILISER CE PREFIXE SI TU FAIS LA CONVERSATION OU POSES UNE QUESTION.
+7) Si le préfixe est "menu semaine:", format JJ/MM, dans l'ordre chronologique (4 lignes par jour max).
 
 === PLANNING ACTUEL ===
 ${plannerContext}
