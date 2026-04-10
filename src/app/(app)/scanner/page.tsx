@@ -69,8 +69,17 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     const rows: React.ReactNode[] = []
     let currentDayBlock: React.ReactNode[] = []
     let currentDayKey = ''
+    let pendingButtons: React.ReactNode[] = []
 
     const flushDayBlock = () => {
+        if (pendingButtons.length > 0) {
+            currentDayBlock.push(
+                <div key="pending-btns-container" style={{ marginTop: '4px' }}>
+                    {pendingButtons.map((b, i) => <div key={`pb-${i}`} style={{ marginTop: '8px' }}>{b}</div>)}
+                </div>
+            )
+            pendingButtons = []
+        }
         if (!currentDayKey || currentDayBlock.length === 0) return
         rows.push(
             <div key={`day-${currentDayKey}`} style={{ marginTop: '10px', padding: '10px', background: 'rgba(255,255,255,0.02)', border: '0.5px solid #242424', borderRadius: '12px' }}>
@@ -167,9 +176,9 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                     <p style={{ color: '#e5e7eb', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
                         {line}
                     </p>
-                    {buttonNode}
                 </div>
             )
+            if (buttonNode) pendingButtons.push(buttonNode)
             if (currentDayKey) currentDayBlock.push(node)
             else rows.push(node)
             return
@@ -185,6 +194,13 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     })
 
     flushDayBlock()
+    if (pendingButtons.length > 0) {
+        rows.push(
+            <div key="final-btns-container" style={{ marginTop: '4px', marginBottom: '12px' }}>
+                {pendingButtons.map((b, i) => <div key={`fb-${i}`} style={{ marginTop: '8px' }}>{b}</div>)}
+            </div>
+        )
+    }
     return rows
 }
 
