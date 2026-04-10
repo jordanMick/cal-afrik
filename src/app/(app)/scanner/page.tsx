@@ -264,12 +264,15 @@ export default function ScannerPage() {
     const slotColor = ACCENT_COLOR
     const effectiveTier = getEffectiveTier(profile)
     const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
+    const todayStr = new Date().toISOString().split('T')[0]
     const activeMenuText =
-        menuTab === 'today'
-            ? chatSuggestedMenus.today
-            : menuTab === 'tomorrow'
-                ? chatSuggestedMenus.tomorrow
-                : chatSuggestedMenus.week
+        chatSuggestedMenus.date === todayStr
+            ? (menuTab === 'today'
+                ? chatSuggestedMenus.today[currentSlotKey]
+                : menuTab === 'tomorrow'
+                    ? chatSuggestedMenus.tomorrow
+                    : chatSuggestedMenus.week)
+            : null
 
     useEffect(() => {
         if (!canAccessFutureMenus && (menuTab === 'tomorrow' || menuTab === 'week')) {

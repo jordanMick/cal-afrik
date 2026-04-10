@@ -62,7 +62,7 @@ function sanitizeThreads(threads: ChatThread[]): ChatThread[] {
     return valid.slice(-3)
 }
 
-function detectMenuKind(message: string): 'today' | 'tomorrow' | 'week' | null {
+function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week', slot?: string } | null {
     const normalized = message
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -70,9 +70,12 @@ function detectMenuKind(message: string): 'today' | 'tomorrow' | 'week' | null {
         .toLowerCase()
 
     const hasMealContent = /(petit[- ]?dej|dejeuner|collation|diner)/.test(normalized)
-    if (normalized.startsWith('menu semaine:') && hasMealContent) return 'week'
-    if (normalized.startsWith('menu demain:') && hasMealContent) return 'tomorrow'
-    if (normalized.startsWith('menu creneau ') && hasMealContent) return 'today'
+    if (normalized.includes('menu semaine:') && hasMealContent) return { kind: 'week' }
+    if (normalized.includes('menu demain:') && hasMealContent) return { kind: 'tomorrow' }
+    
+    const slotMatch = normalized.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
+    if (slotMatch && hasMealContent) return { kind: 'today', slot: slotMatch[1] }
+    
     return null
 }
 
@@ -250,8 +253,8 @@ export default function CoachChatPage() {
             if (data.success) {
                 setMessagesUsedToday(maxMessages - data.usageRemaining)
                 setLastCoachMessage(data.message)
-                const menuKind = detectMenuKind(data.message)
-                if (menuKind) setChatSuggestedMenu(menuKind, data.message)
+                const menuInfo = detectMenuKind(data.message)
+                if (menuInfo) setChatSuggestedMenu(menuInfo.kind, data.message, menuInfo.slot)
                 const coachReply: Message = {
                     id: (Date.now() + 1).toString(),
                     role: 'coach',

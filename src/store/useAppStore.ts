@@ -75,11 +75,12 @@ interface AppState {
     lastCoachMessage: string | null
     setLastCoachMessage: (msg: string) => void
     chatSuggestedMenus: {
-        today: string | null
+        today: Record<string, string | null> // slot -> message
         tomorrow: string | null
         week: string | null
+        date: string | null // YYYY-MM-DD
     }
-    setChatSuggestedMenu: (kind: 'today' | 'tomorrow' | 'week', message: string) => void
+    setChatSuggestedMenu: (kind: 'today' | 'tomorrow' | 'week', message: string, slot?: string) => void
 
     // ─── Bilans par créneau ──────────────────────────────────
     slotBilans: Partial<Record<MealSlotKey, SlotBilan>>
@@ -243,17 +244,33 @@ export const useAppStore = create<AppState>()(
             lastCoachMessage: null,
             setLastCoachMessage: (msg) => set({ lastCoachMessage: msg }),
             chatSuggestedMenus: {
-                today: null,
+                today: {},
                 tomorrow: null,
                 week: null,
+                date: null,
             },
-            setChatSuggestedMenu: (kind, message) =>
-                set((state) => ({
-                    chatSuggestedMenus: {
-                        ...state.chatSuggestedMenus,
-                        [kind]: message,
-                    },
-                })),
+            setChatSuggestedMenu: (kind, message, slot) =>
+                set((state) => {
+                    const nextToday = { ...state.chatSuggestedMenus.today }
+                    if (kind === 'today' && slot) {
+                        nextToday[slot] = message
+                    } else if (kind === 'today') {
+                        // Fallback si pas de slot précis détecté
+                        const slotMatch = message.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
+                        const s = slotMatch ? slotMatch[1] : 'unspecified'
+                        nextToday[s] = message
+                    }
+
+                    return {
+                        chatSuggestedMenus: {
+                            ...state.chatSuggestedMenus,
+                            today: nextToday,
+                            tomorrow: kind === 'tomorrow' ? message : state.chatSuggestedMenus.tomorrow,
+                            week: kind === 'week' ? message : state.chatSuggestedMenus.week,
+                            date: new Date().toISOString().split('T')[0]
+                        },
+                    }
+                }),
 
             slotBilans: {},
             setSlotBilan: (slot, bilan) =>
