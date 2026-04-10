@@ -185,10 +185,10 @@ RÈGLES STRICTES :
 3) Français simple, chaleureux, pas d'artefacts.
 4) Recommandation locale concrète.
 5) RÈGLE DE PLANNING CRITIQUE : Si l'utilisateur te demande de générer un menu (demain, semaine, ou un créneau), analyse d'abord les "Repas planifiés" en bas.
-   - S'il a DÉJÀ un menu pour cette date/créneau précis et qu'il n'a pas explicitement répondu à ta question de modification : Dis-lui calmement quel menu il a déjà prévu et demande-lui : "Veux-tu réécrire ou modifier ce menu ?". Si tu fais ça, termine ta phrase par un point d'interrogation (?) et ne mets AUCUN préfixe technique.
+   - S'il a DÉJÀ un menu pour cette date/créneau précis et qu'il n'a pas explicitement répondu à ta question de modification : Dis-lui calmement quel menu il a déjà prévu et demande-lui : "Veux-tu réécrire ou modifier ce menu ?". Si tu fais ça, termine ta phrase par un point d'interrogation (?) et INTERDICTION ABSOLUE de mettre un préfixe technique (ex: "menu creneau...") au début de ton message.
    - S'il répond qu'il NE VEUT PAS le modifier (ex: 'non', 'affiche le'), ALORS RE-AFFICHE simplement le menu qu'il avait DÉJÀ prévu en reprenant l'historique du planning. Tu DOIS obligatoirement utiliser le préfixe technique (ex: "menu demain:") dans ce cas pour l'afficher !
    - S'il n'a rien prévu, ou s'il confirme vouloir modifier (ex: 'oui', 'change le'), ALORS génère un nouveau menu et utilise le préfixe technique.
-6) QUAND TU GÉNÈRES EFFECTIVEMENT UN MENU, ta réponse DOIT obligatoirement commencer par l'un de ces préfixes : "menu creneau petit_dejeuner:", "menu creneau dejeuner:", "menu creneau collation:", "menu creneau diner:", "menu demain:", "menu semaine:". Ne mets CE PREFIXE que si tu crées le menu !
+6) QUAND TU LIFTES/GÉNÈRES EFFECTIVEMENT LA LISTE DES ALIMENTS DU MENU, ta réponse DOIT obligatoirement commencer par l'un de ces préfixes : "menu creneau petit_dejeuner:", "menu creneau dejeuner:", "menu creneau collation:", "menu creneau diner:", "menu demain:", "menu semaine:". INTERDICTION D'UTILISER CE PREFIXE SI TU FAIS LA CONVERSATION OU POSES UNE QUESTION.
 7) Si le préfixe est "menu semaine:", format JJ/MM, dans l'ordre chronologique (4 lignes par jour max).
 
 Contexte utilisateur :
@@ -244,12 +244,19 @@ ${plannerContext}${foodsContext}`
             }
 
             // Garde-fou: si l'utilisateur demande un menu mais que le modèle n'a pas mis
-            // le préfixe attendu, on le rajoute automatiquement (sauf si c'est une question de confirmation du Coach).
-            const hasMenuPrefix = /^menu\s+(creneau\s+(petit_dejeuner|dejeuner|collation|diner)|demain|semaine)\s*:/i.test(aiMessage)
+            // le préfixe attendu, on le rajoute automatiquement. Mais si le modèle a mis le préfixe
+            // alors que c'est manifestement une question ou une phrase conversationnelle courte, on l'enlève.
+            const prefixRegex = /^menu\s+(creneau\s+(petit_dejeuner|dejeuner|collation|diner)|demain|semaine)\s*:\s*/i
+            const hasMenuPrefix = prefixRegex.test(aiMessage)
             const hasExplicitTarget = wantsWeek || wantsTomorrow || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
             const isConfirmationPrompt = aiMessage.includes('?') && aiMessage.length < 250
+            const lacksMealFormat = !/(Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b/i.test(aiMessage) && !wantsWeek
 
-            if (wantsMenu && hasExplicitTarget && !hasMenuPrefix && !isConfirmationPrompt) {
+            if (hasMenuPrefix && (isConfirmationPrompt || lacksMealFormat)) {
+                // L'IA a mis le préfixe à tort sur une phrase conversationnelle
+                aiMessage = aiMessage.replace(prefixRegex, '')
+            } else if (wantsMenu && hasExplicitTarget && !hasMenuPrefix && !isConfirmationPrompt && !lacksMealFormat) {
+                // L'IA a oublié le préfixe pour un vrai menu
                 let prefix = 'menu demain:'
                 if (wantsWeek) prefix = 'menu semaine:'
                 else if (wantsTomorrow) prefix = 'menu demain:'
