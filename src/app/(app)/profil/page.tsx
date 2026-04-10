@@ -255,14 +255,30 @@ export default function ProfilPage() {
                                     <span style={{ opacity: 0.7 }}>🎯</span> {GOAL_LABELS[profile?.goal || ''] || 'Définir un objectif'}
                                 </p>
                             </div>
-                            <div style={{
-                                display: 'inline-flex', padding: '4px 10px', borderRadius: '10px',
-                                background: effectiveTier === 'pro' ? 'rgba(99,102,241,0.15)' : effectiveTier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                                color: effectiveTier === 'pro' ? '#818cf8' : effectiveTier === 'premium' ? '#34d399' : '#888',
-                                fontSize: '10px', fontWeight: '900', letterSpacing: '0.8px', border: '0.5px solid rgba(255,255,255,0.08)',
-                                textTransform: 'uppercase'
-                            }}>
-                                PLAN {effectiveTier.toUpperCase()}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <div style={{
+                                    display: 'inline-flex', padding: '4px 10px', borderRadius: '10px',
+                                    background: effectiveTier === 'pro' ? 'rgba(99,102,241,0.15)' : effectiveTier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                                    color: effectiveTier === 'pro' ? '#818cf8' : effectiveTier === 'premium' ? '#34d399' : '#888',
+                                    fontSize: '10px', fontWeight: '900', letterSpacing: '0.8px', border: '0.5px solid rgba(255,255,255,0.08)',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    PLAN {effectiveTier.toUpperCase()}
+                                </div>
+
+                                {effectiveTier !== 'premium' && (
+                                    <button 
+                                        onClick={() => router.push('/upgrade')}
+                                        style={{ 
+                                            background: 'linear-gradient(90deg, #6366f1, #10b981)',
+                                            border: 'none', borderRadius: '8px', padding: '4px 12px',
+                                            color: '#fff', fontSize: '10px', fontWeight: '800',
+                                            cursor: 'pointer', boxShadow: '0 4px 10px rgba(99,102,241,0.2)'
+                                        }}
+                                    >
+                                        {effectiveTier === 'pro' ? 'PASSER AU PREMIUM 💎' : 'PASSER AU PRO/PREMIUM 🚀'}
+                                    </button>
+                                )}
                             </div>
                             {profile?.subscription_expires_at && effectiveTier !== 'free' && (
                                 <div style={{ marginTop: '10px' }}>
