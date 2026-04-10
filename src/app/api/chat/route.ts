@@ -192,14 +192,11 @@ RÈGLES DE CONSCIENCE TEMPORELLE :
 - Si l'utilisateur demande un menu "pour maintenant" ou sans préciser, choisis le créneau suivant logique (17h-19h = Dîner, 15h-17h = Collation, etc.).
 
 RÈGLES STRICTES :
-1) Utilise UNIQUEMENT les aliments de la BASE DE DONNÉES CERTIFIÉE ci-dessus pour composer tes menus.
-2) Longueur : 1 à 6 phrases max.
-3) Français simple et chaleureux.
-4) PLANNING : Analyse d'abord le planning ci-dessous avant de proposer du nouveau.
-5) RÈGLE DE CONVERSATION : Si tu poses une question (ex: "Veux-tu modifier ce menu ?"), si tu informes l'utilisateur d'un conflit de planning, ou si tu discutes simplement, tu DOIS parler normalement SANS aucun préfixe technique.
-6) RÈGLE D'AFFICHAGE TECHNIQUE : Tu DOIS utiliser les préfixes (ex: "menu creneau collation:") UNIQUEMENT quand tu génères la liste finale et concrète des ingrédients. Ton message doit alors être complet : titre du repas, liste des ingrédients, portions suggérées, et un petit mot d'encouragement.
-7) FORMATAGE : À l'intérieur d'un menu technique, le titre (ex: "Collation :") doit être seul sur sa ligne. Utilise des listes à puces pour les ingrédients.
-8) TON : Reste chaleureux, enthousiaste et expert. Ne sois pas trop court ou robotique. Explique pourquoi ce menu est bon pour l'objectif de l'utilisateur (${profile.goal}).
+1) INTERDICTION DES PRÉFIXES POUR LES QUESTIONS : Si ton message contient un point d'interrogation (?) ou si tu poses une question, tu DOIS obligatoirement parler normalement SANS aucun préfixe technique.
+2) Utilise UNIQUEMENT les aliments de la BASE DE DONNÉES CERTIFIÉE ci-dessus pour composer tes menus.
+3) PRÉFIXES TECHNIQUES : Tu n'utilises les préfixes (ex: "menu creneau collation:") QUE lorsque tu génères la liste finale et concrète des ingrédients.
+4) Longueur : 1 à 6 phrases max. Ton est chaleureux et africain expert.
+5) PLANNING : Analyse d'abord le planning ci-dessous avant de proposer du nouveau. Si un menu existe déjà, demande avant de le modifier.
 
 === PLANNING ACTUEL ===
 ${plannerContext}
@@ -244,6 +241,12 @@ Contexte utilisateur :
                 aiMessage = rawText
                     .replace(/Dis-\s*/gi, 'Dis ')
                     .trim()
+
+                // 🛡️ SÉCURITÉ : Si l'IA met un préfixe technique alors qu'elle pose une question, on le retire.
+                const prefixRegex = /^menu\s+(creneau\s+(petit_dejeuner|dejeuner|collation|diner)|demain|semaine)\s*:\s*/i
+                if (aiMessage.includes('?') && prefixRegex.test(aiMessage)) {
+                    aiMessage = aiMessage.replace(prefixRegex, '').trim()
+                }
             } catch (anthropicErr) {
                 console.error('⚠️ Anthropic primary error:', anthropicErr)
                 if (wantsWeek) {
