@@ -141,14 +141,15 @@ export async function POST(req: NextRequest) {
             }, { status: 200 })
         }
 
-        const wantsMenuAny = /\bmenu\b/.test(normalizedUserMessage)
+        const messageLower = normalizedUserMessage
+        const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit déjeuner') || messageLower.includes('déjeuner') || messageLower.includes('dîner')
         let foodsContext = ""
         
         if (wantsMenuAny) {
             const { data: allFoods } = await supabase.from('food_items').select('*')
             if (allFoods && allFoods.length > 0) {
                 const foodsList = allFoods.map((f: any) => `- ${f.name_standard || f.display_name || f.name_fr} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`).join('\n')
-                foodsContext = `\n\n=== BASE DE DONNÉES DES ALIMENTS ===\nVoici la liste STRICTE des aliments autorisés dans notre système :\n${foodsList}\n\nRÈGLE DU MENU : Tu DOIS obligatoirement combiner ces ingrédients pour construire tes menus (ex: Riz + Viande + Sauce). Additionne leurs calories et macros. N'invente AUCUN plat qui n'est pas directement issu de cette liste ou une combinaison de cette liste.`
+                foodsContext = `\n\n=== BASE DE DONNÉES STRICTE (food_items) ===\nTu es INTERDIT de proposer un aliment qui n'est pas dans cette liste. Voici tes seules options :\n${foodsList}\n\nCONSIGNE : Pour chaque menu, cite EXACTEMENT le nom de l'aliment tel qu'écrit ci-dessus (ex: "Riz au gras" si c'est le nom exact). N'utilise JAMAIS de noms génériques si un nom spécifique existe dans la liste.`
             }
         }
 
