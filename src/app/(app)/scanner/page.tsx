@@ -347,7 +347,7 @@ export default function ScannerPage() {
             if (scanMode === 'barcode' && !image) {
                 // Attendre un court instant que le DOM soit prêt
                 await new Promise(r => setTimeout(r, 100));
-                
+
                 const element = document.getElementById("reader");
                 if (!element) return;
 
@@ -355,10 +355,10 @@ export default function ScannerPage() {
                     if (!qrScannerRef.current) {
                         qrScannerRef.current = new Html5Qrcode("reader");
                     }
-                    
+
                     if (isMounted) {
                         await qrScannerRef.current.start(
-                            { facingMode: "environment" }, 
+                            { facingMode: "environment" },
                             { fps: 10, qrbox: { width: 250, height: 250 } },
                             onScanSuccess,
                             onScanFailure
@@ -382,7 +382,7 @@ export default function ScannerPage() {
 
     async function onScanSuccess(decodedText: string) {
         if (qrScannerRef.current) qrScannerRef.current.stop().catch(e => console.error(e));
-        
+
         // --- VÉRIFICATION LIMITE SCAN PRODUIT (COMBO 2) ---
         const { data: { session } } = await supabase.auth.getSession()
         if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
@@ -444,7 +444,7 @@ export default function ScannerPage() {
                 .eq('ai_confidence', -1)
                 .gte('logged_at', `${today}T00:00:00.000Z`)
                 .lte('logged_at', `${today}T23:59:59.999Z`)
-            
+
             if (count !== null && count >= 5) {
                 alert("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit). Passez au plan Pro pour scanner sans limite !")
                 router.push('/upgrade')
@@ -528,44 +528,44 @@ export default function ScannerPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            
+
             // 1. Sauvegarder l'aliment dans la base de données (pour futur usage)
             const factor = manualFood.portion_g > 0 ? 100 / manualFood.portion_g : 1
-            const resFood = await fetch('/api/foods', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
-                body: JSON.stringify({ 
-                    name_fr: manualFood.name_fr, 
-                    category: manualFood.category, 
-                    calories_per_100g: Math.round(manualFood.calories * factor), 
-                    protein_per_100g: Math.round(manualFood.protein_g * factor * 10) / 10, 
-                    carbs_per_100g: Math.round(manualFood.carbs_g * factor * 10) / 10, 
-                    fat_per_100g: Math.round(manualFood.fat_g * factor * 10) / 10, 
-                    default_portion_g: manualFood.portion_g, 
-                    verified: false, 
-                    origin_country: [] 
-                }) 
+            const resFood = await fetch('/api/foods', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({
+                    name_fr: manualFood.name_fr,
+                    category: manualFood.category,
+                    calories_per_100g: Math.round(manualFood.calories * factor),
+                    protein_per_100g: Math.round(manualFood.protein_g * factor * 10) / 10,
+                    carbs_per_100g: Math.round(manualFood.carbs_g * factor * 10) / 10,
+                    fat_per_100g: Math.round(manualFood.fat_g * factor * 10) / 10,
+                    default_portion_g: manualFood.portion_g,
+                    verified: false,
+                    origin_country: []
+                })
             })
             const jsonFood = await resFood.json()
             if (!jsonFood.success) throw new Error("Erreur lors de la sauvegarde de l'aliment")
 
             // 2. Préparer le repas complet (Aliments déjà sélectionnés + ce nouvel aliment)
-            const newFoodEntry: EnrichedSuggestion = { 
-                id: jsonFood.data.id, 
-                name: manualFood.name_fr, 
-                score: 100, 
-                calories: manualFood.calories, 
-                protein_g: manualFood.protein_g, 
-                carbs_g: manualFood.carbs_g, 
-                fat_g: manualFood.fat_g, 
-                portion_g: manualFood.portion_g, 
-                calories_detected: manualFood.calories, 
-                protein_detected: manualFood.protein_g, 
-                carbs_detected: manualFood.carbs_g, 
-                fat_detected: manualFood.fat_g, 
-                confidence: 100, 
-                detected: manualFood.name_fr, 
-                fromAI: false 
+            const newFoodEntry: EnrichedSuggestion = {
+                id: jsonFood.data.id,
+                name: manualFood.name_fr,
+                score: 100,
+                calories: manualFood.calories,
+                protein_g: manualFood.protein_g,
+                carbs_g: manualFood.carbs_g,
+                fat_g: manualFood.fat_g,
+                portion_g: manualFood.portion_g,
+                calories_detected: manualFood.calories,
+                protein_detected: manualFood.protein_g,
+                carbs_detected: manualFood.carbs_g,
+                fat_detected: manualFood.fat_g,
+                confidence: 100,
+                detected: manualFood.name_fr,
+                fromAI: false
             }
 
             const allFoods = [...selectedFoods, newFoodEntry]
@@ -579,34 +579,34 @@ export default function ScannerPage() {
 
             // 3. Sauvegarder le repas (Meal) directement
             const isBarcode = scanMode === 'barcode' || !!(window as any).isLastScanFromBarcode;
-            const resMeal = await fetch('/api/meals', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
-                body: JSON.stringify({ 
-                    custom_name: mealName || allFoods.map(f => f.name).join(', '), 
+            const resMeal = await fetch('/api/meals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({
+                    custom_name: mealName || allFoods.map(f => f.name).join(', '),
                     meal_type: currentSlotKey,
-                    portion_g: Math.round(finalTotals.portion_g), 
-                    calories: Math.round(finalTotals.calories), 
-                    protein_g: Math.round(finalTotals.protein_g * 10) / 10, 
-                    carbs_g: Math.round(finalTotals.carbs_g * 10) / 10, 
-                    fat_g: Math.round(finalTotals.fat_g * 10) / 10, 
-                    image_url: capturedImage, 
+                    portion_g: Math.round(finalTotals.portion_g),
+                    calories: Math.round(finalTotals.calories),
+                    protein_g: Math.round(finalTotals.protein_g * 10) / 10,
+                    carbs_g: Math.round(finalTotals.carbs_g * 10) / 10,
+                    fat_g: Math.round(finalTotals.fat_g * 10) / 10,
+                    image_url: capturedImage,
                     ai_confidence: isBarcode ? -1 : 100, // -1 marque le scan code-barres
                     coach_message: null
-                }) 
+                })
             })
-            
+
             const jsonMeal = await resMeal.json()
             if (jsonMeal.success && jsonMeal.data) {
                 addMeal(jsonMeal.data)
                 router.push('/journal')
             }
 
-        } catch (err) { 
+        } catch (err) {
             console.error(err)
             alert("Erreur lors de l'enregistrement.")
-        } finally { 
-            setIsSavingManual(false) 
+        } finally {
+            setIsSavingManual(false)
         }
     }
 
@@ -813,10 +813,10 @@ export default function ScannerPage() {
                 <div style={{ marginBottom: '20px' }}>
                     <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414', minHeight: '250px' }}></div>
                     <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres dans le carré</p>
-                    
+
                     <div style={{ marginTop: '20px', textAlign: 'center' }}>
                         <p style={{ color: '#444', fontSize: '11px', marginBottom: '10px', textTransform: 'uppercase', fontWeight: '700' }}>Ou</p>
-                        <button 
+                        <button
                             onClick={() => {
                                 const input = document.createElement('input');
                                 input.type = 'file';
@@ -827,13 +827,13 @@ export default function ScannerPage() {
                                 };
                                 input.click();
                             }}
-                            style={{ 
-                                background: 'transparent', 
-                                border: `1px solid ${slotColor}30`, 
-                                color: slotColor, 
-                                padding: '10px 20px', 
-                                borderRadius: '12px', 
-                                fontSize: '13px', 
+                            style={{
+                                background: 'transparent',
+                                border: `1px solid ${slotColor}30`,
+                                color: slotColor,
+                                padding: '10px 20px',
+                                borderRadius: '12px',
+                                fontSize: '13px',
                                 fontWeight: '600',
                                 cursor: 'pointer'
                             }}
