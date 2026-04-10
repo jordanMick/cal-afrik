@@ -59,7 +59,7 @@ function normalizeMenuText(raw: string, mode: 'today' | 'tomorrow' | 'week' = 't
     return base
 }
 
-function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week') {
+function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (line: string, slotKey: string) => void) {
     const normalized = normalizeMenuText(menuText, mode)
     const lines = normalized
         .split('\n')
@@ -116,10 +116,57 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week') 
         }
 
         if (isMealLine) {
+            const mealMatch = line.match(/^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner):/i)
+            let buttonNode = null
+
+            if (mealMatch && mode === 'today' && onLogSuggestion) {
+                const slotPrefix = mealMatch[1].toLowerCase()
+                const SLOT_MAP: Record<string, string> = {
+                    'petit-déj': 'petit_dejeuner', 'petit-dej': 'petit_dejeuner',
+                    'déjeuner': 'dejeuner', 'dejeuner': 'dejeuner',
+                    'collation': 'collation', 'dîner': 'diner', 'diner': 'diner'
+                }
+                const lineSlotKey = SLOT_MAP[slotPrefix]
+                const isCurrentSlot = lineSlotKey === currentSlotKey
+                
+                const SLOT_START_HOURS: Record<string, number> = { petit_dejeuner: 6, dejeuner: 11, collation: 15, diner: 18 }
+                const startHour = SLOT_START_HOURS[lineSlotKey] || 0
+                const currentHour = new Date().getHours()
+                const isFuture = currentHour < startHour
+                
+                const buttonDisabled = !isCurrentSlot || isSavingActivity
+
+                buttonNode = (
+                    <button
+                        disabled={buttonDisabled}
+                        onClick={() => onLogSuggestion(line, lineSlotKey)}
+                        style={{
+                            marginTop: '8px',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            border: `0.5px solid ${buttonDisabled ? '#333' : '#6366f180'}`,
+                            background: buttonDisabled ? 'transparent' : '#6366f110',
+                            color: buttonDisabled ? '#555' : '#6366f1',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            cursor: buttonDisabled ? 'default' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                        }}
+                    >
+                        📥 {isSavingActivity ? 'Enregistrement...' : isCurrentSlot ? 'Ajouter au journal' : isFuture ? `Disponible à ${startHour}:00` : 'Déjà passé'}
+                    </button>
+                )
+            }
+
             const node = (
-                <p key={`menu-line-${idx}`} style={{ color: '#e5e7eb', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
-                    {line}
-                </p>
+                <div key={`menu-line-${idx}`} style={{ marginTop: '10px', marginBottom: '14px' }}>
+                    <p style={{ color: '#e5e7eb', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
+                        {line}
+                    </p>
+                    {buttonNode}
+                </div>
             )
             if (currentDayKey) currentDayBlock.push(node)
             else rows.push(node)
@@ -164,6 +211,49 @@ export default function ScannerPage() {
     const [menuTab, setMenuTab] = useState<'today' | 'tomorrow' | 'week'>('today')
     const [showWeekMenuPopup, setShowWeekMenuPopup] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
+
+    const handleLogSuggestion = async (line: string, slotKey: string) => {
+        if (!line) return
+        setIsSaving(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+            
+            const cleanedLine = line.replace(/^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]\s*/i, '').trim()
+            const mealNameLocal = cleanedLine.substring(0, 50) + (cleanedLine.length > 50 ? '...' : '')
+            
+            let calories = 500
+            if (slotKey === 'dejeuner' || slotKey === 'diner') calories = 700
+            if (slotKey === 'collation') calories = 250
+
+            const res = await fetch('/api/meals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({
+                    custom_name: mealNameLocal,
+                    meal_type: slotKey,
+                    portion_g: 250, 
+                    calories: calories,
+                    protein_g: 0,
+                    carbs_g: 0,
+                    fat_g: 0,
+                    image_url: null,
+                    ai_confidence: 100,
+                    coach_message: "Repas suggéré par Coach Yao"
+                })
+            })
+            const json = await res.json()
+            if (json.success) {
+                addMeal(json.data)
+                router.push('/journal')
+            }
+        } catch (err) {
+            console.error(err)
+            alert("Erreur lors de l'enregistrement.")
+        } finally {
+            setIsSaving(false)
+        }
+    }
 
     const currentHour = new Date().getHours()
     const currentSlotKey = getMealSlot(currentHour)
@@ -735,7 +825,7 @@ export default function ScannerPage() {
                         </div>
                         {activeMenuText ? (
                             <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '180px' : 'none', overflow: menuTab === 'week' ? 'hidden' : 'visible' }}>
-                                {renderMenuBlock(activeMenuText, menuTab)}
+                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleLogSuggestion)}
                             </div>
                         ) : (
                             <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
