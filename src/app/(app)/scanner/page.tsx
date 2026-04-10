@@ -83,7 +83,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
 
     lines.forEach((line, idx) => {
         const isHeader = /^(menu\s+)/i.test(line) || /^(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:/i.test(line)
-        const isMealLine = /^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner):/i.test(line)
+        const isMealLine = /^(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i.test(line)
 
         if (isHeader) {
             if (/^menu\s+/i.test(line)) {
@@ -116,12 +116,13 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
         }
 
         if (isMealLine) {
-            const mealMatch = line.match(/^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner):/i)
+            const mealMatch = line.match(/^(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i)
             let buttonNode = null
 
             if (mealMatch && mode === 'today' && onLogSuggestion) {
                 const slotPrefix = mealMatch[1].toLowerCase()
                 const SLOT_MAP: Record<string, string> = {
+                    'petit-déjeuner': 'petit_dejeuner', 'petit-dejeuner': 'petit_dejeuner',
                     'petit-déj': 'petit_dejeuner', 'petit-dej': 'petit_dejeuner',
                     'déjeuner': 'dejeuner', 'dejeuner': 'dejeuner',
                     'collation': 'collation', 'dîner': 'diner', 'diner': 'diner'
