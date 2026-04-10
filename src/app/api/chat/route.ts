@@ -103,11 +103,17 @@ export async function POST(req: NextRequest) {
         }
         
         // 2. Gestion des quotas
+        const SUBSCRIPTION_RULES: Record<string, any> = {
+            free: { maxChatMessagesPerDay: 10 },
+            pro: { maxChatMessagesPerDay: 50 },
+            premium: { maxChatMessagesPerDay: 100 }
+        }
+        
         const effectiveTier = getEffectiveTier(profile)
-        const maxMessages = Number(SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay || 2)
+        const rules = SUBSCRIPTION_RULES[effectiveTier] || SUBSCRIPTION_RULES.free
+        const maxMessages = Number(rules.maxChatMessagesPerDay)
         const today = new Date().toISOString().split('T')[0]
         
-        // Si la dernière réinitialisation n'est pas aujourd'hui, on remet le compteur à 0
         let messagesUsedToday = profile.chat_messages_today || 0
         if (profile.last_usage_reset_date !== today) {
             messagesUsedToday = 0
@@ -117,7 +123,7 @@ export async function POST(req: NextRequest) {
         if (messagesUsedToday >= maxMessages) {
             return NextResponse.json({ 
                 success: false, 
-                error: 'Limite de messages atteinte', 
+                error: 'Limite journalière atteinte. Reviens demain !', 
                 code: 'LIMIT_REACHED' 
             }, { status: 200 })
         }
