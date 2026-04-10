@@ -243,8 +243,14 @@ export default function ScannerPage() {
         
         const cleanedLower = fullText.toLowerCase()
         const detectedInDB = (foods || []).filter(f => {
-            const name = (f.display_name || f.name_standard || f.name_fr || "").toLowerCase()
-            return name && name.length > 2 && cleanedLower.includes(name)
+            const fullName = (f.display_name || f.name_standard || f.name_fr || "").toLowerCase()
+            // On extrait le nom court sans les parenthèses (ex: "Molou Zogbon (Bouillie de riz)" -> "molou zogbon")
+            const shortName = fullName.replace(/\s*\(.*?\)/g, "").trim()
+            
+            return fullName && (
+                cleanedLower.includes(fullName) || 
+                (shortName.length > 3 && cleanedLower.includes(shortName))
+            )
         })
 
         if (detectedInDB.length > 0) {
