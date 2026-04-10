@@ -216,7 +216,7 @@ export default function OnboardingPage() {
     const back = () => setStep(step - 1)
 
     useEffect(() => {
-        if (step === 9) {
+        if (step === 10) {
             setAnalysisProgress(0)
             const interval = setInterval(() => {
                 setAnalysisProgress(p => {
