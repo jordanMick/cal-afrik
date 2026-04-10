@@ -13,8 +13,8 @@ declare global {
 }
 
 const plans = {
-    pro: { price: '4 900', period: 'FCFA/mois', value: 'pro' },
-    premium: { price: '9 900', period: 'FCFA/mois', value: 'premium' },
+    pro: { price: '100', period: 'FCFA/mois', value: 'pro' },
+    premium: { price: '100', period: 'FCFA/mois', value: 'premium' },
 }
 
 function PricingContent() {
