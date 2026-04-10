@@ -11,24 +11,39 @@ export async function POST(req: Request) {
         // La transaction est dans payload.data.entity ou payload.entity
         const transaction = payload.data?.entity || payload.entity || {};
         
-        // Les métadonnées peuvent être dans metadata ou custom_metadata
-        const metadata = transaction.metadata || transaction.custom_metadata || {};
+        // 🛡️ LOGIQUE ULTRA-ROBUSTE POUR LES METADONNEES
+        let rawMeta = transaction.metadata || transaction.custom_metadata || payload.metadata || {};
+        let metadata: any = {};
 
-        console.log(`[FedaPay Webhook] Événement reçu: ${eventName}`, {
+        // Si c'est une chaîne JSON, on la décode
+        if (typeof rawMeta === 'string') {
+            try {
+                metadata = JSON.parse(rawMeta);
+                console.log('[FedaPay Webhook] Metadata JSON parsée avec succès');
+            } catch (e) {
+                console.error('[FedaPay Webhook] Échec du parsing JSON des metadata string');
+            }
+        } else {
+            metadata = rawMeta;
+        }
+
+        const userId = metadata.user_id || metadata.userId;
+        const tier = metadata.tier || metadata.plan;
+
+        console.log(`[FedaPay Webhook] Analyse payload:`, {
+            eventName,
             transaction_id: transaction.id,
             status: transaction.status,
-            userId: metadata.user_id,
-            tier: metadata.tier
+            userId,
+            tier,
+            rawMetadataType: typeof rawMeta
         });
 
         // 1. Gestion du paiement réussi
         if (eventName === 'transaction.approved' || transaction.status === 'approved') {
-            const userId = metadata.user_id;
-            const tier = metadata.tier;
-
             if (!userId || !tier) {
-                console.error('[FedaPay Webhook] Métadonnées manquantes dans le payload approuvé');
-                return NextResponse.json({ error: 'Métadonnées manquantes' }, { status: 400 });
+                console.error('[FedaPay Webhook] ERREUR: Impossible de trouver userId ou tier dans:', metadata);
+                return NextResponse.json({ error: 'Data missing in metadata' }, { status: 400 });
             }
 
             console.log(`[FedaPay Webhook] Traitement validation pour ${userId} - Plan: ${tier}`);
