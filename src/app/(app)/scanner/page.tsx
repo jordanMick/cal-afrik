@@ -237,24 +237,45 @@ export default function ScannerPage() {
         const cleanedLine = line.replace(/^(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]\s*/i, '').trim()
         const displayLabel = cleanedLine.substring(0, 50) + (cleanedLine.length > 50 ? '...' : '')
 
-        // Estimation rapide des calories
-        let calories = 500
-        if (slotKey === 'dejeuner' || slotKey === 'diner') calories = 700
-        if (slotKey === 'collation') calories = 250
+        // --- LOGIQUE DE CALCUL VIA TA BASE DE DONNÉES ---
+        let totalCals = 0;
+        let totalProt = 0;
+        let totalCarbs = 0;
+        let totalFat = 0;
+        
+        // On cherche les aliments de la BD mentionnés dans la suggestion
+        const cleanedLower = cleanedLine.toLowerCase()
+        const detectedInDB = (foods || []).filter(f => {
+            const name = (f.name_fr || f.name_standard || "").toLowerCase()
+            return name && name.length > 2 && cleanedLower.includes(name)
+        })
+
+        if (detectedInDB.length > 0) {
+            detectedInDB.forEach(f => {
+                const portion = f.default_portion_g || 100
+                totalCals += (f.calories_per_100g * portion) / 100
+                totalProt += (f.protein_per_100g * portion) / 100
+                totalCarbs += (f.carbs_per_100g * portion) / 100
+                totalFat += (f.fat_per_100g * portion) / 100
+            })
+        } else {
+            // Fallback si aucun aliment n'est trouvé dans la BD par nom
+            totalCals = slotKey === 'dejeuner' || slotKey === 'diner' ? 700 : (slotKey === 'collation' ? 250 : 500)
+        }
 
         const virtualFood: EnrichedSuggestion = {
             id: `suggested-${slotKey}-${Date.now()}`,
             name: cleanedLine,
             score: 100,
-            calories: calories,
-            protein_g: 0,
-            carbs_g: 0,
-            fat_g: 0,
+            calories: Math.round(totalCals),
+            protein_g: Math.round(totalProt * 10) / 10,
+            carbs_g: Math.round(totalCarbs * 10) / 10,
+            fat_g: Math.round(totalFat * 10) / 10,
             portion_g: 250,
-            calories_detected: calories,
-            protein_detected: 0,
-            carbs_detected: 0,
-            fat_detected: 0,
+            calories_detected: Math.round(totalCals),
+            protein_detected: totalProt,
+            carbs_detected: totalCarbs,
+            fat_detected: totalFat,
             confidence: 100,
             detected: cleanedLine,
             fromAI: false
@@ -262,7 +283,7 @@ export default function ScannerPage() {
 
         setMealName(displayLabel)
         setSelectedFoods([virtualFood])
-        setTotalCaloriesAI(calories)
+        setTotalCaloriesAI(Math.round(totalCals))
         setShowRecap(true)
         setShowCoach(false)
         setCoachMessage('')
