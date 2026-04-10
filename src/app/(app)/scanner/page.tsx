@@ -141,6 +141,12 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 const isCurrentSlot = lineSlotKey === currentSlotKey
                 const buttonDisabled = !isCurrentSlot || isSavingActivity
 
+                // Correction : On utilise les heures du store pour les messages
+                const SLOT_START_HOURS_STORE: Record<string, number> = { petit_dejeuner: 0, dejeuner: 12, collation: 16, diner: 19 }
+                const startHour = SLOT_START_HOURS_STORE[lineSlotKey] || 0
+                const currentHour = new Date().getHours()
+                const isFuture = currentHour < startHour
+
                 buttonNode = (
                     <button
                         disabled={buttonDisabled}
