@@ -560,7 +560,7 @@ export default function OnboardingPage() {
                         </div>
                     </div>
                     <div style={{ marginTop: '20px' }}>
-                        <NextButton label={isEditMode ? "Terminer" : "Découvrir mon plan →"} onClick={isEditMode ? handleFinish : next} />
+                        <NextButton label={isEditMode ? "Terminer" : "Découvrir mon plan →"} onClick={isEditMode ? () => handleFinish() : next} />
                     </div>
                 </StepWrapper>
             )}
@@ -589,7 +589,7 @@ export default function OnboardingPage() {
                         </button>
                         <button
                             disabled={isSaving}
-                            onClick={handleFinish}
+                            onClick={() => handleFinish()}
                             style={{ width: '100%', height: '56px', background: 'transparent', color: '#555', borderRadius: '18px', fontWeight: '700', border: 'none', cursor: 'pointer', fontSize: '15px' }}>
                             Continuer gratuitement (limité)
                         </button>
