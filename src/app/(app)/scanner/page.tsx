@@ -316,24 +316,52 @@ export default function ScannerPage() {
                     : chatSuggestedMenus.week)
             : null
 
-    // Fallback intelligent : si menuTab === 'tomorrow' est vide, on cherche dans 'week'
-    if (menuTab === 'tomorrow' && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
-        const tomorrow = new Date()
-        tomorrow.setDate(tomorrow.getDate() + 1)
+    // Fallback intelligent : si menuTab === 'today' ou 'tomorrow' est vide, on cherche dans 'week'
+    if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
+        const targetDate = new Date()
+        if (menuTab === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1)
+        
         const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
-        const tomorrowDay = dayNames[tomorrow.getDay()]
-        const tomorrowDate = `${String(tomorrow.getDate()).padStart(2, '0')}/${String(tomorrow.getMonth() + 1).padStart(2, '0')}`
-        const dateKey = `${tomorrowDay} ${tomorrowDate}`
+        const targetDay = dayNames[targetDate.getDay()]
+        const formattedDate = `${String(targetDate.getDate()).padStart(2, '0')}/${String(targetDate.getMonth() + 1).padStart(2, '0')}`
+        const dateKey = `${targetDay} ${formattedDate}`
         
         const weekText = chatSuggestedMenus.week
         const dateIdx = weekText.toLowerCase().indexOf(dateKey.toLowerCase())
+        
         if (dateIdx !== -1) {
-            const afterDate = weekText.substring(dateIdx)
-            // On cherche le début du jour suivant (Lundi, Mardi, ...) pour couper
-            const nextDayMatch = afterDate.substring(10).match(/(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}/i)
-            activeMenuText = nextDayMatch 
-                ? afterDate.substring(0, 10 + nextDayMatch.index!).trim()
-                : afterDate.trim()
+            const nextDayIdx = weekText.toLowerCase().indexOf(dayNames[(targetDate.getDay() + 1) % 7], dateIdx + 10)
+            let dayContent = nextDayIdx !== -1 
+                ? weekText.substring(dateIdx, nextDayIdx).trim()
+                : weekText.substring(dateIdx).trim()
+
+            if (menuTab === 'tomorrow') {
+                activeMenuText = dayContent
+            } else {
+                // Pour 'today', on cherche le créneau spécifique (Petit-déj, Déjeuner, etc.)
+                const slotKeywords: Record<string, string[]> = {
+                    petit_dejeuner: ['petit', 'matin'],
+                    dejeuner: ['dejeuner', 'midi'],
+                    collation: ['collation', 'gouter', '4h'],
+                    diner: ['diner', 'soir']
+                }
+                const keywords = slotKeywords[currentSlotKey] || []
+                
+                // On cherche la ligne du créneau
+                const lines = dayContent.split('\n')
+                const slotLineIdx = lines.findIndex(l => keywords.some(k => l.toLowerCase().includes(k)))
+                
+                if (slotLineIdx !== -1) {
+                    // On prend la ligne du slot + les lignes suivantes jusqu'au prochain slot connu
+                    const allSlots = ['petit', 'dejeuner', 'collation', 'diner']
+                    let extracted = lines[slotLineIdx]
+                    for (let i = slotLineIdx + 1; i < lines.length; i++) {
+                        if (allSlots.some(s => lines[i].toLowerCase().includes(s))) break
+                        extracted += '\n' + lines[i]
+                    }
+                    activeMenuText = extracted.trim()
+                }
+            }
         }
     }
 
