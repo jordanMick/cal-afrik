@@ -541,9 +541,24 @@ export default function ProfilPage() {
                     </>
                 )}
 
+                {effectiveTier !== 'premium' && (
+                    <button 
+                        onClick={() => router.push('/upgrade')}
+                        style={{ 
+                            width: '100%', height: '54px', marginBottom: '12px',
+                            background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                            border: 'none', borderRadius: '18px',
+                            color: '#fff', fontSize: '15px', fontWeight: '800',
+                            cursor: 'pointer', boxShadow: '0 8px 16px rgba(99,102,241,0.2)'
+                        }}
+                    >
+                        {effectiveTier === 'pro' ? '💎 PASSER AU PREMIUM' : '🚀 AMÉLIORER MON PLAN'}
+                    </button>
+                )}
+
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <button onClick={() => router.push('/onboarding?edit=1')} style={{ flex: 1, height: '48px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>
-                        ✏️ Modifier
+                    <button onClick={() => router.push('/onboarding?edit=1')} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#fff', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
+                        ✏️ Modifier Profil
                     </button>
                     <button onClick={handleLogout} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#ef4444', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
                         Déconnexion
