@@ -72,16 +72,21 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     let pendingButtons: React.ReactNode[] = []
 
     const flushDayBlock = () => {
-        if (!currentDayKey || currentDayBlock.length === 0) return
-
+        // 1. Toujours vider les boutons en attente, même sans clé de jour (menu Today)
         if (pendingButtons.length > 0) {
-            currentDayBlock.push(
-                <div key="pending-btns-container" style={{ marginTop: '4px' }}>
+            const btns = (
+                <div key={`pending-btns-${Math.random()}`} style={{ marginTop: '4px', marginBottom: '10px' }}>
                     {pendingButtons.map((b, i) => <div key={`pb-${i}`} style={{ marginTop: '8px' }}>{b}</div>)}
                 </div>
             )
+            if (currentDayKey) currentDayBlock.push(btns)
+            else rows.push(btns)
             pendingButtons = []
         }
+
+        // 2. Si on a un bloc de jour complet (Planning semaine), on le traite
+        if (!currentDayKey || currentDayBlock.length === 0) return
+
         rows.push(
             <div key={`day-${currentDayKey}`} style={{ marginTop: '10px', padding: '10px', background: 'rgba(255,255,255,0.02)', border: '0.5px solid #242424', borderRadius: '12px' }}>
                 {currentDayBlock}
