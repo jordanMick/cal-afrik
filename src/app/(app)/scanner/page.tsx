@@ -892,9 +892,24 @@ export default function ScannerPage() {
 
                     <div style={{ background: '#141414', border: `0.5px solid ${slotColor}30`, borderRadius: '16px', padding: '14px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                            <p style={{ color: slotColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                                Menu suggéré par Yao
-                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <p style={{ color: slotColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                                    Menu suggéré par Yao
+                                </p>
+                                {activeMenuText && (
+                                    <button
+                                        onClick={() => {
+                                            if (confirm("Effacer cette suggestion ?")) {
+                                                clearChatSuggestedMenu(menuTab, menuTab === 'today' ? currentSlotKey : undefined)
+                                            }
+                                        }}
+                                        style={{ background: 'transparent', border: 'none', color: '#444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                                        title="Supprimer la suggestion"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6m4-6v6"/></svg>
+                                    </button>
+                                )}
+                            </div>
                             {menuTab === 'week' && activeMenuText && (
                                 <button
                                     onClick={() => setShowWeekMenuPopup(true)}

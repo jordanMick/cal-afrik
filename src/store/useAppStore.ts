@@ -81,6 +81,7 @@ interface AppState {
         date: string | null // YYYY-MM-DD
     }
     setChatSuggestedMenu: (kind: 'today' | 'tomorrow' | 'week', message: string, slot?: string) => void
+    clearChatSuggestedMenu: (kind: 'today' | 'tomorrow' | 'week', slot?: string) => void
 
     // ─── Bilans par créneau ──────────────────────────────────
     slotBilans: Partial<Record<MealSlotKey, SlotBilan>>
@@ -251,11 +252,11 @@ export const useAppStore = create<AppState>()(
             },
             setChatSuggestedMenu: (kind, message, slot) =>
                 set((state) => {
+                    const today = new Date().toISOString().split('T')[0]
                     const nextToday = { ...state.chatSuggestedMenus.today }
                     if (kind === 'today' && slot) {
                         nextToday[slot] = message
                     } else if (kind === 'today') {
-                        // Fallback si pas de slot précis détecté
                         const slotMatch = message.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
                         const s = slotMatch ? (slotMatch[1] as MealSlotKey) : 'unspecified' as any
                         nextToday[s] = message
@@ -267,8 +268,24 @@ export const useAppStore = create<AppState>()(
                             today: nextToday,
                             tomorrow: kind === 'tomorrow' ? message : state.chatSuggestedMenus.tomorrow,
                             week: kind === 'week' ? message : state.chatSuggestedMenus.week,
-                            date: new Date().toISOString().split('T')[0]
+                            date: today
                         },
+                    }
+                }),
+
+            clearChatSuggestedMenu: (kind, slot) =>
+                set((state) => {
+                    const nextToday = { ...state.chatSuggestedMenus.today }
+                    if (kind === 'today' && slot) {
+                        delete nextToday[slot]
+                    }
+                    return {
+                        chatSuggestedMenus: {
+                            ...state.chatSuggestedMenus,
+                            today: nextToday,
+                            tomorrow: kind === 'tomorrow' ? null : state.chatSuggestedMenus.tomorrow,
+                            week: kind === 'week' ? null : state.chatSuggestedMenus.week,
+                        }
                     }
                 }),
 
