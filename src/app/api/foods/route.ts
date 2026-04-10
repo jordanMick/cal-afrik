@@ -83,13 +83,13 @@ export async function POST(req: NextRequest) {
         const { data, error } = await supabase
             .from('food_items')
             .insert({
-                name_fr,
-                name_local: name_local || null,
+                name_standard: name_fr,
+                display_name: name_local || null,
                 category,
                 calories_per_100g,
-                protein_per_100g: protein_per_100g ?? 0,
-                carbs_per_100g: carbs_per_100g ?? 0,
-                fat_per_100g: fat_per_100g ?? 0,
+                proteins_100g: protein_per_100g ?? 0,
+                carbs_100g: carbs_per_100g ?? 0,
+                lipids_100g: fat_per_100g ?? 0,
                 default_portion_g: default_portion_g ?? 200,
                 verified: verified ?? false,
             })

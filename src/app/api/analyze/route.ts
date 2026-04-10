@@ -539,7 +539,6 @@ export async function POST(req: Request) {
                 console.log("[ANALYZE][PIPELINE] unknown_logs_lookup", {
                     detectedName,
                     matched: !!unknownLogMatch,
-                    technicalMatchFromLog: unknownLogMatch?.technical_match || null,
                     occurrenceCount: unknownLogMatch?.occurrence_count ?? null,
                 })
             }
@@ -558,22 +557,9 @@ export async function POST(req: Request) {
                 })
             }
 
-            // unknown_logs peut stocker un technical_match réutilisable
-            let matchedViaUnknownTechnical: any = null
-            if (!matchedByAliasSql && !matchedByTechnical && unknownLogMatch?.technical_match) {
-                const normalizedUnknownTechnical = normalizeTechnicalKey(String(unknownLogMatch.technical_match))
-                matchedViaUnknownTechnical = (foodItems || []).find((food: any) =>
-                    normalizeTechnicalKey(food?.name_standard) === normalizedUnknownTechnical
-                ) || null
-                console.log("[ANALYZE][PIPELINE] technical_from_unknown_lookup", {
-                    technicalMatch: unknownLogMatch?.technical_match || null,
-                    matched: !!matchedViaUnknownTechnical,
-                    matchedName: matchedViaUnknownTechnical?.display_name || matchedViaUnknownTechnical?.name_standard || null,
-                })
-            }
-
             const matchedByAlias = matchedByAliasSql || aliasToFood.get(normalizedLabel) || null
-            const matchedFood = matchedByAlias || matchedViaUnknownTechnical || matchedByTechnical || null
+            // L'ordre demandé : Alias -> unknown_logs -> technical_match
+            const matchedFood = matchedByAlias || unknownLogMatch || matchedByTechnical || null
             console.log("🧪 FOOD ITEM MATCH:", matchedFood)
             console.log("Match trouvé en BD ?:", !!matchedFood)
             const topMatches = getTopMatches(detectedName, foodItems || [])
@@ -614,9 +600,13 @@ export async function POST(req: Request) {
                         await supabase
                             .from("unknown_logs")
                             .update({
-                                technical_match: technicalMatch || null,
-                                fallback_data: fallbackData || {},
+                                calories_per_100g: Number(fallbackData?.calories_per_100g) || 0,
+                                proteins_100g: Number(fallbackData?.proteins_100g) || 0,
+                                lipids_100g: Number(fallbackData?.lipids_100g) || 0,
+                                carbs_100g: Number(fallbackData?.carbs_100g) || 0,
+                                density_g_ml: Number(fallbackData?.density_g_ml) || 1.0,
                                 occurrence_count: Number(existingUnknown.occurrence_count || 0) + 1,
+                                last_detected_at: new Date().toISOString()
                             })
                             .eq("id", existingUnknown.id)
                     } else {
@@ -624,8 +614,11 @@ export async function POST(req: Request) {
                             .from("unknown_logs")
                             .insert({
                                 detected_name: detectedName,
-                                technical_match: technicalMatch || null,
-                                fallback_data: fallbackData || {},
+                                calories_per_100g: Number(fallbackData?.calories_per_100g) || 0,
+                                proteins_100g: Number(fallbackData?.proteins_100g) || 0,
+                                lipids_100g: Number(fallbackData?.lipids_100g) || 0,
+                                carbs_100g: Number(fallbackData?.carbs_100g) || 0,
+                                density_g_ml: Number(fallbackData?.density_g_ml) || 1.0,
                                 occurrence_count: 1,
                             })
                     }
@@ -635,19 +628,19 @@ export async function POST(req: Request) {
             }
             console.log("[ANALYZE][PIPELINE] final_resolution", {
                 detectedName,
-                source: matchedByAlias ? "alias" : matchedViaUnknownTechnical ? "unknown_logs->technical_match" : matchedByTechnical ? "technical_match" : "fallback_data",
-                shownName: matchedFood?.display_name || detectedName,
+                source: matchedByAlias ? "alias" : unknownLogMatch ? "unknown_logs" : matchedByTechnical ? "technical_match" : "fallback_data",
+                shownName: matchedFood?.display_name || matchedFood?.detected_name || detectedName,
                 weight,
                 caloriesDetected,
             })
 
             const displayDetected = matchedFood
-                ? (matchedFood?.display_name || detectedName)
+                ? (matchedFood?.display_name || matchedFood?.detected_name || detectedName)
                 : detectedName
             const finalResolvedSuggestion = matchedFood
                 ? [{
                     id: matchedFood.id,
-                    name: matchedFood.display_name || matchedFood.name_standard,
+                    name: matchedFood.display_name || matchedFood.detected_name || matchedFood.name_standard,
                     score: 100,
                     calories: Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100),
                     protein_g: Math.round((((Number(matchedFood?.proteins_100g) || 0) * weight) / 100) * 10) / 10,

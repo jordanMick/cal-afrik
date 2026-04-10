@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         const remainingAfter = Math.max(0, slotTarget - newSlotConsumed)
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
-        const MOCK_MODE = true
+        const MOCK_MODE = false
         if (MOCK_MODE) {
             const protein = Number(totals?.protein_g || 0)
             const carbs = Number(totals?.carbs_g || 0)
