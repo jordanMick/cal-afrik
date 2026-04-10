@@ -59,7 +59,7 @@ function normalizeMenuText(raw: string, mode: 'today' | 'tomorrow' | 'week' = 't
     return base
 }
 
-function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (line: string, slotKey: string) => void) {
+function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (fullText: string, slotKey: string) => void, slots?: any) {
     const normalized = normalizeMenuText(menuText, mode)
     const lines = normalized
         .split('\n')
@@ -144,7 +144,8 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 }
                 const lineSlotKey = SLOT_MAP[slotPrefix]
                 const isCurrentSlot = lineSlotKey === currentSlotKey
-                const buttonDisabled = !isCurrentSlot || isSavingActivity
+                const slotHasMeal = slots && slots[lineSlotKey] && slots[lineSlotKey].consumed > 0
+                const buttonDisabled = !isCurrentSlot || isSavingActivity || slotHasMeal
 
                 // Correction : On utilise les heures du store pour les messages
                 const SLOT_START_HOURS_STORE: Record<string, number> = { petit_dejeuner: 0, dejeuner: 12, collation: 16, diner: 19 }
@@ -172,7 +173,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                             transition: 'all 0.2s'
                         }}
                     >
-                        ✨ {isSavingActivity ? 'Chargement...' : isCurrentSlot ? 'Choisir ce menu' : isFuture ? `Disponible à ${startHour}:00` : 'Déjà passé'}
+                        ✨ {isSavingActivity ? 'Chargement...' : slotHasMeal ? 'Déjà enregistré ✓' : isCurrentSlot ? 'Choisir ce menu' : isFuture ? `Disponible à ${startHour}:00` : 'Déjà passé'}
                     </button>
                 )
             }
@@ -870,7 +871,7 @@ export default function ScannerPage() {
                         </div>
                         {activeMenuText ? (
                             <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '180px' : 'none', overflow: menuTab === 'week' ? 'hidden' : 'visible' }}>
-                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion)}
+                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots)}
                             </div>
                         ) : (
                             <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
