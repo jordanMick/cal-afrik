@@ -292,8 +292,8 @@ export default function OnboardingPage() {
     const liveResults = calculateSafeTargets()
 
     useEffect(() => {
-        if (isEditMode && step > 10) {
-            setStep(10)
+        if (isEditMode && step > 11) {
+            setStep(11)
         }
     }, [isEditMode, step, setStep])
 
