@@ -415,11 +415,11 @@ export default function DashboardPage() {
                         {/* Arrière-plan (gris) */}
                         <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#222" strokeWidth="12" strokeLinecap="round" />
                         
-                        {/* Jauge progressive (dégradé) */}
+                        {/* Jauge progressive (Dégradé Global depuis layout.tsx) */}
                         <motion.path 
                             d="M 20 100 A 80 80 0 0 1 180 100" 
                             fill="none" 
-                            stroke="url(#dashboardArcGradFix)" // ID unique
+                            stroke="url(#globalDashboardArcGrad)" 
                             strokeWidth="12" 
                             strokeLinecap="round" 
                             strokeDasharray="251.32" 
@@ -429,16 +429,11 @@ export default function DashboardPage() {
                             }}
                             transition={{ duration: 1.5, ease: "easeOut" }}
                             style={{ 
-                                // Sécurité : au cas où le gradient bug, on garde une couleur de base
-                                filter: 'drop-shadow(0px 0px 4px rgba(16,185,129,0.2))' 
+                                // Sécurité : au cas où le gradient met du temps à se lier, une couleur unie très proche
+                                stroke: dailyCalories > (calorieTarget * 0.7) ? '#10b981' : '#f59e0b',
+                                strokeOpacity: 0.8
                             }}
                         />
-                        <defs>
-                            <linearGradient id="dashboardArcGradFix" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#f59e0b" />
-                                <stop offset="100%" stopColor="#10b981" />
-                            </linearGradient>
-                        </defs>
                     </svg>
                     <div style={{ position: 'absolute', bottom: '10px', textAlign: 'center' }}>
                         <div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>{remaining}</div>

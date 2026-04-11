@@ -39,6 +39,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </AuthProvider>
 
             <BottomNav />
+            {/* ✅ Dégradés SVG globaux (Fix pour les bugs d'affichage sur iPhone/Safari lors de la navigation) */}
+            <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
+                <defs>
+                    <linearGradient id="globalDashboardArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#10b981" />
+                    </linearGradient>
+                </defs>
+            </svg>
         </div>
     )
 }
