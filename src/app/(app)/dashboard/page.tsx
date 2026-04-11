@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
 import { getProgressPercent } from '@/lib/nutrition'
+import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -410,10 +411,25 @@ export default function DashboardPage() {
             <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', border: '0.5px solid #222', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ position: 'relative', width: '200px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg width="200" height="120" viewBox="0 0 200 120">
+                        {/* Arrière-plan (gris) */}
                         <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#222" strokeWidth="12" strokeLinecap="round" />
-                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#arcGrad)" strokeWidth="12" strokeLinecap="round" strokeDasharray="251.32" strokeDashoffset={251.32 - (251.32 * Math.min(100, (dailyCalories / calorieTarget) * 100)) / 100} style={{ transition: 'stroke-dashoffset 1s ease' }} />
+                        
+                        {/* Jauge progressive (dégradé) */}
+                        <motion.path 
+                            d="M 20 100 A 80 80 0 0 1 180 100" 
+                            fill="none" 
+                            stroke="url(#dashboardArcGrad)" 
+                            strokeWidth="12" 
+                            strokeLinecap="round" 
+                            strokeDasharray="251.32" 
+                            initial={{ strokeDashoffset: 251.32 }}
+                            animate={{ 
+                                strokeDashoffset: 251.32 - (251.32 * Math.min(1, (dailyCalories || 0) / (calorieTarget || 2000))) 
+                            }}
+                            transition={{ duration: 1.5, ease: "easeOut" }}
+                        />
                         <defs>
-                            <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <linearGradient id="dashboardArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stopColor="#f59e0b" />
                                 <stop offset="100%" stopColor="#10b981" />
                             </linearGradient>
