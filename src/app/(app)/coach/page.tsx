@@ -506,7 +506,7 @@ export default function CoachChatPage() {
                             {/* Bouton "Ajouter au Scanner" si DATA block présent */}
                             {parsed && (
                                 <button
-                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot, msg.content)}
+                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot, parsed.displayText)}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
