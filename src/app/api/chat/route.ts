@@ -215,15 +215,16 @@ export async function POST(req: NextRequest) {
                 if (hasIngredientConstraint) {
                     // Mode contraint : injecter UNIQUEMENT les aliments disponibles avec macros/100g
                     const matchedList = matchedFoods.map((f: any) =>
-                        `- ${f.display_name || f.name_standard} : ${f.calories_per_100g}kcal/100g | P:${f.proteins_100g || 0}g G:${f.carbs_100g || 0}g L:${f.lipids_100g || 0}g`
+                        `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}] : ${f.calories_per_100g}kcal/100g | P:${f.proteins_100g || 0}g G:${f.carbs_100g || 0}g L:${f.lipids_100g || 0}g`
                     ).join('\n')
-                    foodsContext = `\n\n[INGRÉDIENTS DISPONIBLES - LISTE EXCLUSIVE]\nL'utilisateur a UNIQUEMENT ces ${matchedFoods.length} aliment(s) à sa disposition. Tu DOIS composer le menu EN UTILISANT SEULEMENT ces ingrédients :\n${matchedList}\n\nCONSIGNE PORTIONS : Propose des portions précises en grammes pour atteindre l'objectif calorique du créneau (basé sur le profil utilisateur). Calcule et affiche en fin de réponse :\n- Total calories du repas\n- Total Protéines / Glucides / Lipides\nN'invente AUCUN autre ingrédient non listé ci-dessus.`
+                    foodsContext = `\n\n[INGRÉDIENTS DISPONIBLES - LISTE EXCLUSIVE]\nL'utilisateur a UNIQUEMENT ces ${matchedFoods.length} aliment(s) à sa disposition. Tu DOIS composer le menu EN UTILISANT SEULEMENT ces ingrédients :\n${matchedList}\n\nCONSIGNE PORTIONS : Propose des portions précises en grammes pour atteindre l'objectif calorique du créneau (basé sur le profil utilisateur). Calcule et affiche en fin de réponse :\n- Total calories du repas\n- Total Protéines / Glucides / Lipides\nN'invente AUCUN autre ingrédient non listé ci-dessus.\n\n⚠️ RAPPEL ---DATA--- : Dans le champ "name", utilise UNIQUEMENT les valeurs [ID_BD:...] listées ci-dessus. Ex: [ID_BD: riz_blanc_vapeur] → "name":"riz_blanc_vapeur".`
                 } else {
                     // Mode standard : toute la BD
+                    // On expose EXPLICITEMENT le name_standard pour le bloc ---DATA---
                     const foodsList = allFoods.map((f: any) =>
-                        `- ${f.display_name || f.name_standard} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`
+                        `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}] (cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`
                     ).join('\n')
-                    foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste :\n${foodsList}\n\nCONSIGNE : Cite EXACTEMENT le nom de l'aliment de la liste. N'utilise JAMAIS de noms génériques.`
+                    foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste. Pour chaque aliment, tu vois son [ID_BD: xxx] — c'est cet identifiant exact que tu DOIS utiliser dans le champ "name" du bloc ---DATA--- :\n${foodsList}\n\nCONSIGNE : Dans le bloc ---DATA---, "name" = la valeur [ID_BD:...] EXACTE. N'invente aucun nom, n'utilise pas le display_name.`
                 }
             }
         }
