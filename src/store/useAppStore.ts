@@ -108,6 +108,13 @@ interface AppState {
     onboardingForm: any
     setOnboardingForm: (form: any) => void
 
+    dailyReview: {
+        emoji: string
+        text: string
+        date: string
+    } | null
+    setDailyReview: (review: { emoji: string, text: string, date: string } | null) => void
+
     // ─── Pont Coach → Scanner ─────────────────────────────────
     pendingScannerPrefill: {
         items: Array<{ name: string; volume_ml: number }>
@@ -139,6 +146,7 @@ export const useAppStore = create<AppState>()(
                     set({
                         todayMeals: [],
                         chatSuggestedMenus: { today: {}, tomorrow: null, week: null, date: null, user_id: null },
+                        dailyReview: null,
                         slotBilans: {},
                     })
                 }
@@ -314,6 +322,9 @@ export const useAppStore = create<AppState>()(
                         }
                     }
                 }),
+
+            dailyReview: null,
+            setDailyReview: (review) => set({ dailyReview: review }),
 
             slotBilans: {},
             setSlotBilan: (slot, bilan) =>

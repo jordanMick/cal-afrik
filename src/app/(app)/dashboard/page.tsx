@@ -170,7 +170,7 @@ export default function DashboardPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-    const { profile, todayMeals, setTodayMeals, removeMeal, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useAppStore()
+    const { profile, todayMeals, setTodayMeals, removeMeal, dailyCalories, dailyProtein, dailyCarbs, dailyFat, dailyReview, setDailyReview } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
     // Mis à jour à chaque arrivée sur la page pour refléter l'heure réelle
@@ -281,7 +281,31 @@ export default function DashboardPage() {
         return { emoji: '🎯', text: `Presque au bout ! Il ne te reste que ${Math.round(remaining)} kcal. Un petit snack léger suffira.` }
     }
 
-    const coachMsg = getCoachMessage()
+    const coachMsg = (() => {
+        const today = toLocalDateString()
+        const hour = currentHour
+
+        // 1. Si on a déjà mangé aujourd'hui, on affiche le message en temps réel
+        if (todayMeals.length > 0) {
+            const currentMsg = getCoachMessage()
+            // Sauvegarde auto du bilan final (le soir ou si dépassé)
+            if (hour >= 19 || exceeded) {
+                // On évite les updates de boucle infinie en ne sauvant que si le texte change ou si c'est une nouvelle date
+                if (dailyReview?.date !== today || dailyReview?.text !== currentMsg.text) {
+                    setDailyReview({ ...currentMsg, date: today })
+                }
+            }
+            return currentMsg
+        }
+
+        // 2. Si on n'a pas encore mangé aujourd'hui mais qu'on a un bilan d'hier
+        if (dailyReview && dailyReview.date !== today) {
+            return { emoji: '📊', text: `Hier : ${dailyReview.text}` }
+        }
+
+        // 3. Sinon, message morning standard
+        return getCoachMessage()
+    })()
 
     useEffect(() => { fetchMeals() }, [])
 
