@@ -32,29 +32,22 @@ const LAST_SLOT = 'diner'
 const ACCENT_COLOR = '#6366f1'
 const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
 
-function normalizeMenuText(raw: string, mode: 'today' | 'tomorrow' | 'week' = 'today'): string {
+function normalizeMenuText(raw: string): string {
     const base = raw
         .replace(/\*\*/g, '')
         .replace(/\s{2,}/g, ' ')
-        .replace(/(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s*(\d{1,2}\/\d{1,2})/gi, '\n$1 $2')
-        .replace(/\s+(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+(\d{1,2}\/\d{1,2})/gi, '\n$1 $2')
-        .replace(/((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*:\s*/gi, '\n$1:\n')
-        .replace(/((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]/gi, '\n$1:\n$3: ')
-        .replace(/((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:)\s*(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner:)/gi, '\n$1\n$3')
-        .replace(/\s*-\s*(Petit-déj|Petit-dej|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*[:：]/gi, '\n$1: ')
-        .replace(/\s*(\d+\.\s*(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*[:：]?/gi, '\n$1:')
-        .replace(/\s*((lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2})\s*[:：]?/gi, '\n$1:')
-        .replace(/\s*(menu\s+(?:creneau\s+\w+|demain|semaine)\s*:)/i, '$1\n')
+        // Force le passage à la ligne avant chaque jour (ex: Lundi, Mardi)
+        .replace(/\s+(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/gi, '\n$1')
+        // Force le passage à la ligne avant chaque créneau (ex: Petit-déjeuner, Dîner)
+        .replace(/\s+(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b/gi, '\n$1')
+        // Force le passage à la ligne avant les puces et les flèches
+        .replace(/\s*-\s+/g, '\n- ')
+        .replace(/\s*→\s*/g, '\n→ ')
         .replace(/a definir/gi, 'Repas local équilibré')
         .trim()
 
-    if (mode === 'tomorrow') {
-        return base
-            // Nouveau créneau à la ligne même avec "(700 kcal)" entre le titre et ":"
-            .replace(/\s+(Petit-déjeuner|Petit-dejeuner|Petit-déj|Déjeuner|Dejeuner|Collation|Dîner|Diner)\s*(\([^)]*\))?\s*[:：]/gi, '\n$1$2: ')
-            // Fallback: si pas de ":" explicite, on coupe quand même avant le nom du créneau
-            .replace(/\s+(Petit-déjeuner|Petit-dejeuner|Petit-déj|Déjeuner|Dejeuner|Collation|Dîner|Diner)\b/gi, '\n$1')
-    }
+    return base
+}
 
     return base
 }
