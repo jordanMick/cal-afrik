@@ -1014,7 +1014,7 @@ export default function ScannerPage() {
     const dailyRemainingNow = calorieTarget - dailyConsumed
     const recapRemainingAfter = isLastSlot ? dailyRemainingNow - totals.calories : (currentSlot?.target || 0) - (currentSlot?.consumed || 0) - totals.calories
     const recapExceeded = recapRemainingAfter < 0
-    const displayedRemaining = isLastSlot ? dailyRemainingNow : (currentSlot?.remaining ?? 0)
+    const displayedRemaining = Math.max(0, isLastSlot ? dailyRemainingNow : (currentSlot?.remaining ?? 0))
     const displayedRemainingLabel = isLastSlot ? "Restant journée" : "Restant créneau"
 
     return (
