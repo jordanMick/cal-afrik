@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
                     return NextResponse.json({
                         success: false,
                         reason: 'monthly_quota_exceeded',
-                        message: 'Tu as déjà utilisé ton bilan IA mensuel gratuit. Reviens le mois prochain, ou passe en Pro pour un accès illimité ! 🗓️',
+                        message: 'Tu as déjà utilisé ton bilan Coach Yao mensuel gratuit. Reviens le mois prochain, ou passe en Pro pour un accès illimité ! 🗓️',
                     })
                 }
 
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
 
             const plannedText = plans && plans.length > 0 ? plans[0].recipe_name : 'Aucun repas verrouillé dans le Planner.'
 
-            prompt = `Tu es un coach nutritionnel bienveillant. L'utilisateur vient de terminer son créneau "${slotLabel}".
+            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA ou une recherche automatisée. N'utilise JAMAIS d'icône de robot 🤖.
 
 Son objectif global est de ${goalLabel}.
 
@@ -227,7 +227,7 @@ Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
                 ? plans.map((p: any) => `- ${p.slot} : ${p.recipe_name}`).join('\n')
                 : "Aucun repas verrouillé aujourd'hui."
 
-            prompt = `Tu es un coach nutritionnel bienveillant. Voici le bilan de journée de l'utilisateur.
+            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA. N'utilise JAMAIS d'icône de robot 🤖. Voici le bilan de journée de l'utilisateur.
 
 Objectif : ${goalLabel}
 
@@ -276,7 +276,7 @@ Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
             const goalReached = calPct >= 85 && calPct <= 115
             const exceeded = calPct > 115
 
-            prompt = `Tu es un coach nutritionnel bienveillant. Voici le bilan mensuel de l'utilisateur.
+            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA. N'utilise JAMAIS d'icône de robot 🤖. Voici le bilan mensuel de l'utilisateur.
 
 Objectif : ${goalLabel}
 

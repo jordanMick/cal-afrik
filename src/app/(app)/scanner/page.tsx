@@ -11,7 +11,7 @@ import { Html5Qrcode } from 'html5-qrcode'
 interface EnrichedSuggestion extends FoodSuggestion {
     portion_g: number; calories_detected: number; protein_detected: number
     carbs_detected: number; fat_detected: number; confidence: number
-    detected: string; fromAI?: boolean
+    detected: string; fromCoach?: boolean
 }
 
 interface ManualFood {
@@ -315,7 +315,7 @@ export default function ScannerPage() {
                         fat_detected: fat,
                         confidence: 100,
                         detected: food.display_name || food.name_standard,
-                        fromAI: false,
+                        fromCoach: false,
                     })
                 }
 
@@ -1277,7 +1277,7 @@ export default function ScannerPage() {
             {mealName && !isAnalyzing && (
                 <div style={{ marginBottom: '20px', padding: '16px 20px', background: '#141414', border: `0.5px solid ${slotColor}20`, borderRadius: '18px' }}>
                     <p style={{ color: '#fff', fontWeight: '700', fontSize: '15px' }}>🍽️ {mealName}</p>
-                    {totalCaloriesAI > 0 && <p style={{ color: '#555', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Estimation IA : ~{totalCaloriesAI} kcal</p>}
+                    {totalCaloriesAI > 0 && <p style={{ color: '#555', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Estimation Coach Yao : ~{totalCaloriesAI} kcal</p>}
                 </div>
             )}
 
@@ -1320,7 +1320,7 @@ export default function ScannerPage() {
             {showManualForm && (
                 <div style={{ marginBottom: '14px', padding: '18px', borderRadius: '14px', background: '#141414', border: '0.5px solid #222' }}>
                     <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px', marginBottom: '2px' }}>✏️ Ajouter un aliment</p>
-                    <p style={{ color: '#444', fontSize: '12px', marginBottom: '14px' }}>Valeurs pré-remplies par l'IA</p>
+                    <p style={{ color: '#444', fontSize: '12px', marginBottom: '14px' }}>Valeurs suggérées par Coach Yao</p>
                     <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Nom *</label><input style={inputStyle} value={manualFood.name_fr} onChange={e => setManualFood(p => ({ ...p, name_fr: e.target.value }))} placeholder="ex: Rôti de porc" /></div>
                     <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Catégorie *</label><select style={inputStyle} value={manualFood.category} onChange={e => setManualFood(p => ({ ...p, category: e.target.value }))}>{CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
                     <div style={{ marginBottom: '4px' }}><label style={labelStyle}>Portion (g) *</label><input style={inputStyle} type="number" value={manualFood.portion_g} onChange={e => setManualFood(p => ({ ...p, portion_g: Number(e.target.value) }))} /></div>
@@ -1397,7 +1397,7 @@ export default function ScannerPage() {
                         {!selectedFoods.some(f => f.id.startsWith('suggested-')) && (
                             <>
                                 <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(245,158,11,0.08)' : 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
-                                    {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
+                                    {showCoach ? '💡 Conseil du coach' : '💡 Voir le conseil du coach →'}
                                 </button>
                                 {showCoach && (
                                     <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
@@ -1420,7 +1420,7 @@ export default function ScannerPage() {
                                         ) : coachMessage ? (
                                             <div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                                    <span style={{ fontSize: '18px' }}>🤖</span>
+                                                    <span style={{ fontSize: '18px' }}>💡</span>
                                                     <span style={{ color: '#f59e0b', fontSize: '13px', fontWeight: '600' }}>Coach Yao</span>
                                                     {profile?.subscription_tier === 'free' && (
                                                         <span style={{ marginLeft: 'auto', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>

@@ -44,7 +44,7 @@ function getWelcomeMessage(name?: string | null): PersistedMessage {
     return {
         id: 'welcome',
         role: 'coach',
-        content: `Bonjour ${name || 'mon ami'} ! Je suis ton coach Yao 🤖. Nutritionniste et expert en plats africains. Que puis-je faire pour t'aider à atteindre ton objectif aujourd'hui ?`,
+        content: `Bonjour ${name || 'mon ami'} ! Je suis ton coach Yao. Nutritionniste et expert en plats africains. Que puis-je faire pour t'aider à atteindre ton objectif aujourd'hui ?`,
         timestamp: new Date().toISOString(),
     }
 }
@@ -81,7 +81,7 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
 }
 
 /**
- * Extrait le bloc ---DATA--- du message de l'IA.
+ * Extrait le bloc ---DATA--- du message de Coach Yao.
  * Retourne { displayText, dataItems, slot } ou null si absent.
  */
 function parseDataBlock(rawMessage: string): {
@@ -466,7 +466,7 @@ export default function CoachChatPage() {
             <div style={{ padding: '24px 20px', background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(15px)', borderBottom: '0.5px solid #222', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{ position: 'relative' }}>
                     <div style={{ width: '48px', height: '48px', borderRadius: '18px', background: 'linear-gradient(135deg, #f59e0b, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 8px 20px rgba(245,158,11,0.25)' }}>
-                        🤖
+                        👨🏾‍⚕️
                     </div>
                     {/* Status dot */}
                     <div style={{ position: 'absolute', bottom: -2, right: -2, width: '14px', height: '14px', background: '#10b981', border: '3px solid #0a0a0a', borderRadius: '50%' }} />

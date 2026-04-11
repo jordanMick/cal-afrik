@@ -67,7 +67,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
     );
 
     const maxCal = Math.max(targetKcal, ...weeklyData.map(d => d.calories), Math.min(targetKcal + 500, 3000))
-    const isLocked = false // Déverrouillé pour tout le monde selon demande utilisateur
+    const isLocked = tier === 'free'
 
     return (
         <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '20px', padding: '20px', marginBottom: '28px', position: 'relative', overflow: 'hidden' }}>
@@ -120,7 +120,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(99,102,241,0.15)', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '8px', border: '0.5px solid rgba(99,102,241,0.3)' }}>
                         🔒
                     </div>
-                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Analyses Pro</p>
+                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Analyses Coach Yao</p>
                     <p style={{ color: '#aaa', fontSize: '11px', marginBottom: '14px', maxWidth: '200px' }}>Débloquez le plan Pro pour suivre votre constance hebdomadaire.</p>
                     <button
                         onClick={() => router.push('/upgrade')}

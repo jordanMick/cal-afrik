@@ -349,7 +349,7 @@ export default function ProfilPage() {
                         📌 Bilan de journée disponible à 23h00 dans cette section Profil.
                     </p>
                     <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.6', marginBottom: '12px' }}>
-                        En plan Pro, tu reçois un bilan IA de fin de journée. Pour un bilan à chaque créneau, passe au Premium.
+                        En plan Pro, tu reçois un bilan Coach Yao de fin de journée. Pour un bilan à chaque créneau, passe au Premium.
                     </p>
                     <div
                         onClick={() => router.push('/upgrade')}
@@ -360,7 +360,7 @@ export default function ProfilPage() {
                 </div>
             )}
 
-            {/* SECTION BILAN IA (uniquement quand le plan y a droit) */}
+            {/* SECTION BILAN COACH YAO (uniquement quand le plan y a droit) */}
             {canUseAIBilanForActiveSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') && (
                 <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : (bilanColor + '40')}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
                     {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
@@ -461,7 +461,7 @@ export default function ProfilPage() {
                         <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🔒</div>
                         <div>
                             <p style={{ color: '#fff', fontWeight: '700', fontSize: '16px' }}>Bilan de ta journée</p>
-                            <p style={{ color: '#555', fontSize: '12px' }}>Par Coach Yao 🤖</p>
+                            <p style={{ color: '#555', fontSize: '12px' }}>Par Coach Yao</p>
                         </div>
                     </div>
                     <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
