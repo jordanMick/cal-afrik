@@ -109,6 +109,22 @@ function parseDataBlock(rawMessage: string): {
     }
     return null
 }
+/**
+ * Détecte si un message est un menu "demain" ou "semaine".
+ * Retourne { kind, cleanText } ou null.
+ */
+function parseMenuKind(text: string): { kind: 'tomorrow' | 'week'; cleanText: string } | null {
+    const tomorrowMatch = /^menu\s+demain\s*:\s*/i.exec(text)
+    if (tomorrowMatch) {
+        return { kind: 'tomorrow', cleanText: text.substring(tomorrowMatch[0].length).trim() }
+    }
+    const weekMatch = /^menu\s+semaine\s*:\s*/i.exec(text)
+    if (weekMatch) {
+        return { kind: 'week', cleanText: text.substring(weekMatch[0].length).trim() }
+    }
+    return null
+}
+
 
 export default function CoachChatPage() {
     const router = useRouter()
@@ -336,28 +352,8 @@ export default function CoachChatPage() {
                 console.log('📨 Réponse brute Yao:', data.message)
                 setMessagesUsedToday(maxMessages - data.usageRemaining)
                 setLastCoachMessage(data.message)
-                // ✅ Ne pas traiter comme menu suggéré si c'est un bloc DATA
-                const hasDataBlock = data.message.includes('---DATA---')
-                
-                if (!hasDataBlock) {
-                    const menuInfo = detectMenuKind(data.message)
-                    if (menuInfo) {
-                        setChatSuggestedMenu(menuInfo.kind, data.message, menuInfo.slot)
-                        // Persistance cross-device des menus suggérés
-                        const updatedMenus = {
-                            ...chatSuggestedMenus,
-                            [menuInfo.kind]: menuInfo.kind === 'today'
-                                ? { ...chatSuggestedMenus.today, [menuInfo.slot || 'unspecified']: data.message }
-                                : data.message,
-                            date: todayDate,
-                        }
-                        supabase
-                            .from('user_profiles')
-                            .update({ suggested_menus_json: updatedMenus })
-                            .eq('user_id', session.user.id)
-                            .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
-                    }
-                }
+                // Le stockage dans les suggestions se fait UNIQUEMENT via le bouton
+                // (plus d'auto-stockage — l'utilisateur valide manuellement)
                 const coachReply: Message = {
                     id: (Date.now() + 1).toString(),
                     role: 'coach',
@@ -426,6 +422,25 @@ export default function CoachChatPage() {
         router.push('/scanner')
     }
 
+    /** Ajoute un menu demain/semaine dans les suggestions du Scanner (validation manuelle) */
+    const handleAddMenuToScanner = (kind: 'tomorrow' | 'week', cleanText: string) => {
+        setChatSuggestedMenu(kind, cleanText)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!session) return
+            const updatedMenus = {
+                ...chatSuggestedMenus,
+                [kind]: cleanText,
+                date: todayDate,
+            }
+            supabase
+                .from('user_profiles')
+                .update({ suggested_menus_json: updatedMenus })
+                .eq('user_id', session.user.id)
+                .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
+        })
+        router.push('/scanner')
+    }
+
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
 
@@ -487,7 +502,12 @@ export default function CoachChatPage() {
                 {messages.map((msg) => {
                     const isCoach = msg.role === 'coach'
                     const parsed = isCoach ? parseDataBlock(msg.content) : null
-                    const displayContent = parsed ? parsed.displayText : msg.content
+                    const menuKind = isCoach && !parsed ? parseMenuKind(msg.content) : null
+                    const displayContent = parsed
+                        ? parsed.displayText
+                        : menuKind
+                            ? menuKind.cleanText
+                            : msg.content
                     return (
                         <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isCoach ? 'flex-start' : 'flex-end', width: '100%' }}>
                             <div style={{
@@ -503,7 +523,7 @@ export default function CoachChatPage() {
                             }}>
                                 {displayContent}
                             </div>
-                            {/* Bouton "Ajouter au Scanner" si DATA block présent */}
+                            {/* Bouton "Ajouter au Scanner" — menu créneau (DATA block) */}
                             {parsed && (
                                 <button
                                     onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot, parsed.displayText)}
@@ -527,6 +547,36 @@ export default function CoachChatPage() {
                                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                                 >
                                     📲 Ajouter au Scanner
+                                </button>
+                            )}
+                            {/* Bouton "Ajouter au Scanner" — menu demain ou semaine */}
+                            {menuKind && (
+                                <button
+                                    onClick={() => handleAddMenuToScanner(menuKind.kind, menuKind.cleanText)}
+                                    style={{
+                                        marginTop: '10px',
+                                        padding: '10px 18px',
+                                        borderRadius: '14px',
+                                        background: menuKind.kind === 'tomorrow'
+                                            ? 'linear-gradient(135deg, #6366f1, #818cf8)'
+                                            : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                        color: '#fff',
+                                        border: 'none',
+                                        fontSize: '13px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        boxShadow: menuKind.kind === 'tomorrow'
+                                            ? '0 6px 16px rgba(99,102,241,0.3)'
+                                            : '0 6px 16px rgba(245,158,11,0.3)',
+                                        transition: 'all 0.2s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                >
+                                    {menuKind.kind === 'tomorrow' ? '📅 Ajouter au Scanner (Demain)' : '📆 Ajouter au Scanner (Semaine)'}
                                 </button>
                             )}
                             <span style={{ color: '#555', fontSize: '10px', marginTop: '6px', margin: isCoach ? '0 0 0 4px' : '0 4px 0 0' }}>
