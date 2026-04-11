@@ -13,84 +13,40 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const router = useRouter()
     const pathname = usePathname()
     const mealsLoaded = useRef(false)
-
-    useEffect(() => {
-        initAuth()
-
-        const { data: listener } = supabase.auth.onAuthStateChange((_event) => {
-            // On recharge aussi lors de l'initialisation et du refresh token,
-            // utile en PWA où la restauration de session peut arriver juste après le montage.
-            if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'INITIAL_SESSION' || _event === 'TOKEN_REFRESHED') {
-                mealsLoaded.current = false
-                initAuth()
-            }
-        })
-
-        return () => { listener.subscription.unsubscribe() }
-    }, [])
-
     const [loading, setLoading] = useState(true)
+
     const initAuth = async () => {
         try {
+            // 1. Première tentative immédiate
             const { data, error } = await supabase.auth.getSession()
+            let session = data?.session
 
-            if (error) {
-                console.error(error)
-                setLoading(false)
-                return
+            // 2. Si pas de session, on patiente un peu (important sur mobile/PWA)
+            // L'iPhone met parfois du temps à indexer le IndexedDB au démarrage de l'app
+            if (!session) {
+                await new Promise(resolve => setTimeout(resolve, 800))
+                const { data: retryData } = await supabase.auth.getSession()
+                session = retryData?.session
             }
 
-            const session = data.session
-
-            // 🔥 IMPORTANT
+            // 3. Si toujours rien, on fait une ultime tentative à 1.5s
             if (!session) {
-                // En PWA, la session peut se restaurer légèrement après l'ouverture.
-                await new Promise(resolve => setTimeout(resolve, 350))
-                const { data: retryData } = await supabase.auth.getSession()
-                const retrySession = retryData?.session
-                if (retrySession) {
-                    const { data: profile, error: profileError } = await supabase
-                        .from('user_profiles')
-                        .select('*')
-                        .eq('user_id', retrySession.user.id)
-                        .single()
+                await new Promise(resolve => setTimeout(resolve, 700))
+                const { data: finalData } = await supabase.auth.getSession()
+                session = finalData?.session
+            }
 
-                    if (!profileError && profile) {
-                        setProfile(profile)
-                        if (!mealsLoaded.current) {
-                            mealsLoaded.current = true
-                            const today = toLocalDateString()
-                            const tzOffset = new Date().getTimezoneOffset()
-                            const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, {
-                                headers: { Authorization: `Bearer ${retrySession.access_token}` }
-                            })
-                            const json = await res.json()
-                            if (json.success) setTodayMeals(json.data)
-                        }
-                        setLoading(false)
-                        return
-                    }
-                }
-
-                // 👉 attendre un peu si on est sur reset-password
-                if (pathname.startsWith('/reset-password')) {
-                    setLoading(false)
-                    return
-                }
-
-                if (
-                    !pathname.startsWith('/login') &&
-                    !pathname.startsWith('/onboarding')
-                ) {
+            if (!session) {
+                // Cette fois on est sûr qu'il n'y a pas de session active
+                if (!pathname.startsWith('/login') && !pathname.startsWith('/onboarding') && !pathname.startsWith('/reset-password')) {
+                    console.log('--- Auth: No session found after retries, redirecting to login ---')
                     router.push('/login')
                 }
-
                 setLoading(false)
                 return
             }
 
-            // reste de ton code...
-            // ✅ Charger le profil
+            // ✅ Session trouvée ! On charge le profil
             const { data: profile, error: profileError } = await supabase
                 .from('user_profiles')
                 .select('*')
@@ -98,35 +54,64 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 .single()
 
             if (profileError || !profile) {
-                router.push('/onboarding')
+                if (!pathname.startsWith('/onboarding') && !pathname.startsWith('/login')) {
+                    router.push('/onboarding')
+                }
                 setLoading(false)
                 return
             }
 
             setProfile(profile)
 
-            // ✅ Charger les repas UNE SEULE FOIS
-            // Après un ajout, le store est mis à jour via addMeal() directement
-            // Après une suppression, le store est mis à jour via removeMeal() directement
-            // On ne recharge depuis Supabase qu'au premier démarrage ou après login
+            // ✅ Charger les repas (une seule fois pour éviter les flashs)
             if (!mealsLoaded.current) {
                 mealsLoaded.current = true
                 const today = toLocalDateString()
                 const tzOffset = new Date().getTimezoneOffset()
-                const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, {
-                    headers: { Authorization: `Bearer ${session.access_token}` }
-                })
-                const json = await res.json()
-                if (json.success) setTodayMeals(json.data)
+                try {
+                    const res = await fetch(`/api/meals?date=${today}&tz_offset_min=${tzOffset}`, {
+                        headers: { Authorization: `Bearer ${session.access_token}` }
+                    })
+                    const json = await res.json()
+                    if (json.success) setTodayMeals(json.data)
+                } catch (mealErr) {
+                    console.error('Error loading meals:', mealErr)
+                }
             }
+            
             setLoading(false)
 
         } catch (err) {
-            console.error('Erreur AuthProvider:', err)
+            console.error('AuthProvider critical error:', err)
             setLoading(false)
         }
     }
-    if (loading) return null
+
+    useEffect(() => {
+        initAuth()
+
+        // S'abonner aux changements d'état (login/logout/refresh)
+        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                initAuth()
+            }
+            if (event === 'SIGNED_OUT') {
+                setProfile(null)
+                router.push('/login')
+            }
+        })
+
+        return () => { listener.subscription.unsubscribe() }
+    }, [])
+
+    if (loading) {
+        return (
+            <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid #141414', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+        )
+    }
 
     return <>{children}</>
 }
