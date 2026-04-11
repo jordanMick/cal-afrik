@@ -149,13 +149,13 @@ export async function POST(req: NextRequest) {
                     .eq('user_id', user.id)
             }
         }
-        
+
         // 2. Gestion des quotas
         const effectiveTier = getEffectiveTier(profile)
         const rules = SUBSCRIPTION_RULES[effectiveTier] || SUBSCRIPTION_RULES.free
         const maxMessages = Number(rules.maxChatMessagesPerDay)
         const today = new Date().toISOString().split('T')[0]
-        
+
         let messagesUsedToday = profile.chat_messages_today || 0
         if (profile.last_usage_reset_date !== today) {
             messagesUsedToday = 0
@@ -163,21 +163,21 @@ export async function POST(req: NextRequest) {
 
         // Vérification de la limite
         if (messagesUsedToday >= maxMessages) {
-            return NextResponse.json({ 
-                success: false, 
-                error: 'Limite journalière atteinte. Reviens demain !', 
-                code: 'LIMIT_REACHED' 
+            return NextResponse.json({
+                success: false,
+                error: 'Limite journalière atteinte. Reviens demain !',
+                code: 'LIMIT_REACHED'
             }, { status: 200 })
         }
 
         // 3. Traiter la requête de l'utilisateur
         const { messages, userContext, currentSuggestions } = await req.json()
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
-             return NextResponse.json({ error: 'Messages invalides' }, { status: 400 })
+            return NextResponse.json({ error: 'Messages invalides' }, { status: 400 })
         }
         const messageContent = String(messages[messages.length - 1]?.content || '')
         const normalizedUserMessage = messageContent.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-        
+
         const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)
         const wantsWeek = (/\bsemaine\b/.test(normalizedUserMessage) || /\b7 jours\b/.test(normalizedUserMessage)) && /\bmenu\b/.test(normalizedUserMessage)
         const isFreeLimited = (wantsTomorrow || wantsWeek) && effectiveTier === 'free'
@@ -328,7 +328,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
         const MOCK_MODE = false
 
         let aiMessage = ""
-        
+
         if (MOCK_MODE) {
             await new Promise(r => setTimeout(r, 800)) // Simule un délai réaliste
             aiMessage = `[Mode TEST 🔧] Salut ${profile.name || 'ami'} ! Super question. Rappelle-toi : l'équilibre c'est la clé ! Mange des légumes africains variés, bois 2L d'eau et écoute ton corps. Tu es sur la bonne voie ! 🌿`
@@ -342,14 +342,28 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
             const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
 
             // Formatage des messages pour Anthropic
-            const formattedMessages = messages.map((m: any) => ({
-                role: m.role === 'coach' ? 'assistant' : 'user',
-                content: m.content
-            }))
+            // Formatage des messages pour Anthropic (Claude exige de commencer par 'user' et d'alterner les rôles)
+            let formattedMessages: any[] = messages
+                .map((m: any) => ({
+                    role: (m.role === 'coach' ? 'assistant' : 'user') as 'assistant' | 'user',
+                    content: String(m.content || '')
+                }))
+            
+            // On commence impérativement par un message 'user'
+            const firstUserIdx = formattedMessages.findIndex(m => m.role === 'user')
+            if (firstUserIdx !== -1) {
+                formattedMessages = formattedMessages.slice(firstUserIdx)
+            } else {
+                // Si aucun message user (impossible normalement), on vide pour éviter le crash
+                formattedMessages = []
+            }
+
+            // On filtre pour éviter les doublons de rôle consécutifs (Claude râle sinon)
+            formattedMessages = formattedMessages.filter((m, i, arr) => i === 0 || m.role !== arr[i-1].role)
 
             try {
                 // Si l'utilisateur est gratuit et demande un menu restreint, on ajoute une consigne à l'IA
-                const tierInstruction = isFreeLimited 
+                const tierInstruction = isFreeLimited
                     ? "\n\n[ALERTE PLAN]: L'utilisateur est en version GRATUITE. Il demande un menu (semaine ou demain) réservé aux membres PRO. NE GÉNÈRE PAS le menu demandé. Explique-lui chaleureusement que c'est une fonctionnalité PRO/PREMIUM et invite-le à s'abonner, mais propose-lui tout de même un menu pour AUJOURD'HUI pour qu'il ne reparte pas les mains vides."
                     : ""
 
@@ -357,9 +371,9 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
                     model: 'claude-3-5-sonnet-20240620',
                     max_tokens: wantsWeek ? 4096 : 800,
                     system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux (Petit-déjeuner, Déjeuner, Collation, Dîner). Ne sois pas trop concis, donne une planification complète et riche pour motiver l'utilisateur." : "") + tierInstruction,
-                    messages: formattedMessages
+                    messages: formattedMessages as any
                 })
-                
+
                 const rawText = response.content[0].type === 'text' ? response.content[0].text : 'Je suis là pour t\'aider ! 💪'
                 aiMessage = rawText
                     .replace(/Dis-\s*/gi, 'Dis ')
@@ -405,7 +419,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
 
             // On s'assure que le menu semaine est bien détecté et formaté par Yao directement
             if (wantsWeek && !/^menu\s+semaine\s*:/i.test(aiMessage) && aiMessage.length > 300) {
-                 aiMessage = `menu semaine:\n${aiMessage}`.trim()
+                aiMessage = `menu semaine:\n${aiMessage}`.trim()
             }
         }
 
@@ -497,15 +511,15 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
         // 4. Mettre à jour l'utilisation dans la base de données
         await supabase
             .from('user_profiles')
-            .update({ 
+            .update({
                 chat_messages_today: messagesUsedToday + 1,
                 last_usage_reset_date: today
             })
             .eq('user_id', user.id)
 
         // 5. Retourner la réponse
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             message: aiMessage,
             usageRemaining: maxMessages - (messagesUsedToday + 1)
         })
