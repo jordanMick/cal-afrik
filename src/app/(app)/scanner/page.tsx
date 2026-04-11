@@ -1369,14 +1369,14 @@ export default function ScannerPage() {
                             <p style={{ color: '#444', fontSize: '13px' }}>kilocalories</p>
                         </div>
 
-                        <div style={{ background: recapExceeded ? 'rgba(239,68,68,0.06)' : '#141414', border: `0.5px solid ${recapExceeded ? 'rgba(239,68,68,0.3)' : '#222'}`, borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ background: recapExceeded ? 'rgba(248,113,113,0.06)' : '#141414', border: `0.5px solid ${recapExceeded ? 'rgba(248,113,113,0.3)' : '#222'}`, borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                                 <p style={{ color: '#444', fontSize: '11px' }}>{isLastSlot ? `Journée · objectif ${calorieTarget} kcal` : `Créneau ${slotLabel}`}</p>
                                 <p style={{ color: '#333', fontSize: '12px', marginTop: '2px' }}>{isLastSlot ? `${Math.round(dailyConsumed)} + ${Math.round(totals.calories)} kcal` : `${Math.round(currentSlot.consumed)} + ${Math.round(totals.calories)} kcal`}</p>
                             </div>
                             <div style={{ textAlign: 'right' }}>
                                 <p style={{ color: '#444', fontSize: '11px' }}>{recapExceeded ? '⚠️ Dépassement' : 'Restant après repas'}</p>
-                                <p style={{ color: recapExceeded ? '#ef4444' : slotColor, fontWeight: '700', fontSize: '18px' }}>
+                                <p style={{ color: recapExceeded ? '#f87171' : slotColor, fontWeight: '700', fontSize: '18px' }}>
                                     {recapExceeded ? `+${Math.abs(Math.round(recapRemainingAfter))} kcal` : `${Math.round(recapRemainingAfter)} kcal`}
                                 </p>
                             </div>
