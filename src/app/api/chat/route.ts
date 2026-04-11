@@ -151,12 +151,6 @@ export async function POST(req: NextRequest) {
         }
         
         // 2. Gestion des quotas
-        const SUBSCRIPTION_RULES: Record<string, any> = {
-            free: { maxChatMessagesPerDay: 10 },
-            pro: { maxChatMessagesPerDay: 50 },
-            premium: { maxChatMessagesPerDay: 100 }
-        }
-        
         const effectiveTier = getEffectiveTier(profile)
         const rules = SUBSCRIPTION_RULES[effectiveTier] || SUBSCRIPTION_RULES.free
         const maxMessages = Number(rules.maxChatMessagesPerDay)
@@ -178,7 +172,10 @@ export async function POST(req: NextRequest) {
 
         // 3. Traiter la requête de l'utilisateur
         const { messages, userContext, currentSuggestions } = await req.json()
-        const messageContent = String(messages?.[messages.length - 1]?.content || '')
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+             return NextResponse.json({ error: 'Messages invalides' }, { status: 400 })
+        }
+        const messageContent = String(messages[messages.length - 1]?.content || '')
         const normalizedUserMessage = messageContent.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
         
         const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)
