@@ -472,8 +472,10 @@ export default function ScannerPage() {
     // Restauration des menus suggérés depuis Supabase (sync cross-device)
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0]
-        // Si le store local est déjà à jour pour aujourd'hui, pas besoin de fetcher
-        if (chatSuggestedMenus.date === today) return
+        const currentUid = profile?.user_id || profile?.id
+        
+        // Si le store local est déjà à jour pour aujourd'hui ET l'utilisateur actuel, pas besoin de fetcher
+        if (chatSuggestedMenus.date === today && chatSuggestedMenus.user_id === currentUid) return
 
         const restoreMenusFromSupabase = async () => {
             try {
