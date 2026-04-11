@@ -526,6 +526,10 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
 
     } catch (err: any) {
         console.error('❌ Chat API error:', err)
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+        return NextResponse.json({ 
+            success: false, 
+            error: err.message || 'Erreur interne inconnue',
+            details: err.stack
+        }, { status: 500 })
     }
 }

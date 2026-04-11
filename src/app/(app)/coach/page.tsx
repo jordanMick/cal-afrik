@@ -368,7 +368,12 @@ export default function CoachChatPage() {
                 })
             } else {
                 setMessages(prev => {
-                    const next = [...prev, { id: `err-${Date.now()}`, role: 'coach' as const, content: 'Désolé, une erreur technique est survenue.', timestamp: new Date() }]
+                    const next = [...prev, { 
+                        id: `err-${Date.now()}`, 
+                        role: 'coach' as const, 
+                        content: `Erreur serveur : ${data.error || 'Problème de connexion'}`, 
+                        timestamp: new Date() 
+                    }]
                     persistMessagesForThread(activeThreadDate, next)
                     return next
                 })
