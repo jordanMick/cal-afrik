@@ -522,22 +522,22 @@ export default function CoachChatPage() {
                     <button
                         onClick={scrollToBottom}
                         style={{
-                            position: 'sticky',
-                            bottom: '20px',
+                            position: 'fixed',
+                            bottom: '180px', // Plus haut pour éviter la zone de saisie
                             left: '50%',
-                            transform: 'translateX(-50%)',
+                            marginLeft: '-20px', // Centrage manuel précis
                             width: '40px',
                             height: '40px',
                             borderRadius: '50%',
-                            background: 'rgba(99,102,241,0.9)',
-                            border: '0.5px solid rgba(255,255,255,0.2)',
+                            background: '#6366f1',
+                            border: '2px solid #fff',
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                            zIndex: 20,
+                            boxShadow: '0 8px 24px rgba(99,102,241,0.5)',
+                            zIndex: 1000, // Toujours au-dessus
                             animation: 'fadeInUp 0.3s ease-out'
                         }}
                     >
