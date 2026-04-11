@@ -681,10 +681,12 @@ export default function CoachChatPage() {
                 {!activeThreadLimitReached && (
                     <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '16px', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
                         {[
-                            "Fais-moi un menu pour demain",
-                            "Génère un menu pour la semaine",
-                            "Que manger au dîner ce soir ?",
-                            "Idée de petit-déjeuner africain ?"
+                            "Menu Petit-déj",
+                            "Menu Déjeuner",
+                            "Menu Collation",
+                            "Menu Dîner",
+                            "Menu Demain",
+                            "Menu Semaine"
                         ].map((suggestion, idx) => (
                             <button
                                 key={idx}
