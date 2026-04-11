@@ -1009,7 +1009,8 @@ export default function ScannerPage() {
 
     const totals = getTotals()
     const calorieTarget = profile?.calorie_target ?? 2000
-    const dailyConsumed = Object.values(slots).reduce((acc: number, s: any) => acc + (s.consumed || 0), 0)
+    // On utilise directement la valeur globale plus fiable
+    const dailyConsumed = dailyCalories
     const dailyRemainingNow = calorieTarget - dailyConsumed
     const recapRemainingAfter = isLastSlot ? dailyRemainingNow - totals.calories : (currentSlot?.target || 0) - (currentSlot?.consumed || 0) - totals.calories
     const recapExceeded = recapRemainingAfter < 0
