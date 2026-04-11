@@ -368,7 +368,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
                     : ""
 
                 const response = await anthropic.messages.create({
-                    model: 'claude-3-5-sonnet-20240620',
+                    model: 'claude-3-sonnet-20240229',
                     max_tokens: wantsWeek ? 4096 : 800,
                     system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux (Petit-déjeuner, Déjeuner, Collation, Dîner). Ne sois pas trop concis, donne une planification complète et riche pour motiver l'utilisateur." : "") + tierInstruction,
                     messages: formattedMessages as any
