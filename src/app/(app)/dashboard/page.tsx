@@ -67,7 +67,7 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
     );
 
     const maxCal = Math.max(targetKcal, ...weeklyData.map(d => d.calories), Math.min(targetKcal + 500, 3000))
-    const isLocked = tier === 'free'
+    const isLocked = false // Déverrouillé pour tout le monde selon demande utilisateur
 
     return (
         <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '20px', padding: '20px', marginBottom: '28px', position: 'relative', overflow: 'hidden' }}>

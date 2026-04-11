@@ -554,21 +554,6 @@ export default function ProfilPage() {
                     </>
                 )}
 
-                {effectiveTier !== 'premium' && (
-                    <button
-                        onClick={() => router.push('/upgrade')}
-                        style={{
-                            width: '100%', height: '54px', marginBottom: '12px',
-                            background: 'linear-gradient(135deg, #6366f1, #10b981)',
-                            border: 'none', borderRadius: '18px',
-                            color: '#fff', fontSize: '15px', fontWeight: '800',
-                            cursor: 'pointer', boxShadow: '0 8px 16px rgba(99,102,241,0.2)'
-                        }}
-                    >
-                        {effectiveTier === 'pro' ? '💎 PASSER AU PREMIUM' : '🚀 AMÉLIORER MON PLAN'}
-                    </button>
-                )}
-
                 {/* SECTION ASSISTANCE */}
                 <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '24px 0 12px' }}>Assistance & Aide</p>
                 <div style={{ background: '#141414', borderRadius: '24px', border: '0.5px solid #222', padding: '6px', marginBottom: '20px' }}>
