@@ -560,7 +560,7 @@ export default function OnboardingPage() {
                         </div>
                     </div>
                     <div style={{ marginTop: '20px' }}>
-                        <NextButton label={isEditMode ? "Terminer" : "Découvrir mon plan →"} onClick={isEditMode ? () => handleFinish() : next} />
+                        <NextButton label={isEditMode ? "Terminer" : "C'est parti ! →"} onClick={() => handleFinish()} />
                     </div>
                 </StepWrapper>
             )}
@@ -574,7 +574,7 @@ export default function OnboardingPage() {
                             <span style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>Tout illimité</span>
                         </div>
                         <ul style={{ color: '#777', fontSize: '15px', listStyle: 'none', padding: 0 }}>
-                            <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Coach Yao AI Illimité</li>
+                            <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Coach Yao Illimité</li>
                             <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Scans photos illimités</li>
                             <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Statistiques & Graphiques</li>
                             <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><span style={{ color: '#22c55e' }}>✓</span> Accès prioritaire 24/7</li>
