@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier, SUBSCRIPTION_RULES } from '@/lib/subscription'
 import { supabase } from '@/lib/supabase'
+import ReactMarkdown from 'react-markdown'
 
 type Role = 'user' | 'coach'
 
@@ -521,7 +522,26 @@ export default function CoachChatPage() {
                                 boxShadow: isCoach ? 'none' : '0 10px 20px rgba(99,102,241,0.2)',
                                 border: isCoach ? '0.5px solid #222' : 'none'
                             }}>
-                                {displayContent}
+                                {isCoach ? (
+                                    <ReactMarkdown
+                                        components={{
+                                            p: ({ children }) => <p style={{ margin: '0 0 8px 0' }}>{children}</p>,
+                                            strong: ({ children }) => <strong style={{ color: '#f59e0b', fontWeight: 700 }}>{children}</strong>,
+                                            em: ({ children }) => <em style={{ color: '#a78bfa' }}>{children}</em>,
+                                            hr: () => <hr style={{ border: 'none', borderTop: '0.5px solid #333', margin: '10px 0' }} />,
+                                            ul: ({ children }) => <ul style={{ paddingLeft: '18px', margin: '4px 0' }}>{children}</ul>,
+                                            ol: ({ children }) => <ol style={{ paddingLeft: '18px', margin: '4px 0' }}>{children}</ol>,
+                                            li: ({ children }) => <li style={{ marginBottom: '4px' }}>{children}</li>,
+                                            h1: ({ children }) => <h1 style={{ fontSize: '17px', fontWeight: 800, margin: '8px 0 4px', color: '#f59e0b' }}>{children}</h1>,
+                                            h2: ({ children }) => <h2 style={{ fontSize: '15px', fontWeight: 700, margin: '8px 0 4px', color: '#f59e0b' }}>{children}</h2>,
+                                            h3: ({ children }) => <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '6px 0 2px', color: '#a78bfa' }}>{children}</h3>,
+                                        }}
+                                    >
+                                        {displayContent}
+                                    </ReactMarkdown>
+                                ) : (
+                                    displayContent
+                                )}
                             </div>
                             {/* Bouton "Ajouter au Scanner" — menu créneau (DATA block) */}
                             {parsed && (
