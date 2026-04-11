@@ -102,7 +102,8 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     }
 
     lines.forEach((line, idx) => {
-        const isHeader = /^(menu\s+)/i.test(line) || /^(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:/i.test(line)
+        const isHeader = /^(menu\s+)/i.test(line) || 
+                         /^[-*\s]*(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?[:\s]*/i.test(line)
         const isMealLine = /^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i.test(line)
 
         if (isHeader) {
@@ -115,14 +116,15 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 )
             } else {
                 flushDayBlock()
-                const forcedSplit = line.match(/^((?:\d+\.\s*)?(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+\d{1,2}\/\d{1,2}:)\s*(.*)$/i)
+                const forcedSplit = line.match(/^[-*\s]*((?:\d+\.\s*)?(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?)[:\s]*(.*)$/i)
                 const dateTitle = forcedSplit ? forcedSplit[1] : line
                 const trailing = forcedSplit ? forcedSplit[2] : ''
                 currentDayKey = `${idx}-${dateTitle}`
                 currentDayBlock.push(
-                    <p key={`menu-line-${idx}`} style={{ color: '#f59e0b', fontSize: '12px', fontWeight: '800', marginTop: '0', marginBottom: '6px', letterSpacing: '0.2px' }}>
-                        {dateTitle}
-                    </p>
+                    <div key={`header-tag-${idx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f59e0b20', border: '0.5px solid #f59e0b40', padding: '4px 10px', borderRadius: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Jour :</span>
+                        <span style={{ color: '#fff', fontSize: '12px', fontWeight: '800' }}>{dateTitle}</span>
+                    </div>
                 )
                 if (trailing) {
                     currentDayBlock.push(
