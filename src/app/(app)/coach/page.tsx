@@ -336,22 +336,27 @@ export default function CoachChatPage() {
                 console.log('📨 Réponse brute Yao:', data.message)
                 setMessagesUsedToday(maxMessages - data.usageRemaining)
                 setLastCoachMessage(data.message)
-                const menuInfo = detectMenuKind(data.message)
-                if (menuInfo) {
-                    setChatSuggestedMenu(menuInfo.kind, data.message, menuInfo.slot)
-                    // Persistance cross-device des menus suggérés
-                    const updatedMenus = {
-                        ...chatSuggestedMenus,
-                        [menuInfo.kind]: menuInfo.kind === 'today'
-                            ? { ...chatSuggestedMenus.today, [menuInfo.slot || 'unspecified']: data.message }
-                            : data.message,
-                        date: todayDate,
+                // ✅ Ne pas traiter comme menu suggéré si c'est un bloc DATA
+                const hasDataBlock = data.message.includes('---DATA---')
+                
+                if (!hasDataBlock) {
+                    const menuInfo = detectMenuKind(data.message)
+                    if (menuInfo) {
+                        setChatSuggestedMenu(menuInfo.kind, data.message, menuInfo.slot)
+                        // Persistance cross-device des menus suggérés
+                        const updatedMenus = {
+                            ...chatSuggestedMenus,
+                            [menuInfo.kind]: menuInfo.kind === 'today'
+                                ? { ...chatSuggestedMenus.today, [menuInfo.slot || 'unspecified']: data.message }
+                                : data.message,
+                            date: todayDate,
+                        }
+                        supabase
+                            .from('user_profiles')
+                            .update({ suggested_menus_json: updatedMenus })
+                            .eq('user_id', session.user.id)
+                            .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
                     }
-                    supabase
-                        .from('user_profiles')
-                        .update({ suggested_menus_json: updatedMenus })
-                        .eq('user_id', session.user.id)
-                        .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
                 }
                 const coachReply: Message = {
                     id: (Date.now() + 1).toString(),

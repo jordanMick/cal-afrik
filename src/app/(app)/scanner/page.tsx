@@ -258,7 +258,7 @@ export default function ScannerPage() {
                     const { data: foodRows } = await supabase
                         .from('food_items')
                         .select('id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, carbs_100g, lipids_100g, default_portion_g')
-                        .ilike('name_standard', item.name)
+                        .ilike('name_standard', `%${item.name}%`)
                         .limit(1)
 
                     const food = foodRows?.[0]
