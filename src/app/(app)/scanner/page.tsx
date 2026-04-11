@@ -65,6 +65,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     let currentDayBlock: React.ReactNode[] = []
     let currentDayKey = ''
     let pendingButtons: React.ReactNode[] = []
+    const renderedSlots = new Set<string>()
 
     const flushDayBlock = () => {
         // 1. Toujours vider les boutons en attente
@@ -157,7 +158,12 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                     'collation': 'collation', 'dîner': 'diner', 'diner': 'diner'
                 }
                 const lineSlotKey = SLOT_MAP[slotPrefix]
-                const isCurrentSlot = lineSlotKey === currentSlotKey
+
+                if (renderedSlots.has(lineSlotKey)) {
+                    buttonNode = null
+                } else {
+                    renderedSlots.add(lineSlotKey)
+                    const isCurrentSlot = lineSlotKey === currentSlotKey
                 const slotHasMeal = slots && slots[lineSlotKey] && slots[lineSlotKey].consumed > 0
                 const buttonDisabled = !isCurrentSlot || isSavingActivity || slotHasMeal
 
@@ -192,6 +198,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                         {slotHasMeal ? '✨ Enregistré ✓' : <><span>Choisir ce menu</span> <span style={{ opacity: 0.7 }}>→</span></>}
                     </button>
                 )
+                  }
             }
 
             const node = (
