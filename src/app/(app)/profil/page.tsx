@@ -543,6 +543,40 @@ export default function ProfilPage() {
                     </button>
                 )}
 
+                {/* SECTION ASSISTANCE */}
+                <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '24px 0 12px' }}>Assistance & Aide</p>
+                <div style={{ background: '#141414', borderRadius: '24px', border: '0.5px solid #222', padding: '6px', marginBottom: '20px' }}>
+                    <button 
+                        onClick={() => window.open('https://wa.me/22890000000?text=Bonjour%20Coach%20Yao,%20j\'ai%20besoin%20d\'aide%20sur%20l\'application%20Cal-Afrik', '_blank')}
+                        style={{ 
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
+                            background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer',
+                            borderBottom: '0.5px solid #1a1a1a'
+                        }}
+                    >
+                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>💬</div>
+                        <div style={{ textAlign: 'left' }}>
+                            <p style={{ fontSize: '14px', fontWeight: '600' }}>Contacter sur WhatsApp</p>
+                            <p style={{ fontSize: '11px', color: '#555' }}>Réponse rapide garantie</p>
+                        </div>
+                        <span style={{ marginLeft: 'auto', color: '#333' }}>→</span>
+                    </button>
+                    <button 
+                        onClick={() => window.location.href = 'mailto:support@cal-afrik.com?subject=Aide%20Cal-Afrik'}
+                        style={{ 
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
+                            background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer'
+                        }}
+                    >
+                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>📩</div>
+                        <div style={{ textAlign: 'left' }}>
+                            <p style={{ fontSize: '14px', fontWeight: '600' }}>Envoyer un E-mail</p>
+                            <p style={{ fontSize: '11px', color: '#555' }}>support@cal-afrik.com</p>
+                        </div>
+                        <span style={{ marginLeft: 'auto', color: '#333' }}>→</span>
+                    </button>
+                </div>
+
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                     <button onClick={() => router.push('/onboarding?edit=1')} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#fff', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
                         ✏️ Modifier Profil
