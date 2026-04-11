@@ -410,7 +410,8 @@ export default function DashboardPage() {
             {/* CARTE STATUT KILLED / REDESIGNED */}
             <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', border: '0.5px solid #222', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ position: 'relative', width: '200px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="200" height="120" viewBox="0 0 200 120">
+                    {/* On ajoute une key={dailyCalories} pour forcer le re-rendu complet sur iPhone lors du changement de données */}
+                    <svg key={`${dailyCalories}-${calorieTarget}`} width="200" height="120" viewBox="0 0 200 120">
                         {/* Arrière-plan (gris) */}
                         <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#222" strokeWidth="12" strokeLinecap="round" />
                         
@@ -418,7 +419,7 @@ export default function DashboardPage() {
                         <motion.path 
                             d="M 20 100 A 80 80 0 0 1 180 100" 
                             fill="none" 
-                            stroke="url(#dashboardArcGrad)" 
+                            stroke="url(#dashboardArcGradFix)" // ID unique
                             strokeWidth="12" 
                             strokeLinecap="round" 
                             strokeDasharray="251.32" 
@@ -427,9 +428,13 @@ export default function DashboardPage() {
                                 strokeDashoffset: 251.32 - (251.32 * Math.min(1, (dailyCalories || 0) / (calorieTarget || 2000))) 
                             }}
                             transition={{ duration: 1.5, ease: "easeOut" }}
+                            style={{ 
+                                // Sécurité : au cas où le gradient bug, on garde une couleur de base
+                                filter: 'drop-shadow(0px 0px 4px rgba(16,185,129,0.2))' 
+                            }}
                         />
                         <defs>
-                            <linearGradient id="dashboardArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <linearGradient id="dashboardArcGradFix" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stopColor="#f59e0b" />
                                 <stop offset="100%" stopColor="#10b981" />
                             </linearGradient>
