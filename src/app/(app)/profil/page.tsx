@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAppStore, MealSlotKey, SLOT_LABELS, NEXT_SLOT } from '@/store/useAppStore'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
@@ -150,7 +151,9 @@ export default function ProfilPage() {
     const bilanTitle = activeSlot === 'diner' ? (goalReached ? 'Objectif atteint !' : exceeded ? 'Objectif dépassé' : 'Journée incomplète') : `Bilan ${activeSlot ? SLOT_LABELS[activeSlot] : ''}`
     const bilanColor = goalReached ? '#10b981' : exceeded ? '#ef4444' : '#f59e0b'
 
-    const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+    const handleLogoutTrigger = () => setShowLogoutConfirm(true)
+    const confirmLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
 
     const handleShareWhatsApp = () => {
         const text = `🔥 Bilan du jour sur Cal-Afrik !\n\n📊 Calories: ${Math.round(dailyCalories)} / ${calorieTarget} kcal\n🥩 Protéines: ${Math.round(dailyProtein)}g\n🌾 Glucides: ${Math.round(dailyCarbs)}g\n🥑 Lipides: ${Math.round(dailyFat)}g\n\nRejoins l'app #1 de nutrition en Afrique et atteins tes objectifs en mangeant local ! 🌍\n👉 https://al-afrik.vercel.app`
@@ -544,11 +547,83 @@ export default function ProfilPage() {
                     <button onClick={() => router.push('/onboarding?edit=1')} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#fff', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
                         ✏️ Modifier Profil
                     </button>
-                    <button onClick={handleLogout} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#ef4444', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
+                    <button onClick={handleLogoutTrigger} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#ef4444', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
                         Déconnexion
                     </button>
                 </div>
             </div>
+
+            {/* MODAL DE CONFIRMATION DE DÉCONNEXION */}
+            <AnimatePresence>
+                {showLogoutConfirm && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowLogoutConfirm(false)}
+                            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            style={{
+                                width: '100%',
+                                maxWidth: '340px',
+                                background: '#141414',
+                                borderRadius: '28px',
+                                padding: '32px 24px',
+                                border: '0.5px solid #222',
+                                textAlign: 'center',
+                                position: 'relative',
+                                zIndex: 3001,
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+                            }}
+                        >
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 20px' }}>👋</div>
+                            <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Déconnexion ?</h3>
+                            <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>
+                                Es-tu sûr de vouloir te déconnecter de ton coach Yao ?
+                            </p>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <button
+                                    onClick={confirmLogout}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px',
+                                        background: '#ef4444',
+                                        borderRadius: '16px',
+                                        color: '#fff',
+                                        border: 'none',
+                                        fontSize: '15px',
+                                        fontWeight: '800',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Oui, me déconnecter
+                                </button>
+                                <button
+                                    onClick={() => setShowLogoutConfirm(false)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px',
+                                        background: 'transparent',
+                                        color: '#666',
+                                        border: 'none',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
