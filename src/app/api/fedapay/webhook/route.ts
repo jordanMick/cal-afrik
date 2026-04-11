@@ -34,7 +34,9 @@ export async function POST(req: Request) {
         }
 
         const userId = metadata.user_id || metadata.userId;
-        const tier = metadata.tier || metadata.plan;
+        const tier = metadata.tier || metadata.plan || "premium"; // Fallback premium si plan absent
+
+        const customerEmail = transaction.customer?.email || payload.data?.customer?.email;
 
         console.log(`[FedaPay Webhook] Analyse payload:`, {
             eventName,
@@ -42,23 +44,42 @@ export async function POST(req: Request) {
             status: transaction.status,
             userId,
             tier,
+            customerEmail,
             rawMetadataType: typeof rawMeta
         });
 
         // 1. Gestion du paiement réussi
-        if (eventName === 'transaction.approved' || transaction.status === 'approved') {
-            if (!userId || !tier) {
-                console.error('[FedaPay Webhook] ERREUR: Impossible de trouver userId ou tier dans:', metadata);
-                return NextResponse.json({ error: 'Data missing in metadata' }, { status: 400 });
+        if (eventName === 'transaction.approved' || transaction.status === 'approved' || eventName === 'transaction.paid') {
+            
+            let targetUserId = userId;
+
+            // 🔍 FALLBACK: Si pas de userId dans les métadonnées, on cherche par email
+            if (!targetUserId && customerEmail) {
+                console.log(`[FedaPay Webhook] UID absent, recherche par email: ${customerEmail}`);
+                const { data: userByEmail } = await supabaseAdmin
+                    .from('user_profiles')
+                    .select('user_id')
+                    .eq('email', customerEmail)
+                    .single();
+                
+                if (userByEmail) {
+                    targetUserId = userByEmail.user_id;
+                    console.log(`[FedaPay Webhook] Utilisateur trouvé par email: ${targetUserId}`);
+                }
             }
 
-            console.log(`[FedaPay Webhook] Traitement validation pour ${userId} - Plan: ${tier}`);
+            if (!targetUserId) {
+                console.error('[FedaPay Webhook] ERREUR CRITIQUE: Impossible d\'identifier l\'utilisateur (ni par metadata, ni par email)');
+                return NextResponse.json({ error: 'User identification failed' }, { status: 400 });
+            }
+
+            console.log(`[FedaPay Webhook] Traitement validation pour ${targetUserId} - Plan: ${tier}`);
 
             // Récupération de l'ancienne date pour le cumul
             const { data: currentProfile } = await supabaseAdmin
                 .from('user_profiles')
                 .select('subscription_expires_at')
-                .eq('user_id', userId)
+                .eq('user_id', targetUserId)
                 .single();
 
             let baseDate = new Date();
@@ -77,7 +98,7 @@ export async function POST(req: Request) {
                     subscription_expires_at: baseDate.toISOString(),
                     updated_at: new Date().toISOString(),
                 })
-                .eq('user_id', userId);
+                .eq('user_id', targetUserId);
 
             if (updateError) {
                 console.error('[FedaPay Webhook] Erreur UPDATE Supabase:', updateError);
