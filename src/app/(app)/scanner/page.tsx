@@ -77,11 +77,11 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
     let pendingButtons: React.ReactNode[] = []
 
     const flushDayBlock = () => {
-        // 1. Toujours vider les boutons en attente, même sans clé de jour (menu Today)
+        // 1. Toujours vider les boutons en attente
         if (pendingButtons.length > 0) {
             const btns = (
-                <div key={`pending-btns-${Math.random()}`} style={{ marginTop: '4px', marginBottom: '10px' }}>
-                    {pendingButtons.map((b, i) => <div key={`pb-${i}`} style={{ marginTop: '8px' }}>{b}</div>)}
+                <div key={`pending-btns-${Math.random()}`} style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {pendingButtons.map((b, i) => <div key={`pb-${i}`}>{b}</div>)}
                 </div>
             )
             if (currentDayKey) currentDayBlock.push(btns)
@@ -89,11 +89,19 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
             pendingButtons = []
         }
 
-        // 2. Si on a un bloc de jour complet (Planning semaine), on le traite
+        // 2. Bloc de jour (Planning)
         if (!currentDayKey || currentDayBlock.length === 0) return
 
         rows.push(
-            <div key={`day-${currentDayKey}`} style={{ marginTop: '10px', padding: '10px', background: 'rgba(255,255,255,0.02)', border: '0.5px solid #242424', borderRadius: '12px' }}>
+            <div key={`day-${currentDayKey}`} style={{ 
+                marginTop: '12px', 
+                marginBottom: '16px',
+                padding: '16px', 
+                background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid rgba(255,255,255,0.05)', 
+                borderRadius: '20px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+            }}>
                 {currentDayBlock}
             </div>
         )
@@ -121,9 +129,18 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 const trailing = forcedSplit ? forcedSplit[2] : ''
                 currentDayKey = `${idx}-${dateTitle}`
                 currentDayBlock.push(
-                    <div key={`header-tag-${idx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f59e0b20', border: '0.5px solid #f59e0b40', padding: '4px 10px', borderRadius: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Jour :</span>
-                        <span style={{ color: '#fff', fontSize: '12px', fontWeight: '800' }}>{dateTitle}</span>
+                    <div key={`header-tag-${idx}`} style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
+                        padding: '4px 14px', 
+                        borderRadius: '99px', 
+                        marginBottom: '12px',
+                        boxShadow: '0 4px 12px rgba(245,158,11,0.2)'
+                    }}>
+                        <span style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(0,0,0,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Jour</span>
+                        <span style={{ color: '#fff', fontSize: '13px', fontWeight: '800' }}>{dateTitle}</span>
                     </div>
                 )
                 if (trailing) {
@@ -165,22 +182,24 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                         disabled={buttonDisabled}
                         onClick={() => onLogSuggestion(menuText, lineSlotKey)}
                         style={{
-                            marginTop: '8px',
-                            padding: '6px 12px',
-                            borderRadius: '8px',
-                            border: `0.5px solid ${buttonDisabled ? '#333' : '#6366f180'}`,
-                            background: buttonDisabled ? 'transparent' : '#6366f110',
-                            color: buttonDisabled ? '#555' : '#6366f1',
+                            marginTop: '10px',
+                            padding: '8px 16px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: buttonDisabled ? 'rgba(255,255,255,0.05)' : `linear-gradient(135deg, ${slotColor}, ${slotColor}dd)`,
+                            color: buttonDisabled ? '#444' : '#fff',
                             fontSize: '11px',
-                            fontWeight: '700',
+                            fontWeight: '800',
                             cursor: buttonDisabled ? 'default' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            transition: 'all 0.2s'
+                            gap: '8px',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: buttonDisabled ? 'none' : `0 4px 15px ${slotColor}40`,
+                            opacity: buttonDisabled && slotHasMeal ? 0.8 : 1,
                         }}
                     >
-                        ✨ {isSavingActivity ? 'Chargement...' : slotHasMeal ? 'Déjà enregistré ✓' : isCurrentSlot ? 'Choisir ce menu' : isFuture ? `Disponible à ${startHour}:00` : 'Déjà passé'}
+                        {slotHasMeal ? '✨ Enregistré ✓' : <><span>Choisir ce menu</span> <span style={{ opacity: 0.7 }}>→</span></>}
                     </button>
                 )
             }
@@ -1058,8 +1077,15 @@ export default function ScannerPage() {
                         </button>
                     </div>
 
-                    <div style={{ background: '#141414', border: `0.5px solid ${slotColor}30`, borderRadius: '16px', padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                    <div style={{ 
+                        background: 'rgba(20,20,20,0.4)', 
+                        backdropFilter: 'blur(20px)',
+                        border: `1px solid ${slotColor}20`, 
+                        borderRadius: '24px', 
+                        padding: '18px 20px',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <p style={{ color: slotColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                                     Menu suggéré par Yao
