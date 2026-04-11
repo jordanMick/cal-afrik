@@ -14,7 +14,7 @@ export async function POST(req: Request) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                description: "Abonnement Cal-Afrik",
+                description: `Abonnement Cal-Afrik - ID: ${body.userId || body.user_id}`,
                 amount: 1500,
                 currency: { iso: "XOF" },
 

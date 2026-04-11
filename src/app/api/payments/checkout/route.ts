@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         console.log(`[FedaPay] Création transaction pour ${user.email} - Montant: ${amount}`);
 
         const transaction = await Transaction.create({
-            description: `Abonnement Cal-Afrik ${tier.toUpperCase()}`,
+            description: `Abonnement Cal-Afrik ${tier.toUpperCase()} - ID: ${user.id}`,
             amount: amount,
             currency: { iso: 'XOF' },
             callback_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard?payment=success`,
