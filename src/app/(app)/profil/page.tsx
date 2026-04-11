@@ -447,6 +447,32 @@ export default function ProfilPage() {
                 </div>
             )}
 
+            {/* UPSELL POUR LES GENS EN FREE (Bilan Verrouillé) */}
+            {effectiveTier === 'free' && (
+                <div 
+                    onClick={() => router.push('/upgrade')}
+                    style={{ 
+                        margin: '0 20px 20px', background: '#141414', border: '1px solid #222', 
+                        borderRadius: '24px', padding: '24px', overflow: 'hidden', cursor: 'pointer',
+                        position: 'relative'
+                    }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🔒</div>
+                        <div>
+                            <p style={{ color: '#fff', fontWeight: '700', fontSize: '16px' }}>Bilan de ta journée</p>
+                            <p style={{ color: '#555', fontSize: '12px' }}>Par Coach Yao 🤖</p>
+                        </div>
+                    </div>
+                    <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
+                        Coach Yao analyse tes repas et tes macros pour te donner un bilan précis de ta journée. Débloque le plan Pro pour y accéder !
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6366f1', fontWeight: '800', fontSize: '12px', letterSpacing: '0.5px' }}>
+                        DÉCOUVRIR LE PLAN PRO <span style={{ fontSize: '16px' }}>→</span>
+                    </div>
+                </div>
+            )}
+
 
 
             <div style={{ padding: '0 20px' }}>
