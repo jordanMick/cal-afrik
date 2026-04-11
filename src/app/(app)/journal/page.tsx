@@ -299,7 +299,7 @@ function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () 
                     {meal.coach_message && (
                         <div style={{ marginBottom: '14px' }}>
                             <button onClick={() => setShowCoach(!showCoach)} style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}>
-                                {showCoach ? '🤖 Conseil du coach' : '💡 Voir le conseil du coach →'}
+                                {showCoach ? '💡 Conseil du coach' : '💡 Voir le conseil du coach →'}
                             </button>
                             {showCoach && <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '10px', padding: '12px', border: '0.5px solid rgba(245,158,11,0.2)' }}><p style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.6' }}>{meal.coach_message}</p></div>}
                         </div>

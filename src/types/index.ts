@@ -187,7 +187,7 @@ export interface EnrichedSuggestion extends FoodSuggestion {
     fat_detected: number
     confidence: number
     detected: string
-    fromAI: boolean
+    fromCoach: boolean
 }
 
 // Résultat final retourné par l'API route au frontend

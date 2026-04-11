@@ -655,7 +655,7 @@ export default function ScannerPage() {
                 body: JSON.stringify({ images: [{ data: base64Image, mimeType: file.type }] })
             })
             const json = await res.json()
-            console.log("🤖 Réponse IA (/api/analyze):", json)
+            console.log("💡 Réponse Coach Yao (/api/analyze):", json)
 
             // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
             const effectiveTier = profile?.subscription_tier || 'free';
@@ -854,7 +854,7 @@ export default function ScannerPage() {
             fat_detected: 0,
             confidence: 50,
             detected: item.name_standard,
-            fromAI: false
+            fromCoach: false
         })))
     }
 
@@ -929,7 +929,7 @@ export default function ScannerPage() {
                 fat_detected: manualFood.fat_g,
                 confidence: 100,
                 detected: manualFood.name_fr,
-                fromAI: false
+                fromCoach: false
             }
 
             const allFoods = [...selectedFoods, newFoodEntry]
@@ -985,7 +985,7 @@ export default function ScannerPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
-            const aiFoods = selectedFoods.filter(f => f.fromAI)
+            const aiFoods = selectedFoods.filter(f => f.fromCoach)
             if (aiFoods.length > 0) await Promise.all(aiFoods.map(food => saveAIFoodToDB(food, session)))
             const totals = getTotals()
             const res = await fetch('/api/meals', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ custom_name: mealName || selectedFoods.map(f => f.name).join(', '), meal_type: currentSlotKey, portion_g: Math.round(totals.portion_g), calories: Math.round(totals.calories), protein_g: Math.round(totals.protein_g * 10) / 10, carbs_g: Math.round(totals.carbs_g * 10) / 10, fat_g: Math.round(totals.fat_g * 10) / 10, image_url: capturedImage, ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length), coach_message: coachMessage || null }) })
@@ -1299,7 +1299,7 @@ export default function ScannerPage() {
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <span style={{ color: '#555', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
-                                    <span style={{ color: '#222', fontSize: '11px' }}>•</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">COACH YAO EN ACTION...</span>
                                     <p style={{ color: isSelected ? ACCENT_COLOR : '#666', fontSize: '12px', fontWeight: '600' }}>
                                         {food.calories} kcal · {food.protein_g}g prot.
                                     </p>
@@ -1397,7 +1397,7 @@ export default function ScannerPage() {
                         {!selectedFoods.some(f => f.id.startsWith('suggested-')) && (
                             <>
                                 <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(245,158,11,0.08)' : 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
-                                    {showCoach ? '💡 Conseil du coach' : '💡 Voir le conseil du coach →'}
+                                    {showCoach ? 'Conseil personnalisé de votre coach' : 'Demander l\'avis du coach →'}
                                 </button>
                                 {showCoach && (
                                     <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
@@ -1405,7 +1405,7 @@ export default function ScannerPage() {
                                             <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Yao analyse ton assiette...</p>
                                         ) : coachMessage === '__FREE_USED__' ? (
                                             <div style={{ textAlign: 'center' }}>
-                                                <p style={{ fontSize: '24px', marginBottom: '8px' }}>🔒</p>
+                                                <p className="text-[10px] font-bold text-white/30 mt-1 uppercase tracking-widest">ANALYSE COACH YAO</p>
                                                 <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Essai gratuit déjà utilisé</p>
                                                 <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Tu as déjà vu le talent de Coach Yao ! Passe au Plan Pro pour ses conseils chaque jour.</p>
                                                 <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: '#f59e0b', color: '#000', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Voir le Plan Pro →</div>

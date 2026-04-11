@@ -124,7 +124,7 @@ export const MealRecap = ({
                     className="h-14 border-zinc-800"
                 >
                   <BrainCircuit className="w-4 h-4 mr-2 text-amber-500" />
-                  {showCoach ? 'Conseil IA de votre coach' : 'Demander l\'avis du coach →'}
+                  {showCoach ? 'Conseil personnalisé de votre coach' : 'Demander l\'avis du coach →'}
                 </Button>
 
                 <AnimatePresence>

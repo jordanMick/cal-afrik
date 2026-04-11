@@ -44,7 +44,7 @@ export const ImageUpload = ({
             </div>
             <div className="text-center z-10">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-white">Prendre une Photo</p>
-                <p className="text-[10px] font-bold text-white/30 mt-1 uppercase tracking-widest">IA ANALYSE INSTANTANÉE</p>
+                <p className="text-[10px] font-bold text-white/30 mt-1 uppercase tracking-widest">ANALYSE INSTANTANÉE</p>
             </div>
           </motion.div>
         ) : (
@@ -85,7 +85,7 @@ export const ImageUpload = ({
                     
                     <div className="glass-panel px-6 py-3 rounded-full flex items-center gap-3 animate-pulse">
                         <div className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e]" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">IA EN ACTION...</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">ANALYSE EN COURS...</span>
                     </div>
                 </motion.div>
               )}
