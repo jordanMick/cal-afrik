@@ -250,7 +250,7 @@ export default function ScannerPage() {
     const [suggestions, setSuggestions] = useState<EnrichedSuggestion[]>([])
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
     const [mealName, setMealName] = useState('')
-    const [totalCaloriesAI, setTotalCaloriesAI] = useState(0)
+    const [totalCaloriesCoach, setTotalCaloriesCoach] = useState(0)
     const [showManualForm, setShowManualForm] = useState(false)
     const [isSavingManual, setIsSavingManual] = useState(false)
     const [showRecap, setShowRecap] = useState(false)
@@ -323,7 +323,7 @@ export default function ScannerPage() {
                     setMealName('Menu Coach Yao')
                     setSuggestions(enrichedItems)
                     setSelectedFoods(enrichedItems)
-                    setTotalCaloriesAI(totalCals)
+                    setTotalCaloriesCoach(totalCals)
                     setShowRecap(true)
                 } else {
                     // Aucun aliment trouvé en BD — on affiche quand même un recap générique
@@ -431,7 +431,7 @@ export default function ScannerPage() {
 
         setMealName(displayLabel)
         setSelectedFoods([virtualFood])
-        setTotalCaloriesAI(Math.round(totalCals))
+        setTotalCaloriesCoach(Math.round(totalCals))
         setShowRecap(true)
         setShowCoach(false)
         setCoachMessage('')
@@ -636,7 +636,7 @@ export default function ScannerPage() {
     const processImage = async (file: File) => {
         setIsAnalyzing(true)
         setSelectedFoods([]); setSuggestions([]); setMealName('')
-        setTotalCaloriesAI(0); setShowManualForm(false); setShowRecap(false); setCoachMessage('')
+        setTotalCaloriesCoach(0); setShowManualForm(false); setShowRecap(false); setCoachMessage('')
         try {
             // Compression prioritaire
             const compressedFile = await compressImage(file)
@@ -686,7 +686,7 @@ export default function ScannerPage() {
                 return
             }
             setMealName(json.meal_name || 'Repas détecté')
-            setTotalCaloriesAI(json.total_calories || 0)
+            setTotalCaloriesCoach(json.total_calories || 0)
             const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[]).flatMap((item): EnrichedSuggestion[] => {
                 const suggs = item.suggestions ?? []
                 if (suggs.length > 0) return suggs.map((s): EnrichedSuggestion => ({ ...s, portion_g: item.portion_g ?? 0, calories_detected: item.calories_detected ?? 0, protein_detected: item.protein_detected ?? 0, carbs_detected: item.carbs_detected ?? 0, fat_detected: item.fat_detected ?? 0, confidence: item.confidence ?? 0, detected: item.detected ?? 'Inconnu', fromCoach: false }))
@@ -1277,7 +1277,7 @@ export default function ScannerPage() {
             {mealName && !isAnalyzing && (
                 <div style={{ marginBottom: '20px', padding: '16px 20px', background: '#141414', border: `0.5px solid ${slotColor}20`, borderRadius: '18px' }}>
                     <p style={{ color: '#fff', fontWeight: '700', fontSize: '15px' }}>🍽️ {mealName}</p>
-                    {totalCaloriesAI > 0 && <p style={{ color: '#555', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Estimation Coach Yao : ~{totalCaloriesAI} kcal</p>}
+                    {totalCaloriesCoach > 0 && <p style={{ color: '#555', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Estimation Coach Yao : ~{totalCaloriesCoach} kcal</p>}
                 </div>
             )}
 
