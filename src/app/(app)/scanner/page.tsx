@@ -60,7 +60,12 @@ function normalizeMenuText(raw: string, mode: 'today' | 'tomorrow' | 'week' = 't
 }
 
 function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (fullText: string, slotKey: string) => void, slots?: any) {
-    const normalized = normalizeMenuText(menuText, mode)
+    // On cache le bloc DATA pour le rendu UI mais on garde le texte propre
+    const sep = '---DATA---'
+    const dataIdx = menuText.indexOf(sep)
+    const cleanMenuText = dataIdx !== -1 ? menuText.substring(0, dataIdx).trim() : menuText
+    
+    const normalized = normalizeMenuText(cleanMenuText, mode)
     const lines = normalized
         .split('\n')
         .map(l => l.trim())
@@ -330,33 +335,62 @@ export default function ScannerPage() {
         let totalFat = 0;
         
         const cleanedLower = fullText.toLowerCase()
-        const detectedInDB = (foods || []).filter(f => {
-            const fullName = (f.display_name || f.name_standard || f.name_fr || "").toLowerCase()
-            // On extrait le nom court sans les parenthèses (ex: "Molou Zogbon (Bouillie de riz)" -> "molou zogbon")
-            const shortName = fullName.replace(/\s*\(.*?\)/g, "").trim()
-            
-            return fullName && (
-                cleanedLower.includes(fullName) || 
-                (shortName.length > 3 && cleanedLower.includes(shortName))
-            )
-        })
+        
+        // --- 1. Tenter l'extraction via bloc ---DATA--- (Précis) ---
+        const sep = '---DATA---'
+        const dataIdx = fullText.indexOf(sep)
+        let dataParsedSuccessfully = false
 
-        if (detectedInDB.length > 0) {
-            detectedInDB.forEach(f => {
-                // On essaie d'extraire la portion spécifique à cet aliment dans le texte (ex: "Nom (150g)")
-                const nameEscaped = (f.display_name || f.name_standard || f.name_fr || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-                const portionRegex = new RegExp(`${nameEscaped}.*?\\(?(\\d+)\\s*g\\)?`, 'i')
-                const portionMatch = fullText.match(portionRegex)
+        if (dataIdx !== -1 && foods) {
+            try {
+                const jsonPart = fullText.substring(dataIdx + sep.length).trim()
+                const data = JSON.parse(jsonPart)
+                if (data.items && Array.isArray(data.items)) {
+                    data.items.forEach((item: any) => {
+                        const food = foods.find(f => f.name_standard === item.name)
+                        if (food) {
+                            const portion = item.volume_ml || food.default_portion_g || 150
+                            totalCals += (food.calories_per_100g * portion) / 100
+                            totalProt += ((food.proteins_100g || 0) * portion) / 100
+                            totalCarbs += ((food.carbs_100g || 0) * portion) / 100
+                            totalFat += ((food.lipids_100g || 0) * portion) / 100
+                        }
+                    })
+                    dataParsedSuccessfully = totalCals > 0
+                }
+            } catch (err) {
+                console.warn('⚠️ handleSelectSuggestion data parse error:', err)
+            }
+        }
+
+        // --- 2. Fallback via regex (Moins précis) if no data or parse failed ---
+        if (!dataParsedSuccessfully) {
+            const detectedInDB = (foods || []).filter(f => {
+                const fullName = (f.display_name || f.name_standard || f.name_fr || "").toLowerCase()
+                // On extrait le nom court sans les parenthèses (ex: "Molou Zogbon (Bouillie de riz)" -> "molou zogbon")
+                const shortName = fullName.replace(/\s*\(.*?\)/g, "").trim()
                 
-                const portion = portionMatch ? parseInt(portionMatch[1]) : (f.default_portion_g || 200)
-                
-                totalCals += (f.calories_per_100g * portion) / 100
-                totalProt += ((f.proteins_100g || 0) * portion) / 100
-                totalCarbs += ((f.carbs_100g || 0) * portion) / 100
-                totalFat += ((f.lipids_100g || 0) * portion) / 100
+                return fullName && (
+                    cleanedLower.includes(fullName) || 
+                    (shortName.length > 3 && cleanedLower.includes(shortName))
+                )
             })
-        } else {
-            totalCals = slotKey === 'dejeuner' || slotKey === 'diner' ? 700 : (slotKey === 'collation' ? 250 : 500)
+
+            if (detectedInDB.length > 0) {
+                detectedInDB.forEach(f => {
+                    const nameEscaped = (f.display_name || f.name_standard || f.name_fr || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                    const portionRegex = new RegExp(`${nameEscaped}.*?\\(?(\\d+)\\s*g\\)?`, 'i')
+                    const portionMatch = fullText.match(portionRegex)
+                    const portion = portionMatch ? parseInt(portionMatch[1]) : (f.default_portion_g || 200)
+                    
+                    totalCals += (f.calories_per_100g * portion) / 100
+                    totalProt += ((f.proteins_100g || 0) * portion) / 100
+                    totalCarbs += ((f.carbs_100g || 0) * portion) / 100
+                    totalFat += ((f.lipids_100g || 0) * portion) / 100
+                })
+            } else {
+                totalCals = slotKey === 'dejeuner' || slotKey === 'diner' ? 700 : (slotKey === 'collation' ? 250 : 500)
+            }
         }
 
         const virtualFood: EnrichedSuggestion = {
@@ -435,7 +469,11 @@ export default function ScannerPage() {
                 const keywords = slotKeywords[currentSlotKey] || []
                 
                 // On cherche la ligne du créneau
-                const lines = dayContent.split('\n')
+                // Extraction de la partie texte propre (avant ---DATA---)
+                const sep = '---DATA---'
+                const dataIdx = dayContent.indexOf(sep)
+                const displayText = dataIdx !== -1 ? dayContent.substring(0, dataIdx).trim() : dayContent
+                const lines = displayText.split('\n')
                 const slotLineIdx = lines.findIndex(l => keywords.some(k => l.toLowerCase().includes(k)))
                 
                 if (slotLineIdx !== -1) {

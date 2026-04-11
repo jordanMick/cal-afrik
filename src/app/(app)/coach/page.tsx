@@ -546,7 +546,7 @@ export default function CoachChatPage() {
                             {/* Bouton "Ajouter au Scanner" — menu créneau (DATA block) */}
                             {parsed && (
                                 <button
-                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot, parsed.displayText)}
+                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot, msg.content)}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
