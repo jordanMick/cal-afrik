@@ -465,6 +465,45 @@ export default function ScannerPage() {
 
     useEffect(() => { loadFoods() }, [])
 
+    // Restauration des menus suggérés depuis Supabase (sync cross-device)
+    useEffect(() => {
+        const today = new Date().toISOString().split('T')[0]
+        // Si le store local est déjà à jour pour aujourd'hui, pas besoin de fetcher
+        if (chatSuggestedMenus.date === today) return
+
+        const restoreMenusFromSupabase = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) return
+
+                const { data: profileData } = await supabase
+                    .from('user_profiles')
+                    .select('suggested_menus_json')
+                    .eq('user_id', session.user.id)
+                    .single()
+
+                const remote = profileData?.suggested_menus_json
+                if (!remote || remote.date !== today) return
+
+                // Restaurer chaque type de menu dans le store
+                const { setChatSuggestedMenu } = useAppStore.getState()
+                if (remote.week) setChatSuggestedMenu('week', remote.week)
+                if (remote.tomorrow) setChatSuggestedMenu('tomorrow', remote.tomorrow)
+                if (remote.today && typeof remote.today === 'object') {
+                    for (const [slot, msg] of Object.entries(remote.today)) {
+                        if (msg) setChatSuggestedMenu('today', msg as string, slot)
+                    }
+                }
+                console.log('✅ Menus suggérés restaurés depuis Supabase')
+            } catch (err) {
+                console.error('⚠️ restoreMenusFromSupabase error:', err)
+            }
+        }
+
+        restoreMenusFromSupabase()
+    }, [])
+
+
     const loadFoods = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession()

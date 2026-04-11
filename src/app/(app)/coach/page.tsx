@@ -30,7 +30,7 @@ interface ChatThread {
     updatedAt: string;
 }
 
-const CHAT_THREADS_STORAGE_KEY = 'coach-chat-threads-v1'
+// Supprimé : localStorage migré vers Supabase pour sync cross-device
 
 function toLocalDateKey(d = new Date()): string {
     const y = d.getFullYear()
@@ -127,52 +127,94 @@ export default function CoachChatPage() {
     const [input, setInput] = useState('')
     const [isTyping, setIsTyping] = useState(false)
     const [messagesUsedToday, setMessagesUsedToday] = useState(initialMessagesUsed)
+    const [isLoadingThreads, setIsLoadingThreads] = useState(false)
 
-    // Clé dynamique par utilisateur pour isoler l'historique
-    const userId = profile?.user_id || profile?.id || 'guest'
-    const userStorageKey = `${CHAT_THREADS_STORAGE_KEY}-${userId}`
+    // ── Sauvegarde asynchrone d'un thread vers Supabase ──────────────
+    const saveThreadToSupabase = async (thread: ChatThread, userId: string) => {
+        try {
+            await supabase
+                .from('coach_chat_threads')
+                .upsert({
+                    user_id: userId,
+                    date: thread.date,
+                    messages: thread.messages,
+                    messages_used: thread.messagesUsed,
+                    max_messages: thread.maxMessages,
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: 'user_id,date' })
+        } catch (err) {
+            console.error('⚠️ saveThreadToSupabase error:', err)
+        }
+    }
 
     // Synchroniser si le profil change en arrière-plan
     useEffect(() => {
         setMessagesUsedToday(profile?.last_usage_reset_date === todayDate ? (profile?.chat_messages_today || 0) : 0)
     }, [profile, todayDate])
 
-    // Historique persistant: 3 discussions max, 1 discussion/jour
+    // Historique persistant : chargé depuis Supabase (sync cross-device)
     useEffect(() => {
-        const storedRaw = localStorage.getItem(userStorageKey)
-        let stored: ChatThread[] = []
-        if (storedRaw) {
+        if (!profile) return
+        const uid = profile.user_id || profile.id
+        if (!uid) return
+
+        const loadFromSupabase = async () => {
+            setIsLoadingThreads(true)
             try {
-                stored = sanitizeThreads(JSON.parse(storedRaw))
-            } catch {
-                stored = []
+                const threeDaysAgo = new Date()
+                threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+                const sinceDate = threeDaysAgo.toISOString().split('T')[0]
+
+                const { data, error } = await supabase
+                    .from('coach_chat_threads')
+                    .select('*')
+                    .eq('user_id', uid)
+                    .gte('date', sinceDate)
+                    .order('date', { ascending: true })
+
+                let stored: ChatThread[] = []
+                if (!error && data) {
+                    stored = sanitizeThreads(data.map((t: any) => ({
+                        date: t.date,
+                        messages: t.messages || [],
+                        messagesUsed: t.messages_used || 0,
+                        maxMessages: t.max_messages || maxMessages,
+                        updatedAt: t.updated_at || t.date,
+                    })))
+                }
+
+                const todayThread = stored.find(t => t.date === todayDate)
+                if (!todayThread) {
+                    const newThread: ChatThread = {
+                        date: todayDate,
+                        messages: [getWelcomeMessage(profile?.name)],
+                        messagesUsed: 0,
+                        maxMessages,
+                        updatedAt: new Date().toISOString(),
+                    }
+                    stored.push(newThread)
+                    await saveThreadToSupabase(newThread, uid)
+                } else {
+                    if (todayThread.messages.length === 0) {
+                        todayThread.messages = [getWelcomeMessage(profile?.name)]
+                        todayThread.updatedAt = new Date().toISOString()
+                    }
+                    // Toujours synchroniser le max avec le plan actuel
+                    todayThread.maxMessages = maxMessages
+                }
+
+                const trimmed = sanitizeThreads(stored)
+                setThreads(trimmed)
+                setActiveThreadDate(todayDate)
+            } catch (err) {
+                console.error('❌ loadFromSupabase chat error:', err)
+            } finally {
+                setIsLoadingThreads(false)
             }
         }
 
-        const todayThread = stored.find(t => t.date === todayDate)
-        if (!todayThread) {
-            stored.push({
-                date: todayDate,
-                messages: [getWelcomeMessage(profile?.name)],
-                messagesUsed: 0,
-                maxMessages,
-                updatedAt: new Date().toISOString(),
-            })
-        } else if (todayThread.messages.length === 0) {
-            todayThread.messages = [getWelcomeMessage(profile?.name)]
-            todayThread.updatedAt = new Date().toISOString()
-        }
-
-        // Toujours synchroniser le max avec le plan actuel
-        if (todayThread) {
-            todayThread.maxMessages = maxMessages
-        }
-
-        const trimmed = sanitizeThreads(stored)
-        localStorage.setItem(userStorageKey, JSON.stringify(trimmed))
-        setThreads(trimmed)
-        setActiveThreadDate(todayDate)
-    }, [todayDate, profile?.name, maxMessages, userStorageKey])
+        loadFromSupabase()
+    }, [todayDate, profile?.user_id, profile?.id, profile?.name, maxMessages])
 
     useEffect(() => {
         const thread = threads.find(t => t.date === activeThreadDate)
@@ -225,7 +267,12 @@ export default function CoachChatPage() {
                     updatedAt: new Date().toISOString(),
                 }]
             const trimmed = sanitizeThreads(updated)
-            localStorage.setItem(userStorageKey, JSON.stringify(trimmed))
+
+            // Sauvegarde asynchrone vers Supabase (fire-and-forget)
+            const uid = profile?.user_id || profile?.id
+            const threadToSave = trimmed.find(t => t.date === threadDate)
+            if (uid && threadToSave) saveThreadToSupabase(threadToSave, uid)
+
             return trimmed
         })
     }
@@ -289,7 +336,22 @@ export default function CoachChatPage() {
                 setMessagesUsedToday(maxMessages - data.usageRemaining)
                 setLastCoachMessage(data.message)
                 const menuInfo = detectMenuKind(data.message)
-                if (menuInfo) setChatSuggestedMenu(menuInfo.kind, data.message, menuInfo.slot)
+                if (menuInfo) {
+                    setChatSuggestedMenu(menuInfo.kind, data.message, menuInfo.slot)
+                    // Persistance cross-device des menus suggérés
+                    const updatedMenus = {
+                        ...chatSuggestedMenus,
+                        [menuInfo.kind]: menuInfo.kind === 'today'
+                            ? { ...chatSuggestedMenus.today, [menuInfo.slot || 'unspecified']: data.message }
+                            : data.message,
+                        date: todayDate,
+                    }
+                    supabase
+                        .from('user_profiles')
+                        .update({ suggested_menus_json: updatedMenus })
+                        .eq('user_id', session.user.id)
+                        .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
+                }
                 const coachReply: Message = {
                     id: (Date.now() + 1).toString(),
                     role: 'coach',
