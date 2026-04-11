@@ -191,7 +191,7 @@ export default function ProfilPage() {
 
         // Logique de Nudge Dynamique (Ce que Yao proposerait pour la suite)
         if (activeSlot === 'petit_dejeuner') {
-            yaoNudge = calPercent > 30 
+            yaoNudge = calPercent > 30
                 ? "Yao vous suggère un déjeuner léger à base de fibres pour équilibrer votre matinée."
                 : "Yao a sélectionné des déjeuners locaux riches en fer pour booster votre après-midi."
         } else if (activeSlot === 'dejeuner') {
@@ -529,9 +529,9 @@ export default function ProfilPage() {
                 )}
 
                 {effectiveTier !== 'premium' && (
-                    <button 
+                    <button
                         onClick={() => router.push('/upgrade')}
-                        style={{ 
+                        style={{
                             width: '100%', height: '54px', marginBottom: '12px',
                             background: 'linear-gradient(135deg, #6366f1, #10b981)',
                             border: 'none', borderRadius: '18px',
@@ -546,9 +546,9 @@ export default function ProfilPage() {
                 {/* SECTION ASSISTANCE */}
                 <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '24px 0 12px' }}>Assistance & Aide</p>
                 <div style={{ background: '#141414', borderRadius: '24px', border: '0.5px solid #222', padding: '6px', marginBottom: '20px' }}>
-                    <button 
-                        onClick={() => window.open('https://wa.me/22890000000?text=Bonjour%20Coach%20Yao,%20j\'ai%20besoin%20d\'aide%20sur%20l\'application%20Cal-Afrik', '_blank')}
-                        style={{ 
+                    <button
+                        onClick={() => window.open('https://wa.me/22891434846?text=Bonjour%20Coach%20Yao,%20j\'ai%20besoin%20d\'aide%20sur%20l\'application%20Cal-Afrik', '_blank')}
+                        style={{
                             width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
                             background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer',
                             borderBottom: '0.5px solid #1a1a1a'
@@ -561,9 +561,9 @@ export default function ProfilPage() {
                         </div>
                         <span style={{ marginLeft: 'auto', color: '#333' }}>→</span>
                     </button>
-                    <button 
-                        onClick={() => window.location.href = 'mailto:support@cal-afrik.com?subject=Aide%20Cal-Afrik'}
-                        style={{ 
+                    <button
+                        onClick={() => window.location.href = 'mailto:jomickeal06@gmail.com?subject=Aide%20Cal-Afrik'}
+                        style={{
                             width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
                             background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer'
                         }}
@@ -620,7 +620,7 @@ export default function ProfilPage() {
                             <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>
                                 Es-tu sûr de vouloir te déconnecter de ton coach Yao ?
                             </p>
-                            
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <button
                                     onClick={confirmLogout}
