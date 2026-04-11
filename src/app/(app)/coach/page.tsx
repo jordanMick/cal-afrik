@@ -145,6 +145,8 @@ export default function CoachChatPage() {
     const [isTyping, setIsTyping] = useState(false)
     const [messagesUsedToday, setMessagesUsedToday] = useState(initialMessagesUsed)
     const [isLoadingThreads, setIsLoadingThreads] = useState(false)
+    const [showScrollButton, setShowScrollButton] = useState(false)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
 
     // ── Sauvegarde asynchrone d'un thread vers Supabase ──────────────
     const saveThreadToSupabase = async (thread: ChatThread, userId: string) => {
@@ -258,6 +260,12 @@ export default function CoachChatPage() {
     useEffect(() => {
         scrollToBottom()
     }, [messages, isTyping])
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const target = e.currentTarget
+        const diff = target.scrollHeight - target.scrollTop - target.clientHeight
+        setShowScrollButton(diff > 300)
+    }
 
     const persistMessagesForThread = (threadDate: string, nextMessages: Message[], incrementUsage: boolean = false) => {
         const persisted: PersistedMessage[] = nextMessages.map(m => ({
@@ -504,7 +512,44 @@ export default function CoachChatPage() {
             )}
 
             {/* MESSAGES AREA */}
-            <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '30px' }}>
+            <div 
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '30px', position: 'relative' }}
+            >
+                {/* Scroll to bottom floating arrow */}
+                {showScrollButton && (
+                    <button
+                        onClick={scrollToBottom}
+                        style={{
+                            position: 'sticky',
+                            bottom: '20px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: 'rgba(99,102,241,0.9)',
+                            border: '0.5px solid rgba(255,255,255,0.2)',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            zIndex: 20,
+                            animation: 'fadeInUp 0.3s ease-out'
+                        }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+                        <style>{`
+                            @keyframes fadeInUp {
+                                from { opacity: 0; transform: translate(-50%, 10px); }
+                                to { opacity: 1; transform: translate(-50%, 0); }
+                            }
+                        `}</style>
+                    </button>
+                )}
                 {messages.map((msg) => {
                     const isCoach = msg.role === 'coach'
                     const parsed = isCoach ? parseDataBlock(msg.content) : null
