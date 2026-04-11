@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
                     const foodsList = allFoods.map((f: any) =>
                         `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}] (cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`
                     ).join('\n')
-                    foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste. Pour chaque aliment, tu vois son [ID_BD: xxx] — c'est cet identifiant exact que tu DOIS utiliser dans le champ "name" du bloc ---DATA--- :\n${foodsList}\n\nCONSIGNE : Dans le bloc ---DATA---, "name" = la valeur [ID_BD:...] EXACTE. N'invente aucun nom, n'utilise pas le display_name.`
+                    foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste. Pour chaque aliment, tu vois son [ID_BD: xxx] — c'est cet identifiant exact que tu DOIS utiliser dans le champ "name" du bloc ---DATA--- :\n${foodsList}\n\nCONSIGNE CRITIQUE CALCULS : Ne donne JAMAIS de total calorique ou de macros (Protéines/Lipides) dans ton texte de réponse. Contente-toi de décrire le menu. Le système calculera automatiquement le total certifié à partir de ton bloc ---DATA--- et l'affichera à l'utilisateur.`
                 }
             }
         }
@@ -310,9 +310,10 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
 ---DATA---
 {"type":"suggestion","items":[{"name":"nom_standard_exact_bd","volume_ml":400}]}
 
-Règles pour la balise :
 - "name" = le nom_standard EXACT tel qu'il apparaît dans la base de données (ex: "riz_blanc_vapeur", "poisson_frit").
-- "volume_ml" = estimation du volume de la portion en millilitres (le code convertira en grammes via density_g_ml).
+- "volume_ml" = la portion en grammes/ml que tu as choisie (ex: 200).
+
+⚠️ INTERDICTION : Ne calcule pas toi-même les calories dans ton texte. Ne mets pas de lignes comme "Total: 700kcal". Laisse le système s'en occuper via ta balise DATA.
 - Liste TOUS les composants du repas dans "items" (base + sauce + protéine séparément).
 - Pour les menus SEMAINE ou DEMAIN : n'ajoute PAS cette balise (trop d'items).
 - Ne mets RIEN après la balise ---DATA---. C'est la dernière chose dans ton message.`
@@ -456,9 +457,26 @@ Règles pour la balise :
                         return item
                     }).filter(Boolean)
 
-                    if (changed) {
-                        const fixedJson = JSON.stringify(parsed)
-                        aiMessage = aiMessage.substring(0, dataIdx) + '---DATA---\n' + fixedJson
+                    if (changed || parsed.items.length > 0) {
+                        // --- CALCUL DU TOTAL CERTIFIÉ (Injecté en signature) ---
+                        let trueCals = 0, trueP = 0, trueG = 0, trueL = 0
+                        parsed.items.forEach((it: any) => {
+                            const f = allFoodsDB.find(db => db.name_standard === it.name)
+                            if (f) {
+                                const q = it.volume_ml || f.default_portion_g || 150
+                                trueCals += (f.calories_per_100g * q) / 100
+                                trueP += ((f.proteins_100g || 0) * q) / 100
+                                trueG += ((f.carbs_100g || 0) * q) / 100
+                                trueL += ((f.lipids_100g || 0) * q) / 100
+                            }
+                        })
+
+                        if (trueCals > 0) {
+                            const signature = `\n\n─────────────────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
+                            aiMessage = aiMessage.substring(0, dataIdx).trim() + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
+                        } else if (changed) {
+                            aiMessage = aiMessage.substring(0, dataIdx) + '---DATA---\n' + JSON.stringify(parsed)
+                        }
                     }
                 }
             } catch (fixErr) {
