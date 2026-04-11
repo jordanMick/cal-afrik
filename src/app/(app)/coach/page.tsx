@@ -112,7 +112,7 @@ function parseDataBlock(rawMessage: string): {
 
 export default function CoachChatPage() {
     const router = useRouter()
-    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu, chatSuggestedMenus, setPendingScannerPrefill } = useAppStore()
+    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu, chatSuggestedMenus } = useAppStore()
     const effectiveTier = getEffectiveTier(profile)
 
     const maxMessages = Number(SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay || 2)
@@ -392,9 +392,37 @@ export default function CoachChatPage() {
     const activeThread = threads.find(t => t.date === activeThreadDate)
     const activeThreadLimitReached = !!activeThread && (activeThread.messagesUsed >= activeThread.maxMessages)
 
-    /** Transfère les items DATA vers le store puis navigue vers le scanner */
-    const handleAddToScanner = (dataItems: Array<{ name: string; volume_ml: number }>, slot: string) => {
-        setPendingScannerPrefill({ items: dataItems, slot })
+    /**
+     * Ajoute le menu suggéré dans le bloc Scanner "Aujourd'hui" (slot concerné)
+     * puis navigue vers le Scanner. L'utilisateur pourra ensuite cliquer
+     * "Ajouter au journal" depuis les suggestions du Scanner.
+     */
+    const handleAddToScanner = (
+        dataItems: Array<{ name: string; volume_ml: number }>,
+        slot: string,
+        fullMessage: string
+    ) => {
+        // Stocker dans chatSuggestedMenus[today][slot] — le Scanner lira ça
+        setChatSuggestedMenu('today', fullMessage, slot)
+
+        // Persistance cross-device
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!session) return
+            const updatedMenus = {
+                ...chatSuggestedMenus,
+                today: {
+                    ...(chatSuggestedMenus.today || {}),
+                    [slot]: fullMessage,
+                },
+                date: todayDate,
+            }
+            supabase
+                .from('user_profiles')
+                .update({ suggested_menus_json: updatedMenus })
+                .eq('user_id', session.user.id)
+                .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
+        })
+
         router.push('/scanner')
     }
 
@@ -478,7 +506,7 @@ export default function CoachChatPage() {
                             {/* Bouton "Ajouter au Scanner" si DATA block présent */}
                             {parsed && (
                                 <button
-                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot)}
+                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot, msg.content)}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
