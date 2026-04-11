@@ -333,6 +333,7 @@ export default function CoachChatPage() {
             }
 
             if (data.success) {
+                console.log('📨 Réponse brute Yao:', data.message)
                 setMessagesUsedToday(maxMessages - data.usageRemaining)
                 setLastCoachMessage(data.message)
                 const menuInfo = detectMenuKind(data.message)
