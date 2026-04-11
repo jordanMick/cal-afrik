@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
 import { getProgressPercent } from '@/lib/nutrition'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -184,18 +184,33 @@ export default function DashboardPage() {
     const remaining = Math.max(0, calorieTarget - dailyCalories)
     const exceeded = dailyCalories > calorieTarget
 
-    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-    const isPaymentSuccess = searchParams?.get('payment') === 'success'
+    const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
 
     useEffect(() => {
-        if (isPaymentSuccess) {
-            // Un petit délai pour laisser au webhook le temps de passer
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('payment') === 'success') {
+            setShowPaymentSuccess(true)
+            
+            // 1. Un petit délai pour laisser au webhook le temps de passer
             const timer = setTimeout(() => {
                 fetchProfile()
             }, 2000)
-            return () => clearTimeout(timer)
+
+            // 2. Faire disparaître le message après 6 secondes
+            const hideTimer = setTimeout(() => {
+                setShowPaymentSuccess(false)
+            }, 6000)
+
+            // 3. Nettoyer l'URL pour ne pas que le message revienne au refresh
+            const newUrl = window.location.pathname
+            window.history.replaceState({}, '', newUrl)
+
+            return () => {
+                clearTimeout(timer)
+                clearTimeout(hideTimer)
+            }
         }
-    }, [isPaymentSuccess])
+    }, [])
 
     const fetchProfile = async () => {
         try {
@@ -366,28 +381,40 @@ export default function DashboardPage() {
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
             
             {/* BANNIÈRE SUCCÈS PAIEMENT */}
-            {isPaymentSuccess && (
-                <div style={{ 
-                    background: 'linear-gradient(90deg, #10b981, #059669)',
-                    color: '#fff',
-                    padding: '12px 20px',
-                    borderRadius: '16px',
-                    marginBottom: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    boxShadow: '0 8px 20px rgba(16,185,129,0.3)',
-                    animation: 'fadeIn 0.5s ease-out'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '20px' }}>🎉</span>
-                        <div>
-                            <p style={{ fontSize: '14px', fontWeight: '800' }}>Paiement réussi !</p>
-                            <p style={{ fontSize: '11px', opacity: 0.9 }}>Votre plan a été mis à jour avec succès.</p>
+            <AnimatePresence>
+                {showPaymentSuccess && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        style={{ 
+                            background: 'linear-gradient(90deg, #10b981, #059669)',
+                            color: '#fff',
+                            padding: '12px 20px',
+                            borderRadius: '16px',
+                            marginBottom: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            boxShadow: '0 8px 20px rgba(16,185,129,0.3)',
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontSize: '20px' }}>🎉</span>
+                            <div>
+                                <p style={{ fontSize: '14px', fontWeight: '800' }}>Paiement réussi !</p>
+                                <p style={{ fontSize: '11px', opacity: 0.9 }}>Votre plan a été mis à jour avec succès.</p>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                        <button 
+                            onClick={() => setShowPaymentSuccess(false)}
+                            style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '14px' }}
+                        >
+                            ✕
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* HEADER */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
