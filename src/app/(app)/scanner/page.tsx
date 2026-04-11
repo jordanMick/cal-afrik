@@ -1013,8 +1013,11 @@ export default function ScannerPage() {
     }
 
     const totals = getTotals()
+    const dailyRemainingNow = dailyCalories.remaining
     const recapRemainingAfter = isLastSlot ? dailyRemainingNow - totals.calories : currentSlot.target - currentSlot.consumed - totals.calories
     const recapExceeded = recapRemainingAfter < 0
+    const displayedRemaining = isLastSlot ? dailyRemainingNow : (currentSlot.target - currentSlot.consumed)
+    const displayedRemainingLabel = isLastSlot ? "Restant (Jour)" : "Restant (Créneau)"
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative', overflow: 'hidden' }}>
