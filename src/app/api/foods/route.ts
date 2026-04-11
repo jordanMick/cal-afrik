@@ -10,29 +10,45 @@ const supabase = createClient(
 export async function GET(req: NextRequest) {
     try {
         const authHeader = req.headers.get('authorization')
+        const { searchParams } = new URL(req.url)
+        const search = searchParams.get('search')
+        const limitParam = searchParams.get('limit')
+
         let limit = 100 // Défaut gratuit
 
         if (authHeader) {
             const token = authHeader.replace('Bearer ', '')
             const { data: { user } } = await supabase.auth.getUser(token)
-            
+
             if (user) {
                 const { data: profile } = await supabase
                     .from('user_profiles')
                     .select('subscription_tier')
                     .eq('user_id', user.id)
                     .single()
-                
+
                 if (profile?.subscription_tier === 'pro' || profile?.subscription_tier === 'premium') {
-                    limit = 2000 // Illimité (ou très large)
+                    limit = 2000
                 }
             }
         }
 
-        const { data, error } = await supabase
-            .from('food_items')
-            .select('*')
-            .limit(limit)
+        // Si ?limit= est précisé, on l'utilise (ex: limit=1 pour le prefill)
+        if (limitParam) {
+            limit = Math.min(parseInt(limitParam), 2000)
+        }
+
+        let query = supabase.from('food_items').select('*')
+
+        // ─── Recherche par nom si ?search= est fourni ────────────
+        if (search && search.trim().length > 0) {
+            // On cherche dans name_standard ET display_name
+            query = query.or(
+                `name_standard.ilike.%${search.trim()}%,display_name.ilike.%${search.trim()}%`
+            )
+        }
+
+        const { data, error } = await query.limit(limit)
 
         if (error) return NextResponse.json({ success: false, error: error.message })
         return NextResponse.json({ success: true, data })
@@ -72,7 +88,6 @@ export async function POST(req: NextRequest) {
             verified,
         } = body
 
-        // Validation minimale
         if (!name_fr || !category || calories_per_100g === undefined) {
             return NextResponse.json({
                 success: false,

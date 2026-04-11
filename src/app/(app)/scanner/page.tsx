@@ -247,22 +247,25 @@ export default function ScannerPage() {
         const processPrefill = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession()
-                const headers: any = { 'Content-Type': 'application/json' }
-                if (session) headers.Authorization = `Bearer ${session.access_token}`
+                const authHeaders: any = { 'Content-Type': 'application/json' }
+                if (session) authHeaders.Authorization = `Bearer ${session.access_token}`
 
-                // Chercher chaque aliment en BD par name_standard
                 const enrichedItems: EnrichedSuggestion[] = []
                 let totalCals = 0
 
                 for (const item of pendingScannerPrefill.items) {
-                    const { data: foodRows } = await supabase
-                        .from('food_items')
-                        .select('id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, carbs_100g, lipids_100g, default_portion_g')
-                        .ilike('name_standard', `%${item.name}%`)
-                        .limit(1)
+                    // ✅ Utilise /api/foods?search= au lieu de Supabase direct (évite le 400)
+                    const res = await fetch(
+                        `/api/foods?search=${encodeURIComponent(item.name)}&limit=1`,
+                        { headers: authHeaders }
+                    )
+                    const json = await res.json()
+                    const food = json.success && json.data?.length > 0 ? json.data[0] : null
 
-                    const food = foodRows?.[0]
-                    if (!food) continue
+                    if (!food) {
+                        console.warn(`⚠️ Aliment non trouvé en BD : ${item.name}`)
+                        continue
+                    }
 
                     // Conversion volume → grammes via densité (défaut 1.0 g/ml)
                     const density = Number(food.density_g_ml) || 1.0
@@ -294,17 +297,18 @@ export default function ScannerPage() {
                 }
 
                 if (enrichedItems.length > 0) {
-                    const label = `Menu Coach Yao`
-                    setMealName(label)
+                    setMealName('Menu Coach Yao')
                     setSuggestions(enrichedItems)
                     setSelectedFoods(enrichedItems)
                     setTotalCaloriesAI(totalCals)
                     setShowRecap(true)
+                } else {
+                    // Aucun aliment trouvé en BD — on affiche quand même un recap générique
+                    console.warn('⚠️ Aucun aliment du prefill trouvé en BD. Vérifier les name_standard.')
                 }
             } catch (err) {
                 console.error('❌ Prefill scanner error:', err)
             } finally {
-                // Toujours vider le prefill après traitement
                 setPendingScannerPrefill(null)
             }
         }
