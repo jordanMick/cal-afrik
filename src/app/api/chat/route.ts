@@ -196,11 +196,13 @@ export async function POST(req: NextRequest) {
         const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit déjeuner') || messageLower.includes('déjeuner') || messageLower.includes('dîner') || messageLower.includes('ingredient') || messageLower.includes('j\'ai') || messageLower.includes('j\'ai seulement')
         let foodsContext = ""
         let hasIngredientConstraint = false
+        let allFoodsDB: any[] = [] // Hoissé pour la validation post-réponse du bloc ---DATA---
 
         if (wantsMenuAny) {
             console.log("🔍 Coach Yao interroge la BD food_items...")
             const { data: allFoods, error: foodsError } = await supabase.from('food_items').select('*')
             if (foodsError) console.error("❌ Erreur Supabase food_items:", foodsError)
+            if (allFoods) allFoodsDB = allFoods  // Sauvegarde pour correction DATA post-IA
             console.log(`✅ ${allFoods?.length || 0} aliments trouvés dans la BD.`)
 
             if (allFoods && allFoods.length > 0) {
@@ -403,6 +405,70 @@ Règles pour la balise :
             // On s'assure que le menu semaine est bien détecté et formaté par Yao directement
             if (wantsWeek && !/^menu\s+semaine\s*:/i.test(aiMessage) && aiMessage.length > 300) {
                  aiMessage = `menu semaine:\n${aiMessage}`.trim()
+            }
+        }
+
+        // ─── VALIDATION SERVEUR DU BLOC ---DATA--- ──────────────────────────────
+        // L'IA peut inventer des name_standard. On corrige ici avant d'envoyer au frontend.
+        if (aiMessage.includes('---DATA---') && allFoodsDB.length > 0) {
+            try {
+                const dataIdx = aiMessage.lastIndexOf('---DATA---')
+                const jsonStr = aiMessage.substring(dataIdx + 10).trim()
+                const parsed = JSON.parse(jsonStr)
+
+                if (parsed.items && Array.isArray(parsed.items)) {
+                    let changed = false
+                    parsed.items = parsed.items.map((item: any) => {
+                        const inputName = (item.name || '').toLowerCase().replace(/_/g, ' ')
+
+                        // 1. Correspondance exacte name_standard
+                        let match = allFoodsDB.find((f: any) => f.name_standard === item.name)
+
+                        // 2. Correspondance exacte display_name
+                        if (!match) {
+                            match = allFoodsDB.find((f: any) =>
+                                (f.display_name || '').toLowerCase() === inputName
+                            )
+                        }
+
+                        // 3. Correspondance partielle (mots significatifs > 2 chars)
+                        if (!match) {
+                            const words = inputName.split(/[\s_]+/).filter((w: string) => w.length > 2)
+                            let bestScore = 0
+                            for (const f of allFoodsDB) {
+                                const nameStd = (f.name_standard || '').toLowerCase().replace(/_/g, ' ')
+                                const dispName = (f.display_name || '').toLowerCase()
+                                const score = words.filter((w: string) =>
+                                    nameStd.includes(w) || dispName.includes(w)
+                                ).length
+                                if (score > bestScore) {
+                                    bestScore = score
+                                    match = f
+                                }
+                            }
+                            if (bestScore === 0) match = undefined
+                        }
+
+                        if (match && match.name_standard !== item.name) {
+                            console.log(`🔧 DATA auto-fix: "${item.name}" → "${match.name_standard}"`)
+                            changed = true
+                            return { ...item, name: match.name_standard }
+                        }
+                        if (!match) {
+                            console.warn(`⚠️ DATA: aliment introuvable en BD: "${item.name}" — item supprimé du bloc`)
+                            changed = true
+                            return null
+                        }
+                        return item
+                    }).filter(Boolean)
+
+                    if (changed) {
+                        const fixedJson = JSON.stringify(parsed)
+                        aiMessage = aiMessage.substring(0, dataIdx) + '---DATA---\n' + fixedJson
+                    }
+                }
+            } catch (fixErr) {
+                console.warn('⚠️ DATA block auto-fix failed:', fixErr)
             }
         }
 
