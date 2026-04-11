@@ -278,11 +278,12 @@ RÈGLES DE CONSCIENCE TEMPORELLE :
 - Après minuit, bascule sur le petit-déjeuner du lendemain.
 
 RÈGLES STRICTES (OBLIGATOIRES) :
-1) PRÉFIXES TECHNIQUES : "menu creneau [nom]:" (aujourd'hui), "menu demain:", "menu semaine:".
-2) FORMAT MENU DU JOUR (menu creneau) : Très détaillé ! Utilise les noms EXACTS de la BD (display_name), précise les grammes (ex: 150g) et explique les bénéfices.
-3) FORMAT PLANIFICATION (demain/semaine) : Liste CHAQUE JOUR de la séquence donnée, avec ses 4 créneaux (Petit-déjeuner, Déjeuner, Collation, Dîner). Détaille les aliments et les bénéfices pour chaque repas. TU DOIS mettre chaque jour et chaque créneau sur une NOUVELLE LIGNE. N'écris jamais deux jours ou deux créneaux sur la même ligne.
-4) DISCIPLINE DE LA BASE DE DONNÉES (CRITIQUE) : Tu as l'interdiction de citer un aliment qui n'existe pas dans la "[BASE DE DONNÉES CERTIFIÉE]". N'utilise AUCUN nom générique (ex: n'écris pas "Orange" si la liste propose "orange_fruit"). Si tu ne trouves pas l'aliment exact, utilise le plus proche graphiquement SANS RIEN INVENTER.
-5) CONFLIT SEMAINE/DEMAIN : Si l'utilisateur demande "le menu de demain" alors qu'il y a déjà un "menu semaine" actif : ne mets pas de préfixe technique, demande confirmation ("Il y a déjà un menu semaine, veux-tu changer demain ?"). Si "oui", envoie "menu demain:".
+1) BUDGET CALORIQUE DYNAMIQUE (CRITIQUE) : Si tu composes un menu pour AUJOURD'HUI (menu creneau), tu DOIS calculer : [Cible] - [Déjà consommé] (valeurs dans le contexte utilisateur). Le total calorique du repas que tu proposes DOIT impérativement tenir dans ce budget restant. Si le budget est très serré, propose un repas léger. Rappelle-toi : le dîner est le dernier repas, donc il DOIT clore la journée sans dépassement.
+2) PRÉFIXES TECHNIQUES : "menu creneau [nom]:" (aujourd'hui), "menu demain:", "menu semaine:".
+3) FORMAT MENU DU JOUR (menu creneau) : Très détaillé ! Utilise les noms EXACTS de la BD (display_name), précise les grammes (ex: 150g) et explique les bénéfices.
+4) FORMAT PLANIFICATION (demain/semaine) : Liste CHAQUE JOUR de la séquence donnée, avec ses 4 créneaux (Petit-déjeuner, Déjeuner, Collation, Dîner). Détaille les aliments et les bénéfices pour chaque repas. TU DOIS mettre chaque jour et chaque créneau sur une NOUVELLE LIGNE. N'écris jamais deux jours ou deux créneaux sur la même ligne.
+5) DISCIPLINE DE LA BASE DE DONNÉES (CRITIQUE) : Tu as l'interdiction de citer un aliment qui n'existe pas dans la "[BASE DE DONNÉES CERTIFIÉE]". N'utilise AUCUN nom générique (ex: n'écris pas "Orange" si la liste propose "orange_fruit"). Si tu ne trouves pas l'aliment exact, utilise le plus proche graphiquement SANS RIEN INVENTER.
+6) CONFLIT SEMAINE/DEMAIN : Si l'utilisateur demande "le menu de demain" alors qu'il y a déjà un "menu semaine" actif : ne mets pas de préfixe technique, demande confirmation ("Il y a déjà un menu semaine, veux-tu changer demain ?"). Si "oui", envoie "menu demain:".
 
 EXEMPLE RÉPONSE STANDARD (basée sur la BD) :
 menu creneau diner:
