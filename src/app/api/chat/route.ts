@@ -42,6 +42,53 @@ function fillUndefinedMeals(text: string): string {
     })
 }
 
+/**
+ * Détecte si l'utilisateur précise des ingrédients disponibles.
+ * Ex: "j'ai seulement du riz, des tomates et du poisson"
+ * Retourne un tableau de noms normalisés, ou null si aucune contrainte.
+ */
+function detectIngredientConstraint(msg: string): string[] | null {
+    const normalized = msg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    const patterns = [
+        /j[\s']ai\s+(?:seulement|que|uniquement)?\s*(?:du\s+|de\s+la\s+|de\s+l[\s']|des\s+)?([^.?!\n]+?)(?:\s+(?:disponible|a disposition|chez moi|seulement))?[.?!]?$/i,
+        /avec\s+(?:seulement|que|uniquement)?\s*(?:du\s+|de\s+la\s+|des\s+)?([^.?!\n]+?)(?:\s+(?:disponible|a disposition))?[.?!]?$/i,
+        /(?:ingredients?|aliments?)\s*(?:disponibles?|que j[\s']ai)?\s*[:]\s*([^.?!\n]+)/i,
+        /(?:en utilisant|utilise|prepare|compose)\s+(?:seulement|uniquement)?\s*(?:du\s+|de\s+la\s+|des\s+)?([^.?!\n]+)/i,
+        /(?:il me reste|j[\s']ai seulement|j[\s']ai juste)\s+([^.?!\n]+)/i,
+    ]
+    for (const pattern of patterns) {
+        const match = normalized.match(pattern)
+        if (match) {
+            const items = match[1]
+                .split(/,|\bet\b|\bou\b|\bplus\b/i)
+                .map((s: string) => s.replace(/^(du|de la|de l|des|un|une|le|la|les)\s+/i, '').trim())
+                .filter((s: string) => s.length > 2 && !/^(menu|pour|mon|ma|mes|ce|cette|le|la|les)$/.test(s))
+            if (items.length > 0) return items
+        }
+    }
+    return null
+}
+
+/**
+ * Filtre les aliments de la BD dont le nom correspond aux ingrédients détectés.
+ * Utilise une correspondance partielle bidirectionnelle pour la robustesse.
+ */
+function matchFoodsToIngredients(allFoods: any[], ingredients: string[]): any[] {
+    return allFoods.filter((f: any) => {
+        const nameStd = (f.name_standard || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const nameDisp = (f.display_name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        return ingredients.some((ing: string) => {
+            const ingClean = ing.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+            return (
+                nameStd.includes(ingClean) ||
+                nameDisp.includes(ingClean) ||
+                ingClean.includes(nameStd.split(' ')[0]) ||
+                (nameDisp && ingClean.includes(nameDisp.split(' ')[0]))
+            )
+        })
+    })
+}
+
 function buildLocalWeekMenuFallback(): string {
     const weekDates = buildWeekDatesFromTomorrow()
     const dayTemplates = [
@@ -146,9 +193,10 @@ export async function POST(req: NextRequest) {
         }
 
         const messageLower = normalizedUserMessage
-        const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit déjeuner') || messageLower.includes('déjeuner') || messageLower.includes('dîner')
+        const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit déjeuner') || messageLower.includes('déjeuner') || messageLower.includes('dîner') || messageLower.includes('ingredient') || messageLower.includes('j\'ai') || messageLower.includes('j\'ai seulement')
         let foodsContext = ""
-        
+        let hasIngredientConstraint = false
+
         if (wantsMenuAny) {
             console.log("🔍 Coach Yao interroge la BD food_items...")
             const { data: allFoods, error: foodsError } = await supabase.from('food_items').select('*')
@@ -156,8 +204,27 @@ export async function POST(req: NextRequest) {
             console.log(`✅ ${allFoods?.length || 0} aliments trouvés dans la BD.`)
 
             if (allFoods && allFoods.length > 0) {
-                const foodsList = allFoods.map((f: any) => `- ${f.display_name || f.name_standard} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`).join('\n')
-                foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste :\n${foodsList}\n\nCONSIGNE : Cite EXACTEMENT le nom de l'aliment de la liste. N'utilise JAMAIS de noms génériques.`
+                // ── Détection d'ingrédients précisés par l'utilisateur ──────────
+                const detectedIngredients = detectIngredientConstraint(messageContent)
+                const matchedFoods = detectedIngredients ? matchFoodsToIngredients(allFoods, detectedIngredients) : []
+                hasIngredientConstraint = matchedFoods.length > 0
+
+                console.log(`🧪 Ingrédients détectés : ${detectedIngredients?.join(', ') || 'aucun'}`)
+                console.log(`✅ Aliments matchés dans la BD : ${matchedFoods.length}`)
+
+                if (hasIngredientConstraint) {
+                    // Mode contraint : injecter UNIQUEMENT les aliments disponibles avec macros/100g
+                    const matchedList = matchedFoods.map((f: any) =>
+                        `- ${f.display_name || f.name_standard} : ${f.calories_per_100g}kcal/100g | P:${f.proteins_100g || 0}g G:${f.carbs_100g || 0}g L:${f.lipids_100g || 0}g`
+                    ).join('\n')
+                    foodsContext = `\n\n[INGRÉDIENTS DISPONIBLES - LISTE EXCLUSIVE]\nL'utilisateur a UNIQUEMENT ces ${matchedFoods.length} aliment(s) à sa disposition. Tu DOIS composer le menu EN UTILISANT SEULEMENT ces ingrédients :\n${matchedList}\n\nCONSIGNE PORTIONS : Propose des portions précises en grammes pour atteindre l'objectif calorique du créneau (basé sur le profil utilisateur). Calcule et affiche en fin de réponse :\n- Total calories du repas\n- Total Protéines / Glucides / Lipides\nN'invente AUCUN autre ingrédient non listé ci-dessus.`
+                } else {
+                    // Mode standard : toute la BD
+                    const foodsList = allFoods.map((f: any) =>
+                        `- ${f.display_name || f.name_standard} (cat: ${f.category}, cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`
+                    ).join('\n')
+                    foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste :\n${foodsList}\n\nCONSIGNE : Cite EXACTEMENT le nom de l'aliment de la liste. N'utilise JAMAIS de noms génériques.`
+                }
             }
         }
 
@@ -204,17 +271,32 @@ RÈGLES DE CONSCIENCE TEMPORELLE :
 RÈGLES STRICTES (OBLIGATOIRES) :
 1) PRÉFIXES TECHNIQUES : "menu creneau [nom]:" (aujourd'hui), "menu demain:", "menu semaine:".
 2) FORMAT MENU DU JOUR (menu creneau) : Très détaillé ! Utilise les noms EXACTS de la BD, précise les grammes (ex: 150g) et explique les bénéfices.
-3) FORMAT PLANIFICATION (demain/semaine) : Sois CONCIS. Donne juste le nom du plat et une portion indicative. 
+3) FORMAT PLANIFICATION (demain/semaine) : Sois CONCIS. Donne juste le nom du plat et une portion indicative.
 4) NOMS DE LA BASE DE DONNÉES : Utilise les noms EXACTS de la liste ci-dessus.
 5) CONFLIT SEMAINE/DEMAIN : Si l'utilisateur demande "le menu de demain" alors qu'il y a déjà un "menu semaine" actif : ne mets pas de préfixe technique, demande confirmation ("Il y a déjà un menu semaine, veux-tu changer demain ?"). Si "oui", envoie "menu demain:".
+6) MODE INGRÉDIENTS CONTRAINTS : Si la liste ci-dessus est marquée "[INGRÉDIENTS DISPONIBLES - LISTE EXCLUSIVE]", tu DOIS :
+   a) N'utiliser QUE les aliments listés, sans exception.
+   b) Calculer les portions en grammes pour atteindre l'objectif calorique du créneau.
+   c) Afficher en fin de réponse le récapitulatif nutritionnel calculé :
+      → Total : Xcal | Protéines : Xg | Glucides : Xg | Lipides : Xg
 
-EXEMPLE DE RÉPONSE EXPERTE :
+EXEMPLE RÉPONSE STANDARD :
 menu creneau diner:
 Dîner :
 - Fufu (Banane plantain & Igname) (250g) : Pour tes glucides complexes et l'énergie durable.
 - Poisson braisé (150g) : Excellente source de protéines maigres pour tes muscles.
-- Sauce Gombos : Riche en minéraux essentiels.
-Ce combo est parfait pour ta prise de masse, Komlan ! Les glucides du fufu combinés aux protéines du poisson vont booster ta récupération. Ça te tente ? 💪
+- Sauce Gombos (100g) : Riche en minéraux essentiels.
+Ce combo est parfait pour ta prise de masse ! 💪
+
+EXEMPLE RÉPONSE MODE INGRÉDIENTS CONTRAINTS :
+menu creneau diner:
+Dîner composé avec tes ingrédients disponibles :
+- Riz blanc (200g) : Énergie durable pour la soirée.
+- Poisson braisé (150g) : Protéines maigres pour tes muscles.
+- Tomate (100g) : Vitamines et fraîcheur.
+─────────────────────────────
+📊 Total : 503 kcal | P : 37g | G : 59g | L : 8g
+Super choix avec ce que tu as ! Continue comme ça 💪
 
 === PLANNING ACTUEL ===
 ${plannerContext}
@@ -223,7 +305,20 @@ Contexte utilisateur :
 - Objectif : ${profile.goal || 'rester en forme'}
 - Poids : ${profile.weight_kg || '?'} kg
 - Suggestions déjà générées précédemment : ${suggestionsContext}
-- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}`
+- Contexte nutrition du jour : ${userContext || 'Aucune donnée fournie pour aujourd hui.'}
+
+=== BALISE STRUCTURELLE OBLIGATOIRE (menu creneau uniquement) ===
+Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "menu creneau XXX:"), tu DOIS ajouter à la toute fin de ton message, sans rien mettre après, cette balise machine :
+
+---DATA---
+{"type":"suggestion","items":[{"name":"nom_standard_exact_bd","volume_ml":400}]}
+
+Règles pour la balise :
+- "name" = le nom_standard EXACT tel qu'il apparaît dans la base de données (ex: "riz_blanc_vapeur", "poisson_frit").
+- "volume_ml" = estimation du volume de la portion en millilitres (le code convertira en grammes via density_g_ml).
+- Liste TOUS les composants du repas dans "items" (base + sauce + protéine séparément).
+- Pour les menus SEMAINE ou DEMAIN : n'ajoute PAS cette balise (trop d'items).
+- Ne mets RIEN après la balise ---DATA---. C'est la dernière chose dans ton message.`
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
         const MOCK_MODE = false

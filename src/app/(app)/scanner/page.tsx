@@ -213,7 +213,9 @@ export default function ScannerPage() {
         dailyCalories, 
         setLastCoachMessage, 
         chatSuggestedMenus, 
-        clearChatSuggestedMenu 
+        clearChatSuggestedMenu,
+        pendingScannerPrefill,
+        setPendingScannerPrefill,
     } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -237,6 +239,79 @@ export default function ScannerPage() {
     const [menuTab, setMenuTab] = useState<'today' | 'tomorrow' | 'week'>('today')
     const [showWeekMenuPopup, setShowWeekMenuPopup] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
+
+    // ─── Pont Coach → Scanner : traitement du pre-fill ───────────────
+    useEffect(() => {
+        if (!pendingScannerPrefill || !pendingScannerPrefill.items.length) return
+
+        const processPrefill = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                const headers: any = { 'Content-Type': 'application/json' }
+                if (session) headers.Authorization = `Bearer ${session.access_token}`
+
+                // Chercher chaque aliment en BD par name_standard
+                const enrichedItems: EnrichedSuggestion[] = []
+                let totalCals = 0
+
+                for (const item of pendingScannerPrefill.items) {
+                    const { data: foodRows } = await supabase
+                        .from('food_items')
+                        .select('id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, carbs_100g, lipids_100g, default_portion_g')
+                        .ilike('name_standard', item.name)
+                        .limit(1)
+
+                    const food = foodRows?.[0]
+                    if (!food) continue
+
+                    // Conversion volume → grammes via densité (défaut 1.0 g/ml)
+                    const density = Number(food.density_g_ml) || 1.0
+                    const portionG = Math.round(item.volume_ml * density)
+
+                    const cals = Math.round((Number(food.calories_per_100g) * portionG) / 100)
+                    const prot = Math.round(((Number(food.proteins_100g) || 0) * portionG) / 100 * 10) / 10
+                    const carbs = Math.round(((Number(food.carbs_100g) || 0) * portionG) / 100 * 10) / 10
+                    const fat = Math.round(((Number(food.lipids_100g) || 0) * portionG) / 100 * 10) / 10
+                    totalCals += cals
+
+                    enrichedItems.push({
+                        id: food.id,
+                        name: food.display_name || food.name_standard,
+                        score: 100,
+                        calories: cals,
+                        protein_g: prot,
+                        carbs_g: carbs,
+                        fat_g: fat,
+                        portion_g: portionG,
+                        calories_detected: cals,
+                        protein_detected: prot,
+                        carbs_detected: carbs,
+                        fat_detected: fat,
+                        confidence: 100,
+                        detected: food.display_name || food.name_standard,
+                        fromAI: false,
+                    })
+                }
+
+                if (enrichedItems.length > 0) {
+                    const label = `Menu Coach Yao`
+                    setMealName(label)
+                    setSuggestions(enrichedItems)
+                    setSelectedFoods(enrichedItems)
+                    setTotalCaloriesAI(totalCals)
+                    setShowRecap(true)
+                }
+            } catch (err) {
+                console.error('❌ Prefill scanner error:', err)
+            } finally {
+                // Toujours vider le prefill après traitement
+                setPendingScannerPrefill(null)
+            }
+        }
+
+        processPrefill()
+    }, [pendingScannerPrefill])
+
 
     const handleSelectSuggestion = (fullText: string, slotKey: string) => {
         if (!fullText) return

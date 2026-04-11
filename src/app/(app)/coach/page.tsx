@@ -79,9 +79,40 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
     return null
 }
 
+/**
+ * Extrait le bloc ---DATA--- du message de l'IA.
+ * Retourne { displayText, dataItems, slot } ou null si absent.
+ */
+function parseDataBlock(rawMessage: string): {
+    displayText: string
+    dataItems: Array<{ name: string; volume_ml: number }>
+    slot: string
+} | null {
+    const sep = '---DATA---'
+    const idx = rawMessage.indexOf(sep)
+    if (idx === -1) return null
+
+    const displayText = rawMessage.substring(0, idx).trim()
+    const jsonPart = rawMessage.substring(idx + sep.length).trim()
+
+    // Détection du slot depuis le prefix technique
+    const slotMatch = rawMessage.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
+    const slot = slotMatch ? slotMatch[1] : 'dejeuner'
+
+    try {
+        const parsed = JSON.parse(jsonPart)
+        if (parsed?.type === 'suggestion' && Array.isArray(parsed.items)) {
+            return { displayText, dataItems: parsed.items, slot }
+        }
+    } catch {
+        // JSON malformé : on affiche juste le texte sans le bouton
+    }
+    return null
+}
+
 export default function CoachChatPage() {
     const router = useRouter()
-    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu, chatSuggestedMenus } = useAppStore()
+    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu, chatSuggestedMenus, setPendingScannerPrefill } = useAppStore()
     const effectiveTier = getEffectiveTier(profile)
 
     const maxMessages = Number(SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay || 2)
@@ -293,6 +324,12 @@ export default function CoachChatPage() {
     const activeThread = threads.find(t => t.date === activeThreadDate)
     const activeThreadLimitReached = !!activeThread && (activeThread.messagesUsed >= activeThread.maxMessages)
 
+    /** Transfère les items DATA vers le store puis navigue vers le scanner */
+    const handleAddToScanner = (dataItems: Array<{ name: string; volume_ml: number }>, slot: string) => {
+        setPendingScannerPrefill({ items: dataItems, slot })
+        router.push('/scanner')
+    }
+
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
 
@@ -353,6 +390,8 @@ export default function CoachChatPage() {
             <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '30px' }}>
                 {messages.map((msg) => {
                     const isCoach = msg.role === 'coach'
+                    const parsed = isCoach ? parseDataBlock(msg.content) : null
+                    const displayContent = parsed ? parsed.displayText : msg.content
                     return (
                         <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isCoach ? 'flex-start' : 'flex-end', width: '100%' }}>
                             <div style={{
@@ -366,8 +405,34 @@ export default function CoachChatPage() {
                                 boxShadow: isCoach ? 'none' : '0 10px 20px rgba(99,102,241,0.2)',
                                 border: isCoach ? '0.5px solid #222' : 'none'
                             }}>
-                                {msg.content}
+                                {displayContent}
                             </div>
+                            {/* Bouton "Ajouter au Scanner" si DATA block présent */}
+                            {parsed && (
+                                <button
+                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot)}
+                                    style={{
+                                        marginTop: '10px',
+                                        padding: '10px 18px',
+                                        borderRadius: '14px',
+                                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                                        color: '#fff',
+                                        border: 'none',
+                                        fontSize: '13px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        boxShadow: '0 6px 16px rgba(16,185,129,0.3)',
+                                        transition: 'all 0.2s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                >
+                                    📲 Ajouter au Scanner
+                                </button>
+                            )}
                             <span style={{ color: '#555', fontSize: '10px', marginTop: '6px', margin: isCoach ? '0 0 0 4px' : '0 4px 0 0' }}>
                                 {msg.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                             </span>

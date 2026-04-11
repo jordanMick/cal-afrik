@@ -106,6 +106,13 @@ interface AppState {
     setOnboardingStep: (step: number) => void
     onboardingForm: any
     setOnboardingForm: (form: any) => void
+
+    // ─── Pont Coach → Scanner ─────────────────────────────────
+    pendingScannerPrefill: {
+        items: Array<{ name: string; volume_ml: number }>
+        slot: string
+    } | null
+    setPendingScannerPrefill: (data: { items: Array<{ name: string; volume_ml: number }>; slot: string } | null) => void
 }
 
 const buildInitialSlots = (calorieTarget: number): Record<MealSlotKey, SlotState> => ({
@@ -335,6 +342,9 @@ export const useAppStore = create<AppState>()(
             setOnboardingStep: (step) => set({ onboardingStep: step }),
             onboardingForm: null,
             setOnboardingForm: (form) => set({ onboardingForm: form }),
+
+            pendingScannerPrefill: null,
+            setPendingScannerPrefill: (data) => set({ pendingScannerPrefill: data }),
         }),
         {
             name: 'app-storage',
