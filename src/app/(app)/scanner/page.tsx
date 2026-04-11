@@ -59,7 +59,7 @@ function normalizeMenuText(raw: string, mode: 'today' | 'tomorrow' | 'week' = 't
     return base
 }
 
-function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (fullText: string, slotKey: string) => void, slots?: any) {
+function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (fullText: string, slotKey: string) => void, slots?: any, slotColor?: string) {
     // On cache le bloc DATA pour le rendu UI mais on garde le texte propre
     const sep = '---DATA---'
     const dataIdx = menuText.indexOf(sep)
@@ -1129,7 +1129,7 @@ export default function ScannerPage() {
                         </div>
                         {activeMenuText ? (
                             <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '450px' : 'none', overflowY: 'auto', paddingRight: '4px' }}>
-                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots)}
+                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots, slotColor)}
                             </div>
                         ) : (
                             <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
@@ -1196,7 +1196,7 @@ export default function ScannerPage() {
                                 ✕
                             </button>
                         </div>
-                        <div>{activeMenuText ? renderMenuBlock(activeMenuText, 'week') : null}</div>
+                        <div>{activeMenuText ? renderMenuBlock(activeMenuText, 'week', undefined, undefined, undefined, undefined, slotColor) : null}</div>
                     </div>
                 </>
             )}
