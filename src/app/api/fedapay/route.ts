@@ -28,6 +28,15 @@ export async function POST(req: Request) {
                     firstname: "User",
                     lastname: "CalAfrik",
                     email: body.email
+                },
+                // ✅ Ajout des métadonnées pour que le webhook puisse mettre à jour la base de données
+                metadata: {
+                    user_id: body.userId || body.user_id,
+                    tier: body.tier
+                },
+                custom_metadata: {
+                    user_id: body.userId || body.user_id,
+                    tier: body.tier
                 }
             })
         })

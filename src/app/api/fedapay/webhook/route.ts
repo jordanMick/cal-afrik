@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// ✅ Client Admin obligatoire pour contourner RLS dans un Webhook
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(req: Request) {
     try {
@@ -12,7 +18,7 @@ export async function POST(req: Request) {
         const transaction = payload.data?.entity || payload.entity || {};
         
         // 🛡️ LOGIQUE ULTRA-ROBUSTE POUR LES METADONNEES
-        let rawMeta = transaction.metadata || transaction.custom_metadata || payload.metadata || {};
+        const rawMeta = transaction.metadata || transaction.custom_metadata || payload.metadata || payload.data?.metadata || {};
         let metadata: any = {};
 
         // Si c'est une chaîne JSON, on la décode
@@ -49,7 +55,7 @@ export async function POST(req: Request) {
             console.log(`[FedaPay Webhook] Traitement validation pour ${userId} - Plan: ${tier}`);
 
             // Récupération de l'ancienne date pour le cumul
-            const { data: currentProfile } = await supabase
+            const { data: currentProfile } = await supabaseAdmin
                 .from('user_profiles')
                 .select('subscription_expires_at')
                 .eq('user_id', userId)
@@ -64,7 +70,7 @@ export async function POST(req: Request) {
             // +30 jours
             baseDate.setDate(baseDate.getDate() + 30);
 
-            const { error: updateError } = await supabase
+            const { error: updateError } = await supabaseAdmin
                 .from('user_profiles')
                 .update({ 
                     subscription_tier: tier.toLowerCase(),
@@ -86,7 +92,7 @@ export async function POST(req: Request) {
         if (failureEvents.includes(eventName)) {
             const userId = metadata.user_id;
             if (userId) {
-                await supabase
+                await supabaseAdmin
                     .from('user_profiles')
                     .update({ subscription_tier: 'free', updated_at: new Date().toISOString() })
                     .eq('user_id', userId);
