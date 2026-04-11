@@ -446,17 +446,16 @@ export default function ScannerPage() {
     const effectiveTier = getEffectiveTier(profile)
     const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
     const todayStr = new Date().toISOString().split('T')[0]
-    const userSuggested = profile?.id ? chatSuggestedMenus[profile.id] : null
-    let activeMenuText = (userSuggested?.date === todayStr)
+    let activeMenuText = (chatSuggestedMenus.date === todayStr)
         ? (menuTab === 'today'
-            ? userSuggested.today?.[currentSlotKey]
+            ? chatSuggestedMenus.today?.[currentSlotKey]
             : menuTab === 'tomorrow'
-                ? userSuggested.tomorrow
-                : userSuggested.week)
+                ? chatSuggestedMenus.tomorrow
+                : chatSuggestedMenus.week)
         : null
 
     // Fallback intelligent : si menuTab === 'today' ou 'tomorrow' est vide, on cherche dans 'week'
-    if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && userSuggested?.date === todayStr && userSuggested?.week) {
+    if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
         const targetDate = new Date()
         if (menuTab === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1)
         
@@ -466,7 +465,7 @@ export default function ScannerPage() {
         const dateKey = `${targetDay} ${formattedDate}`
         
         const weekText = chatSuggestedMenus.week
-        const dateIdx = weekText.toLowerCase().indexOf(dateKey.toLowerCase())
+        const dateIdx = weekText?.toLowerCase().indexOf(dateKey.toLowerCase()) ?? -1
         
         if (dateIdx !== -1) {
             const nextDayIdx = weekText.toLowerCase().indexOf(dayNames[(targetDate.getDay() + 1) % 7], dateIdx + 10)
@@ -514,11 +513,7 @@ export default function ScannerPage() {
         }
     }, [canAccessFutureMenus, menuTab])
 
-    const calorieTarget = profile?.calorie_target ?? 0
-    const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
-    const dailyRemainingNow = calorieTarget - dailyConsumed
-    const displayedRemaining = isLastSlot ? Math.max(0, dailyRemainingNow) : Math.max(0, currentSlot.remaining)
-    const displayedRemainingLabel = isLastSlot ? 'Restant journée' : 'Restant créneau'
+
 
     const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#0f0f0f', border: '0.5px solid #2a2a2a', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }
     const labelStyle: React.CSSProperties = { color: '#555', fontSize: '12px', marginBottom: '4px', display: 'block', fontWeight: '500' }
@@ -1013,11 +1008,13 @@ export default function ScannerPage() {
     }
 
     const totals = getTotals()
-    const dailyRemainingNow = dailyCalories.remaining
-    const recapRemainingAfter = isLastSlot ? dailyRemainingNow - totals.calories : currentSlot.target - currentSlot.consumed - totals.calories
+    const calorieTarget = profile?.calorie_target ?? 2000
+    const dailyConsumed = Object.values(slots).reduce((acc: number, s: any) => acc + (s.consumed || 0), 0)
+    const dailyRemainingNow = calorieTarget - dailyConsumed
+    const recapRemainingAfter = isLastSlot ? dailyRemainingNow - totals.calories : (currentSlot?.target || 0) - (currentSlot?.consumed || 0) - totals.calories
     const recapExceeded = recapRemainingAfter < 0
-    const displayedRemaining = isLastSlot ? dailyRemainingNow : (currentSlot.target - currentSlot.consumed)
-    const displayedRemainingLabel = isLastSlot ? "Restant (Jour)" : "Restant (Créneau)"
+    const displayedRemaining = isLastSlot ? dailyRemainingNow : (currentSlot?.remaining ?? 0)
+    const displayedRemainingLabel = isLastSlot ? "Restant journée" : "Restant créneau"
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative', overflow: 'hidden' }}>
@@ -1144,7 +1141,7 @@ export default function ScannerPage() {
                             const SLOT_HOURS: Record<string, number> = { petit_dejeuner: 0, dejeuner: 12, collation: 16, diner: 19 }
                             const currentIndex = SLOT_ORDER.indexOf(currentSlotKey as MealSlotKey)
                             const futureSlot = SLOT_ORDER.slice(currentIndex + 1).find(sk => 
-                                userSuggested?.today && userSuggested?.today[sk]
+                                chatSuggestedMenus.today && chatSuggestedMenus.today[sk]
                             )
                             if (!futureSlot) return null
 
