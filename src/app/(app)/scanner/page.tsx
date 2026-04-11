@@ -49,16 +49,13 @@ function normalizeMenuText(raw: string): string {
     return base
 }
 
-    return base
-}
-
 function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (fullText: string, slotKey: string) => void, slots?: any, slotColor?: string) {
     // On cache le bloc DATA pour le rendu UI mais on garde le texte propre
     const sep = '---DATA---'
     const dataIdx = menuText.indexOf(sep)
     const cleanMenuText = dataIdx !== -1 ? menuText.substring(0, dataIdx).trim() : menuText
     
-    const normalized = normalizeMenuText(cleanMenuText, mode)
+    const normalized = normalizeMenuText(cleanMenuText)
     const lines = normalized
         .split('\n')
         .map(l => l.trim())
