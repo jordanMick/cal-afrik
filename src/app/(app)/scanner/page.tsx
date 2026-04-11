@@ -446,17 +446,17 @@ export default function ScannerPage() {
     const effectiveTier = getEffectiveTier(profile)
     const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
     const todayStr = new Date().toISOString().split('T')[0]
-    let activeMenuText =
-        chatSuggestedMenus.date === todayStr
-            ? (menuTab === 'today'
-                ? chatSuggestedMenus.today[currentSlotKey]
-                : menuTab === 'tomorrow'
-                    ? chatSuggestedMenus.tomorrow
-                    : chatSuggestedMenus.week)
-            : null
+    const userSuggested = profile?.id ? chatSuggestedMenus[profile.id] : null
+    let activeMenuText = (userSuggested?.date === todayStr)
+        ? (menuTab === 'today'
+            ? userSuggested.today?.[currentSlotKey]
+            : menuTab === 'tomorrow'
+                ? userSuggested.tomorrow
+                : userSuggested.week)
+        : null
 
     // Fallback intelligent : si menuTab === 'today' ou 'tomorrow' est vide, on cherche dans 'week'
-    if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
+    if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && userSuggested?.date === todayStr && userSuggested?.week) {
         const targetDate = new Date()
         if (menuTab === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1)
         
@@ -1144,7 +1144,7 @@ export default function ScannerPage() {
                             const SLOT_HOURS: Record<string, number> = { petit_dejeuner: 0, dejeuner: 12, collation: 16, diner: 19 }
                             const currentIndex = SLOT_ORDER.indexOf(currentSlotKey as MealSlotKey)
                             const futureSlot = SLOT_ORDER.slice(currentIndex + 1).find(sk => 
-                                chatSuggestedMenus.today && chatSuggestedMenus.today[sk]
+                                userSuggested?.today && userSuggested?.today[sk]
                             )
                             if (!futureSlot) return null
 
