@@ -239,6 +239,10 @@ export async function POST(req: NextRequest) {
         tomDate.setDate(now.getDate() + 1)
         const tomorrowStr = tomDate.toISOString().split('T')[0]
 
+        // --- DATES DE PLANIFICATION (Séquence exacte pour le Coach) ---
+        const next7Days = buildWeekDatesFromTomorrow()
+        const planningSequence = next7Days.map((d, i) => `Jour ${i + 1} : ${d}`).join('\n')
+
         const { data: userPlans } = await supabase
             .from('user_plans')
             .select('*')
@@ -260,6 +264,10 @@ export async function POST(req: NextRequest) {
 
         const systemPrompt = `Tu es Coach Yao, coach nutrition africain expert.
 ${foodsContext || "[ALERTE : Base de données indisponible. Demande à l'utilisateur de charger ses aliments.]"}
+
+=== SÉQUENCE DE PLANIFICATION (7 JOURS À VENIR) ===
+Tu DOIS commencer tout menu de la SEMAINE par le "Jour 1" listé ci-dessous :
+${planningSequence}
 
 === TRANCHES HORAIRES DU STORE (getMealSlot) ===
 - Petit-déjeuner (petit_dejeuner) : 00:00 - 12:00
