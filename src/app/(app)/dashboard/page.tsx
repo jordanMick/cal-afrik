@@ -288,13 +288,18 @@ export default function DashboardPage() {
         // 1. Si on a déjà mangé aujourd'hui, on affiche le message en temps réel
         if (todayMeals.length > 0) {
             const currentMsg = getCoachMessage()
-            // Sauvegarde auto du bilan final (le soir ou si dépassé)
-            if (hour >= 19 || exceeded) {
-                // On évite les updates de boucle infinie en ne sauvant que si le texte change ou si c'est une nouvelle date
+            // Sauvegarde auto du bilan final (à partir de 21h ou si dépassé)
+            if (hour >= 21 || exceeded) {
                 if (dailyReview?.date !== today || dailyReview?.text !== currentMsg.text) {
                     setDailyReview({ ...currentMsg, date: today })
                 }
             }
+            
+            // À partir de 23h, on affiche explicitement que c'est le bilan de la journée
+            if (hour >= 23) {
+                return { ...currentMsg, text: `Bilan de la journée : ${currentMsg.text}` }
+            }
+            
             return currentMsg
         }
 
