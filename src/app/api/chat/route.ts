@@ -458,6 +458,10 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE du jour (préfixe "
                     }).filter(Boolean)
 
                     if (changed || parsed.items.length > 0) {
+                        // --- NETTOYAGE DES MENTIONS DE CALORIES HALLUCINÉES PAR L'IA ---
+                        // On enlève des trucs comme "~750 kcal", "400 calories", "Total: 120g" qui feraient doublon
+                        aiMessage = aiMessage.replace(/~?\d+\s*k?cal(ories)?/gi, '').replace(/\s*\(\s*~\d+\s*k?cal\s*\)/gi, '')
+
                         // --- CALCUL DU TOTAL CERTIFIÉ (Injecté en signature) ---
                         let trueCals = 0, trueP = 0, trueG = 0, trueL = 0
                         parsed.items.forEach((it: any) => {
