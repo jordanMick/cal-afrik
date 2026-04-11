@@ -1040,7 +1040,7 @@ export default function ScannerPage() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                     <p style={{ color: '#444', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{displayedRemainingLabel}</p>
-                    <p style={{ color: displayedRemaining <= 0 ? '#ef4444' : slotColor, fontWeight: '800', fontSize: '16px', marginTop: '2px' }}>{displayedRemaining} kcal</p>
+                    <p style={{ color: displayedRemaining < 0 ? '#f87171' : (displayedRemaining === 0 ? '#fbbf24' : slotColor), fontWeight: '800', fontSize: '16px', marginTop: '2px' }}>{displayedRemaining} kcal</p>
                 </div>
             </div>
 
