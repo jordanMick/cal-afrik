@@ -308,7 +308,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
 - Ne calcule RIEN manuellement dans le texte.`
 
         // ─── MODE SIMULATION ──────────────────────────────────────────
-        const MOCK_MODE = false
+        const MOCK_MODE = true
 
         let aiMessage = ""
 
