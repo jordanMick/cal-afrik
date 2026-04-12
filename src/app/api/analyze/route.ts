@@ -334,7 +334,10 @@ export async function POST(req: Request) {
         let generationError: any = null
         let lastTriedModel = ""
         
-        const apiKey = process.env.GEMINI_API_KEY as string
+        const apiKey = (process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || "").trim()
+        if (!apiKey) {
+            throw new Error("Absence de clé API. Vercel n'a pas lu ta variable GEMINI_API_KEY ou OPENROUTER_API_KEY.")
+        }
 
         const aiMessages = [
             {
