@@ -184,7 +184,7 @@ ${profileList}`
 }
 
 const GEMINI_MODEL_CANDIDATES = [
-    "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "google/gemini-3-pro-image",
 ]
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -358,10 +358,12 @@ export async function POST(req: Request) {
                     try {
                         console.log(`[ANALYZE] IA attempt ${attempt}/${maxAttempts} with ${modelName}`)
                         
-                        const response = await fetch("https://api.together.xyz/v1/chat/completions", {
+                        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                             method: "POST",
                             headers: {
                                 "Authorization": `Bearer ${apiKey}`,
+                                "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+                                "X-Title": "Cal-Afrik",
                                 "Content-Type": "application/json"
                             },
                             body: JSON.stringify({
