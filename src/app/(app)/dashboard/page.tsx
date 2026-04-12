@@ -188,7 +188,9 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        if (params.get('payment') === 'success') {
+        const status = params.get('status')
+        
+        if (status === 'approved' || params.get('payment') === 'success') {
             setShowPaymentSuccess(true)
             
             // 1. Un petit délai pour laisser au webhook le temps de passer

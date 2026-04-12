@@ -50,7 +50,7 @@ export async function POST(req: Request) {
             description: `Abonnement Cal-Afrik ${tier.toUpperCase()} - ID: ${user.id}`,
             amount: amount,
             currency: { iso: 'XOF' },
-            callback_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard?payment=success`,
+            callback_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard`,
             customer: {
                 firstname: user.user_metadata?.full_name || 'Utilisateur',
                 email: user.email,
