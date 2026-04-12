@@ -184,7 +184,8 @@ ${profileList}`
 }
 
 const GEMINI_MODEL_CANDIDATES = [
-    "Qwen/Qwen3.5-397B-A17B",
+    "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo",
+    "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
 ]
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
