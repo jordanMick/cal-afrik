@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { GoogleGenAI } from "@google/genai"
 import type { ScanApiResponse } from "@/types"
-
-const genAI = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY as string,
-    apiVersion: "v1",
-})
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -336,50 +330,68 @@ export async function POST(req: Request) {
             }, { status: 500 })
         }
 
-        // ─── APPEL IA (Gemini) ───────────────────────────────────────
-        const inputParts = [
-            {
-                inlineData: {
-                    mimeType: image.mimeType || "image/jpeg",
-                    data: image.data,
-                },
-            },
-            { text: buildPrompt(profile?.country) },
-        ]
+        // ─── APPEL IA (Llama 4 via API Compatible OpenAI/Together) ───────────────────────────────────────
         let responseText = ""
         let generationError: any = null
         let lastTriedModel = ""
+        
+        const apiKey = process.env.GEMINI_API_KEY as string
+
+        const aiMessages = [
+            {
+                role: "user",
+                content: [
+                    { type: "text", text: buildPrompt(profile?.country) },
+                    { 
+                        type: "image_url", 
+                        image_url: { url: `data:${image.mimeType || "image/jpeg"};base64,${image.data}` } 
+                    }
+                ]
+            }
+        ]
 
         for (const modelName of GEMINI_MODEL_CANDIDATES) {
             lastTriedModel = modelName
-            console.log("[ANALYZE] Trying Gemini model", modelName)
+            console.log("[ANALYZE] Trying model", modelName)
             try {
                 const maxAttempts = 3
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                     try {
-                        console.log("[ANALYZE] Gemini attempt", { modelName, attempt, maxAttempts })
-                        const result = await genAI.models.generateContent({
-                            model: modelName,
-                            contents: inputParts as any,
-                            config: {
-                                temperature: 0.2,
+                        console.log(`[ANALYZE] IA attempt ${attempt}/${maxAttempts} with ${modelName}`)
+                        
+                        const response = await fetch("https://api.together.xyz/v1/chat/completions", {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${apiKey}`,
+                                "Content-Type": "application/json"
                             },
+                            body: JSON.stringify({
+                                model: modelName,
+                                messages: aiMessages,
+                                temperature: 0.2,
+                                response_format: { type: "json_object" }
+                            })
                         })
-                        responseText = typeof (result as any).text === "function"
-                            ? (result as any).text()
-                            : String((result as any).text || "")
+
+                        if (!response.ok) {
+                            const errBody = await response.text()
+                            throw new Error(`API HTTP Error ${response.status}: ${errBody}`)
+                        }
+
+                        const result = await response.json()
+                        responseText = result.choices?.[0]?.message?.content || ""
                         generationError = null
-                        console.log(`✅ Gemini modèle utilisé: ${modelName} (attempt ${attempt}/${maxAttempts})`)
+                        console.log(`✅ IA modèle utilisé: ${modelName} (attempt ${attempt}/${maxAttempts})`)
                         break
                     } catch (err: any) {
                         const rawErr = String(err?.message || "")
                         const isUnavailable =
-                            err?.status === 503
+                            rawErr.includes("503")
                             || rawErr.includes("UNAVAILABLE")
                             || rawErr.toLowerCase().includes("high demand")
                         generationError = err
                         console.error(err)
-                        console.error(`❌ Gemini tentative ${attempt}/${maxAttempts} échouée avec ${modelName}`)
+                        console.error(`❌ Tentative ${attempt}/${maxAttempts} échouée avec ${modelName}`)
                         if (!isUnavailable || attempt === maxAttempts) break
                         await wait(800 * attempt)
                     }
@@ -388,7 +400,7 @@ export async function POST(req: Request) {
             } catch (err: any) {
                 generationError = err
                 console.error(err)
-                console.error(`❌ Gemini generateContent échoue avec ${modelName}`)
+                console.error(`❌ Echec de génération avec ${modelName}`)
             }
         }
 
