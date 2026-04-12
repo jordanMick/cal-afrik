@@ -185,7 +185,7 @@ ${profileList}`
 
 const GEMINI_MODEL_CANDIDATES = [
     // "gemini-2.5-flash",
-    "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+    "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo",
 ]
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
