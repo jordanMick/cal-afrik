@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(req: NextRequest) {
-    const MOCK_MODE = false
+    const MOCK_MODE = true
 
     try {
         const authHeader = req.headers.get('Authorization')
