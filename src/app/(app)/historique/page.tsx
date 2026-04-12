@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useAppStore } from '@/store/useAppStore'
+import { getEffectiveTier } from '@/lib/subscription'
 import type { Meal } from '@/types'
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
@@ -106,7 +108,17 @@ export default function HistoriquePage() {
     const [mealsForDate, setMealsForDate] = useState<Meal[]>([])
     const [daysWithMeals, setDaysWithMeals] = useState<Set<string>>(new Set())
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
+    const { profile } = useAppStore()
+    const effectiveTier = getEffectiveTier(profile)
     const [isLoading, setIsLoading] = useState(false)
+
+    const limitDate = (() => {
+        const d = new Date()
+        if (effectiveTier === 'free') d.setDate(d.getDate() - 7)
+        else if (effectiveTier === 'pro') d.setMonth(d.getMonth() - 6)
+        else return '0000-00-00'
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    })()
 
     useEffect(() => { fetchMonthDays() }, [year, month])
     useEffect(() => { if (selectedDate) fetchMealsForDate(selectedDate) }, [selectedDate])
@@ -192,19 +204,34 @@ export default function HistoriquePage() {
                             const isSelected = dateStr === selectedDate
                             const hasMeals = daysWithMeals.has(dateStr)
                             const isFuture = dateStr > todayStr
+                            const isLocked = dateStr < limitDate && !isFuture
+
                             return (
-                                <button key={day} onClick={() => !isFuture && setSelectedDate(dateStr)} disabled={isFuture}
+                                <button key={day} 
+                                    onClick={() => {
+                                        if (isFuture) return
+                                        if (isLocked) {
+                                            if (confirm(`Cette date est verrouillée. Passez au plan supérieur pour voir votre historique complet ?`)) {
+                                                router.push('/upgrade')
+                                            }
+                                            return
+                                        }
+                                        setSelectedDate(dateStr)
+                                    }}
                                     style={{
                                         position: 'relative', width: '100%', aspectRatio: '1', borderRadius: '50%',
                                         background: isSelected ? 'linear-gradient(135deg, #6366f1, #10b981)' : isToday ? 'rgba(99,102,241,0.12)' : 'transparent',
                                         border: isToday && !isSelected ? '1px solid rgba(99,102,241,0.4)' : '1px solid transparent',
-                                        color: isFuture ? '#1e1e1e' : isSelected ? '#fff' : '#fff',
-                                        fontSize: '12px', fontWeight: isSelected ? '600' : '400',
+                                        color: isFuture || isLocked ? '#222' : isSelected ? '#fff' : '#888',
+                                        fontSize: '13px', fontWeight: isSelected || isToday ? '700' : '400',
                                         cursor: isFuture ? 'default' : 'pointer',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
                                     }}>
                                     {day}
-                                    {hasMeals && !isSelected && <span style={{ position: 'absolute', bottom: '2px', width: '4px', height: '4px', borderRadius: '50%', background: '#6366f1' }} />}
+                                    {isLocked && !isSelected && (
+                                        <span style={{ position: 'absolute', top: '-1px', right: '-1px', fontSize: '8px' }}>🔒</span>
+                                    )}
+                                    {hasMeals && !isSelected && !isLocked && <div style={{ position: 'absolute', bottom: '6px', width: '4px', height: '4px', borderRadius: '50%', background: '#6366f1' }} />}
                                 </button>
                             )
                         })}
@@ -222,7 +249,21 @@ export default function HistoriquePage() {
                         </div>
 
                         {isLoading ? (
-                            <div style={{ textAlign: 'center', padding: '32px', color: '#333' }}>Chargement...</div>
+                            <div style={{ color: '#444', fontSize: '12px', textAlign: 'center', padding: '20px' }}>Chargement...</div>
+                        ) : (selectedDate && selectedDate < limitDate) ? (
+                            <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(16,185,129,0.05))', borderRadius: '16px', padding: '40px 20px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                                <div style={{ fontSize: '32px' }}>🔒</div>
+                                <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '600', margin: 0 }}>Historique limité</h4>
+                                <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5', maxWidth: '240px', margin: 0 }}>
+                                    Votre plan <strong>{effectiveTier.toUpperCase()}</strong> permet de voir les {effectiveTier === 'free' ? '7 derniers jours' : '6 derniers mois'}.
+                                </p>
+                                <button 
+                                    onClick={() => router.push('/upgrade')}
+                                    style={{ marginTop: '5px', padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg, #6366f1, #10b981)', color: '#fff', border: 'none', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                                >
+                                    Passer au plan Pro
+                                </button>
+                            </div>
                         ) : mealsForDate.length === 0 ? (
                             <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', padding: '32px', textAlign: 'center' }}>
                                 <p style={{ fontSize: '24px', marginBottom: '8px' }}>📋</p>
