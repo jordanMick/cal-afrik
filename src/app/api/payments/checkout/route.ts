@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { FedaPay, Transaction } from 'fedapay';
 
 const PRICES = {
-    pro: 100,
-    premium: 100
+    pro: 1500,
+    premium: 2500
 };
 
 export async function POST(req: Request) {
