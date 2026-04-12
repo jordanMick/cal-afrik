@@ -184,8 +184,7 @@ ${profileList}`
 }
 
 const GEMINI_MODEL_CANDIDATES = [
-    "openai/gpt-image-1.5",
-    "openai/gpt-4o",
+    "Qwen/Qwen3.5-397B-A17B",
 ]
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
