@@ -156,9 +156,11 @@ function PricingContent() {
                             <div style={{ height: '0.5px', background: '#222', marginBottom: '20px' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
-                                    { text: 'Scanner IA — 2 repas/jour', active: true },
-                                    { text: '100 plats africains', active: true },
-                                    { text: 'Journal calorique simple', active: true },
+                                    { text: 'Journal alimentaire de base', active: true },
+                                    { text: '2 Scans Photo / jour', active: true },
+                                    { text: 'Base locale (35+ aliments)', active: true },
+                                    { text: 'Calcul des besoins (kcal/macros)', active: true },
+                                    { text: 'Support technique WhatsApp', active: true },
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#555', flexShrink: 0 }} />
@@ -196,13 +198,12 @@ function PricingContent() {
                             <div style={{ height: '0.5px', background: '#2a2a2a', margin: '20px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
-                                    'Scanner IA illimité',
-                                    '1 000+ plats africains',
-                                    '1 conseil Coach Yao / jour',
-                                    'Recalcul auto des calories',
-                                    'Graphique de progression',
-                                    'Historique 6 mois',
-                                    'Sync cloud',
+                                    'Scans Photo ILLIMITÉS',
+                                    'Graphiques de progression (6 mois)',
+                                    'Recalcul auto des objectifs',
+                                    'Historique détaillé sur 6 mois',
+                                    'Sync cloud & Sécurité',
+                                    'Conseils de Coach Yao',
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'pro' ? '#444' : '#6366f1', flexShrink: 0 }} />
@@ -242,13 +243,12 @@ function PricingContent() {
                             <div style={{ height: '0.5px', background: '#1a2e24', margin: '20px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
-                                    'Tout le plan Pro',
-                                    'Coach Yao IA personnalisé',
-                                    'Plus d\'interactions avec Coach Yao',
-                                    'Plans repas hebdomadaires',
-                                    'Analyse nutritionnelle détaillée',
-                                    'Historique illimité',
-                                    'Accès prioritaire nouveautés',
+                                    'Tout le contenu du Plan PRO',
+                                    'Menus Hebdomadaires Personnalisés',
+                                    'Accès aux menus futurs (7 jours)',
+                                    'Historique ILLIMITÉ',
+                                    'Accès prioritaire aux nouveautés',
+                                    'Coach Yao personnel illimité',
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'premium' ? '#444' : '#10b981', flexShrink: 0 }} />
