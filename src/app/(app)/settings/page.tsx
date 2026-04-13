@@ -1,9 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, User, CreditCard, Palette, UserMinus, ShieldAlert, ChevronRight } from 'lucide-react'
+import { ChevronLeft, User, CreditCard, UserMinus, ShieldAlert, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import ThemeSelector from '@/components/ThemeSelector'
 
 export default function SettingsPage() {
     const router = useRouter()
@@ -47,13 +48,8 @@ export default function SettingsPage() {
                 {/* Section 2: Préférences */}
                 <p style={{ color: '#666', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Préférences</p>
                 <div style={{ background: '#121212', borderRadius: '16px', border: '0.5px solid #222', overflow: 'hidden', marginBottom: '28px' }}>
-                    <button onClick={() => alert("Le mode clair/sombre est en cours de développement")} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <Palette size={18} color="#ddd" strokeWidth={1.5} />
-                            <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Thème de l'application</span>
-                        </div>
-                        <span style={{ color: '#666', fontSize: '13px' }}>Sombre</span>
-                    </button>
+                    {/* ✅ REMPLACÉ: ThemeSelector à la place du bouton alert */}
+                    <ThemeSelector />
                 </div>
 
                 {/* Section 3: Danger Zone */}
