@@ -583,25 +583,48 @@ export default function RapportPage() {
                         </div>
                     </div>
                     {/* Objectif de poids */}
-                    {profile?.goal_weight_kg && (
-                        <div style={{ marginBottom: '16px', background: '#0d0d0d', borderRadius: '12px', padding: '12px 14px', border: '0.5px solid #222' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                <p style={{ color: '#444', fontSize: '11px', fontWeight: '500' }}>Objectif : {GOAL_LABELS[profile.goal || 'maintenir']}</p>
-                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>{profile.goal_weight_kg} kg</p>
+                    {profile?.goal_weight_kg && profile.goal !== 'maintenir' && (() => {
+                        const initialWeight = weightMax  // Le plus haut = poids de départ
+                        const current = currentWeight
+                        const target = profile.goal_weight_kg
+                        const totalToLose = Math.abs(initialWeight - target)
+                        const progressMade = Math.abs(initialWeight - current)
+                        const pct = totalToLose > 0 ? Math.min(100, Math.round((progressMade / totalToLose) * 100)) : 0
+                        const remaining = Math.round(Math.abs(current - target) * 10) / 10
+                        const isDone = (profile.goal === 'perdre' && current <= target) || (profile.goal === 'prendre' && current >= target)
+                        const barColor = isDone ? '#10b981' : pct >= 50 ? '#6366f1' : '#f59e0b'
+                        return (
+                            <div style={{ marginBottom: '16px', background: '#0d0d0d', borderRadius: '16px', padding: '16px', border: `0.5px solid ${barColor}25` }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                    <div>
+                                        <p style={{ color: '#777', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Progression vers l'objectif</p>
+                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '600', marginTop: '2px' }}>
+                                            {isDone ? '🎉 Objectif atteint !' : profile.goal === 'perdre' ? `Encore ${remaining} kg à perdre` : `Encore ${remaining} kg à prendre`}
+                                        </p>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p style={{ color: barColor, fontSize: '24px', fontWeight: '900', letterSpacing: '-1px' }}>{pct}<span style={{ fontSize: '12px' }}>%</span></p>
+                                        <p style={{ color: '#444', fontSize: '10px' }}>{target} kg visé</p>
+                                    </div>
+                                </div>
+                                {/* Barre de progression */}
+                                <div style={{ height: '6px', background: '#1e1e1e', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{
+                                        height: '100%',
+                                        width: `${pct}%`,
+                                        background: isDone ? '#10b981' : `linear-gradient(90deg, #f59e0b, ${barColor})`,
+                                        borderRadius: '4px',
+                                        transition: 'width 0.8s ease'
+                                    }} />
+                                </div>
+                                {/* Jalons */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                                    <p style={{ color: '#333', fontSize: '9px' }}>{initialWeight} kg</p>
+                                    <p style={{ color: '#333', fontSize: '9px' }}>Départ → Cible : {target} kg</p>
+                                </div>
                             </div>
-                            <div style={{ height: '4px', background: '#1e1e1e', borderRadius: '2px', overflow: 'hidden' }}>
-                                <div style={{
-                                    height: '100%',
-                                    width: `${Math.min(100, Math.max(0, 100 - Math.abs((currentWeight - profile.goal_weight_kg) / (Math.max(weightMax, currentWeight + 1) - profile.goal_weight_kg)) * 100))}%`,
-                                    background: 'linear-gradient(90deg, #6366f1, #10b981)',
-                                    borderRadius: '2px'
-                                }} />
-                            </div>
-                            <p style={{ color: '#444', fontSize: '10px', marginTop: '6px', textAlign: 'right' }}>
-                                {currentWeight > profile.goal_weight_kg ? `Encore ${Math.round((currentWeight - profile.goal_weight_kg) * 10) / 10}kg à perdre` : `Encore ${Math.round((profile.goal_weight_kg - currentWeight) * 10) / 10}kg à prendre`}
-                            </p>
-                        </div>
-                    )}
+                        )
+                    })()}
 
                     {weightEntries.length > 0 ? (
                         <div style={{ background: '#0a0a0a', borderRadius: '24px', padding: '16px', border: '0.5px solid rgba(99,102,241,0.1)' }}>
