@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Zap, Crown, Star, RefreshCw, ArrowUpCircle, ScanLine, MessageCircle, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, Zap, Crown, Star, RefreshCw, ArrowUpCircle, ScanLine, TrendingUp } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier, SUBSCRIPTION_RULES } from '@/lib/subscription'
 import { supabase } from '@/lib/supabase'
@@ -59,7 +59,6 @@ export default function SubscriptionPage() {
     const rules = SUBSCRIPTION_RULES[effectiveTier]
     const today = new Date().toISOString().split('T')[0]
     const usedScans = (profile as any)?.last_usage_reset_date === today ? ((profile as any)?.scans_today || 0) : 0
-    const usedMessages = (profile as any)?.last_usage_reset_date === today ? ((profile as any)?.chat_messages_today || 0) : 0
 
     const handleRenew = async () => {
         setRenewing(true)
@@ -136,26 +135,36 @@ export default function SubscriptionPage() {
 
                 {/* Usage du jour */}
                 <p style={{ color: '#555', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Utilisation aujourd'hui</p>
-                <div style={{ background: '#121212', borderRadius: '16px', border: '0.5px solid #1e1e1e', padding: '16px 20px', marginBottom: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    {[
-                        { icon: <ScanLine size={16} color="#6366f1" />, label: 'Scans', used: usedScans, max: Number(rules.maxScansPerDay) >= 1000 ? '∞' : String(rules.maxScansPerDay), color: '#6366f1' },
-                        { icon: <MessageCircle size={16} color="#10b981" />, label: 'Messages', used: usedMessages, max: String(rules.maxChatMessagesPerDay), color: '#10b981' },
-                    ].map((item, i) => (
-                        <div key={i}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                                {item.icon}
-                                <p style={{ color: '#666', fontSize: '11px', fontWeight: '600' }}>{item.label}</p>
+                <div style={{ background: '#121212', borderRadius: '16px', border: '0.5px solid #1e1e1e', padding: '16px 20px', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ background: 'rgba(99,102,241,0.1)', borderRadius: '10px', padding: '8px' }}>
+                                <ScanLine size={18} color="#6366f1" />
                             </div>
-                            <p style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>
-                                {item.used}<span style={{ color: '#333', fontSize: '13px', fontWeight: '400' }}> / {item.max}</span>
-                            </p>
-                            {item.max !== '∞' && (
-                                <div style={{ height: '3px', background: '#1e1e1e', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
-                                    <div style={{ height: '100%', width: `${Math.min(100, (item.used / Number(item.max)) * 100)}%`, background: item.color, borderRadius: '2px' }} />
-                                </div>
-                            )}
+                            <div>
+                                <p style={{ color: '#555', fontSize: '11px', fontWeight: '600' }}>Scans aujourd'hui</p>
+                                <p style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginTop: '2px' }}>
+                                    {usedScans}
+                                    <span style={{ color: '#333', fontSize: '13px', fontWeight: '400' }}>
+                                        {Number(rules.maxScansPerDay) >= 1000 ? ' / ∞' : ` / ${rules.maxScansPerDay}`}
+                                    </span>
+                                </p>
+                            </div>
                         </div>
-                    ))}
+                        {Number(rules.maxScansPerDay) < 1000 && (
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ color: usedScans >= Number(rules.maxScansPerDay) ? '#ef4444' : '#6366f1', fontSize: '22px', fontWeight: '900' }}>
+                                    {Math.max(0, Number(rules.maxScansPerDay) - usedScans)}
+                                </p>
+                                <p style={{ color: '#444', fontSize: '10px' }}>restants</p>
+                            </div>
+                        )}
+                    </div>
+                    {Number(rules.maxScansPerDay) < 1000 && (
+                        <div style={{ height: '3px', background: '#1e1e1e', borderRadius: '2px', marginTop: '14px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${Math.min(100, (usedScans / Number(rules.maxScansPerDay)) * 100)}%`, background: usedScans >= Number(rules.maxScansPerDay) ? '#ef4444' : '#6366f1', borderRadius: '2px' }} />
+                        </div>
+                    )}
                 </div>
 
                 {/* Tableau comparatif */}
