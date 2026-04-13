@@ -73,7 +73,7 @@ export default function SubscriptionPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '60px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
             {/* Halo */}
             <div style={{ position: 'fixed', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: `radial-gradient(circle, ${config.color}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
 
@@ -193,7 +193,7 @@ export default function SubscriptionPage() {
                 {effectiveTier === 'free' ? (
                     <button
                         onClick={() => router.push('/upgrade')}
-                        style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 24px rgba(99,102,241,0.3)' }}
+                        style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 24px rgba(99,102,241,0.3)', marginBottom: '12px' }}
                     >
                         <ArrowUpCircle size={20} />
                         Passer au plan Pro
@@ -202,7 +202,7 @@ export default function SubscriptionPage() {
                     <button
                         onClick={handleRenew}
                         disabled={renewing}
-                        style={{ width: '100%', padding: '18px', background: renewing ? '#1a1a1a' : config.gradient, border: 'none', borderRadius: '20px', color: renewing ? '#555' : '#fff', fontSize: '16px', fontWeight: '800', cursor: renewing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: `0 8px 24px ${config.color}25` }}
+                        style={{ width: '100%', padding: '18px', background: renewing ? '#1a1a1a' : config.gradient, border: 'none', borderRadius: '20px', color: renewing ? '#555' : '#fff', fontSize: '16px', fontWeight: '800', cursor: renewing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: `0 8px 24px ${config.color}25`, marginBottom: '12px' }}
                     >
                         <RefreshCw size={20} />
                         {renewing ? 'Redirection...' : 'Renouveler mon abonnement'}
@@ -212,7 +212,7 @@ export default function SubscriptionPage() {
                 {effectiveTier === 'pro' && (
                     <button
                         onClick={() => router.push('/upgrade?plan=premium')}
-                        style={{ width: '100%', padding: '14px', background: 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', borderRadius: '16px', color: '#f59e0b', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        style={{ width: '100%', padding: '14px', background: 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', borderRadius: '16px', color: '#f59e0b', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
                         <Crown size={16} />
                         Passer au Premium →
