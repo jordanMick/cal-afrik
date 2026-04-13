@@ -22,32 +22,50 @@ const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', mainten
 
 function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { entries: { date: string; weight: number }[], profile: any, selectedPeriod: string, setSelectedPeriod: (p: string) => void }) {
     const isPremium = profile?.subscription_tier === 'premium'
-    
-    // 1. Consolidation Mensuelle : On ne garde que la dernière pesée de chaque mois
-    const getConsolidatedData = (period: string) => {
-        const monthsCount = period === '90' ? 3 : period === '1y' ? 12 : 6
+    const isPro = profile?.subscription_tier === 'pro' || isPremium
+
+    // Vue hebdomadaire : dernière pesée de chaque semaine sur N semaines
+    const getWeeklyData = (weeksCount: number) => {
         const result: { label: string; weight: number; date: string }[] = []
         const now = new Date()
-
-        for (let i = monthsCount - 1; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-            const monthKey = d.toISOString().slice(0, 7) // YYYY-MM
-            const label = d.toLocaleDateString('fr-FR', { month: 'short' }).charAt(0).toUpperCase() + d.toLocaleDateString('fr-FR', { month: 'short' }).slice(1)
-            
-            // Trouver la dernière entrée pour ce mois
-            const monthEntries = entries.filter(e => e.date.startsWith(monthKey))
-            if (monthEntries.length > 0) {
-                result.push({
-                    label,
-                    weight: monthEntries[monthEntries.length - 1].weight,
-                    date: monthKey
-                })
+        for (let i = weeksCount - 1; i >= 0; i--) {
+            const weekStart = new Date(now)
+            weekStart.setDate(now.getDate() - i * 7 - 6)
+            const weekEnd = new Date(now)
+            weekEnd.setDate(now.getDate() - i * 7)
+            const startStr = weekStart.toISOString().split('T')[0]
+            const endStr = weekEnd.toISOString().split('T')[0]
+            const weekEntries = entries.filter(e => {
+                const d = e.date.split('T')[0]
+                return d >= startStr && d <= endStr
+            })
+            const label = `S${weeksCount - i}`
+            if (weekEntries.length > 0) {
+                result.push({ label, weight: weekEntries[weekEntries.length - 1].weight, date: startStr })
             }
         }
         return result
     }
 
-    const chartData = getConsolidatedData(selectedPeriod)
+    // Vue mensuelle : dernière pesée par mois
+    const getMonthlyData = (monthsCount: number) => {
+        const result: { label: string; weight: number; date: string }[] = []
+        const now = new Date()
+        for (let i = monthsCount - 1; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+            const monthKey = d.toISOString().slice(0, 7)
+            const label = d.toLocaleDateString('fr-FR', { month: 'short' }).charAt(0).toUpperCase() + d.toLocaleDateString('fr-FR', { month: 'short' }).slice(1)
+            const monthEntries = entries.filter(e => e.date.startsWith(monthKey))
+            if (monthEntries.length > 0) {
+                result.push({ label, weight: monthEntries[monthEntries.length - 1].weight, date: monthKey })
+            }
+        }
+        return result
+    }
+
+    const chartData = selectedPeriod === '8w' ? getWeeklyData(8)
+        : selectedPeriod === '6m' ? getMonthlyData(6)
+        : getMonthlyData(12)
     
     // 2. Calcul du message de progression
     const getProgressionInfo = () => {
@@ -99,37 +117,34 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
 
     return (
         <div style={{ padding: '8px 0' }}>
-            {/* Pied de sélecteur pour Premium ou Label pour Pro */}
+            {/* Sélecteur de période */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <p style={{ color: '#444', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    {isPremium ? 'Période d\'analyse' : 'Vue sur 6 mois (Premium pour +)'}
-                </p>
-                {isPremium && (
-                    <div style={{ display: 'flex', background: '#0a0a0a', borderRadius: '8px', padding: '2px', border: '0.5px solid #222' }}>
-                        {[
-                            { id: '90', label: '90j' },
-                            { id: '6m', label: '6m' },
-                            { id: '1y', label: '1an' }
-                        ].map(p => (
-                            <button
-                                key={p.id}
-                                onClick={() => setSelectedPeriod(p.id)}
-                                style={{
-                                    padding: '4px 10px',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    fontSize: '10px',
-                                    fontWeight: '700',
-                                    background: selectedPeriod === p.id ? '#1a1a1a' : 'transparent',
-                                    color: selectedPeriod === p.id ? '#fff' : '#555',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {p.label}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                <p style={{ color: '#444', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>Période</p>
+                <div style={{ display: 'flex', background: '#0a0a0a', borderRadius: '8px', padding: '2px', border: '0.5px solid #222' }}>
+                    {[
+                        { id: '8w', label: '8 sem', locked: false },
+                        { id: '6m', label: '6 mois', locked: !isPro },
+                        { id: '1y', label: '1 an', locked: !isPremium },
+                    ].map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => p.locked ? null : setSelectedPeriod(p.id)}
+                            style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '10px',
+                                fontWeight: '700',
+                                background: selectedPeriod === p.id ? '#1a1a1a' : 'transparent',
+                                color: p.locked ? '#2a2a2a' : selectedPeriod === p.id ? '#fff' : '#555',
+                                cursor: p.locked ? 'not-allowed' : 'pointer',
+                                position: 'relative' as const,
+                            }}
+                        >
+                            {p.label}{p.locked ? ' 🔒' : ''}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Graphique */}
@@ -321,7 +336,7 @@ export default function RapportPage() {
     const [weightEntries, setWeightEntries] = useState<{ date: string; weight: number }[]>([])
     const [showWeightModal, setShowWeightModal] = useState(false)
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
-    const [selectedPeriod, setSelectedPeriod] = useState('6m')
+    const [selectedPeriod, setSelectedPeriod] = useState('8w')
     const [isLoading, setIsLoading] = useState(true)
     const [targetUpdate, setTargetUpdate] = useState<{ old: number, new: number, isLocked: boolean } | null>(null)
 
