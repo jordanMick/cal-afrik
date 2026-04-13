@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
+import { Settings, Bell, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -554,52 +555,47 @@ export default function ProfilPage() {
                     </>
                 )}
 
-                {/* SECTION ASSISTANCE */}
-                <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '24px 0 12px' }}>Assistance & Aide</p>
-                <div style={{ background: '#141414', borderRadius: '24px', border: '0.5px solid #222', padding: '6px', marginBottom: '20px' }}>
-                    <button
-                        onClick={() => window.open('https://wa.me/22891434846?text=Bonjour%20Coach%20Yao,%20j\'ai%20besoin%20d\'aide%20sur%20l\'application%20Cal-Afrik', '_blank')}
-                        style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
-                            background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer',
-                            borderBottom: '0.5px solid #1a1a1a'
-                        }}
-                    >
-                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.896 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                            </svg>
+                {/* NOUVEAU MENU (Paramètres, Notifications, etc.) */}
+                <div style={{ background: '#121212', border: '0.5px solid #222', borderRadius: '16px', overflow: 'hidden', marginTop: '32px', marginBottom: '24px' }}>
+                    <button onClick={() => router.push('/onboarding?edit=1')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <Settings size={20} color="#ddd" strokeWidth={1.5} />
+                            <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Paramètres</span>
                         </div>
-                        <div style={{ textAlign: 'left' }}>
-                            <p style={{ fontSize: '14px', fontWeight: '600' }}>Contacter sur WhatsApp</p>
-                            <p style={{ fontSize: '11px', color: '#555' }}>Réponse rapide garantie</p>
-                        </div>
-                        <span style={{ marginLeft: 'auto', color: '#333' }}>→</span>
+                        <ChevronRight size={18} color="#555" strokeWidth={2} />
                     </button>
-                    <button
-                        onClick={() => window.location.href = 'mailto:support@cal-afrik.com?subject=Aide%20Cal-Afrik'}
-                        style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px',
-                            background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer'
-                        }}
-                    >
-                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>📩</div>
-                        <div style={{ textAlign: 'left' }}>
-                            <p style={{ fontSize: '14px', fontWeight: '600' }}>Envoyer un E-mail</p>
-                            <p style={{ fontSize: '11px', color: '#555' }}>support@cal-afrik.com</p>
+                    
+                    <button style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <Bell size={20} color="#ddd" strokeWidth={1.5} />
+                            <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Notifications</span>
                         </div>
-                        <span style={{ marginLeft: 'auto', color: '#333' }}>→</span>
+                        <ChevronRight size={18} color="#555" strokeWidth={2} />
+                    </button>
+
+                    <button onClick={() => window.open('https://wa.me/22891434846?text=Bonjour%20Coach%20Yao,%20j\'ai%20besoin%20d\'aide%20sur%20l\'application%20Cal-Afrik', '_blank')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <HelpCircle size={20} color="#ddd" strokeWidth={1.5} />
+                            <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Aide & Support</span>
+                        </div>
+                        <ChevronRight size={18} color="#555" strokeWidth={2} />
+                    </button>
+
+                    <button onClick={handleLogoutTrigger} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <LogOut size={20} color="#ef4444" strokeWidth={1.5} />
+                            <span style={{ color: '#ef4444', fontSize: '15px', fontWeight: '600' }}>Déconnexion</span>
+                        </div>
+                        <ChevronRight size={18} color="#ef4444" strokeWidth={2} />
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <button onClick={() => router.push('/onboarding?edit=1')} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#fff', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
-                        ✏️ Modifier Profil
-                    </button>
-                    <button onClick={handleLogoutTrigger} style={{ flex: 1, height: '54px', background: '#141414', border: '0.5px solid #222', borderRadius: '18px', color: '#ef4444', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
-                        Déconnexion
-                    </button>
+                {/* FOOTER */}
+                <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '32px' }}>
+                    <p style={{ color: '#666', fontSize: '12px', marginBottom: '4px' }}>Cal Afrik v1.0.0</p>
+                    <p style={{ color: '#333', fontSize: '11px' }}>© 2026 Nutrition africaine</p>
                 </div>
+
             </div>
 
             {/* MODAL DE CONFIRMATION DE DÉCONNEXION */}
