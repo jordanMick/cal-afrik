@@ -99,11 +99,6 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
     }
 
     const prog = getProgressionInfo()
-    const lastWeightDate = entries[entries.length - 1]?.date || toLocalDateString()
-    const daysSince = Math.floor((Date.now() - new Date(lastWeightDate).getTime()) / 86400000)
-    const daysLeft = Math.max(0, 30 - daysSince)
-    const pct = Math.round((daysSince / 30) * 100)
-    const urgentColor = daysLeft <= 5 ? '#ef4444' : daysLeft <= 10 ? '#f59e0b' : '#6366f1'
 
     const W = 320, H = 140, padX = 30, padY = 20
     const weights = chartData.map(e => e.weight)
@@ -223,32 +218,6 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                     </p>
                 </div>
             )}
-
-            {/* Rappel Pesée */}
-            <div style={{
-                marginTop: '12px',
-                background: '#0d0d0d',
-                borderRadius: '16px',
-                padding: '12px 14px',
-                border: `0.5px solid ${urgentColor}20`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-            }}>
-                <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <p style={{ color: '#fff', fontSize: '12px', fontWeight: '600' }}>
-                           Dernière pesée ⚖️
-                        </p>
-                        <span style={{ color: urgentColor, fontSize: '10px', fontWeight: '700' }}>
-                            {daysLeft === 0 ? 'URGENT' : `${daysLeft}j restants`}
-                        </span>
-                    </div>
-                    <div style={{ height: '3px', background: '#1e1e1e', borderRadius: '2px' }}>
-                        <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, background: urgentColor, borderRadius: '2px' }} />
-                    </div>
-                </div>
-            </div>
         </div>
     )
 }
