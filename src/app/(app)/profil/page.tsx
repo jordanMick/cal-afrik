@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
-import { Settings, Bell, HelpCircle, LogOut, ChevronRight, Pencil } from 'lucide-react'
+import { Settings, Bell, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -238,13 +238,6 @@ export default function ProfilPage() {
                 }}>
                     {/* Décoration en arrière-plan */}
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
-
-                    {/* BOUTON MODIFIER EXPLICITE EN HAUT À DROITE */}
-                    <button
-                        onClick={() => router.push('/onboarding?edit=1')}
-                        style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10, width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <Pencil size={16} color="#ddd" />
-                    </button>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                         <div style={{
