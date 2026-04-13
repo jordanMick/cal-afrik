@@ -526,42 +526,6 @@ export default function ProfilPage() {
                     Partager mon bilan sur WhatsApp
                 </button>
 
-                <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Mes informations</p>
-
-                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '14px', marginBottom: '16px', overflow: 'hidden' }}>
-                    {[
-                        { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—', icon: '👤' },
-                        { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
-                        { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—', icon: '⚖️' },
-                        { label: 'Taille', value: profile?.height_cm ? `${profile.height_cm} cm` : '—', icon: '📏' },
-                        { label: 'Activité', value: profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—', icon: '⚡' },
-                        { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '🎯' },
-                    ].map((item, i, arr) => (
-                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '14px' }}>{item.icon}</span>
-                                <span style={{ color: '#444', fontSize: '13px' }}>{item.label}</span>
-                            </div>
-                            <span style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>{item.value}</span>
-                        </div>
-                    ))}
-                </div>
-
-                {profile?.preferred_cuisines && profile.preferred_cuisines.length > 0 && (
-                    <>
-                        <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '20px 0 10px' }}>Cuisines préférées</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
-                            {profile.preferred_cuisines.map((c, i) => {
-                                const color = STAT_COLORS[i % STAT_COLORS.length]
-                                return (
-                                    <span key={c} style={{ padding: '6px 14px', background: `${color}12`, border: `0.5px solid ${color}40`, borderRadius: '20px', color: color, fontSize: '12px', fontWeight: '500' }}>
-                                        {c}
-                                    </span>
-                                )
-                            })}
-                        </div>
-                    </>
-                )}
 
                 {/* NOUVEAU MENU (Paramètres, Notifications, etc.) */}
                 <div style={{ background: '#121212', border: '0.5px solid #222', borderRadius: '16px', overflow: 'hidden', marginTop: '32px', marginBottom: '24px' }}>

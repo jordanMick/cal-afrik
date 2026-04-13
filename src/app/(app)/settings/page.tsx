@@ -28,7 +28,7 @@ export default function SettingsPage() {
                 {/* Section 1: Compte */}
                 <p style={{ color: '#666', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Mon Compte</p>
                 <div style={{ background: '#121212', borderRadius: '16px', border: '0.5px solid #222', overflow: 'hidden', marginBottom: '28px' }}>
-                    <button onClick={() => router.push('/onboarding?edit=1')} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/settings/profile')} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <User size={18} color="#ddd" strokeWidth={1.5} />
                             <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Informations personnelles</span>
