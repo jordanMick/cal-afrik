@@ -327,37 +327,6 @@ export default function ProfilPage() {
                 </div>
             )}
 
-            {/* BARRE PROGRESSION POIDS */}
-            {profile?.goal_weight_kg && profile.goal !== 'maintenir' && (() => {
-                const current = profile.weight_kg || 0
-                const target = profile.goal_weight_kg
-                const startWeight = Math.max(current, target + Math.abs(target - current) * 0.1)
-                const totalRange = Math.abs(startWeight - target)
-                const progressMade = Math.abs(startWeight - current)
-                const pct = totalRange > 0 ? Math.min(100, Math.round((progressMade / totalRange) * 100)) : 0
-                const remaining = Math.round(Math.abs(current - target) * 10) / 10
-                const isDone = (profile.goal === 'perdre' && current <= target) || (profile.goal === 'prendre' && current >= target)
-                const barColor = isDone ? '#10b981' : pct >= 50 ? '#6366f1' : '#f59e0b'
-                return (
-                    <div style={{ margin: '0 20px 8px', padding: '14px 16px', background: '#111', borderRadius: '16px', border: `0.5px solid ${barColor}30` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                            <div>
-                                <p style={{ color: '#555', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Objectif corporel</p>
-                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '600', marginTop: '2px' }}>
-                                    {isDone ? '🎉 Objectif atteint !' : profile.goal === 'perdre' ? `${remaining} kg à perdre` : `${remaining} kg à prendre`}
-                                </p>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ color: barColor, fontSize: '22px', fontWeight: '900' }}>{pct}<span style={{ fontSize: '11px' }}>%</span></p>
-                                <p style={{ color: '#444', fontSize: '10px' }}>cible : {target} kg</p>
-                            </div>
-                        </div>
-                        <div style={{ height: '5px', background: '#1e1e1e', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${pct}%`, background: isDone ? '#10b981' : `linear-gradient(90deg, #f59e0b, ${barColor})`, borderRadius: '4px', transition: 'width 0.8s ease' }} />
-                        </div>
-                    </div>
-                )
-            })()}
 
             <div style={{
                 margin: '0 20px 10px',
