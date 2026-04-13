@@ -19,6 +19,16 @@ const EATING_HABITS = [
 ]
 
 const CUISINES = ['Africaine (Générale)', 'Togolaise', 'Ivoirienne', 'Sénégalaise', 'Nigériane', 'Camerounaise', 'Internationale']
+
+const RESTRICTIONS = [
+    { id: 'arachide', label: 'Arachides 🥜' },
+    { id: 'lactose', label: 'Lactose 🥛' },
+    { id: 'gluten', label: 'Gluten 🌾' },
+    { id: 'fruits_mer', label: 'Fruits de mer 🦐' },
+    { id: 'porc', label: 'Viande de porc 🐖' },
+    { id: 'vegetarien', label: 'Végétarien 🥗' }
+]
+
 const COUNTRIES = [
     { code: 'DZ', label: 'Algérie 🇩🇿' },
     { code: 'AO', label: 'Angola 🇦🇴' },
@@ -101,7 +111,7 @@ function WheelPicker({
                 listRef.current.scrollTop = index * ITEM_HEIGHT
             }
         }
-    }, [value]) // Re-sync if value changes externally
+    }, [value])
 
     const handleScroll = (e: any) => {
         const top = e.target.scrollTop
@@ -153,7 +163,7 @@ function WheelPicker({
     )
 }
 
-// ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────
+// ─── COMPOSANTS PRINCIPAL ──────────────────────────────────────────
 
 export default function OnboardingPage() {
     const router = useRouter()
@@ -168,7 +178,6 @@ export default function OnboardingPage() {
 
     const currentYear = new Date().getFullYear()
 
-    // Safety: ensure all numeric values are numbers, not strings
     const initialForm = {
         name: profile?.name || '',
         goal: (profile?.goal as UserProfile['goal']) || 'maintenir',
@@ -180,13 +189,13 @@ export default function OnboardingPage() {
         activity_level: (profile?.activity_level as UserProfile['activity_level']) || 'modere',
         eating_habits: [] as string[],
         preferred_cuisines: profile?.preferred_cuisines || [] as string[],
+        dietary_restrictions: profile?.dietary_restrictions || [] as string[],
         target_weeks: 8,
         country: profile?.country || 'TG',
     }
 
     const form = onboardingForm || initialForm
 
-    // Migration safety: if old form doesn't have birth_year but has age
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const edit = new URLSearchParams(window.location.search).get('edit') === '1'
@@ -216,7 +225,7 @@ export default function OnboardingPage() {
     const back = () => setStep(step - 1)
 
     useEffect(() => {
-        if (step === 10) {
+        if (step === 12) {
             setAnalysisProgress(0)
             const interval = setInterval(() => {
                 setAnalysisProgress(p => {
@@ -254,7 +263,6 @@ export default function OnboardingPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) { router.push('/login'); return }
 
-            // 1. Récupérer le tier ACTUEL en base pour ne pas l'écraser par erreur
             const { data: currentProfile } = await supabase
                 .from('user_profiles')
                 .select('subscription_tier, subscription_expires_at')
@@ -272,9 +280,10 @@ export default function OnboardingPage() {
                 height_cm: Number(form.height_cm),
                 activity_level: form.activity_level,
                 goal: form.goal,
+                goal_weight_kg: Number(form.target_weight_kg),
                 country: form.country,
                 preferred_cuisines: form.preferred_cuisines,
-                // On garde la version de la DB en priorité
+                dietary_restrictions: form.dietary_restrictions || [],
                 subscription_tier: currentProfile?.subscription_tier || profile?.subscription_tier || 'free',
                 subscription_expires_at: currentProfile?.subscription_expires_at || profile?.subscription_expires_at,
                 onboarding_done: true,
@@ -302,8 +311,8 @@ export default function OnboardingPage() {
     const liveResults = calculateSafeTargets()
 
     useEffect(() => {
-        if (isEditMode && step > 11) {
-            setStep(11)
+        if (isEditMode && step > 13) {
+            setStep(13)
         }
     }, [isEditMode, step, setStep])
 
@@ -320,10 +329,10 @@ export default function OnboardingPage() {
             `}</style>
 
             {/* PROGRESS BAR */}
-            {step < 10 && (
+            {step < 12 && (
                 <div style={{ width: '100%', height: '4px', background: '#111', borderRadius: '2px', marginBottom: '40px' }}>
                     <div style={{
-                        width: `${(step / 10) * 100}%`, height: '100%',
+                        width: `${(step / 12) * 100}%`, height: '100%',
                         background: 'linear-gradient(90deg, #22c55e, #10b981)',
                         borderRadius: '2px', transition: 'width 0.4s ease'
                     }} />
@@ -345,8 +354,28 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 1. COUNTRY */}
+            {/* 1. GENRE */}
             {step === 1 && (
+                <StepWrapper key="stepGender" title="Quel est votre sexe ?" sub="Essentiel pour le calcul de votre métabolisme de base." icon="🚻">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {[
+                            { id: 'homme', label: 'Homme 👨' },
+                            { id: 'femme', label: 'Femme 👩' }
+                        ].map(g => (
+                            <button key={g.id} onClick={() => { update('gender', g.id); next(); }} style={{
+                                padding: '24px', background: form.gender === g.id ? 'rgba(34,197,94,0.1)' : '#111',
+                                border: form.gender === g.id ? '1px solid #22c55e' : '1.5px solid #222',
+                                borderRadius: '18px', cursor: 'pointer', textAlign: 'center', fontSize: '16px', fontWeight: '700', color: '#fff'
+                            }}>
+                                {g.label}
+                            </button>
+                        ))}
+                    </div>
+                </StepWrapper>
+            )}
+
+            {/* 2. PAYS */}
+            {step === 2 && (
                 <StepWrapper key="stepCountry" title="Dans quel pays habitez-vous ?" icon="🌍" sub="Yao adaptera ses conseils culinaires à votre région.">
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         {COUNTRIES.map(c => (
@@ -362,9 +391,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 2. OBJECTIF (Décalé de 1) */}
-            {step === 2 && (
-                <StepWrapper key="step1" title="Quel est votre objectif ?" icon="🎯">
+            {/* 3. OBJECTIF */}
+            {step === 3 && (
+                <StepWrapper key="stepGoal" title="Quel est votre objectif ?" icon="🎯">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {[
                             { id: 'perdre', label: 'Perdre du poids', icon: '🔥' },
@@ -384,9 +413,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 3. POIDS (Décalé de 2) */}
-            {step === 3 && (
-                <StepWrapper key="step2" title="Quel est votre poids ?" sub="Une estimation suffit" icon="⚖️">
+            {/* 4. POIDS */}
+            {step === 4 && (
+                <StepWrapper key="stepWeight" title="Quel est votre poids ?" sub="Une estimation suffit" icon="⚖️">
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={30} max={200} value={Number(form.weight_kg)} onChange={v => update('weight_kg', v)} unit="kg" />
                     </div>
@@ -396,9 +425,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 4. TAILLE */}
-            {step === 4 && (
-                <StepWrapper key="step3" title="Quelle est votre taille ?" icon="📏">
+            {/* 5. TAILLE */}
+            {step === 5 && (
+                <StepWrapper key="stepHeight" title="Quelle est votre taille ?" icon="📏">
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={100} max={250} value={Number(form.height_cm)} onChange={v => update('height_cm', v)} unit="cm" />
                     </div>
@@ -408,9 +437,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 5. ANNEE DE NAISSANCE */}
-            {step === 5 && (
-                <StepWrapper key="step4" title="Votre année de naissance" icon="📅">
+            {/* 6. ANNEE DE NAISSANCE */}
+            {step === 6 && (
+                <StepWrapper key="stepYear" title="Votre année de naissance" icon="📅">
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <WheelPicker min={1920} max={2015} value={Number(form.birth_year)} onChange={v => update('birth_year', v)} />
                     </div>
@@ -420,9 +449,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 6. ACTIVITÉ */}
-            {step === 6 && (
-                <StepWrapper key="step5" title="Votre niveau d'activité ?" icon="⚡">
+            {/* 7. ACTIVITÉ */}
+            {step === 7 && (
+                <StepWrapper key="stepActivity" title="Votre niveau d'activité ?" icon="⚡">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         {[
                             { id: 'sedentaire', label: 'Sédentaire', sub: 'Bureau, peu de sport' },
@@ -443,9 +472,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 7. HABITUDES */}
-            {step === 7 && (
-                <StepWrapper key="step6" title="Vos habitudes ?" sub="Identifiez ce qui vous freine" icon="🍽️">
+            {/* 8. HABITUDES */}
+            {step === 8 && (
+                <StepWrapper key="stepHabits" title="Vos habitudes ?" sub="Identifiez ce qui vous freine" icon="🍽️">
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                         {EATING_HABITS.map(h => (
                             <button key={h.id} onClick={() => toggleHabit(h.id)} style={{
@@ -464,9 +493,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 8. PRÉFÉRENCES */}
-            {step === 8 && (
-                <StepWrapper key="step7" title="Vos préférences" sub="Pour personnaliser vos repas" icon="🌍">
+            {/* 9. PRÉFÉRENCES CULINAIRES */}
+            {step === 9 && (
+                <StepWrapper key="stepCuisines" title="Vos préférences" sub="Pour personnaliser vos repas" icon="🌍">
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         {CUISINES.map(c => (
                             <button key={c} onClick={() => {
@@ -486,9 +515,36 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 9. PROJECTION */}
-            {step === 9 && (
-                <StepWrapper key="step8" title="Votre vision" icon="🎯">
+            {/* 10. RESTRICTIONS / ALLERGIES */}
+            {step === 10 && (
+                <StepWrapper key="stepRestrictions" title="Avez-vous des restrictions ?" sub="Allergies, intolérances ou régimes" icon="🚫">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {RESTRICTIONS.map(r => {
+                            const isSelected = (form.dietary_restrictions || []).includes(r.id);
+                            return (
+                                <button key={r.id} onClick={() => {
+                                    const list = isSelected 
+                                        ? form.dietary_restrictions.filter((x: string) => x !== r.id) 
+                                        : [...(form.dietary_restrictions || []), r.id];
+                                    update('dietary_restrictions', list);
+                                }} style={{
+                                    padding: '16px', borderRadius: '14px', border: '1.5px solid #222',
+                                    background: isSelected ? 'rgba(34,197,94,0.1)' : '#111',
+                                    color: isSelected ? '#22c55e' : '#fff',
+                                    fontSize: '14px', fontWeight: '600'
+                                }}>{r.label}</button>
+                            );
+                        })}
+                    </div>
+                    <div style={{ marginTop: '20px' }}>
+                        <NextButton onClick={next} label="Continuer" />
+                    </div>
+                </StepWrapper>
+            )}
+
+            {/* 11. PROJECTION CAHIER DES CHARGES */}
+            {step === 11 && (
+                <StepWrapper key="stepProjection" title="Votre vision" icon="🎯">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                         {form.goal !== 'maintenir' && (
                             <div>
@@ -515,8 +571,8 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 10. ANALYSE */}
-            {step === 10 && (
+            {/* 12. ANALYSE */}
+            {step === 12 && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                     <div style={{ width: '120px', height: '120px', position: 'relative', marginBottom: '40px' }}>
                         <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
@@ -536,9 +592,9 @@ export default function OnboardingPage() {
                 </div>
             )}
 
-            {/* 11. RESULTATS WOW */}
-            {step === 11 && (
-                <StepWrapper key="step10" title="C'est prêt !" icon="🌟">
+            {/* 13. RESULTATS WOW */}
+            {step === 13 && (
+                <StepWrapper key="stepWow" title="C'est prêt !" icon="🌟">
                     <div style={{ background: 'linear-gradient(135deg, #111, #080808)', border: '1.5px solid #222', borderRadius: '28px', padding: '40px 30px', textAlign: 'center' }}>
                         <div style={{ fontSize: '12px', color: '#22c55e', fontWeight: '800', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '12px' }}>Objectif Quotidien</div>
                         <div style={{ fontSize: '68px', fontWeight: '900', color: '#fff', letterSpacing: '-2px' }}>{liveResults.calorie_target}</div>
@@ -565,9 +621,9 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* 12. PAYWALL */}
-            {!isEditMode && step === 12 && (
-                <StepWrapper key="step11" title="Libérez tout votre potentiel" icon="🚀">
+            {/* 14. PAYWALL */}
+            {!isEditMode && step === 14 && (
+                <StepWrapper key="stepPaywall" title="Libérez tout votre potentiel" icon="🚀">
                     <div style={{ padding: '24px', background: '#111', borderRadius: '20px', border: '1px solid #222', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
                             <span style={{ fontWeight: '800', fontSize: '18px' }}>Premium Elite</span>
@@ -598,7 +654,7 @@ export default function OnboardingPage() {
             )}
 
             {/* BTN RETOUR */}
-            {step > 0 && step < 9 && (
+            {step > 0 && step < 11 && (
                 <button onClick={back} style={{ position: 'fixed', bottom: '40px', left: '24px', background: 'transparent', border: 'none', color: '#444', fontSize: '14px', fontWeight: '700', cursor: 'pointer', zIndex: 10 }}>← Précédent</button>
             )}
         </div>

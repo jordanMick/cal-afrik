@@ -28,11 +28,13 @@ export default function PersonalInfoPage() {
                 <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', marginBottom: '24px', overflow: 'hidden' }}>
                     {[
                         { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—', icon: '👤' },
+                        { label: 'Sexe', value: profile?.gender === 'femme' ? 'Femme' : 'Homme', icon: '🚻' },
                         { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
                         { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—', icon: '⚖️' },
+                        { label: 'Poids cible', value: profile?.goal_weight_kg ? `${profile.goal_weight_kg} kg` : '—', icon: '🎯' },
                         { label: 'Taille', value: profile?.height_cm ? `${profile.height_cm} cm` : '—', icon: '📏' },
                         { label: 'Activité', value: profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—', icon: '⚡' },
-                        { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '🎯' },
+                        { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '📈' },
                     ].map((item, i, arr) => (
                         <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: i < arr.length - 1 ? '0.5px solid #1a1a1a' : 'none' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -47,7 +49,7 @@ export default function PersonalInfoPage() {
                 {profile?.preferred_cuisines && profile.preferred_cuisines.length > 0 && (
                     <>
                         <p style={{ color: '#666', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Cuisines préférées</p>
-                        <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '32px' }}>
+                        <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
                             {profile.preferred_cuisines.map((c, i) => {
                                 const color = STAT_COLORS[i % STAT_COLORS.length]
                                 return (
@@ -56,6 +58,19 @@ export default function PersonalInfoPage() {
                                     </span>
                                 )
                             })}
+                        </div>
+                    </>
+                )}
+
+                {profile?.dietary_restrictions && profile.dietary_restrictions.length > 0 && (
+                    <>
+                        <p style={{ color: '#666', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Restrictions & Allergies</p>
+                        <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '32px' }}>
+                            {profile.dietary_restrictions.map((r, i) => (
+                                <span key={r} style={{ padding: '8px 16px', background: 'rgba(239,68,68,0.1)', border: '0.5px solid rgba(239,68,68,0.4)', borderRadius: '20px', color: '#ef4444', fontSize: '13px', fontWeight: '600' }}>
+                                    {r}
+                                </span>
+                            ))}
                         </div>
                     </>
                 )}
