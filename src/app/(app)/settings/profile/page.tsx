@@ -13,7 +13,7 @@ export default function PersonalInfoPage() {
     const { profile } = useAppStore()
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '40px' }}>
+        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px' }}>
             {/* Header */}
             <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -24,7 +24,7 @@ export default function PersonalInfoPage() {
 
             <div style={{ padding: '0 20px', marginTop: '10px' }}>
                 <p style={{ color: '#666', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Mes données</p>
-                
+
                 <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', marginBottom: '24px', overflow: 'hidden' }}>
                     {[
                         { label: 'Âge', value: profile?.age ? `${profile.age} ans` : '—', icon: '👤' },

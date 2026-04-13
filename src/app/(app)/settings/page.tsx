@@ -15,7 +15,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '40px', position: 'relative' }}>
+        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative' }}>
             {/* Header */}
             <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -59,7 +59,7 @@ export default function SettingsPage() {
                 {/* Section 3: Danger Zone */}
                 <p style={{ color: '#666', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Zone de danger</p>
                 <div style={{ background: '#121212', borderRadius: '16px', border: '0.5px solid #222', overflow: 'hidden' }}>
-                     <button onClick={() => setShowDeleteModal(true)} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                    <button onClick={() => setShowDeleteModal(true)} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                         <UserMinus size={18} color="#ef4444" strokeWidth={1.5} />
                         <span style={{ color: '#ef4444', fontSize: '15px', fontWeight: '600' }}>Supprimer mon compte</span>
                     </button>
@@ -67,7 +67,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Modal Delete */}
-             <AnimatePresence>
+            <AnimatePresence>
                 {showDeleteModal && (
                     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                         <motion.div
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                             </div>
                             <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Êtes-vous sûr ?</h3>
                             <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>Cette action est irréversible. Toutes vos données seront effacées.</p>
-                            
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <button onClick={handleDeleteAccount} style={{ width: '100%', padding: '16px', background: '#ef4444', borderRadius: '16px', color: '#fff', border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer' }}>
                                     Oui, supprimer
