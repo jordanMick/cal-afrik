@@ -35,7 +35,7 @@ export default function SettingsPage() {
                         </div>
                         <ChevronRight size={16} color="#555" />
                     </button>
-                    <button onClick={() => router.push('/upgrade')} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/settings/subscription')} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <CreditCard size={18} color="#ddd" strokeWidth={1.5} />
                             <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Gérer mon abonnement</span>
