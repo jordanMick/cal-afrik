@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { buildDietaryContextLine } from '@/lib/dietaryContext'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
         // ─── VÉRIFICATION ABONNEMENT ──────────────────────────
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('subscription_tier, subscription_expires_at, monthly_ai_bilan_used_at')
+            .select('subscription_tier, subscription_expires_at, monthly_ai_bilan_used_at, dietary_restrictions, gender')
             .eq('user_id', user.id)
             .single()
 
@@ -172,7 +173,8 @@ export async function POST(req: NextRequest) {
 
             const plannedText = plans && plans.length > 0 ? plans[0].recipe_name : 'Aucun repas verrouillé dans le Planner.'
 
-            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA ou une recherche automatisée. N'utilise JAMAIS d'icône de robot 🤖.
+            const dietaryLine = buildDietaryContextLine(profile?.dietary_restrictions)
+            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA ou une recherche automatisée. N'utilise JAMAIS d'icône de robot 🤖.${dietaryLine}
 
 Son objectif global est de ${goalLabel}.
 
@@ -227,7 +229,8 @@ Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
                 ? plans.map((p: any) => `- ${p.slot} : ${p.recipe_name}`).join('\n')
                 : "Aucun repas verrouillé aujourd'hui."
 
-            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA. N'utilise JAMAIS d'icône de robot 🤖. Voici le bilan de journée de l'utilisateur.
+            const dietaryLineDay = buildDietaryContextLine(profile?.dietary_restrictions)
+            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA. N'utilise JAMAIS d'icône de robot 🤖.${dietaryLineDay} Voici le bilan de journée de l'utilisateur.
 
 Objectif : ${goalLabel}
 
@@ -276,7 +279,8 @@ Sois direct, chaleureux, sans markdown, sans titre. Tutoie l'utilisateur.`
             const goalReached = calPct >= 85 && calPct <= 115
             const exceeded = calPct > 115
 
-            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA. N'utilise JAMAIS d'icône de robot 🤖. Voici le bilan mensuel de l'utilisateur.
+            const dietaryLineMonth = buildDietaryContextLine(profile?.dietary_restrictions)
+            prompt = `Tu es Coach Yao, nutritionniste africain expert (humain). Ne mentionne JAMAIS que tu es une IA. N'utilise JAMAIS d'icône de robot 🤖.${dietaryLineMonth} Voici le bilan mensuel de l'utilisateur.
 
 Objectif : ${goalLabel}
 

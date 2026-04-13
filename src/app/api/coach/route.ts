@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { SUBSCRIPTION_RULES, getEffectiveTier } from '@/lib/subscription'
+import { buildDietaryContextLine } from '@/lib/dietaryContext'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -115,7 +116,8 @@ export async function POST(req: NextRequest) {
         }
 
         // 4. Générer le conseil IA
-        const prompt = `Tu es Coach Yao, un nutritionniste africain bienveillant et enthousiaste. Ton ton est chaleureux, direct et positif.
+        const dietaryLine = buildDietaryContextLine(profile.dietary_restrictions)
+        const prompt = `Tu es Coach Yao, un nutritionniste africain bienveillant et enthousiaste. Ton ton est chaleureux, direct et positif.${dietaryLine}
 
 L'utilisateur vient de scanner son ${slotLabel.toLowerCase()} : ${selectedFoods.join(', ')}.
 

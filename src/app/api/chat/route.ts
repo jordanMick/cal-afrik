@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { SUBSCRIPTION_RULES, getEffectiveTier } from '@/lib/subscription'
+import { buildDietaryContextLine } from '@/lib/dietaryContext'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -299,8 +300,9 @@ ${plannerContext}
 
 Contexte utilisateur :
 - Objectif : ${profile.goal || 'rester en forme'}
+- Sexe : ${profile.gender === 'femme' ? 'Femme' : 'Homme'}
 - Poids : ${profile.weight_kg || '?'} kg
-- Contexte nutrition : ${userContext || 'Aucune donnée.'}
+- Contexte nutrition : ${userContext || 'Aucune donnée.'}${buildDietaryContextLine(profile.dietary_restrictions)}
 
 === BALISE STRUCTURELLE OBLIGATOIRE (menu creneau uniquement) ===
 Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu creneau XXX:"), tu DOIS ajouter à la toute fin de ton message la balise ---DATA--- avec le JSON des items.
