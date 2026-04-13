@@ -565,7 +565,7 @@ export default function ProfilPage() {
 
                 {/* NOUVEAU MENU (Paramètres, Notifications, etc.) */}
                 <div style={{ background: '#121212', border: '0.5px solid #222', borderRadius: '16px', overflow: 'hidden', marginTop: '32px', marginBottom: '24px' }}>
-                    <button onClick={() => router.push('/onboarding?edit=1')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/settings')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <Settings size={20} color="#ddd" strokeWidth={1.5} />
                             <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Paramètres</span>
@@ -573,7 +573,7 @@ export default function ProfilPage() {
                         <ChevronRight size={18} color="#555" strokeWidth={2} />
                     </button>
                     
-                    <button style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/notifications')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <Bell size={20} color="#ddd" strokeWidth={1.5} />
                             <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Notifications</span>
