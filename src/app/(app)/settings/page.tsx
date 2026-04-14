@@ -7,11 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ThemeSelector from '@/components/ThemeSelector'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
+import { supabase } from '@/lib/supabase'
 
 export default function SettingsPage() {
     const router = useRouter()
     const { profile } = useAppStore()
     const [isDeleting, setIsDeleting] = useState(false)
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
 
     const effectiveTier = getEffectiveTier(profile)
 
@@ -32,7 +34,8 @@ export default function SettingsPage() {
             if (json.success) {
                 // Déconnexion complète côté client
                 await supabase.auth.signOut()
-                router.push('/')
+                // On utilise location.href pour vider tout le store et l'état React proprement
+                window.location.href = '/'
             } else {
                 alert(`Erreur: ${json.error || 'Impossible de supprimer le compte'}`)
             }
