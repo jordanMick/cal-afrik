@@ -40,6 +40,8 @@ const TIER_CONFIG = {
 const PLAN_FEATURES: Record<string, { label: string; free: string; pro: string; premium: string }[]> = {
     features: [
         { label: 'Scans / jour', free: '2', pro: 'Illimité', premium: 'Illimité' },
+        { label: 'Planification Menus', free: 'Du jour', pro: 'Sur 2 jours', premium: 'Semaine entière' },
+        { label: 'Bilans Nutritionnels', free: 'Basique', pro: 'Détaillé', premium: 'Bilan Hebdo Avancé' },
         { label: 'Smart Alerts Coach Yao', free: '✗', pro: '✓', premium: '✓' },
         { label: 'Notifications intelligentes', free: '✗', pro: '✓', premium: '✓' },
         { label: 'Conseil scanner', free: '1x à vie', pro: '1 / jour', premium: 'Illimité' },

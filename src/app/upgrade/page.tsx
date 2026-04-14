@@ -248,6 +248,7 @@ function PricingContent() {
                                     'Menus Hebdomadaires Personnalisés',
                                     'Accès aux menus futurs (7 jours)',
                                     'Historique ILLIMITÉ',
+                                    'Bilan Nutritionnel Hebdomadaire Expert',
                                     'Accès prioritaire aux nouveautés',
                                     'Coach Yao personnel illimité',
                                     'Alertes contextuelles avancées'

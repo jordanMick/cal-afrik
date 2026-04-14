@@ -1089,15 +1089,15 @@ export default function ScannerPage() {
                         </button>
                         <button
                             onClick={() => {
-                                if (!canAccessFutureMenus) {
-                                    alert("Menu Semaine réservé aux plans Pro et Premium.")
+                                if (getEffectiveTier(profile) !== 'premium') {
+                                    alert("Menu Semaine réservé exclusivement au plan Premium.")
                                     return
                                 }
                                 setMenuTab('week')
                             }}
                             style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'week' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'week' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
                         >
-                            Semaine {!canAccessFutureMenus ? '🔒' : ''}
+                            Semaine {getEffectiveTier(profile) !== 'premium' ? '🔒' : ''}
                         </button>
                     </div>
 
