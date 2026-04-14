@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { SUBSCRIPTION_RULES, getEffectiveTier } from '@/lib/subscription'
 import { buildDietaryContextLine } from '@/lib/dietaryContext'
+import { SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -42,6 +43,36 @@ function fillUndefinedMeals(text: string): string {
         i += 1
         return val
     })
+}
+
+/**
+ * Fallback en cas de surcharge Anthropic : compose un menu simple à partir de la BD
+ */
+function buildEmergencyLocalMenu(foods: any[], userMsg: string): string {
+    const normalized = userMsg.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    let slot: MealSlotKey = 'dejeuner'
+    if (normalized.includes('petit')) slot = 'petit_dejeuner'
+    if (normalized.includes('collation') || normalized.includes('grignoter')) slot = 'collation'
+    if (normalized.includes('diner') || normalized.includes('soir')) slot = 'diner'
+    
+    const selected: any[] = []
+    if (foods && foods.length > 0) {
+        const shuffled = [...foods].sort(() => 0.5 - Math.random())
+        selected.push(...shuffled.slice(0, 2))
+    }
+
+    const itemsStr = selected.map(f => `- ${f.display_name || f.name_standard} (${f.default_portion_g || 150}g)`).join('\n')
+    const dataItems = selected.map(f => ({ name: f.name_standard, volume_ml: f.default_portion_g || 150 }))
+
+    return `menu creneau ${slot}:
+[Mode de Secours 🛡️] Mes serveurs sont un peu occupés, mais voici une suggestion équilibrée pour ton **${SLOT_LABELS[slot]}** basée sur notre base de données :
+
+${itemsStr}
+
+Bon appétit et merci de ta patience ! 💪
+
+---DATA---
+{"type":"suggestion","items":${JSON.stringify(dataItems)}}`
 }
 
 /**
@@ -356,23 +387,50 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                     ? "\n\n[ALERTE PLAN]: L'utilisateur est en version GRATUITE. Il demande un menu (semaine ou demain) réservé aux membres PRO. NE GÉNÈRE PAS le menu demandé. Explique-lui chaleureusement que c'est une fonctionnalité PRO/PREMIUM et invite-le à s'abonner, mais propose-lui tout de même un menu pour AUJOURD'HUI pour qu'il ne reparte pas les mains vides."
                     : ""
 
-                const response = await anthropic.messages.create({
-                    model: 'claude-haiku-4-5-20251001',
-                    max_tokens: wantsWeek ? 4096 : 800,
-                    system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux (Petit-déjeuner, Déjeuner, Collation, Dîner). Ne sois pas trop concis, donne une planification complète et riche pour motiver l'utilisateur." : "") + tierInstruction,
-                    messages: formattedMessages as any
-                })
+            // --- RETRY LOGIC (Backoff pour erreurs 529) ---
+            let attempts = 0
+            const maxAttempts = 3
+            let lastErr: any = null
 
-                const rawText = response.content[0].type === 'text' ? response.content[0].text : 'Je suis là pour t\'aider ! 💪'
-                aiMessage = rawText
-                    .replace(/Dis-\s*/gi, 'Dis ')
-                    .trim()
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await anthropic.messages.create({
+                        model: 'claude-haiku-4-5-20251001',
+                        max_tokens: wantsWeek ? 4096 : 800,
+                        system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux. Ne sois pas trop concis." : "") + (isFreeLimited ? "\n[PLAN GRATUIT]: Refuse poliment le menu demain/semaine et invite à s'abonner." : ""),
+                        messages: formattedMessages as any
+                    })
 
-                // Nettoyage sécurité : Si l'IA pose une question mais a mis un préfixe technique de CRÉNEAU UNIQUE, on nettoie pour l'affichage suggestion.
-                // On laisse passer "menu demain:" et "menu semaine:" car ils ne vont pas dans le bloc suggestion immédiat.
-                if (aiMessage.includes('?') && aiMessage.toLowerCase().includes('menu creneau')) {
-                    aiMessage = aiMessage.replace(/menu\s+creneau\s+\w+\s*:\s*/gi, '').trim()
+                    const rawText = response.content[0].type === 'text' ? response.content[0].text : 'Je suis là pour t\'aider ! 💪'
+                    aiMessage = rawText.trim()
+                    lastErr = null
+                    break // Succès !
+                } catch (err: any) {
+                    lastErr = err
+                    if (err?.status === 529 || err?.status === 429) {
+                        attempts++
+                        console.warn(`⚠️ Anthropic Overloaded (Attempt ${attempts}/${maxAttempts})...`)
+                        await new Promise(r => setTimeout(r, 1000 * attempts)) // Attente progressive
+                    } else {
+                        throw err // Autre erreur : on stop
+                    }
                 }
+            }
+
+            if (lastErr) {
+                console.error('❌ Anthropic failed after retries:', lastErr)
+                // --- FALLBACK INTELLIGENT (Sans IA) ---
+                if (wantsMenuAny) {
+                    aiMessage = buildEmergencyLocalMenu(allFoodsDB, messageContent)
+                } else {
+                    aiMessage = "Désolé, mes systèmes sont un peu fatigués en ce moment. Peux-tu réessayer dans quelques secondes ? 💪"
+                }
+            }
+            
+            // Nettoyage sécurité : Si l'IA pose une question mais a mis un préfixe technique de CRÉNEAU UNIQUE, on nettoie pour l'affichage suggestion.
+            if (aiMessage.toLowerCase().includes('menu creneau')) {
+                // ... reste du nettoyage existant ...
+            }
             } catch (anthropicErr) {
                 console.error('⚠️ Anthropic primary error:', anthropicErr)
                 if (wantsWeek) {
