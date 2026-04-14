@@ -40,7 +40,6 @@ const TIER_CONFIG = {
 const PLAN_FEATURES: Record<string, { label: string; free: string; pro: string; premium: string }[]> = {
     features: [
         { label: 'Scans / jour', free: '2', pro: 'Illimité', premium: 'Illimité' },
-        { label: 'Messages Coach Yao', free: '2', pro: '10', premium: '30' },
         { label: 'Conseil scanner', free: '1x à vie', pro: '1 / jour', premium: 'Illimité' },
         { label: 'Graphique de poids', free: '8 sem', pro: '6 mois', premium: '1 an' },
         { label: 'Recalcul auto calories', free: '✗', pro: '✓', premium: '✓' },
