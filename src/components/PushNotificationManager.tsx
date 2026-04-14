@@ -8,8 +8,13 @@ const VAPID_PUBLIC_KEY = 'BNfv7lFwqaZzo_KHZe6nmPCyVHse5lLyxy93uIlJql-1FiK0TDbXME
 export default function PushNotificationManager() {
     const [isSupported, setIsSupported] = useState(false)
     const [subscription, setSubscription] = useState<PushSubscription | null>(null)
+    const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default')
 
     useEffect(() => {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            setPermissionStatus(Notification.permission)
+        }
+        
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             setIsSupported(true)
             registerServiceWorker()
@@ -24,6 +29,7 @@ export default function PushNotificationManager() {
             })
             const sub = await registration.pushManager.getSubscription()
             setSubscription(sub)
+            if (sub) setPermissionStatus('granted')
         } catch (err) {
             console.error('Service Worker registration failed:', err)
         }
@@ -51,6 +57,7 @@ export default function PushNotificationManager() {
 
             if (res.ok) {
                 setSubscription(sub)
+                setPermissionStatus('granted')
                 console.log('Push subscription successful')
             }
         } catch (err) {
@@ -60,50 +67,46 @@ export default function PushNotificationManager() {
 
     if (!isSupported) return null
 
-    // Si on n'est pas déjà abonné, on pourrait afficher un bandeau discret ou un bouton
-    // Pour commencer, on va s'abonner automatiquement si on a la permission
-    if (!subscription && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        subscribeToPush()
-    }
+    // Si on a déjà refusé ou autorisé, on n'affiche plus le bandeau
+    if (permissionStatus !== 'default') return null
 
     return (
         <>
-            {(!subscription || (typeof Notification !== 'undefined' && Notification.permission === 'default')) && (
-                 <div style={{
-                    background: 'linear-gradient(135deg, var(--accent), #10b981)',
-                    padding: '16px 20px',
-                    borderRadius: '20px',
-                    marginBottom: '28px',
-                    color: '#fff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                    boxShadow: '0 8px 30px rgba(var(--accent-rgb), 0.2)'
-                 }}>
-                    <div>
-                        <p style={{ fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>🔔 Ne rate jamais tes objectifs !</p>
-                        <p style={{ fontSize: '11px', opacity: 0.9 }}>Active les notifications pour recevoir des rappels et des conseils quotidiens.</p>
-                    </div>
-                    <button 
-                        onClick={async () => {
-                            const permission = await Notification.requestPermission()
-                            if (permission === 'granted') subscribeToPush()
-                        }}
-                        style={{
-                            background: '#fff',
-                            color: 'var(--accent)',
-                            border: 'none',
-                            padding: '10px',
-                            borderRadius: '12px',
-                            fontSize: '13px',
-                            fontWeight: '700',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Activer les notifications
-                    </button>
-                 </div>
-            )}
+            <div style={{
+                background: 'linear-gradient(135deg, var(--accent), #10b981)',
+                padding: '16px 20px',
+                borderRadius: '20px',
+                marginBottom: '28px',
+                color: '#fff',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                boxShadow: '0 8px 30px rgba(var(--accent-rgb), 0.2)'
+            }}>
+                <div>
+                    <p style={{ fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>🔔 Ne rate jamais tes objectifs !</p>
+                    <p style={{ fontSize: '11px', opacity: 0.9 }}>Active les notifications pour recevoir des rappels et des conseils quotidiens.</p>
+                </div>
+                <button 
+                    onClick={async () => {
+                        const permission = await Notification.requestPermission()
+                        setPermissionStatus(permission)
+                        if (permission === 'granted') subscribeToPush()
+                    }}
+                    style={{
+                        background: '#fff',
+                        color: 'var(--accent)',
+                        border: 'none',
+                        padding: '10px',
+                        borderRadius: '12px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Activer les notifications
+                </button>
+            </div>
         </>
     )
 }
