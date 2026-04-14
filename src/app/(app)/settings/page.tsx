@@ -11,13 +11,38 @@ import { getEffectiveTier } from '@/lib/subscription'
 export default function SettingsPage() {
     const router = useRouter()
     const { profile } = useAppStore()
-    const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const effectiveTier = getEffectiveTier(profile)
 
-    const handleDeleteAccount = () => {
-        alert("Demande de suppression enregistrée. Cela peut prendre jusqu'à 72h.")
-        setShowDeleteModal(false)
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            const res = await fetch('/api/user', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            })
+
+            const json = await res.json()
+            if (json.success) {
+                // Déconnexion complète côté client
+                await supabase.auth.signOut()
+                router.push('/')
+            } else {
+                alert(`Erreur: ${json.error || 'Impossible de supprimer le compte'}`)
+            }
+        } catch (err) {
+            console.error(err)
+            alert("Une erreur est survenue lors de la suppression.")
+        } finally {
+            setIsDeleting(false)
+            setShowDeleteModal(false)
+        }
     }
 
     return (
@@ -115,8 +140,12 @@ export default function SettingsPage() {
                             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>Cette action est irréversible. Toutes vos données seront effacées.</p>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <button onClick={handleDeleteAccount} style={{ width: '100%', padding: '16px', background: 'var(--danger)', borderRadius: '16px', color: '#fff', border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer' }}>
-                                    Oui, supprimer
+                                <button 
+                                    onClick={handleDeleteAccount} 
+                                    disabled={isDeleting}
+                                    style={{ width: '100%', padding: '16px', background: 'var(--danger)', borderRadius: '16px', color: '#fff', border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer', opacity: isDeleting ? 0.7 : 1 }}
+                                >
+                                    {isDeleting ? 'Suppression...' : 'Oui, supprimer'}
                                 </button>
                                 <button onClick={() => setShowDeleteModal(false)} style={{ width: '100%', padding: '12px', background: 'transparent', color: 'var(--text-muted)', border: 'none', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
                                     Annuler

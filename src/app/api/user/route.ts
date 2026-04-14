@@ -106,3 +106,34 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const user = await getUser(req)
+        if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+
+        // 1. Supprimer les données de l'utilisateur
+        await supabaseAdmin.from('meals').delete().eq('user_id', user.id)
+        await supabaseAdmin.from('weight_logs').delete().eq('user_id', user.id)
+        await supabaseAdmin.from('user_profiles').delete().eq('user_id', user.id)
+
+        // 2. Supprimer l'utilisateur de l'authentification (Auth)
+        const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
+        
+        if (deleteAuthError) {
+            console.error('Delete auth error:', deleteAuthError)
+            return NextResponse.json({ error: 'Erreur lors de la suppression du compte Auth' }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true, message: 'Compte supprimé avec succès' })
+
+    } catch (err) {
+        console.error('DELETE /api/user error:', err)
+        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    }
+}
