@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 import { Settings, AlertTriangle, X, ShieldAlert } from 'lucide-react'
+import NotificationCenter from '@/components/NotificationCenter'
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -439,7 +440,7 @@ export default function DashboardPage() {
                     <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🔥</div>
+                    <NotificationCenter />
                     <div onClick={() => router.push('/settings')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <Settings color="var(--text-secondary)" size={20} strokeWidth={1.5} />
                     </div>
