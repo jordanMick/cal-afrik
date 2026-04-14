@@ -390,7 +390,7 @@ export const useAppStore = create<AppState>()(
                 set({ slots: buildInitialSlots(cal, prot, carbs, fat) })
             },
 
-            slots: buildInitialSlots(2000),
+            slots: buildInitialSlots(2000, 100, 250, 65),
 
             onboardingStep: 0,
             setOnboardingStep: (step) => set({ onboardingStep: step }),
