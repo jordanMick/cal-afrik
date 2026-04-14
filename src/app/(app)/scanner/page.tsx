@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { Info } from 'lucide-react'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -1041,6 +1042,38 @@ export default function ScannerPage() {
                     <p style={{ color: displayedRemaining < 0 ? 'var(--danger)' : (displayedRemaining === 0 ? 'var(--warning)' : slotColor), fontWeight: '800', fontSize: '16px', marginTop: '2px' }}>{displayedRemaining} kcal</p>
                 </div>
             </div>
+
+            {/* ASTUCE PRÉCISION */}
+            {!image && !isAnalyzing && (
+                <div style={{ 
+                    background: 'rgba(var(--accent-rgb), 0.05)', 
+                    border: '1px solid rgba(var(--accent-rgb), 0.15)', 
+                    borderRadius: '20px', 
+                    padding: '16px', 
+                    display: 'flex', 
+                    gap: '12px', 
+                    marginBottom: '20px' 
+                }}>
+                    <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '10px', 
+                        background: 'rgba(var(--accent-rgb), 0.1)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flexShrink: 0 
+                    }}>
+                        <Info size={18} color="var(--accent)" />
+                    </div>
+                    <div>
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>Astuce Précision</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                            Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Menus suggérés par Yao (via chat) */}
             {!image && !isAnalyzing && (
