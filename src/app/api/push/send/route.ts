@@ -34,9 +34,29 @@ export async function GET(req: NextRequest) {
         let successCount = 0
         const failures: any[] = []
 
+        const now = new Date()
+        const hour = (now.getUTCHours() + 1) % 24 // UTC+1 pour l'Afrique de l'Ouest (Ajustable selon besoin)
+        
+        let slotTitle = 'Cal-Afrik 🥥'
+        let slotBody = 'N\'oublie pas de scanner ton repas pour rester sur la bonne voie !'
+
+        if (hour >= 5 && hour < 11) {
+            slotTitle = 'Petit-déjeuner ☕'
+            slotBody = 'C\'est l\'heure du petit-déjeuner ! Un bon début pour tes objectifs.'
+        } else if (hour >= 12 && hour < 15) {
+            slotTitle = 'Déjeuner 🍛'
+            slotBody = 'Bon appétit ! Qu\'est-ce qu\'on mange pour le déjeuner ?'
+        } else if (hour >= 16 && hour < 18) {
+            slotTitle = 'Goûter 🍎'
+            slotBody = 'Un petit creux ? Pense à scanner ton goûter.'
+        } else if (hour >= 19 && hour < 22) {
+            slotTitle = 'Dîner 🍲'
+            slotBody = 'C\'est l\'heure du dîner ! Une dernière étape pour aujourd\'hui.'
+        }
+
         const payload = JSON.stringify({
-            title: 'Cal-Afrik 🥥',
-            body: 'N\'oublie pas de scanner ton repas pour rester sur la bonne voie !',
+            title: slotTitle,
+            body: slotBody,
             url: '/scanner'
         })
 
