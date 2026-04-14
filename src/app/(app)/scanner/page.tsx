@@ -519,6 +519,27 @@ export default function ScannerPage() {
     const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '14px', boxSizing: 'border-box' }
     const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '4px', display: 'block', fontWeight: '500' }
 
+    const [scanStep, setScanStep] = useState(0)
+    const scanSteps = [
+        "Identification des aliments...",
+        "Estimation des portions...",
+        "Analyse nutritionnelle...",
+        "Finalisation Yao..."
+    ]
+
+    useEffect(() => {
+        let interval: any
+        if (isAnalyzing) {
+            setScanStep(0)
+            interval = setInterval(() => {
+                setScanStep(prev => (prev < scanSteps.length - 1 ? prev + 1 : prev))
+            }, 1200)
+        } else {
+            setScanStep(0)
+        }
+        return () => clearInterval(interval)
+    }, [isAnalyzing])
+
     useEffect(() => { loadFoods() }, [])
 
     // Restauration des menus suggérés depuis Supabase (sync cross-device)
@@ -1290,21 +1311,71 @@ export default function ScannerPage() {
                 </div>
             )}
 
-            {/* PREVIEW IMAGE (SHARED) */}
-            {image && (
-                <div style={{ position: 'relative', marginBottom: '20px' }}>
-                    <img src={image} style={{ width: '100%', borderRadius: '24px', border: '0.5px solid #222' }} />
-                    <button onClick={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName(''); setShowManualForm(false) }}
-                        style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.8)', border: '0.5px solid #333', borderRadius: '50%', width: '36px', height: '36px', color: '#fff', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                </div>
-            )}
+            {/* PREVIEW IMAGE / SCAN ANIMATION */}
+            {(image || isAnalyzing) && (
+                <div style={{ position: 'relative', marginBottom: '24px', width: '100%', aspectRatio: '1/1', borderRadius: '32px', overflow: 'hidden', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', boxShadow: '0 12px 40px rgba(0,0,0,0.15)' }}>
+                    {image && (
+                        <motion.img 
+                            initial={{ scale: 1.1, opacity: 0 }}
+                            animate={{ scale: 1, opacity: isAnalyzing ? 0.6 : 1 }}
+                            src={image} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                    )}
 
-            {isAnalyzing && (
-                <div style={{ textAlign: 'center', padding: '16px', marginBottom: '14px' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: `${slotColor}12`, border: `0.5px solid ${slotColor}30`, borderRadius: '20px' }}>
-                        <span style={{ fontSize: '14px' }}>🔍</span>
-                        <p style={{ color: slotColor, fontSize: '13px', fontWeight: '500' }}>Analyse en cours...</p>
-                    </div>
+                    {isAnalyzing && (
+                        <>
+                            {/* Scanning Line */}
+                            <motion.div
+                                animate={{ top: ['0%', '100%', '0%'] }}
+                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    right: 0,
+                                    height: '3px',
+                                    background: 'linear-gradient(to right, transparent, var(--accent), transparent)',
+                                    boxShadow: '0 0 20px var(--accent), 0 0 40px var(--accent)',
+                                    zIndex: 10
+                                }}
+                            />
+
+                            {/* Overlays d'étapes */}
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(3px)', zIndex: 5 }}>
+                                <div style={{ textAlign: 'center', padding: '20px' }}>
+                                    <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(var(--accent-rgb), 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1px solid var(--accent)' }}>
+                                        <div style={{ width: '20px', height: '20px', border: '3px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                                    </div>
+                                    <p style={{ color: '#fff', fontSize: '16px', fontWeight: '800', letterSpacing: '-0.2px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                                        {scanSteps[scanStep]}
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '12px' }}>
+                                        {scanSteps.map((_, i) => (
+                                            <div 
+                                                key={i} 
+                                                style={{ 
+                                                    width: i === scanStep ? '20px' : '6px', 
+                                                    height: '6px', 
+                                                    borderRadius: '3px', 
+                                                    background: i <= scanStep ? 'var(--accent)' : 'rgba(255,255,255,0.3)',
+                                                    transition: 'all 0.3s ease'
+                                                }} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {!isAnalyzing && (
+                        <button 
+                            onClick={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName(''); setShowManualForm(false) }}
+                            style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: '40px', height: '40px', color: '#fff', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
             )}
 
