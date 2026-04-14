@@ -22,10 +22,13 @@
   --border-color-rgb: 34, 34, 34;
   
   --accent: #6366f1;
-  --accent-secondary: #10b981;
-  --accent-gradient: linear-gradient(135deg, #6366f1, #10b981);
-  --danger: #ef4444;
+  --accent-rgb: 99, 102, 241;
+  --success: #10b981;
+  --success-rgb: 16, 185, 129;
   --warning: #f59e0b;
+  --warning-rgb: 245, 158, 11;
+  --danger: #ef4444;
+  --danger-rgb: 239, 68, 68;
 }
 
 html.light {
@@ -45,6 +48,15 @@ html.light {
   
   --border-color: #e9ecef;
   --border-color-rgb: 233, 236, 239;
+
+  --accent: #6366f1;
+  --accent-rgb: 99, 102, 241;
+  --success: #10b981;
+  --success-rgb: 16, 185, 129;
+  --warning: #f59e0b;
+  --warning-rgb: 245, 158, 11;
+  --danger: #ef4444;
+  --danger-rgb: 239, 68, 68;
 }
 
 * {
