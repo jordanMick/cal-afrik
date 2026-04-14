@@ -121,25 +121,27 @@ export async function DELETE(req: NextRequest) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        // 0. Enregistrer la suppression dans l'audit Log (Nouveau !)
-        await supabaseAdmin.from('account_deletions').insert({
-            user_id: user.id,
-            email: user.email,
-            reason: 'Suppression manuelle par l\'utilisateur'
-        })
+        // 1. Supprimer en PREMIER l'utilisateur de l'auth (opération critique)
+        // Revoquer l'accès avant toute autre chose
+        const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
 
-        // 1. Supprimer les données de l'utilisateur
+        if (deleteAuthError) {
+            console.error('Delete auth error:', deleteAuthError)
+            return NextResponse.json({ error: `Erreur lors de la suppression du compte: ${deleteAuthError.message}` }, { status: 500 })
+        }
+
+        // 2. Supprimer les données applicatives (non-bloquant si ça échoue -- l'accès est déjà révoqué)
         await supabaseAdmin.from('meals').delete().eq('user_id', user.id)
         await supabaseAdmin.from('weight_logs').delete().eq('user_id', user.id)
         await supabaseAdmin.from('user_profiles').delete().eq('user_id', user.id)
 
-        // 2. Supprimer l'utilisateur de l'authentification (Auth)
-        const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
-        
-        if (deleteAuthError) {
-            console.error('Delete auth error:', deleteAuthError)
-            return NextResponse.json({ error: 'Erreur lors de la suppression du compte Auth' }, { status: 500 })
-        }
+        // 3. Audit log optionnel (non-bloquant, on ignore si la table n'existe pas)
+        supabaseAdmin.from('account_deletions').insert({
+            user_id: user.id,
+            email: user.email,
+            reason: 'Suppression manuelle par l\'utilisateur',
+            deleted_at: new Date().toISOString()
+        }).then(() => {}).catch(() => {})
 
         return NextResponse.json({ success: true, message: 'Compte supprimé avec succès' })
 
