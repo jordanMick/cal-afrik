@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 import { Settings, AlertTriangle, X, ShieldAlert } from 'lucide-react'
 import NotificationCenter from '@/components/NotificationCenter'
+import PushNotificationManager from '@/components/PushNotificationManager'
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -446,6 +447,8 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
+            
+            <PushNotificationManager />
 
             <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '24px', lineHeight: '1.4' }}>
                 Tu es sur la bonne voie pour tes objectifs !
