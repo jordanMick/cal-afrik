@@ -204,6 +204,7 @@ function PricingContent() {
                                     'Historique détaillé sur 6 mois',
                                     'Sync cloud & Sécurité',
                                     'Conseils de Coach Yao',
+                                    'Notifications push dynamiques'
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'pro' ? '#444' : '#6366f1', flexShrink: 0 }} />
@@ -249,6 +250,7 @@ function PricingContent() {
                                     'Historique ILLIMITÉ',
                                     'Accès prioritaire aux nouveautés',
                                     'Coach Yao personnel illimité',
+                                    'Alertes contextuelles avancées'
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'premium' ? '#444' : '#10b981', flexShrink: 0 }} />
