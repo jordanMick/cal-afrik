@@ -2,7 +2,7 @@
   "name": "Cal Afrik",
   "short_name": "Cal Afrik",
   "description": "Suivez vos calories avec des plats africains",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0a0f1e",
   "theme_color": "#16a34a",
