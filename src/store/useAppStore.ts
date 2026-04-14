@@ -183,13 +183,15 @@ export const useAppStore = create<AppState>()(
                 const newUserId = profile.user_id || profile.id
                 const oldUserId = currentProfile?.user_id || currentProfile?.id
 
-                // Si l'utilisateur change, on vide les données locales sensibles
-                if (newUserId && oldUserId && newUserId !== oldUserId) {
+                // Si l'utilisateur change (ou si c'est un premier login après un logout), on vide les données locales sensibles
+                if (!oldUserId || (newUserId && newUserId !== oldUserId)) {
                     set({
                         todayMeals: [],
                         chatSuggestedMenus: { today: {}, tomorrow: null, week: null, date: null, user_id: null },
                         dailyReview: null,
                         slotBilans: {},
+                        smartAlert: null,
+                        pendingScannerPrefill: null,
                     })
                 }
 

@@ -574,7 +574,7 @@ export default function RapportPage() {
                         const progressMade = Math.abs(initialWeight - current)
                         const pct = totalToLose > 0 ? Math.min(100, Math.round((progressMade / totalToLose) * 100)) : 0
                         const remaining = Math.round(Math.abs(current - target) * 10) / 10
-                        const isDone = (profile.goal === 'perdre' && current <= target) || (profile.goal === 'prendre' && current >= target)
+                        const isDone = progressMade > 0 && ((profile.goal === 'perdre' && current <= target) || (profile.goal === 'prendre' && current >= target))
                         const barColor = isDone ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : 'var(--warning)'
                         return (
                             <div style={{ marginBottom: '16px', background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '16px', border: `0.5px solid ${barColor}25` }}>
