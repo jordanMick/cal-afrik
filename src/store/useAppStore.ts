@@ -464,6 +464,7 @@ export const useAppStore = create<AppState>()(
                 }
             },
 
+            smartAlert: null,
             clearSmartAlert: () => set({ smartAlert: null }),
 
             initSlots: (cal, prot, carbs, fat) => {
