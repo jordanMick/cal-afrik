@@ -103,7 +103,10 @@ export default function PersonalInfoPage() {
         if (!email) return ''
         const [name, domain] = email.split('@')
         if (!domain) return email
-        const maskedName = name.length > 2 ? `${name.substring(0, 2)}${'*'.repeat(Math.max(0, name.length - 2))}` : name
+        if (name.length <= 3) return email
+        const firstTwo = name.substring(0, 2)
+        const lastOne = name.substring(name.length - 1)
+        const maskedName = `${firstTwo}${'*'.repeat(Math.max(0, name.length - 3))}${lastOne}`
         return `${maskedName}@${domain}`
     }
 
