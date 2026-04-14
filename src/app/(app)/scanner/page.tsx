@@ -1161,8 +1161,11 @@ export default function ScannerPage() {
                                     transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                                 >
                                     {activeMenuText ? (
-                                        <div style={{ marginTop: '16px', maxHeight: menuTab === 'week' ? '450px' : 'none', overflowY: 'auto', paddingRight: '4px' }}>
+                                        <div style={{ marginTop: '16px', maxHeight: menuTab === 'week' ? '200px' : 'none', overflow: 'hidden', paddingRight: '4px', position: 'relative' }}>
                                             {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots, slotColor)}
+                                            {menuTab === 'week' && (
+                                                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', background: 'linear-gradient(transparent, var(--bg-secondary))' }} />
+                                            )}
                                         </div>
                                     ) : (
                                         <p style={{ color: 'var(--text-muted)', fontSize: '12px', lineHeight: '1.55', marginTop: '16px' }}>
