@@ -92,8 +92,7 @@ interface AppState {
     // ─── Slots nutritionnels ─────────────────────────────────
     slots: Record<MealSlotKey, SlotState>
     initSlots: (calorieTarget: number) => void
-    updateSlotOnAdd: (slot: MealSlotKey, calories: number) => void
-    updateSlotOnRemove: (slot: MealSlotKey, calories: number) => void
+    syncSlots: () => void
     redistributeAfterSlot: (finishedSlot: MealSlotKey) => void
 
     dailyCalories: number
@@ -151,7 +150,13 @@ export const useAppStore = create<AppState>()(
                     })
                 }
 
-                set({ profile, slots: buildInitialSlots(profile.calorie_target) })
+                set({ profile })
+                // Déclencher un refresh des repas pour recalculer les slots avec le nouveau profil
+                if (get().todayMeals.length > 0) {
+                    get().setTodayMeals(get().todayMeals)
+                } else {
+                    set({ slots: buildInitialSlots(profile.calorie_target) })
+                }
             },
 
             todayMeals: [],
@@ -159,37 +164,64 @@ export const useAppStore = create<AppState>()(
             setTodayMeals: (meals) => {
                 set({ todayMeals: meals })
                 get().updateDailyTotals()
+                get().syncSlots()
+            },
 
-                const { profile } = get()
+            syncSlots: () => {
+                const { todayMeals, profile } = get()
                 if (!profile) return
 
-                const slots = buildInitialSlots(profile.calorie_target)
-                for (const meal of meals) {
+                // 1. Initialiser avec les cibles de base et consos à 0
+                let newSlots = buildInitialSlots(profile.calorie_target)
+                
+                // 2. Remplir les consommations réelles à partir des repas du jour
+                for (const meal of todayMeals) {
                     const hour = new Date(meal.logged_at).getHours()
                     const slot = getMealSlot(hour)
-                    slots[slot].consumed += meal.calories
-                    slots[slot].remaining = Math.max(0, slots[slot].target - slots[slot].consumed)
+                    newSlots[slot].consumed += meal.calories
                 }
 
+                // 3. redistribution séquentielle
                 const currentHour = new Date().getHours()
                 const currentSlot = getMealSlot(currentHour)
-                const currentIndex = SLOT_ORDER.indexOf(currentSlot)
-                for (let i = 0; i < currentIndex; i++) {
-                    slots[SLOT_ORDER[i]].locked = true
+                const currentIdx = SLOT_ORDER.indexOf(currentSlot)
+
+                let accumulatedConsumed = 0
+                for (let i = 0; i < SLOT_ORDER.length; i++) {
+                    const slotKey = SLOT_ORDER[i]
+                    
+                    if (i < currentIdx) {
+                        // Verrouiller les créneaux passés et cumuler
+                        newSlots[slotKey].locked = true
+                        accumulatedConsumed += newSlots[slotKey].consumed
+                        
+                        // Redistribuer le reste sur les créneaux restants
+                        const remainingToDistribute = Math.max(0, profile.calorie_target - accumulatedConsumed)
+                        const nextSlots = SLOT_ORDER.slice(i + 1)
+                        if (nextSlots.length > 0) {
+                            const totalRemainingPct = nextSlots.reduce((sum, s) => sum + SLOT_PCT[s], 0)
+                            for (const nextSlotKey of nextSlots) {
+                                const share = SLOT_PCT[nextSlotKey] / totalRemainingPct
+                                newSlots[nextSlotKey].target = Math.round(remainingToDistribute * share)
+                            }
+                        }
+                    } else {
+                        // Pour le créneau actuel et futur, target est déjà calculé par les itérations précédentes
+                        newSlots[slotKey].remaining = Math.max(0, newSlots[slotKey].target - newSlots[slotKey].consumed)
+                    }
                 }
 
-                set({ slots })
+                set({ slots: newSlots })
             },
 
             addMeal: (meal) => {
                 set((state) => ({ todayMeals: [...state.todayMeals, meal] }))
                 get().updateDailyTotals()
+                get().syncSlots()
 
+                // Invalider le bilan
                 const hour = new Date(meal.logged_at).getHours()
                 const slot = getMealSlot(hour)
-                get().updateSlotOnAdd(slot, meal.calories)
-
-                // Invalider le bilan du créneau concerné et tous les suivants
                 const slotIndex = SLOT_ORDER.indexOf(slot)
                 const slotsToInvalidate = SLOT_ORDER.slice(slotIndex)
                 slotsToInvalidate.forEach(s => get().markSlotNeedsRefresh(s))
@@ -197,74 +229,23 @@ export const useAppStore = create<AppState>()(
 
             removeMeal: (mealId) => {
                 const meal = get().todayMeals.find(m => m.id === mealId)
+                if (!meal) return
+
                 set((state) => ({
                     todayMeals: state.todayMeals.filter((m) => m.id !== mealId),
                 }))
                 get().updateDailyTotals()
+                get().syncSlots()
 
-                if (meal) {
-                    const hour = new Date(meal.logged_at).getHours()
-                    const slot = getMealSlot(hour)
-                    get().updateSlotOnRemove(slot, meal.calories)
-
-                    const slotIndex = SLOT_ORDER.indexOf(slot)
-                    const slotsToInvalidate = SLOT_ORDER.slice(slotIndex)
-                    slotsToInvalidate.forEach(s => get().markSlotNeedsRefresh(s))
-                }
-            },
-
-            updateSlotOnAdd: (slot, calories) => {
-                set((state) => {
-                    const current = state.slots[slot]
-                    const newConsumed = current.consumed + calories
-                    return {
-                        slots: {
-                            ...state.slots,
-                            [slot]: { ...current, consumed: newConsumed, remaining: current.target - newConsumed }
-                        }
-                    }
-                })
-            },
-
-            updateSlotOnRemove: (slot, calories) => {
-                set((state) => {
-                    const current = state.slots[slot]
-                    const newConsumed = Math.max(0, current.consumed - calories)
-                    return {
-                        slots: {
-                            ...state.slots,
-                            [slot]: { ...current, consumed: newConsumed, remaining: current.target - newConsumed }
-                        }
-                    }
-                })
+                const hour = new Date(meal.logged_at).getHours()
+                const slot = getMealSlot(hour)
+                const slotIndex = SLOT_ORDER.indexOf(slot)
+                const slotsToInvalidate = SLOT_ORDER.slice(slotIndex)
+                slotsToInvalidate.forEach(s => get().markSlotNeedsRefresh(s))
             },
 
             redistributeAfterSlot: (finishedSlot) => {
-                const { slots, dailyCalories, profile } = get()
-                if (!profile) return
-
-                const calorieTarget = profile.calorie_target
-                const finishedIndex = SLOT_ORDER.indexOf(finishedSlot)
-                const remainingSlots = SLOT_ORDER.slice(finishedIndex + 1)
-                if (remainingSlots.length === 0) return
-
-                const remainingCalories = Math.max(0, calorieTarget - dailyCalories)
-                const totalRemainingPct = remainingSlots.reduce((sum, s) => sum + SLOT_PCT[s], 0)
-
-                const newSlots = { ...slots }
-                newSlots[finishedSlot] = { ...newSlots[finishedSlot], locked: true }
-
-                for (const slot of remainingSlots) {
-                    const pctShare = SLOT_PCT[slot] / totalRemainingPct
-                    const newTarget = Math.round(remainingCalories * pctShare)
-                    newSlots[slot] = {
-                        ...newSlots[slot],
-                        target: newTarget,
-                        remaining: Math.max(0, newTarget - newSlots[slot].consumed),
-                    }
-                }
-
-                set({ slots: newSlots })
+                get().syncSlots()
             },
 
             scanResult: null,
