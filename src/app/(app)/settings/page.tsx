@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, User, CreditCard, UserMinus, ShieldAlert, ChevronRight, Target, Crown } from 'lucide-react'
+import { ChevronLeft, User, CreditCard, UserMinus, ShieldAlert, ChevronRight, Target, Crown, FileText } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ThemeSelector from '@/components/ThemeSelector'
@@ -47,7 +47,17 @@ export default function SettingsPage() {
                             <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Stratégie nutritionnelle</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {effectiveTier !== 'premium' && <Crown size={12} color="var(--success)" />}
+                            <span style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>Premium</span>
+                            <ChevronRight size={16} color="var(--text-muted)" />
+                        </div>
+                    </button>
+                    <button onClick={() => router.push('/settings/reports')} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <FileText size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Bilan Santé Pro</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>Premium</span>
                             <ChevronRight size={16} color="var(--text-muted)" />
                         </div>
                     </button>

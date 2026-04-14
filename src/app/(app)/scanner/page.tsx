@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Info } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Info, ChevronDown } from 'lucide-react'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -521,6 +521,7 @@ export default function ScannerPage() {
     const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '4px', display: 'block', fontWeight: '500' }
 
     const [scanStep, setScanStep] = useState(0)
+    const [isSuggestionsExpanded, setIsSuggestionsExpanded] = useState(true)
     const scanSteps = [
         "Identification des aliments...",
         "Estimation des portions...",
@@ -1387,32 +1388,73 @@ export default function ScannerPage() {
                 </div>
             )}
 
-            {/* SUGGESTIONS */}
+            {/* SUGGESTIONS ACCORDION */}
             {suggestions.length > 0 && !isAnalyzing && (
-                <div style={{ marginBottom: '20px' }}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px' }}>Vérifie la composition</p>
-                    {suggestions.map((food, idx) => {
-                        const isSelected = !!selectedFoods.find(f => f.id === food.id)
-                        return (
-                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)} style={{ padding: '16px 20px', borderRadius: '20px', marginBottom: '12px', background: isSelected ? 'rgba(var(--accent-rgb), 0.08)' : 'var(--bg-secondary)', cursor: 'pointer', border: isSelected ? `1px solid var(--accent)` : '0.5px solid var(--border-color)', transition: 'all 0.2s ease', position: 'relative', overflow: 'hidden' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: isSelected ? `1.5px solid var(--accent)` : '1.5px solid var(--border-color)', background: isSelected ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
-                                            {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>✓</span>}
+                <div style={{ marginBottom: '24px' }}>
+                    <button 
+                        onClick={() => setIsSuggestionsExpanded(!isSuggestionsExpanded)}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '18px', cursor: 'pointer', marginBottom: '12px', transition: 'all 0.2s ease' }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>✨</div>
+                            <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '14px' }}>Suggestions Coach Yao</p>
+                        </div>
+                        <motion.div
+                            animate={{ rotate: isSuggestionsExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                            style={{ color: 'var(--text-muted)' }}
+                        >
+                            <ChevronDown size={20} />
+                        </motion.div>
+                    </button>
+
+                    <AnimatePresence>
+                        {isSuggestionsExpanded && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                                style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+                            >
+                                {suggestions.map((food, idx) => {
+                                    const isSelected = !!selectedFoods.find(f => f.id === food.id)
+                                    return (
+                                        <div 
+                                            key={`${food.id}-${food.detected}-${idx}`} 
+                                            onClick={() => selectFood(food)} 
+                                            style={{ 
+                                                padding: '16px 20px', 
+                                                borderRadius: '20px', 
+                                                background: isSelected ? 'rgba(var(--accent-rgb), 0.08)' : 'var(--bg-secondary)', 
+                                                cursor: 'pointer', 
+                                                border: isSelected ? `1px solid var(--accent)` : '0.5px solid var(--border-color)', 
+                                                transition: 'all 0.2s ease', 
+                                                position: 'relative', 
+                                                overflow: 'hidden' 
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: isSelected ? `1.5px solid var(--accent)` : '1.5px solid var(--border-color)', background: isSelected ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                                                        {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>✓</span>}
+                                                    </div>
+                                                    <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '14px' }}>{food.name || 'Plat inconnu'}</p>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] opacity-30">COACH YAO EN ACTION...</span>
+                                                <p style={{ color: isSelected ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>
+                                                    {food.calories} kcal · {food.protein_g}g prot.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '14px' }}>{food.name || 'Plat inconnu'}</p>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] opacity-30">COACH YAO EN ACTION...</span>
-                                    <p style={{ color: isSelected ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>
-                                        {food.calories} kcal · {food.protein_g}g prot.
-                                    </p>
-                                </div>
-                            </div>
-                        )
-                    })}
+                                    )
+                                })}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             )}
 
