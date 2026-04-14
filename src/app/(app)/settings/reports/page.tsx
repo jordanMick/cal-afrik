@@ -309,8 +309,8 @@ export default function ReportsPage() {
 
                         {/* Footer PDF Pro */}
                         <div style={{ display: 'none', marginTop: '40px', borderTop: '0.5px solid #eee', paddingTop: '20px', textAlign: 'center' }} className="show-on-print">
-                            <p style={{ fontSize: '12px', color: '#666', fontWeight: '600' }}>Ce document est auto-généré par l'application Cal-Afrik.</p>
-                            <p style={{ fontSize: '10px', color: '#999', marginTop: '4px' }}>cal-afrik.vercel.app</p>
+                            <p style={{ fontSize: '13px', color: '#444', fontWeight: '700' }}>Rapport généré par Cal-Afrik</p>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>Document confidentiel destiné à l'usage personnel de l'utilisateur.</p>
                         </div>
 
                     </div>
