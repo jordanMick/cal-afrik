@@ -33,6 +33,10 @@ export interface UserProfile {
     last_usage_reset_date?: string | null
     has_used_free_lifetime_feedback?: boolean
     last_monthly_bilan_date?: string | null
+    notify_meals?: boolean
+    notify_hydration?: boolean
+    notify_reports?: boolean
+    notify_subscription?: boolean
 }
 
 export interface WeightLog {
