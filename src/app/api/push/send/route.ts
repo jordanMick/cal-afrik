@@ -24,10 +24,10 @@ export async function GET(req: NextRequest) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        // Récupérer tous les abonnements
+        // Récupérer tous les abonnements AVEC les préférences
         const { data: subs, error } = await supabase
             .from('push_subscriptions')
-            .select('*')
+            .select('*, profile:user_profiles(notify_meals)')
 
         if (error) throw error
 
@@ -40,15 +40,17 @@ export async function GET(req: NextRequest) {
             url: '/scanner'
         })
 
+        // Filtrer les utilisateurs qui ont désactivé les rappels de repas
+        const activeSubs = subs.filter((s: any) => s.profile?.notify_meals !== false)
+
         // Envoi parallèle
-        await Promise.all(subs.map(async (s) => {
+        await Promise.all(activeSubs.map(async (s: any) => {
             try {
                 await webpush.sendNotification(s.subscription, payload)
                 successCount++
             } catch (err: any) {
                 console.error('Push error for user:', s.user_id, err)
                 if (err.statusCode === 410 || err.statusCode === 404) {
-                    // Supprimer l'abonnement expiré
                     await supabase.from('push_subscriptions').delete().eq('id', s.id)
                 }
                 failures.push({ user: s.user_id, error: err.message })
@@ -58,6 +60,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ 
             success: true, 
             sent: successCount, 
+            filtered: subs.length - activeSubs.length,
             failed: failures.length,
             details: failures 
         })

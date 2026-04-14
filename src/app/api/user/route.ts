@@ -90,6 +90,10 @@ export async function POST(req: NextRequest) {
                 language: body.language || 'fr',
                 country: body.country,
                 onboarding_done: true,
+                notify_meals: body.notify_meals,
+                notify_hydration: body.notify_hydration,
+                notify_reports: body.notify_reports,
+                notify_subscription: body.notify_subscription,
             })
             .select()
             .single()

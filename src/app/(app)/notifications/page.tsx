@@ -2,21 +2,66 @@
 
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Bell, Clock, Droplets, Trophy } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAppStore } from '@/store/useAppStore'
+import { supabase } from '@/lib/supabase'
 
 export default function NotificationsPage() {
     const router = useRouter()
+    const { profile, setProfile } = useAppStore()
+    const [loading, setLoading] = useState(false)
     
-    // Simulations d'états (non reliés à une DB pour l'instant)
     const [reminders, setReminders] = useState({
-        repas: true,
-        hydratation: false,
-        bilan: true,
-        abonnement: true
+        repas: profile?.notify_meals ?? true,
+        hydratation: profile?.notify_hydration ?? false,
+        bilan: profile?.notify_reports ?? true,
+        abonnement: profile?.notify_subscription ?? true
     })
 
-    const toggle = (key: keyof typeof reminders) => {
-        setReminders(prev => ({ ...prev, [key]: !prev[key] }))
+    // Synchronisation si le profil change
+    useEffect(() => {
+        if (profile) {
+            setReminders({
+                repas: profile.notify_meals ?? true,
+                hydratation: profile.notify_hydration ?? false,
+                bilan: profile.notify_reports ?? true,
+                abonnement: profile.notify_subscription ?? true
+            })
+        }
+    }, [profile])
+
+    const toggle = async (key: keyof typeof reminders) => {
+        const newVal = !reminders[key]
+        setReminders(prev => ({ ...prev, [key]: newVal }))
+        
+        // Sauvegarde immédiate en DB
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            const dbKeys = {
+                repas: 'notify_meals',
+                hydratation: 'notify_hydration',
+                bilan: 'notify_reports',
+                abonnement: 'notify_subscription'
+            }
+
+            const res = await fetch('/api/user', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}` 
+                },
+                body: JSON.stringify({ 
+                    ...profile,
+                    [dbKeys[key]]: newVal 
+                })
+            })
+            const json = await res.json()
+            if (json.success) setProfile(json.data)
+        } catch (err) {
+            console.error('Update notifications error:', err)
+        }
     }
 
     const ToggleSwitch = ({ active }: { active: boolean }) => (
