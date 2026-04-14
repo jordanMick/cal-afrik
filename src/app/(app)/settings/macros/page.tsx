@@ -91,17 +91,18 @@ export default function MacroStrategyPage() {
                             key={n.id}
                             onClick={() => setActiveNutrient(n.id)}
                             style={{
-                                padding: '10px 16px',
-                                borderRadius: '12px',
+                                padding: '10px 18px',
+                                borderRadius: '14px',
                                 background: activeNutrient === n.id ? n.color : 'var(--bg-secondary)',
-                                color: activeNutrient === n.id ? '#fff' : 'var(--text-secondary)',
-                                border: 'none',
-                                fontSize: '14px',
-                                fontWeight: '700',
+                                color: activeNutrient === n.id ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                                border: activeNutrient === n.id ? 'none' : '0.5px solid var(--border-color)',
+                                fontSize: '13px',
+                                fontWeight: '800',
                                 whiteSpace: 'nowrap',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                boxShadow: activeNutrient === n.id ? `0 4px 12px ${n.color}40` : 'none'
+                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                boxShadow: activeNutrient === n.id ? `0 8px 16px ${n.color}30` : 'none',
+                                transform: activeNutrient === n.id ? 'scale(1.05)' : 'scale(1)'
                             }}
                         >
                             {n.label}
