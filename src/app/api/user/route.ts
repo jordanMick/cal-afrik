@@ -130,10 +130,12 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: `Erreur lors de la suppression du compte: ${deleteAuthError.message}` }, { status: 500 })
         }
 
-        // 2. Supprimer les données applicatives (non-bloquant si ça échoue -- l'accès est déjà révoqué)
-        await supabaseAdmin.from('meals').delete().eq('user_id', user.id)
-        await supabaseAdmin.from('weight_logs').delete().eq('user_id', user.id)
-        await supabaseAdmin.from('user_profiles').delete().eq('user_id', user.id)
+        // 2. Supprimer les données applicatives (indépendants — une erreur n'en bloque pas une autre)
+        const tables = ['meals', 'weight_logs', 'user_profiles']
+        for (const table of tables) {
+            const { error: tableError } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
+            if (tableError) console.warn(`Suppression ${table} ignorée:`, tableError.message)
+        }
 
         // 3. Audit log optionnel (non-bloquant, on ignore si la table n'existe pas)
         supabaseAdmin.from('account_deletions').insert({
