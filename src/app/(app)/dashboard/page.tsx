@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
-import { Settings } from 'lucide-react'
+import { Settings, AlertTriangle, X, ShieldAlert } from 'lucide-react'
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -172,7 +172,20 @@ export default function DashboardPage() {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-    const { profile, todayMeals, setTodayMeals, removeMeal, dailyCalories, dailyProtein, dailyCarbs, dailyFat, dailyReview, setDailyReview } = useAppStore()
+    const { 
+        profile, 
+        todayMeals, 
+        setTodayMeals, 
+        removeMeal, 
+        dailyCalories, 
+        dailyProtein, 
+        dailyCarbs, 
+        dailyFat, 
+        dailyReview, 
+        setDailyReview,
+        smartAlert,
+        clearSmartAlert
+    } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
     // Mis à jour à chaque arrivée sur la page pour refléter l'heure réelle
@@ -436,6 +449,52 @@ export default function DashboardPage() {
             <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '24px', lineHeight: '1.4' }}>
                 Tu es sur la bonne voie pour tes objectifs !
             </h2>
+
+            {/* SMART ALERT COACH YAO */}
+            <AnimatePresence>
+                {smartAlert && smartAlert.date === toLocalDateString() && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                        exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                        style={{ overflow: 'hidden', marginBottom: '24px' }}
+                    >
+                        <div style={{
+                            background: smartAlert.level === 'danger' ? 'rgba(var(--danger-rgb), 0.08)' : 'rgba(var(--warning-rgb), 0.08)',
+                            border: `1px solid ${smartAlert.level === 'danger' ? 'var(--danger)' : 'var(--warning)'}33`,
+                            borderRadius: '24px',
+                            padding: '16px 20px',
+                            display: 'flex',
+                            gap: '14px',
+                            position: 'relative',
+                            boxShadow: `0 8px 24px ${smartAlert.level === 'danger' ? 'rgba(var(--danger-rgb), 0.1)' : 'rgba(var(--warning-rgb), 0.1)'}`
+                        }}>
+                            <div style={{
+                                width: '36px', height: '36px', borderRadius: '12px',
+                                background: smartAlert.level === 'danger' ? 'rgba(var(--danger-rgb), 0.15)' : 'rgba(var(--warning-rgb), 0.15)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                            }}>
+                                {smartAlert.level === 'danger' ? <ShieldAlert size={20} color="var(--danger)" /> : <AlertTriangle size={20} color="var(--warning)" />}
+                            </div>
+                            <div style={{ flex: 1, paddingRight: '20px' }}>
+                                <p style={{ color: smartAlert.level === 'danger' ? 'var(--danger)' : 'var(--warning)', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>
+                                    Conseil Coach Yao
+                                </p>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.5', fontWeight: '500' }}>
+                                    {smartAlert.message}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={clearSmartAlert}
+                                style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* CARTE STATUT KILLED / REDESIGNED */}
             <div style={{ background: 'var(--bg-secondary)', borderRadius: '24px', padding: '24px', border: '0.5px solid var(--border-color)', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

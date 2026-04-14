@@ -123,6 +123,15 @@ interface AppState {
     } | null
     setDailyReview: (review: { emoji: string, text: string, date: string } | null) => void
 
+    // ─── Alertes Intelligentes ────────────────────────────
+    smartAlert: {
+        nutrient: 'calories' | 'protein' | 'carbs' | 'fat'
+        level: 'warning' | 'danger'
+        message: string
+        date: string
+    } | null
+    clearSmartAlert: () => void
+
     // ─── Pont Coach → Scanner ─────────────────────────────────
     pendingScannerPrefill: {
         items: Array<{ name: string; volume_ml: number }>
@@ -414,8 +423,8 @@ export const useAppStore = create<AppState>()(
             dailyFat: 0,
 
             updateDailyTotals: () => {
-                const meals = get().todayMeals
-                const totals = meals.reduce(
+                const { todayMeals, profile } = get()
+                const totals = todayMeals.reduce(
                     (acc, m) => ({
                         dailyCalories: acc.dailyCalories + m.calories,
                         dailyProtein: acc.dailyProtein + m.protein_g,
@@ -425,7 +434,35 @@ export const useAppStore = create<AppState>()(
                     { dailyCalories: 0, dailyProtein: 0, dailyCarbs: 0, dailyFat: 0 }
                 )
                 set(totals)
+
+                // --- ALGORITHME SMART ALERTS (COACH YAO) ---
+                if (profile) {
+                    const today = new Date().toISOString().split('T')[0]
+                    const currentAlert = get().smartAlert
+                    
+                    let newAlert: any = null
+
+                    const carbRatio = totals.dailyCarbs / (profile.carbs_target_g || 250)
+                    const fatRatio = totals.dailyFat / (profile.fat_target_g || 65)
+                    const calRatio = totals.dailyCalories / (profile.calorie_target || 2000)
+
+                    if (calRatio > 1.05) {
+                        newAlert = { nutrient: 'calories', level: 'danger', message: "Tu as dépassé ta cible calorique ! Pour le reste de la journée, privilégie les légumes verts et l'eau pour stabiliser.", date: today }
+                    } else if (carbRatio > 0.9) {
+                        newAlert = { nutrient: 'carbs', level: 'danger', message: "Alerte Glucides ! Tu as quasiment atteint ton quota. Pour ton prochain repas, Coach Yao te conseille d'éviter les féculents (riz, fufu) et de miser sur les fibres.", date: today }
+                    } else if (fatRatio > 0.9) {
+                        newAlert = { nutrient: 'fat', level: 'danger', message: "Lipides élevés ! On arrive au max. Privilégie des cuissons sans huile et des protéines maigres (poulet, poisson) pour la suite.", date: today }
+                    } else if (calRatio > 0.85) {
+                        newAlert = { nutrient: 'calories', level: 'warning', message: "Cible calories en vue ! Tu approches de ta limite. Prends une collation légère si tu as faim.", date: today }
+                    }
+
+                    if (newAlert && (!currentAlert || currentAlert.date !== today || (newAlert.level === 'danger' && currentAlert.level === 'warning'))) {
+                        set({ smartAlert: newAlert })
+                    }
+                }
             },
+
+            clearSmartAlert: () => set({ smartAlert: null }),
 
             initSlots: (cal, prot, carbs, fat) => {
                 set({ slots: buildInitialSlots(cal, prot, carbs, fat, get().macroDistributions) })
@@ -451,6 +488,7 @@ export const useAppStore = create<AppState>()(
                 onboardingForm: state.onboardingForm,
                 chatSuggestedMenus: state.chatSuggestedMenus,
                 macroDistributions: state.macroDistributions,
+                smartAlert: state.smartAlert,
             }),
         }
     )
