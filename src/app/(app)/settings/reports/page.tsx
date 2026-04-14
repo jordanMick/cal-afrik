@@ -159,10 +159,11 @@ export default function ReportsPage() {
         <div className="report-container" style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', maxWidth: '480px', margin: '0 auto', paddingBottom: '120px' }}>
             <style dangerouslySetInnerHTML={{ __html: `
                 @media print {
+                    @page { margin: 15mm; }
                     .no-print { display: none !important; }
                     body { background: white !important; color: black !important; padding: 0 !important; }
                     .report-container { padding: 0 !important; max-width: none !important; width: 100% !important; margin: 0 !important; }
-                    #pdf-report { padding: 20px !important; }
+                    #pdf-report { padding: 0 !important; }
                     div { border-color: #eee !important; box-shadow: none !important; background-color: white !important; }
                     p, span, h1, h2, h3 { color: black !important; }
                 }
@@ -203,7 +204,26 @@ export default function ReportsPage() {
                     {/* PDF CONTENT START */}
                     <div id="pdf-report" style={{ padding: '10px 0' }}>
                         
-                        {/* Summary Cards */}
+                        {/* Header PDF Pro */}
+                        <div style={{ display: 'none', marginBottom: '32px' }} className="show-on-print">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent)', paddingBottom: '20px' }}>
+                                <div>
+                                    <h1 style={{ fontSize: '28px', fontWeight: '900', color: 'var(--accent)', margin: 0 }}>Cal-Afrik</h1>
+                                    <p style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: '600' }}>Bilan Santé Personnel</p>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <p style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>{profile?.name || 'Utilisateur Cal-Afrik'}</p>
+                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Généré le {new Date().toLocaleDateString('fr-FR')}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <style dangerouslySetInnerHTML={{ __html: `
+                            @media print {
+                                .show-on-print { display: block !important; }
+                            }
+                        ` }} />
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
                             <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '20px', border: '0.5px solid var(--border-color)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -285,6 +305,12 @@ export default function ReportsPage() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Footer PDF Pro */}
+                        <div style={{ display: 'none', marginTop: '40px', borderTop: '0.5px solid #eee', paddingTop: '20px', textAlign: 'center' }} className="show-on-print">
+                            <p style={{ fontSize: '12px', color: '#666', fontWeight: '600' }}>Ce document est auto-généré par l'application Cal-Afrik.</p>
+                            <p style={{ fontSize: '10px', color: '#999', marginTop: '4px' }}>cal-afrik.vercel.app</p>
                         </div>
 
                     </div>

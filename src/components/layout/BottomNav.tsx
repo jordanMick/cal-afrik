@@ -59,7 +59,7 @@ export default function BottomNav() {
 
     return (
         <>
-            <div style={{
+            <div className="no-print" style={{
                 position: 'fixed',
                 bottom: 0,
                 left: 0,
