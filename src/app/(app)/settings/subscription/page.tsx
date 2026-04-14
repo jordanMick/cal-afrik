@@ -43,6 +43,7 @@ const PLAN_FEATURES: Record<string, { label: string; free: string; pro: string; 
         { label: 'Conseil scanner', free: '1x à vie', pro: '1 / jour', premium: 'Illimité' },
         { label: 'Graphique de poids', free: '8 sem', pro: '6 mois', premium: '1 an' },
         { label: 'Recalcul auto calories', free: '✗', pro: '✓', premium: '✓' },
+        { label: 'Macros par repas (P/G/L)', free: '✗', pro: '✗', premium: '✓' },
     ]
 }
 

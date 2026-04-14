@@ -600,17 +600,19 @@ export default function DashboardPage() {
                                         <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px' }}>
                                             <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, var(--accent), var(--success))', borderRadius: '3px' }} />
                                         </div>
-                                        <div style={{ display: 'flex', gap: '12px' }}>
-                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                                <span style={{ fontWeight: '700', color: 'var(--accent)' }}>P</span> {Math.round(slotState.protein_consumed)}/{slotState.protein_target}g
-                                            </span>
-                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                                <span style={{ fontWeight: '700', color: 'var(--warning)' }}>G</span> {Math.round(slotState.carbs_consumed)}/{slotState.carbs_target}g
-                                            </span>
-                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                                <span style={{ fontWeight: '700', color: 'var(--success)' }}>L</span> {Math.round(slotState.fat_consumed)}/{slotState.fat_target}g
-                                            </span>
-                                        </div>
+                                        {effectiveTier === 'premium' && (
+                                            <div style={{ display: 'flex', gap: '12px' }}>
+                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                                    <span style={{ fontWeight: '700', color: 'var(--accent)' }}>P</span> {Math.round(slotState.protein_consumed)}/{slotState.protein_target}g
+                                                </span>
+                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                                    <span style={{ fontWeight: '700', color: 'var(--warning)' }}>G</span> {Math.round(slotState.carbs_consumed)}/{slotState.carbs_target}g
+                                                </span>
+                                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                                    <span style={{ fontWeight: '700', color: 'var(--success)' }}>L</span> {Math.round(slotState.fat_consumed)}/{slotState.fat_target}g
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )
