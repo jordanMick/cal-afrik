@@ -10,18 +10,25 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
+    const [successMsg, setSuccessMsg] = useState('')
     const [isRegister, setIsRegister] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
         setError('')
+        setSuccessMsg('')
         try {
             if (isRegister) {
-                const { error } = await supabase.auth.signUp({ email, password })
+                const { data, error } = await supabase.auth.signUp({ email, password })
                 if (error) { setError(error.message); return }
-                const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-                if (signInError) { setError(signInError.message); return }
+                
+                // Si la confirmation d'email est activée sur Supabase, la session sera nulle
+                if (!data.session) {
+                    setSuccessMsg('Compte créé ! Veuillez vérifier votre boîte de réception pour confirmer votre inscription.')
+                    return
+                }
+
                 router.push('/onboarding')
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -178,6 +185,16 @@ export default function LoginPage() {
                             border: '0.5px solid rgba(239,68,68,0.3)',
                             borderRadius: '10px', color: '#f87171', fontSize: '13px',
                         }}>{error}</div>
+                    )}
+
+                    {successMsg && (
+                        <div style={{
+                            padding: '11px 14px',
+                            background: 'rgba(16,185,129,0.08)',
+                            border: '0.5px solid rgba(16,185,129,0.3)',
+                            borderRadius: '10px', color: '#10b981', fontSize: '13px',
+                            textAlign: 'center'
+                        }}>{successMsg}</div>
                     )}
 
                     <button
