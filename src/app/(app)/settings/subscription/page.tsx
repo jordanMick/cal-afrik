@@ -143,7 +143,7 @@ export default function SubscriptionPage() {
                 <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '0.5px solid var(--border-color)', padding: '16px 20px', marginBottom: '24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ background: 'rgba(var(--accent-rgb), 0.1)', borderRadius: '10px', padding: '8px' }}>
+                            <div style={{ background: 'rgba(var(--accent-rgb), 0.1)', borderRadius: '10px', padding: '8px' }}>
                                 <ScanLine size={18} color="var(--accent)" />
                             </div>
                             <div>
@@ -207,13 +207,13 @@ export default function SubscriptionPage() {
                     <button
                         onClick={handleRenew}
                         disabled={renewing}
-                        style={{ 
-                            width: '100%', padding: '18px', 
-                            background: renewing ? 'var(--bg-tertiary)' : config.gradient, 
-                            color: renewing ? 'var(--text-muted)' : (config.textColor || '#fff'), 
-                            border: 'none', borderRadius: '20px', fontSize: '16px', fontWeight: '800', 
-                            cursor: renewing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', 
-                            justifyContent: 'center', gap: '10px', boxShadow: `0 8px 24px ${config.color}25`, marginBottom: '12px' 
+                        style={{
+                            width: '100%', padding: '18px',
+                            background: renewing ? 'var(--bg-tertiary)' : config.gradient,
+                            color: renewing ? 'var(--text-muted)' : (config.textColor || '#fff'),
+                            border: 'none', borderRadius: '20px', fontSize: '16px', fontWeight: '800',
+                            cursor: renewing ? 'default' : 'pointer', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', gap: '10px', boxShadow: `0 8px 24px ${config.color}25`, marginBottom: '12px'
                         }}
                     >
                         <RefreshCw size={20} />
