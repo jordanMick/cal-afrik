@@ -20,7 +20,14 @@ export default function LoginPage() {
         setSuccessMsg('')
         try {
             if (isRegister) {
-                const { data, error } = await supabase.auth.signUp({ email, password })
+                const siteUrl = window.location.origin
+                const { data, error } = await supabase.auth.signUp({ 
+                    email, 
+                    password,
+                    options: {
+                        emailRedirectTo: `${siteUrl}/onboarding`
+                    }
+                })
                 if (error) { setError(error.message); return }
                 
                 // Si la confirmation d'email est activée sur Supabase, la session sera nulle
