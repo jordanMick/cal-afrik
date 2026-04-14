@@ -322,8 +322,24 @@ export default function CoachChatPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) return
 
+            const { macroDistributions, smartAlert, dailyProtein, dailyCarbs, dailyFat } = useAppStore.getState()
+            const todayKey = toLocalDateKey()
             const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
-            const contextStr = `Cible: ${profile?.calorie_target || 2000} kcal. Déjà consommé aujourd'hui: ${Math.round(dailyConsumed)} kcal.`
+            
+            let alertInfo = ""
+            if (smartAlert && smartAlert.date === todayKey) {
+                alertInfo = `\n[ALERTE COACH] : ${smartAlert.message}`
+            }
+
+            const stratInfo = `\n[STRATÉGIE NUTRITIONNELLE (% du total jour)] : 
+            Calories: Petit-déj:${macroDistributions.calories.petit_dejeuner*100}%, Déj:${macroDistributions.calories.dejeuner*100}%, Coll:${macroDistributions.calories.collation*100}%, Dîner:${macroDistributions.calories.diner*100}%
+            Protéines: Petit-déj:${macroDistributions.protein.petit_dejeuner*100}%, Déj:${macroDistributions.protein.dejeuner*100}%, Coll:${macroDistributions.protein.collation*100}%, Dîner:${macroDistributions.protein.diner*100}%
+            Glucides: Petit-déj:${macroDistributions.carbs.petit_dejeuner*100}%, Déj:${macroDistributions.carbs.dejeuner*100}%, Coll:${macroDistributions.carbs.collation*100}%, Dîner:${macroDistributions.carbs.diner*100}%
+            Lipides: Petit-déj:${macroDistributions.fat.petit_dejeuner*100}%, Déj:${macroDistributions.fat.dejeuner*100}%, Coll:${macroDistributions.fat.collation*100}%, Dîner:${macroDistributions.fat.diner*100}%`
+
+            const statsInfo = `\n[STATS AUJOURD'HUI] : Consommé: ${Math.round(dailyConsumed)}kcal, P:${dailyProtein}g, G:${dailyCarbs}g, L:${dailyFat}g.`
+
+            const contextStr = `${statsInfo}${alertInfo}${stratInfo}`
 
             const res = await fetch('/api/chat', {
                 method: 'POST',
