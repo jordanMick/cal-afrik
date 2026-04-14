@@ -41,6 +41,7 @@ const PLAN_FEATURES: Record<string, { label: string; free: string; pro: string; 
     features: [
         { label: 'Scans / jour', free: '2', pro: 'Illimité', premium: 'Illimité' },
         { label: 'Smart Alerts Coach Yao', free: '✗', pro: '✓', premium: '✓' },
+        { label: 'Notifications intelligentes', free: '✗', pro: '✓', premium: '✓' },
         { label: 'Conseil scanner', free: '1x à vie', pro: '1 / jour', premium: 'Illimité' },
         { label: 'Graphique de poids', free: '8 sem', pro: '6 mois', premium: '1 an' },
         { label: 'Recalcul auto calories', free: '✗', pro: '✓', premium: '✓' },
