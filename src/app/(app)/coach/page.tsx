@@ -456,24 +456,24 @@ export default function CoachChatPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
 
             {/* Halos d'ambiance */}
-            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-            <div style={{ position: 'fixed', bottom: '150px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--warning-rgb), 0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '150px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--accent-rgb), 0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             {/* HEADER */}
-            <div style={{ padding: '24px 20px', background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(15px)', borderBottom: '0.5px solid #222', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ padding: '24px 20px', background: 'rgba(var(--bg-primary-rgb), 0.85)', backdropFilter: 'blur(15px)', borderBottom: '0.5px solid var(--border-color)', position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{ position: 'relative' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '18px', background: 'linear-gradient(135deg, #f59e0b, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 8px 20px rgba(245,158,11,0.25)' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '18px', background: 'linear-gradient(135deg, var(--warning), var(--accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 8px 20px rgba(var(--warning-rgb), 0.25)' }}>
                         👨🏾‍⚕️
                     </div>
                     {/* Status dot */}
-                    <div style={{ position: 'absolute', bottom: -2, right: -2, width: '14px', height: '14px', background: '#10b981', border: '3px solid #0a0a0a', borderRadius: '50%' }} />
+                    <div style={{ position: 'absolute', bottom: -2, right: -2, width: '14px', height: '14px', background: 'var(--success)', border: '3px solid var(--bg-primary)', borderRadius: '50%' }} />
                 </div>
                 <div>
-                    <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', letterSpacing: '-0.3px' }}>Coach Yao</h1>
-                    <p style={{ color: '#10b981', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>En ligne</p>
+                    <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', letterSpacing: '-0.3px' }}>Coach Yao</h1>
+                    <p style={{ color: 'var(--success)', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>En ligne</p>
                 </div>
             </div>
 
@@ -487,9 +487,9 @@ export default function CoachChatPage() {
                             key={thread.date}
                             onClick={() => setActiveThreadDate(thread.date)}
                             style={{
-                                border: active ? '0.5px solid #6366f1' : '0.5px solid #222',
-                                background: active ? 'rgba(99,102,241,0.14)' : '#141414',
-                                color: active ? '#c7d2fe' : '#777',
+                                border: active ? '0.5px solid var(--accent)' : '0.5px solid var(--border-color)',
+                                background: active ? 'rgba(var(--accent-rgb), 0.14)' : 'var(--bg-secondary)',
+                                color: active ? 'var(--accent)' : 'var(--text-muted)',
                                 borderRadius: '10px',
                                 padding: '7px 10px',
                                 fontSize: '11px',
@@ -505,7 +505,7 @@ export default function CoachChatPage() {
             </div>
             {activeThread && (
                 <div style={{ padding: '8px 20px 0' }}>
-                    <p style={{ color: '#666', fontSize: '11px', fontWeight: '600' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600' }}>
                         Messages discussion: {activeThread.messagesUsed} / {activeThread.maxMessages}
                     </p>
                 </div>
@@ -565,26 +565,26 @@ export default function CoachChatPage() {
                                 maxWidth: '85%',
                                 padding: '16px 20px',
                                 borderRadius: isCoach ? '6px 24px 24px 24px' : '24px 24px 6px 24px',
-                                background: isCoach ? '#141414' : 'linear-gradient(135deg, #6366f1, #818cf8)',
-                                color: '#fff',
+                                background: isCoach ? 'var(--bg-secondary)' : 'linear-gradient(135deg, var(--accent), #818cf8)',
+                                color: isCoach ? 'var(--text-primary)' : '#fff',
                                 fontSize: '15px',
                                 lineHeight: '1.6',
-                                boxShadow: isCoach ? 'none' : '0 10px 20px rgba(99,102,241,0.2)',
-                                border: isCoach ? '0.5px solid #222' : 'none'
+                                boxShadow: isCoach ? 'none' : '0 10px 20px rgba(var(--accent-rgb), 0.2)',
+                                border: isCoach ? '0.5px solid var(--border-color)' : 'none'
                             }}>
                                 {isCoach ? (
                                     <ReactMarkdown
                                         components={{
                                             p: ({ children }) => <p style={{ margin: '0 0 8px 0' }}>{children}</p>,
-                                            strong: ({ children }) => <strong style={{ color: '#f59e0b', fontWeight: 700 }}>{children}</strong>,
-                                            em: ({ children }) => <em style={{ color: '#a78bfa' }}>{children}</em>,
-                                            hr: () => <hr style={{ border: 'none', borderTop: '0.5px solid #333', margin: '10px 0' }} />,
+                                            strong: ({ children }) => <strong style={{ color: 'var(--warning)', fontWeight: 700 }}>{children}</strong>,
+                                            em: ({ children }) => <em style={{ color: 'var(--accent)' }}>{children}</em>,
+                                            hr: () => <hr style={{ border: 'none', borderTop: '0.5px solid var(--border-color)', margin: '10px 0' }} />,
                                             ul: ({ children }) => <ul style={{ paddingLeft: '18px', margin: '4px 0' }}>{children}</ul>,
                                             ol: ({ children }) => <ol style={{ paddingLeft: '18px', margin: '4px 0' }}>{children}</ol>,
                                             li: ({ children }) => <li style={{ marginBottom: '4px' }}>{children}</li>,
-                                            h1: ({ children }) => <h1 style={{ fontSize: '17px', fontWeight: 800, margin: '8px 0 4px', color: '#f59e0b' }}>{children}</h1>,
-                                            h2: ({ children }) => <h2 style={{ fontSize: '15px', fontWeight: 700, margin: '8px 0 4px', color: '#f59e0b' }}>{children}</h2>,
-                                            h3: ({ children }) => <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '6px 0 2px', color: '#a78bfa' }}>{children}</h3>,
+                                            h1: ({ children }) => <h1 style={{ fontSize: '17px', fontWeight: 800, margin: '8px 0 4px', color: 'var(--warning)' }}>{children}</h1>,
+                                            h2: ({ children }) => <h2 style={{ fontSize: '15px', fontWeight: 700, margin: '8px 0 4px', color: 'var(--warning)' }}>{children}</h2>,
+                                            h3: ({ children }) => <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '6px 0 2px', color: 'var(--accent)' }}>{children}</h3>,
                                         }}
                                     >
                                         {displayContent}
@@ -649,7 +649,7 @@ export default function CoachChatPage() {
                                     {menuKind.kind === 'tomorrow' ? '📅 Ajouter au Scanner (Demain)' : '📆 Ajouter au Scanner (Semaine)'}
                                 </button>
                             )}
-                            <span style={{ color: '#555', fontSize: '10px', marginTop: '6px', margin: isCoach ? '0 0 0 4px' : '0 4px 0 0' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '6px', margin: isCoach ? '0 0 0 4px' : '0 4px 0 0' }}>
                                 {msg.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
@@ -658,10 +658,10 @@ export default function CoachChatPage() {
 
                 {isTyping && (
                     <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                        <div style={{ padding: '14px 20px', borderRadius: '4px 20px 20px 20px', background: '#141414', border: '0.5px solid #222', display: 'flex', gap: '4px' }}>
-                            <span style={{ width: '6px', height: '6px', background: '#6366f1', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out both', animationDelay: '-0.32s' }} />
-                            <span style={{ width: '6px', height: '6px', background: '#6366f1', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out both', animationDelay: '-0.16s' }} />
-                            <span style={{ width: '6px', height: '6px', background: '#6366f1', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out both' }} />
+                        <div style={{ padding: '14px 20px', borderRadius: '4px 20px 20px 20px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', display: 'flex', gap: '4px' }}>
+                            <span style={{ width: '6px', height: '6px', background: 'var(--accent)', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out both', animationDelay: '-0.32s' }} />
+                            <span style={{ width: '6px', height: '6px', background: 'var(--accent)', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out both', animationDelay: '-0.16s' }} />
+                            <span style={{ width: '6px', height: '6px', background: 'var(--accent)', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out both' }} />
                             <style>{"\
                                 @keyframes bounce {\
                                     0%, 80%, 100% { transform: scale(0); }\
@@ -675,7 +675,7 @@ export default function CoachChatPage() {
             </div>
 
             {/* INPUT AREA (FIXED BOTTOM) */}
-            <div style={{ padding: '16px 20px', background: '#0a0a0a', borderTop: '0.5px solid #222', paddingBottom: '100px' }}>
+            <div style={{ padding: '16px 20px', background: 'var(--bg-primary)', borderTop: '0.5px solid var(--border-color)', paddingBottom: '100px' }}>
 
                 {/* SUGGESTIONS DE QUESTIONS (Principalement Menu) */}
                 {!activeThreadLimitReached && (
@@ -694,16 +694,16 @@ export default function CoachChatPage() {
                                 style={{
                                     padding: '8px 14px',
                                     borderRadius: '16px',
-                                    background: '#1a1a1a',
-                                    border: '0.5px solid #333',
-                                    color: '#ccc',
+                                    background: 'var(--bg-secondary)',
+                                    border: '0.5px solid var(--border-color)',
+                                    color: 'var(--text-secondary)',
                                     fontSize: '12px',
                                     whiteSpace: 'nowrap',
                                     cursor: 'pointer',
                                     transition: 'background 0.2s'
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = '#2a2a2a'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = '#1a1a1a'}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
                             >
                                 {suggestion}
                             </button>
@@ -715,7 +715,7 @@ export default function CoachChatPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ padding: '2px 8px', background: effectiveTier === 'free' ? 'rgba(255,255,255,0.1)' : 'rgba(99,102,241,0.15)', color: effectiveTier === 'free' ? '#aaa' : '#818cf8', borderRadius: '10px', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase' }}>
+                        <span style={{ padding: '2px 8px', background: effectiveTier === 'free' ? 'rgba(var(--text-muted-rgb), 0.1)' : 'rgba(var(--accent-rgb), 0.15)', color: effectiveTier === 'free' ? 'var(--text-muted)' : 'var(--accent)', borderRadius: '10px', fontSize: '9px', fontWeight: '700', textTransform: 'uppercase' }}>
                             Plan {effectiveTier}
                         </span>
                     </div>
@@ -728,12 +728,12 @@ export default function CoachChatPage() {
                                 width: '100%',
                                 padding: '14px',
                                 borderRadius: '12px',
-                                background: 'rgba(255,255,255,0.03)',
-                                border: '0.5px solid #2a2a2a',
+                                background: 'var(--bg-secondary)',
+                                border: '0.5px solid var(--border-color)',
                                 textAlign: 'center'
                             }}
                         >
-                            <p style={{ color: '#aaa', fontSize: '13px', fontWeight: '600' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '600' }}>
                                 Limite atteinte, reviens demain.
                             </p>
                         </div>
@@ -742,13 +742,13 @@ export default function CoachChatPage() {
                             onClick={() => router.push('/upgrade')}
                             style={{
                                 width: '100%', padding: '16px', borderRadius: '16px',
-                                background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(245,158,11,0.1))',
-                                border: '1px solid rgba(245,158,11,0.3)',
+                                background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--warning-rgb), 0.1))',
+                                border: '1px solid rgba(var(--warning-rgb), 0.3)',
                                 textAlign: 'center', cursor: 'pointer'
                             }}>
-                            <p style={{ color: '#fff', fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>Limite atteinte 🔒</p>
-                            <p style={{ color: '#aaa', fontSize: '12px', marginBottom: '12px' }}>Passez au plan supérieur pour continuer à discuter avec Yao.</p>
-                            <button style={{ padding: '8px 20px', background: '#f59e0b', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+                            <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>Limite atteinte 🔒</p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '12px' }}>Passez au plan supérieur pour continuer à discuter avec Yao.</p>
+                            <button style={{ padding: '8px 20px', background: 'var(--warning)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
                                 Voir les plans →
                             </button>
                         </div>
@@ -762,9 +762,9 @@ export default function CoachChatPage() {
                             placeholder="Pose ta question à Yao..."
                             style={{
                                 flex: 1, padding: '18px 24px', borderRadius: '24px',
-                                background: '#141414', border: '0.5px solid #333',
-                                color: '#fff', fontSize: '15px', outline: 'none',
-                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                                background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)',
+                                color: 'var(--text-primary)', fontSize: '15px', outline: 'none',
+                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
                             }}
                         />
                         <button
@@ -772,11 +772,11 @@ export default function CoachChatPage() {
                             disabled={!input.trim()}
                             style={{
                                 width: '58px', height: '58px', borderRadius: '24px',
-                                background: input.trim() ? 'linear-gradient(135deg, #6366f1, #818cf8)' : '#1a1a1a',
-                                color: input.trim() ? '#fff' : '#444', border: 'none',
+                                background: input.trim() ? 'linear-gradient(135deg, var(--accent), #818cf8)' : 'var(--bg-tertiary)',
+                                color: input.trim() ? '#fff' : 'var(--text-muted)', border: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default',
                                 transition: 'all 0.3s ease',
-                                boxShadow: input.trim() ? '0 10px 20px rgba(99,102,241,0.3)' : 'none'
+                                boxShadow: input.trim() ? '0 10px 20px rgba(var(--accent-rgb), 0.3)' : 'none'
                             }}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
                         </button>

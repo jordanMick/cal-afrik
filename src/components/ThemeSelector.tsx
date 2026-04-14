@@ -62,10 +62,10 @@ export default function ThemeSelector({ showModal = false, onClose }: ThemeSelec
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Sun size={18} color="#ddd" strokeWidth={1.5} />
-                    <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Thème de l'application</span>
+                    <Sun size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+                    <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Thème de l' application</span>
                 </div>
-                <span style={{ color: '#666', fontSize: '13px' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                     {theme === 'dark' ? 'Sombre' : theme === 'light' ? 'Clair' : 'Automatique'}
                 </span>
             </button>
@@ -88,17 +88,17 @@ export default function ThemeSelector({ showModal = false, onClose }: ThemeSelec
                             style={{
                                 width: '100%',
                                 maxWidth: '340px',
-                                background: '#141414',
+                                background: 'var(--bg-secondary)',
                                 borderRadius: '28px',
                                 padding: '32px 24px',
-                                border: '0.5px solid #222',
+                                border: '0.5px solid var(--border-color)',
                                 position: 'relative',
                                 zIndex: 3001,
-                                boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
                             }}
                         >
-                            <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px', textAlign: 'center' }}>Thème de l'application</h3>
-                            <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px', textAlign: 'center' }}>
+                            <h3 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', marginBottom: '8px', textAlign: 'center' }}>Thème de l'application</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px', textAlign: 'center' }}>
                                 Choisis le thème qui te convient le mieux
                             </p>
 
@@ -112,8 +112,8 @@ export default function ThemeSelector({ showModal = false, onClose }: ThemeSelec
                                         style={{
                                             padding: '16px',
                                             borderRadius: '16px',
-                                            border: theme === option.id ? '1.5px solid #6366f1' : '0.5px solid #222',
-                                            background: theme === option.id ? 'rgba(99,102,241,0.1)' : '#0a0a0a',
+                                            border: theme === option.id ? '1.5px solid var(--accent)' : '0.5px solid var(--border-color)',
+                                            background: theme === option.id ? 'rgba(var(--text-primary-rgb), 0.05)' : 'var(--bg-primary)',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '12px',
@@ -126,26 +126,26 @@ export default function ThemeSelector({ showModal = false, onClose }: ThemeSelec
                                                 width: '40px',
                                                 height: '40px',
                                                 borderRadius: '12px',
-                                                background: theme === option.id ? 'rgba(99,102,241,0.2)' : '#1a1a1a',
+                                                background: theme === option.id ? 'rgba(var(--text-primary-rgb), 0.1)' : 'var(--bg-secondary)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                color: theme === option.id ? '#818cf8' : '#666',
+                                                color: theme === option.id ? 'var(--accent)' : 'var(--text-muted)',
                                                 flexShrink: 0
                                             }}
                                         >
                                             {option.icon}
                                         </div>
                                         <div style={{ textAlign: 'left', flex: 1 }}>
-                                            <p style={{ color: '#fff', fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>{option.label}</p>
-                                            <p style={{ color: '#666', fontSize: '12px' }}>{option.description}</p>
+                                            <p style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>{option.label}</p>
+                                            <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{option.description}</p>
                                         </div>
                                         {theme === option.id && (
                                             <div style={{
                                                 width: '20px',
                                                 height: '20px',
                                                 borderRadius: '50%',
-                                                background: '#6366f1',
+                                                background: 'var(--accent)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -166,7 +166,7 @@ export default function ThemeSelector({ showModal = false, onClose }: ThemeSelec
                                     width: '100%',
                                     padding: '12px',
                                     background: 'transparent',
-                                    color: '#666',
+                                    color: 'var(--text-muted)',
                                     border: 'none',
                                     fontSize: '14px',
                                     fontWeight: '600',

@@ -16,8 +16,8 @@ const formatDay = (dateStr: string) => new Date(dateStr).toLocaleDateString('fr-
 const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 const MEAL_TYPE_EMOJIS: Record<string, string> = { petit_dejeuner: '🌅', dejeuner: '☀️', diner: '🌙', collation: '🥜' }
 
-const ACCENT_COLOR = '#6366f1'
-const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
+const ACCENT_COLOR = 'var(--accent)'
+const GRADIENT = 'linear-gradient(90deg, var(--accent), var(--success))'
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 
 function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { entries: { date: string; weight: number }[], profile: any, selectedPeriod: string, setSelectedPeriod: (p: string) => void }) {
@@ -114,8 +114,8 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
         <div style={{ padding: '8px 0' }}>
             {/* Sélecteur de période */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <p style={{ color: '#444', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>Période</p>
-                <div style={{ display: 'flex', background: '#0a0a0a', borderRadius: '8px', padding: '2px', border: '0.5px solid #222' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>Période</p>
+                <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '8px', padding: '2px', border: '0.5px solid var(--border-color)' }}>
                     {[
                         { id: '8w', label: '8 sem', locked: false },
                         { id: '6m', label: '6 mois', locked: !isPro },
@@ -130,8 +130,8 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                                 border: 'none',
                                 fontSize: '10px',
                                 fontWeight: '700',
-                                background: selectedPeriod === p.id ? '#1a1a1a' : 'transparent',
-                                color: p.locked ? '#2a2a2a' : selectedPeriod === p.id ? '#fff' : '#555',
+                                background: selectedPeriod === p.id ? 'var(--bg-tertiary)' : 'transparent',
+                                color: p.locked ? 'var(--text-muted)' : selectedPeriod === p.id ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 cursor: p.locked ? 'not-allowed' : 'pointer',
                                 position: 'relative' as const,
                             }}
@@ -147,8 +147,8 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                 <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '140px', display: 'block' }}>
                     <defs>
                         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
-                            <stop offset="100%" stopColor="#0a0a0a" stopOpacity="0" />
+                            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.2" />
+                            <stop offset="100%" stopColor="var(--bg-primary)" stopOpacity="0" />
                         </linearGradient>
                     </defs>
 
@@ -158,8 +158,8 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                         const val = Math.round(maxW - t * range)
                         return (
                             <g key={i}>
-                                <line x1={padX} y1={y} x2={W - 8} y2={y} stroke="#ffffff08" strokeWidth="1" />
-                                <text x={padX - 6} y={y + 3} textAnchor="end" fill="#ffffff20" fontSize="8" fontWeight="600">{val}</text>
+                                <line x1={padX} y1={y} x2={W - 8} y2={y} stroke="var(--border-color)" strokeWidth="1" strokeOpacity="0.5" />
+                                <text x={padX - 6} y={y + 3} textAnchor="end" fill="var(--text-muted)" fontSize="8" fontWeight="600">{val}</text>
                             </g>
                         )
                     })}
@@ -173,25 +173,24 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                     )}
 
                     {/* Courbe */}
-                    {path && <path d={path} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                    {path && <path d={path} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
 
                     {/* Points + labels mois */}
                     {points.map((p, i) => (
                         <g key={i}>
-                            <circle cx={p.x} cy={p.y} r="3.5" fill="#6366f1" stroke="#0a0a0a" strokeWidth="2" />
+                            <circle cx={p.x} cy={p.y} r="3.5" fill="var(--accent)" stroke="var(--bg-primary)" strokeWidth="2" />
                             {i === points.length - 1 && (
                                 <g>
-                                    <rect x={p.x - 18} y={p.y - 22} width="36" height="14" rx="4" fill="#6366f1" />
                                     <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#fff" fontSize="8" fontWeight="800">{p.weight}k</text>
                                 </g>
                             )}
-                            <text x={p.x} y={H - 5} textAnchor="middle" fill={i === points.length - 1 ? '#6366f1' : '#ffffff25'} fontSize="8" fontWeight="700">{p.label}</text>
+                            <text x={p.x} y={H - 5} textAnchor="middle" fill={i === points.length - 1 ? 'var(--accent)' : 'var(--text-muted)'} fontSize="8" fontWeight="700">{p.label}</text>
                         </g>
                     ))}
 
                     {/* Si un seul point */}
                     {points.length === 1 && (
-                        <circle cx={points[0].x} cy={points[0].y} r="4" fill="#6366f1" stroke="#0a0a0a" strokeWidth="2" />
+                        <circle cx={points[0].x} cy={points[0].y} r="4" fill="var(--accent)" stroke="var(--bg-primary)" strokeWidth="2" />
                     )}
                 </svg>
             ) : (
@@ -206,14 +205,14 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                     marginTop: '16px',
                     padding: '12px 14px',
                     borderRadius: '16px',
-                    background: prog.isPositive ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
-                    border: `0.5px solid ${prog.isPositive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                    background: prog.isPositive ? 'rgba(var(--success-rgb), 0.08)' : 'rgba(var(--danger-rgb), 0.08)',
+                    border: `0.5px solid ${prog.isPositive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--danger-rgb), 0.2)'}`,
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '10px'
                 }}>
                     <span style={{ fontSize: '18px' }}>{prog.isPositive ? '✨' : '💡'}</span>
-                    <p style={{ color: prog.isPositive ? '#10b981' : '#f87171', fontSize: '12px', lineHeight: '1.5', fontWeight: '500' }}>
+                    <p style={{ color: prog.isPositive ? 'var(--success)' : 'var(--danger)', fontSize: '12px', lineHeight: '1.5', fontWeight: '500' }}>
                         {prog.message}
                     </p>
                 </div>
@@ -228,19 +227,19 @@ function WeightModal({ currentWeight, onClose, onSave }: { currentWeight: number
     const handleSave = async () => { const num = parseFloat(value); if (isNaN(num) || num < 20 || num > 300) return; setSaving(true); await onSave(num); setSaving(false); onClose() }
     return (
         <>
-            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000 }} />
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 1010, padding: '24px 20px 60px' }}>
-                <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', paddingTop: '10px' }}><div style={{ width: '36px', height: '4px', background: '#222', borderRadius: '2px' }} /></div>
-                <h3 style={{ color: '#fff', fontSize: '17px', fontWeight: '600', marginBottom: '4px' }}>Consigner mon poids</h3>
-                <p style={{ color: '#444', fontSize: '13px', marginBottom: '20px' }}>Poids actuel : {currentWeight} kg</p>
+            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--bg-primary-rgb), 0.6)', backdropFilter: 'blur(10px)', zIndex: 1000 }} />
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: 'var(--bg-secondary)', borderRadius: '24px 24px 0 0', border: '0.5px solid var(--border-color)', zIndex: 1010, padding: '24px 20px 60px', boxShadow: '0 -10px 40px rgba(var(--bg-primary-rgb),0.2)' }}>
+                <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success))' }} />
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', paddingTop: '10px' }}><div style={{ width: '36px', height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px' }} /></div>
+                <h3 style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: '600', marginBottom: '4px' }}>Consigner mon poids</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px' }}>Poids actuel : {currentWeight} kg</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                    <input type="number" value={value} onChange={e => setValue(e.target.value)} step="0.1" style={{ flex: 1, padding: '14px', borderRadius: '12px', background: '#0a0a0a', border: '0.5px solid #2a2a2a', color: '#fff', fontSize: '22px', fontWeight: '600', textAlign: 'center' }} />
-                    <span style={{ color: '#444', fontSize: '16px' }}>kg</span>
+                    <input type="number" value={value} onChange={e => setValue(e.target.value)} step="0.1" style={{ flex: 1, padding: '14px', borderRadius: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '22px', fontWeight: '600', textAlign: 'center' }} />
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>kg</span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={onClose} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: '#1a1a1a', border: '0.5px solid #222', color: '#fff', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>Annuler</button>
-                    <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '13px', borderRadius: '12px', background: saving ? '#1e1e1e' : 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', color: saving ? '#444' : '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>{saving ? 'Enregistrement...' : '✅ Enregistrer'}</button>
+                    <button onClick={onClose} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>Annuler</button>
+                    <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: '13px', borderRadius: '12px', background: saving ? 'var(--bg-tertiary)' : GRADIENT, border: 'none', color: saving ? 'var(--text-muted)' : '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}>{saving ? 'Enregistrement...' : '✅ Enregistrer'}</button>
                 </div>
             </div>
         </>
@@ -253,26 +252,26 @@ function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () 
     const macros = totalKcal === 0 ? { protein: 0, carbs: 0, fat: 0 } : { protein: Math.round((meal.protein_g * 4 / totalKcal) * 100), carbs: Math.round((meal.carbs_g * 4 / totalKcal) * 100), fat: Math.round((meal.fat_g * 9 / totalKcal) * 100) }
     return (
         <>
-            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000 }} />
-            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 1010, maxHeight: '90vh', overflowY: 'auto', paddingBottom: '100px' }}>
-                <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)' }} />
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}><div style={{ width: '36px', height: '4px', background: '#222', borderRadius: '2px' }} /></div>
+            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--bg-primary-rgb), 0.6)', backdropFilter: 'blur(10px)', zIndex: 1000 }} />
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: 'var(--bg-secondary)', borderRadius: '24px 24px 0 0', border: '0.5px solid var(--border-color)', zIndex: 1010, maxHeight: '90vh', overflowY: 'auto', paddingBottom: '100px', boxShadow: '0 -10px 40px rgba(var(--bg-primary-rgb), 0.2)' }}>
+                <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success), var(--warning))' }} />
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}><div style={{ width: '36px', height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px' }} /></div>
                 {meal.image_url && <div style={{ width: '100%', height: '160px', overflow: 'hidden' }}><img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
                 <div style={{ padding: '18px 20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                        <h2 style={{ color: '#fff', fontSize: '17px', fontWeight: '600', flex: 1, marginRight: '12px' }}>{meal.custom_name || 'Repas'}</h2>
-                        <span style={{ color: '#444', fontSize: '12px' }}>{formatTime(meal.logged_at)}</span>
+                        <h2 style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: '600', flex: 1, marginRight: '12px' }}>{meal.custom_name || 'Repas'}</h2>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{formatTime(meal.logged_at)}</span>
                     </div>
-                    <p style={{ color: '#444', fontSize: '12px', marginBottom: '14px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'} · {meal.portion_g}g</p>
-                    <div style={{ background: '#0a0a0a', borderRadius: '14px', padding: '16px', textAlign: 'center', marginBottom: '12px', border: '0.5px solid rgba(99,102,241,0.2)' }}>
-                        <p style={{ color: '#6366f1', fontSize: '44px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(meal.calories)}</p>
-                        <p style={{ color: '#444', fontSize: '13px' }}>kilocalories</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '14px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'} · {meal.portion_g}g</p>
+                    <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '16px', textAlign: 'center', marginBottom: '12px', border: '0.5px solid rgba(var(--accent-rgb), 0.2)' }}>
+                        <p style={{ color: 'var(--accent)', fontSize: '44px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(meal.calories)}</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>kilocalories</p>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '16px' }}>
                         {[
-                            { label: 'Protéines', value: meal.protein_g, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
-                            { label: 'Glucides', value: meal.carbs_g, color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
-                            { label: 'Lipides', value: meal.fat_g, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' }
+                            { label: 'Protéines', value: meal.protein_g, color: 'var(--success)', bg: 'rgba(var(--success-rgb), 0.1)' },
+                            { label: 'Glucides', value: meal.carbs_g, color: 'var(--accent)', bg: 'rgba(var(--accent-rgb), 0.1)' },
+                            { label: 'Lipides', value: meal.fat_g, color: 'var(--warning)', bg: 'rgba(var(--warning-rgb), 0.1)' }
                         ].map(m => (
                             <div key={m.label} style={{ background: m.bg, borderRadius: '14px', padding: '12px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
                                 <p style={{ color: m.color, fontSize: '16px', fontWeight: '800' }}>{Math.round(m.value)}g</p>
@@ -282,15 +281,15 @@ function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () 
                     </div>
                     {meal.coach_message && (
                         <div style={{ marginBottom: '14px' }}>
-                            <button onClick={() => setShowCoach(!showCoach)} style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}>
+                            <button onClick={() => setShowCoach(!showCoach)} style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}>
                                 {showCoach ? '💡 Conseil du coach' : '💡 Voir le conseil du coach →'}
                             </button>
-                            {showCoach && <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '10px', padding: '12px', border: '0.5px solid rgba(245,158,11,0.2)' }}><p style={{ color: '#ccc', fontSize: '12px', lineHeight: '1.6' }}>{meal.coach_message}</p></div>}
+                            {showCoach && <div style={{ background: 'rgba(var(--warning-rgb), 0.06)', borderRadius: '10px', padding: '12px', border: '0.5px solid rgba(var(--warning-rgb), 0.2)' }}><p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6' }}>{meal.coach_message}</p></div>}
                         </div>
                     )}
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={onClose} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: '#1a1a1a', border: '0.5px solid #222', color: '#fff', fontWeight: '500', fontSize: '13px', cursor: 'pointer' }}>← Retour</button>
-                        <button onClick={async () => { if (confirm('Supprimer ce repas ?')) { await onDelete(meal.id); onClose() } }} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: 'transparent', border: '0.5px solid rgba(239,68,68,0.3)', color: '#f87171', fontWeight: '500', fontSize: '13px', cursor: 'pointer' }}>🗑️ Supprimer</button>
+                        <button onClick={onClose} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontWeight: '500', fontSize: '13px', cursor: 'pointer' }}>← Retour</button>
+                        <button onClick={async () => { if (confirm('Supprimer ce repas ?')) { await onDelete(meal.id); onClose() } }} style={{ flex: 1, padding: '13px', borderRadius: '12px', background: 'transparent', border: '0.5px solid var(--danger)', color: 'var(--danger)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', opacity: 0.8 }}>🗑️ Supprimer</button>
                     </div>
                 </div>
             </div>
@@ -431,47 +430,47 @@ export default function RapportPage() {
     const weightMin = weightEntries.length > 0 ? Math.min(...weightEntries.map(e => e.weight)) : currentWeight
     const weightMax = weightEntries.length > 0 ? Math.max(...weightEntries.map(e => e.weight)) : currentWeight
 
-    const card: React.CSSProperties = { background: '#141414', border: '0.5px solid #222', borderRadius: '24px', padding: '24px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }
+    const card: React.CSSProperties = { background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '24px', padding: '24px', marginBottom: '16px', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', fontFamily: 'system-ui, sans-serif', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', fontFamily: 'system-ui, sans-serif', position: 'relative', overflow: 'hidden' }}>
             {/* Halos d'ambiance */}
-            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div style={{ padding: '52px 20px 24px' }}>
-                <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.5px' }}>Rapport</h1>
-                <p style={{ color: '#555', fontSize: '13px', fontWeight: '500' }}>Tes analyses nutritionnelles</p>
+                <h1 style={{ color: 'var(--text-primary)', fontSize: '24px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.5px' }}>Rapport</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>Tes analyses nutritionnelles</p>
             </div>
 
             <div style={{ padding: '18px 20px' }}>
 
                 {/* 7 JOURS */}
                 <div style={card}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b, #ec4899)' }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success), var(--warning), #ec4899)' }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                        <p style={{ color: '#555', fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', textTransform: 'uppercase' }}>7 derniers jours</p>
-                        <span style={{ color: '#6366f1', fontSize: '11px', background: 'rgba(99,102,241,0.1)', padding: '3px 10px', borderRadius: '20px', border: '0.5px solid rgba(99,102,241,0.3)' }}>📸 {totalMeals} repas</span>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', textTransform: 'uppercase' }}>7 derniers jours</p>
+                        <span style={{ color: 'var(--accent)', fontSize: '11px', background: 'rgba(var(--accent-rgb), 0.1)', padding: '3px 10px', borderRadius: '20px', border: '0.5px solid rgba(var(--accent-rgb), 0.3)' }}>📸 {totalMeals} repas</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '14px', border: '0.5px solid rgba(99,102,241,0.15)' }}>
-                            <p style={{ color: '#6366f1', fontSize: '26px', fontWeight: '700', letterSpacing: '-1px' }}>{Math.round(totalCalories7).toLocaleString()}</p>
-                            <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>kcal totales</p>
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '14px', border: '0.5px solid rgba(var(--accent-rgb), 0.15)' }}>
+                            <p style={{ color: 'var(--accent)', fontSize: '26px', fontWeight: '700', letterSpacing: '-1px' }}>{Math.round(totalCalories7).toLocaleString()}</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>kcal totales</p>
                         </div>
-                        <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '14px', border: '0.5px solid rgba(16,185,129,0.15)' }}>
-                            <p style={{ color: '#10b981', fontSize: '26px', fontWeight: '700', letterSpacing: '-1px' }}>{avgCaloriesPerDay}</p>
-                            <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>kcal/jour moy.</p>
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '14px', border: '0.5px solid rgba(var(--success-rgb), 0.15)' }}>
+                            <p style={{ color: 'var(--success)', fontSize: '26px', fontWeight: '700', letterSpacing: '-1px' }}>{avgCaloriesPerDay}</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>kcal/jour moy.</p>
                         </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
                         {[
-                            { label: 'Prot. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.protein_g, 0) / 7) : 0, color: '#10b981' },
-                            { label: 'Gluc. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.carbs_g, 0) / 7) : 0, color: '#6366f1' },
-                            { label: 'Lip. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.fat_g, 0) / 7) : 0, color: '#f59e0b' },
+                            { label: 'Prot. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.protein_g, 0) / 7) : 0, color: 'var(--success)' },
+                            { label: 'Gluc. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.carbs_g, 0) / 7) : 0, color: 'var(--accent)' },
+                            { label: 'Lip. moy.', value: totalMeals > 0 ? Math.round(meals7days.reduce((a, m) => a + m.fat_g, 0) / 7) : 0, color: 'var(--warning)' },
                         ].map(m => (
-                            <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', textAlign: 'center', border: `0.5px solid ${m.color}15` }}>
+                            <div key={m.label} style={{ background: 'var(--bg-primary)', borderRadius: '10px', padding: '10px', textAlign: 'center', border: `0.5px solid ${m.color}15` }}>
                                 <p style={{ color: m.color, fontSize: '16px', fontWeight: '600' }}>{m.value}g</p>
-                                <p style={{ color: '#333', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
                             </div>
                         ))}
                     </div>
@@ -480,8 +479,8 @@ export default function RapportPage() {
                 {/* HISTORIQUE 7 JOURS */}
                 <div style={card}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '600' }}>Historique</p>
-                        <button onClick={() => router.push('/historique')} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', cursor: 'pointer' }}>Tous →</button>
+                        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Historique</p>
+                        <button onClick={() => router.push('/historique')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer' }}>Tous →</button>
                     </div>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'space-between', marginBottom: '18px' }}>
                         {last7.map((date, idx) => {
@@ -490,33 +489,33 @@ export default function RapportPage() {
                             const isToday = date === todayStr
                             return (
                                 <div key={date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                    <span style={{ color: '#333', fontSize: '10px', fontWeight: '700' }}>{formatDay(date)}</span>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '700' }}>{formatDay(date)}</span>
                                     <div style={{ 
                                         width: '32px', height: '32px', borderRadius: '50%', 
-                                        background: isToday ? ACCENT_COLOR : hasEaten ? 'rgba(99,102,241,0.1)' : '#111', 
-                                        border: isToday ? 'none' : hasEaten ? `1.5px solid ${ACCENT_COLOR}` : '0.5px solid #1e1e1e', 
+                                        background: isToday ? 'var(--accent)' : hasEaten ? 'rgba(var(--accent-rgb), 0.1)' : 'var(--bg-tertiary)', 
+                                        border: isToday ? 'none' : hasEaten ? `1.5px solid var(--accent)` : '0.5px solid var(--border-color)', 
                                         display: 'flex', alignItems: 'center', justifyContent: 'center' 
                                     }}>
-                                        {hasEaten ? <span style={{ color: isToday ? '#fff' : ACCENT_COLOR, fontSize: '14px', fontWeight: '900' }}>✓</span> : <span style={{ color: '#222', fontSize: '11px' }}>{new Date(date).getDate()}</span>}
+                                        {hasEaten ? <span style={{ color: isToday ? '#fff' : 'var(--accent)', fontSize: '14px', fontWeight: '900' }}>✓</span> : <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{new Date(date).getDate()}</span>}
                                     </div>
-                                    <span style={{ color: hasEaten ? ACCENT_COLOR : '#1e1e1e', fontSize: '9px', fontWeight: '800' }}>{hasEaten ? `${dayMeals.length}` : ''}</span>
+                                    <span style={{ color: hasEaten ? 'var(--accent)' : 'var(--text-muted)', fontSize: '9px', fontWeight: '800' }}>{hasEaten ? `${dayMeals.length}` : ''}</span>
                                 </div>
                             )
                         })}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '14px', borderTop: '0.5px solid var(--border-color)' }}>
                         <div>
-                            <p style={{ color: '#444', fontSize: '11px', marginBottom: '4px' }}>Jours consécutifs</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '4px' }}>Jours consécutifs</p>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontSize: '14px' }}>🔥</span>
-                                <span style={{ color: '#fff', fontSize: '22px', fontWeight: '700' }}>
+                                <span style={{ color: 'var(--text-primary)', fontSize: '22px', fontWeight: '700' }}>
                                     {(() => { let streak = 0; for (let i = last7.length - 1; i >= 0; i--) { if ((mealsByDay[last7[i]] || []).length > 0) streak++; else break }; return streak })()}
                                 </span>
                             </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                            <p style={{ color: '#444', fontSize: '11px', marginBottom: '4px' }}>Aujourd'hui</p>
-                            <p style={{ color: '#10b981', fontSize: '22px', fontWeight: '700' }}>{Math.round(todayCalories)} <span style={{ color: '#333', fontSize: '12px', fontWeight: '400' }}>kcal</span></p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '4px' }}>Aujourd'hui</p>
+                            <p style={{ color: 'var(--success)', fontSize: '22px', fontWeight: '700' }}>{Math.round(todayCalories)} <span style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '400' }}>kcal</span></p>
                         </div>
                     </div>
                 </div>
@@ -525,21 +524,21 @@ export default function RapportPage() {
                 {todayMeals.length > 0 && (
                     <div style={{ marginBottom: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                            <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Plats du jour</p>
-                            <span style={{ fontSize: '10px', color: '#6366f1', background: 'rgba(99,102,241,0.1)', padding: '2px 8px', borderRadius: '10px' }}>{todayMeals.length} scannés</span>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Plats du jour</p>
+                            <span style={{ fontSize: '10px', color: 'var(--accent)', background: 'rgba(var(--accent-rgb), 0.1)', padding: '2px 8px', borderRadius: '10px' }}>{todayMeals.length} scannés</span>
                         </div>
                         {todayMeals.map((meal, idx) => {
                             return (
-                                <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '24px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
-                                    <div style={{ width: '52px', height: '52px', borderRadius: '16px', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
+                                <div key={meal.id} onClick={() => setSelectedMeal(meal)} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '24px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ width: '52px', height: '52px', borderRadius: '16px', overflow: 'hidden', background: 'var(--bg-tertiary)', flexShrink: 0 }}>
                                         {meal.image_url ? <img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'}</div>}
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{meal.custom_name || 'Repas sans nom'}</p>
-                                        <p style={{ color: '#555', fontSize: '11px' }}>{formatTime(meal.logged_at)} · {Math.round(meal.portion_g)}g</p>
+                                        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{meal.custom_name || 'Repas sans nom'}</p>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{formatTime(meal.logged_at)} · {Math.round(meal.portion_g)}g</p>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <p style={{ color: ACCENT_COLOR, fontSize: '16px', fontWeight: '800' }}>{Math.round(meal.calories)}<span style={{ fontSize: '10px', color: '#333', marginLeft: '2px' }}>kcal</span></p>
+                                        <p style={{ color: 'var(--accent)', fontSize: '16px', fontWeight: '800' }}>{Math.round(meal.calories)}<span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '2px' }}>kcal</span></p>
                                     </div>
                                 </div>
                             )
@@ -551,19 +550,19 @@ export default function RapportPage() {
                 <div style={card}>
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #ec4899)' }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                        <p style={{ color: '#fff', fontSize: '15px', fontWeight: '600' }}>Poids</p>
-                        <button onClick={() => setShowWeightModal(true)} style={{ padding: '7px 16px', borderRadius: '20px', background: 'linear-gradient(135deg, #6366f1, #ec4899)', border: 'none', color: '#fff', fontWeight: '600', fontSize: '12px', cursor: 'pointer' }}>Consigner</button>
+                        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Poids</p>
+                        <button onClick={() => setShowWeightModal(true)} style={{ padding: '7px 16px', borderRadius: '20px', background: 'var(--accent)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>+ Ajouter</button>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-                        <div style={{ flex: 1, background: '#0a0a0a', borderRadius: '12px', padding: '14px', border: '0.5px solid rgba(99,102,241,0.2)' }}>
-                            <p style={{ color: '#444', fontSize: '10px', marginBottom: '4px' }}>Actuel</p>
-                            <p style={{ color: '#6366f1', fontSize: '24px', fontWeight: '700' }}>{currentWeight} <span style={{ color: '#333', fontSize: '12px' }}>kg</span></p>
+                        <div style={{ flex: 1, background: 'var(--bg-primary)', borderRadius: '12px', padding: '14px', border: '0.5px solid rgba(var(--accent-rgb), 0.2)' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '4px' }}>Actuel</p>
+                            <p style={{ color: 'var(--accent)', fontSize: '24px', fontWeight: '700' }}>{currentWeight} <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>kg</span></p>
                         </div>
-                        <div style={{ flex: 1, background: '#0a0a0a', borderRadius: '12px', padding: '14px' }}>
-                            <p style={{ color: '#444', fontSize: '10px', marginBottom: '2px' }}>Le plus lourd</p>
-                            <p style={{ color: '#f87171', fontSize: '15px', fontWeight: '600' }}>{weightMax} kg</p>
-                            <p style={{ color: '#444', fontSize: '10px', marginTop: '6px' }}>Le plus léger</p>
-                            <p style={{ color: '#10b981', fontSize: '15px', fontWeight: '600' }}>{weightMin} kg</p>
+                        <div style={{ flex: 1, background: 'var(--bg-primary)', borderRadius: '12px', padding: '14px', border: '0.5px solid var(--border-color)' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '2px' }}>Le plus lourd</p>
+                            <p style={{ color: 'var(--danger)', fontSize: '15px', fontWeight: '600' }}>{weightMax} kg</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '6px' }}>Le plus léger</p>
+                            <p style={{ color: 'var(--success)', fontSize: '15px', fontWeight: '600' }}>{weightMin} kg</p>
                         </div>
                     </div>
                     {/* Objectif de poids */}
@@ -576,42 +575,42 @@ export default function RapportPage() {
                         const pct = totalToLose > 0 ? Math.min(100, Math.round((progressMade / totalToLose) * 100)) : 0
                         const remaining = Math.round(Math.abs(current - target) * 10) / 10
                         const isDone = (profile.goal === 'perdre' && current <= target) || (profile.goal === 'prendre' && current >= target)
-                        const barColor = isDone ? '#10b981' : pct >= 50 ? '#6366f1' : '#f59e0b'
+                        const barColor = isDone ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : 'var(--warning)'
                         return (
-                            <div style={{ marginBottom: '16px', background: '#0d0d0d', borderRadius: '16px', padding: '16px', border: `0.5px solid ${barColor}25` }}>
+                            <div style={{ marginBottom: '16px', background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '16px', border: `0.5px solid ${barColor}25` }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                                     <div>
-                                        <p style={{ color: '#777', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Progression vers l'objectif</p>
-                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '600', marginTop: '2px' }}>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Progression vers l'objectif</p>
+                                        <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '600', marginTop: '2px' }}>
                                             {isDone ? '🎉 Objectif atteint !' : profile.goal === 'perdre' ? `Encore ${remaining} kg à perdre` : `Encore ${remaining} kg à prendre`}
                                         </p>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <p style={{ color: barColor, fontSize: '24px', fontWeight: '900', letterSpacing: '-1px' }}>{pct}<span style={{ fontSize: '12px' }}>%</span></p>
-                                        <p style={{ color: '#444', fontSize: '10px' }}>{target} kg visé</p>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '10px' }}>{target} kg visé</p>
                                     </div>
                                 </div>
                                 {/* Barre de progression */}
-                                <div style={{ height: '6px', background: '#1e1e1e', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div style={{ height: '6px', background: 'var(--bg-primary)', borderRadius: '4px', overflow: 'hidden' }}>
                                     <div style={{
                                         height: '100%',
                                         width: `${pct}%`,
-                                        background: isDone ? '#10b981' : `linear-gradient(90deg, #f59e0b, ${barColor})`,
+                                        background: isDone ? 'var(--success)' : `linear-gradient(90deg, var(--warning), ${barColor})`,
                                         borderRadius: '4px',
                                         transition: 'width 0.8s ease'
                                     }} />
                                 </div>
                                 {/* Jalons */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-                                    <p style={{ color: '#333', fontSize: '9px' }}>{initialWeight} kg</p>
-                                    <p style={{ color: '#333', fontSize: '9px' }}>Départ → Cible : {target} kg</p>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '9px' }}>{initialWeight} kg</p>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '9px' }}>Départ → Cible : {target} kg</p>
                                 </div>
                             </div>
                         )
                     })()}
 
                     {weightEntries.length > 0 ? (
-                        <div style={{ background: '#0a0a0a', borderRadius: '24px', padding: '16px', border: '0.5px solid rgba(99,102,241,0.1)' }}>
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '24px', padding: '16px', border: '0.5px solid var(--border-color)' }}>
                             {/* GRAPHIQUE OU PAYWALL */}
             {checkPermission(profile, 'hasGraph') ? (
                 <WeightChart 
@@ -626,9 +625,9 @@ export default function RapportPage() {
                     style={{
                         margin: '0 20px 20px',
                         height: '140px',
-                        background: '#141414',
+                        background: 'var(--bg-secondary)',
                         borderRadius: '24px',
-                        border: '1px dashed #333',
+                        border: '1px dashed var(--border-color)',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
@@ -637,26 +636,26 @@ export default function RapportPage() {
                         cursor: 'pointer'
                     }}>
                     <span style={{ fontSize: '24px' }}>📈</span>
-                    <p style={{ color: '#666', fontSize: '13px', fontWeight: '500' }}>Activez le graphique avec le plan Pro</p>
-                    <span style={{ color: '#6366f1', fontSize: '11px', fontWeight: 'bold' }}>DÉCOUVRIR →</span>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>Activez le graphique avec le plan Pro</p>
+                    <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 'bold' }}>DÉCOUVRIR →</span>
                 </div>
             )}
                         </div>
                     ) : (
-                        <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
-                            <p style={{ color: '#222', fontSize: '13px' }}>Aucune donnée de poids</p>
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Aucune donnée de poids</p>
                         </div>
                     )}
                     {profile && (
-                        <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '0.5px solid #1a1a1a', display: 'flex', justifyContent: 'space-around' }}>
+                        <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '0.5px solid var(--border-color)', display: 'flex', justifyContent: 'space-around' }}>
                             {[
                                 { label: 'Taille', value: profile.height_cm ? `${profile.height_cm} cm` : '—' },
                                 { label: 'Objectif kcal', value: profile.calorie_target ? `${profile.calorie_target}` : '—' },
                                 { label: 'But', value: profile.goal || '—' },
                             ].map((item, i) => (
                                 <div key={i} style={{ textAlign: 'center' }}>
-                                    <p style={{ color: '#333', fontSize: '10px', marginBottom: '2px' }}>{item.label}</p>
-                                    <p style={{ color: '#666', fontSize: '12px', fontWeight: '500' }}>{item.value}</p>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '2px' }}>{item.label}</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>{item.value}</p>
                                 </div>
                             ))}
                         </div>
@@ -674,7 +673,7 @@ export default function RapportPage() {
                     top: '20px',
                     left: '20px',
                     right: '20px',
-                    background: 'rgba(16,185,129,0.95)',
+                    background: 'rgba(var(--success-rgb), 0.95)',
                     color: '#fff',
                     padding: '16px',
                     borderRadius: '16px',
@@ -710,7 +709,7 @@ export default function RapportPage() {
                                     marginTop: '8px',
                                     padding: '6px 12px',
                                     background: '#fff',
-                                    color: '#10b981',
+                                    color: 'var(--success)',
                                     border: 'none',
                                     borderRadius: '8px',
                                     fontSize: '11px',

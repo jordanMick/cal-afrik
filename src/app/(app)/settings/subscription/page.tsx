@@ -10,27 +10,30 @@ import { useState } from 'react'
 const TIER_CONFIG = {
     free: {
         label: 'FREE',
-        icon: <Star size={22} color="#888" />,
-        color: '#888',
-        bg: 'rgba(136,136,136,0.1)',
-        border: 'rgba(136,136,136,0.2)',
-        gradient: 'linear-gradient(135deg, #333, #1a1a1a)',
+        icon: <Star size={22} color="var(--text-muted)" />,
+        color: 'var(--text-muted)',
+        bg: 'rgba(var(--text-muted-rgb), 0.1)',
+        border: 'rgba(var(--text-muted-rgb), 0.2)',
+        gradient: 'linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary))',
+        textColor: 'var(--text-primary)',
     },
     pro: {
         label: 'PRO',
-        icon: <Zap size={22} color="#6366f1" />,
-        color: '#6366f1',
-        bg: 'rgba(99,102,241,0.1)',
-        border: 'rgba(99,102,241,0.25)',
-        gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+        icon: <Zap size={22} color="var(--accent)" />,
+        color: 'var(--accent)',
+        bg: 'rgba(var(--accent-rgb), 0.1)',
+        border: 'rgba(var(--accent-rgb), 0.25)',
+        gradient: 'linear-gradient(135deg, var(--accent), #4f46e5)',
+        textColor: '#fff',
     },
     premium: {
         label: 'PREMIUM',
-        icon: <Crown size={22} color="#f59e0b" />,
-        color: '#f59e0b',
-        bg: 'rgba(245,158,11,0.1)',
-        border: 'rgba(245,158,11,0.25)',
-        gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+        icon: <Crown size={22} color="var(--warning)" />,
+        color: 'var(--warning)',
+        bg: 'rgba(var(--warning-rgb), 0.1)',
+        border: 'rgba(var(--warning-rgb), 0.25)',
+        gradient: 'linear-gradient(135deg, var(--warning), #d97706)',
+        textColor: '#fff',
     },
 }
 
@@ -73,18 +76,18 @@ export default function SubscriptionPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
             {/* Halo */}
-            <div style={{ position: 'fixed', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: `radial-gradient(circle, ${config.color}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: `radial-gradient(circle, ${config.color}15 0%, transparent 70%)`, pointerEvents: 'none' }} />
 
             {/* Header */}
             <div style={{ padding: '52px 20px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    <ChevronLeft color="#fff" size={24} />
+                <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <ChevronLeft color="var(--text-primary)" size={24} />
                 </button>
                 <div>
-                    <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>Mon abonnement</h1>
-                    <p style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>Gérer votre plan Cal-Afrik</p>
+                    <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>Mon abonnement</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>Gérer votre plan Cal-Afrik</p>
                 </div>
             </div>
 
@@ -105,8 +108,8 @@ export default function SubscriptionPage() {
                     <div style={{ position: 'relative', zIndex: 1 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                             <div>
-                                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Plan actuel</p>
-                                <p style={{ color: '#fff', fontSize: '32px', fontWeight: '900', letterSpacing: '-1px', marginTop: '4px' }}>{config.label}</p>
+                                <p style={{ color: effectiveTier === 'free' ? 'var(--text-muted)' : 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Plan actuel</p>
+                                <p style={{ color: config.textColor || '#fff', fontSize: '32px', fontWeight: '900', letterSpacing: '-1px', marginTop: '4px' }}>{config.label}</p>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '14px', padding: '10px' }}>
                                 {config.icon}
@@ -123,29 +126,29 @@ export default function SubscriptionPage() {
                                     </p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ color: isExpiringSoon ? '#fbbf24' : 'rgba(255,255,255,0.5)', fontSize: '22px', fontWeight: '900' }}>{daysLeft}</p>
+                                    <p style={{ color: isExpiringSoon ? 'var(--warning)' : 'rgba(255,255,255,0.5)', fontSize: '22px', fontWeight: '900' }}>{daysLeft}</p>
                                     <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px' }}>jours restants</p>
                                 </div>
                             </div>
                         ) : effectiveTier === 'free' ? (
-                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Accès gratuit — limité</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Accès gratuit — limité</p>
                         ) : null}
                     </div>
                 </div>
 
                 {/* Usage du jour */}
-                <p style={{ color: '#555', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Utilisation aujourd'hui</p>
-                <div style={{ background: '#121212', borderRadius: '16px', border: '0.5px solid #1e1e1e', padding: '16px 20px', marginBottom: '24px' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Utilisation aujourd'hui</p>
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '0.5px solid var(--border-color)', padding: '16px 20px', marginBottom: '24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ background: 'rgba(99,102,241,0.1)', borderRadius: '10px', padding: '8px' }}>
-                                <ScanLine size={18} color="#6366f1" />
+                        <div style={{ background: 'rgba(var(--accent-rgb), 0.1)', borderRadius: '10px', padding: '8px' }}>
+                                <ScanLine size={18} color="var(--accent)" />
                             </div>
                             <div>
-                                <p style={{ color: '#555', fontSize: '11px', fontWeight: '600' }}>Scans aujourd'hui</p>
-                                <p style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginTop: '2px' }}>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '600' }}>Scans aujourd'hui</p>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', marginTop: '2px' }}>
                                     {usedScans}
-                                    <span style={{ color: '#333', fontSize: '13px', fontWeight: '400' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '400' }}>
                                         {Number(rules.maxScansPerDay) >= 1000 ? ' / ∞' : ` / ${rules.maxScansPerDay}`}
                                     </span>
                                 </p>
@@ -153,35 +156,35 @@ export default function SubscriptionPage() {
                         </div>
                         {Number(rules.maxScansPerDay) < 1000 && (
                             <div style={{ textAlign: 'right' }}>
-                                <p style={{ color: usedScans >= Number(rules.maxScansPerDay) ? '#ef4444' : '#6366f1', fontSize: '22px', fontWeight: '900' }}>
+                                <p style={{ color: usedScans >= Number(rules.maxScansPerDay) ? 'var(--danger)' : 'var(--accent)', fontSize: '22px', fontWeight: '900' }}>
                                     {Math.max(0, Number(rules.maxScansPerDay) - usedScans)}
                                 </p>
-                                <p style={{ color: '#444', fontSize: '10px' }}>restants</p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '10px' }}>restants</p>
                             </div>
                         )}
                     </div>
                     {Number(rules.maxScansPerDay) < 1000 && (
-                        <div style={{ height: '3px', background: '#1e1e1e', borderRadius: '2px', marginTop: '14px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${Math.min(100, (usedScans / Number(rules.maxScansPerDay)) * 100)}%`, background: usedScans >= Number(rules.maxScansPerDay) ? '#ef4444' : '#6366f1', borderRadius: '2px' }} />
+                        <div style={{ height: '3px', background: 'var(--bg-tertiary)', borderRadius: '2px', marginTop: '14px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${Math.min(100, (usedScans / Number(rules.maxScansPerDay)) * 100)}%`, background: usedScans >= Number(rules.maxScansPerDay) ? 'var(--danger)' : 'var(--accent)', borderRadius: '2px' }} />
                         </div>
                     )}
                 </div>
 
                 {/* Tableau comparatif */}
-                <p style={{ color: '#555', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Ce que vous avez</p>
-                <div style={{ background: '#121212', borderRadius: '16px', border: '0.5px solid #1e1e1e', overflow: 'hidden', marginBottom: '24px' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Ce que vous avez</p>
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '0.5px solid var(--border-color)', overflow: 'hidden', marginBottom: '24px' }}>
                     {/* Header colonnes */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', padding: '10px 16px', borderBottom: '0.5px solid #1e1e1e', background: '#0d0d0d' }}>
-                        <p style={{ color: '#444', fontSize: '10px', fontWeight: '700' }}>Fonctionnalité</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', padding: '10px 16px', borderBottom: '0.5px solid var(--border-color)', background: 'var(--bg-tertiary)' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '700' }}>Fonctionnalité</p>
                         {(['free', 'pro', 'premium'] as const).map(t => (
-                            <p key={t} style={{ color: t === effectiveTier ? config.color : '#333', fontSize: '10px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase' }}>{t}</p>
+                            <p key={t} style={{ color: t === effectiveTier ? config.color : 'var(--text-muted)', fontSize: '10px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase' }}>{t}</p>
                         ))}
                     </div>
                     {PLAN_FEATURES.features.map((f, i) => (
-                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', padding: '12px 16px', borderBottom: i < PLAN_FEATURES.features.length - 1 ? '0.5px solid #161616' : 'none', alignItems: 'center' }}>
-                            <p style={{ color: '#666', fontSize: '11px' }}>{f.label}</p>
+                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', padding: '12px 16px', borderBottom: i < PLAN_FEATURES.features.length - 1 ? '0.5px solid var(--border-color)' : 'none', alignItems: 'center', opacity: 1 }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>{f.label}</p>
                             {(['free', 'pro', 'premium'] as const).map(t => (
-                                <p key={t} style={{ color: t === effectiveTier ? '#fff' : '#2a2a2a', fontSize: '11px', fontWeight: t === effectiveTier ? '700' : '400', textAlign: 'center' }}>
+                                <p key={t} style={{ color: t === effectiveTier ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '11px', fontWeight: t === effectiveTier ? '700' : '400', textAlign: 'center', opacity: t === effectiveTier ? 1 : 0.5 }}>
                                     {f[t]}
                                 </p>
                             ))}
@@ -193,7 +196,7 @@ export default function SubscriptionPage() {
                 {effectiveTier === 'free' ? (
                     <button
                         onClick={() => router.push('/upgrade')}
-                        style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #6366f1, #10b981)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 24px rgba(99,102,241,0.3)', marginBottom: '12px' }}
+                        style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, var(--accent), var(--success))', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 24px rgba(var(--accent-rgb), 0.3)', marginBottom: '12px' }}
                     >
                         <ArrowUpCircle size={20} />
                         Passer au plan Pro
@@ -202,7 +205,14 @@ export default function SubscriptionPage() {
                     <button
                         onClick={handleRenew}
                         disabled={renewing}
-                        style={{ width: '100%', padding: '18px', background: renewing ? '#1a1a1a' : config.gradient, border: 'none', borderRadius: '20px', color: renewing ? '#555' : '#fff', fontSize: '16px', fontWeight: '800', cursor: renewing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: `0 8px 24px ${config.color}25`, marginBottom: '12px' }}
+                        style={{ 
+                            width: '100%', padding: '18px', 
+                            background: renewing ? 'var(--bg-tertiary)' : config.gradient, 
+                            color: renewing ? 'var(--text-muted)' : (config.textColor || '#fff'), 
+                            border: 'none', borderRadius: '20px', fontSize: '16px', fontWeight: '800', 
+                            cursor: renewing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', 
+                            justifyContent: 'center', gap: '10px', boxShadow: `0 8px 24px ${config.color}25`, marginBottom: '12px' 
+                        }}
                     >
                         <RefreshCw size={20} />
                         {renewing ? 'Redirection...' : 'Renouveler mon abonnement'}
@@ -212,7 +222,7 @@ export default function SubscriptionPage() {
                 {effectiveTier === 'pro' && (
                     <button
                         onClick={() => router.push('/upgrade?plan=premium')}
-                        style={{ width: '100%', padding: '14px', background: 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', borderRadius: '16px', color: '#f59e0b', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        style={{ width: '100%', padding: '14px', background: 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', borderRadius: '16px', color: 'var(--warning)', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
                         <Crown size={16} />
                         Passer au Premium →

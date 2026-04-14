@@ -171,43 +171,52 @@ export const useAppStore = create<AppState>()(
                 const { todayMeals, profile } = get()
                 if (!profile) return
 
-                // 1. Initialiser avec les cibles de base et consos à 0
-                let newSlots = buildInitialSlots(profile.calorie_target)
+                const calorieTarget = profile.calorie_target
+                let newSlots = buildInitialSlots(calorieTarget)
                 
-                // 2. Remplir les consommations réelles à partir des repas du jour
+                // 1. Calculer les consommations par créneau en fonction de l'heure
+                newSlots.petit_dejeuner.consumed = 0
+                newSlots.dejeuner.consumed = 0
+                newSlots.collation.consumed = 0
+                newSlots.diner.consumed = 0
+
                 for (const meal of todayMeals) {
                     const hour = new Date(meal.logged_at).getHours()
                     const slot = getMealSlot(hour)
                     newSlots[slot].consumed += meal.calories
                 }
 
-                // 3. redistribution séquentielle
+                // 2. Redistribution adaptative
+                // On recalcule les cibles de chaque créneau basé sur le budget restant du jour
+                // au moment où ce créneau a commencé (ou commence).
+                let accumulatedConsumed = 0
+                let currentAccumulatedPct = 0
+                
+                for (const slotKey of SLOT_ORDER) {
+                    // Part du budget journalier alloué aux créneaux restants (celui-ci inclus)
+                    const remainingPctTotal = Math.max(0.01, 1 - currentAccumulatedPct)
+                    const budgetLeft = Math.max(0, calorieTarget - accumulatedConsumed)
+                    
+                    // La cible pour CE créneau est sa proportion relative dans le reste de la journée
+                    const relativeShare = SLOT_PCT[slotKey] / remainingPctTotal
+                    newSlots[slotKey].target = Math.round(budgetLeft * relativeShare)
+                    
+                    // Le restant à consommer pour ce créneau spécifique
+                    newSlots[slotKey].remaining = Math.max(0, newSlots[slotKey].target - newSlots[slotKey].consumed)
+                    
+                    // On cumule ce qui a été RÉELLEMENT consommé pour impacter les cibles des créneaux SUIVANTS
+                    accumulatedConsumed += newSlots[slotKey].consumed
+                    currentAccumulatedPct += SLOT_PCT[slotKey]
+                }
+
+                // 3. Verrouiller les créneaux passés par rapport à l'heure actuelle
                 const currentHour = new Date().getHours()
                 const currentSlot = getMealSlot(currentHour)
                 const currentIdx = SLOT_ORDER.indexOf(currentSlot)
 
-                let accumulatedConsumed = 0
                 for (let i = 0; i < SLOT_ORDER.length; i++) {
-                    const slotKey = SLOT_ORDER[i]
-                    
                     if (i < currentIdx) {
-                        // Verrouiller les créneaux passés et cumuler
-                        newSlots[slotKey].locked = true
-                        accumulatedConsumed += newSlots[slotKey].consumed
-                        
-                        // Redistribuer le reste sur les créneaux restants
-                        const remainingToDistribute = Math.max(0, profile.calorie_target - accumulatedConsumed)
-                        const nextSlots = SLOT_ORDER.slice(i + 1)
-                        if (nextSlots.length > 0) {
-                            const totalRemainingPct = nextSlots.reduce((sum, s) => sum + SLOT_PCT[s], 0)
-                            for (const nextSlotKey of nextSlots) {
-                                const share = SLOT_PCT[nextSlotKey] / totalRemainingPct
-                                newSlots[nextSlotKey].target = Math.round(remainingToDistribute * share)
-                            }
-                        }
-                    } else {
-                        // Pour le créneau actuel et futur, target est déjà calculé par les itérations précédentes
-                        newSlots[slotKey].remaining = Math.max(0, newSlots[slotKey].target - newSlots[slotKey].consumed)
+                        newSlots[SLOT_ORDER[i]].locked = true
                     }
                 }
 

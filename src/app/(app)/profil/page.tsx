@@ -41,7 +41,7 @@ function getNextSlotInfo(hour: number): { label: string; time: string } {
 }
 
 
-const STAT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
+const STAT_COLORS = ['var(--accent)', 'var(--success)', 'var(--warning)', '#ec4899']
 
 export default function ProfilPage() {
     const router = useRouter()
@@ -150,7 +150,7 @@ export default function ProfilPage() {
     const bilanMessage = currentBilan?.message ?? ''
     const bilanEmoji = goalReached ? '🎉' : exceeded ? '⚠️' : '📊'
     const bilanTitle = activeSlot === 'diner' ? (goalReached ? 'Objectif atteint !' : exceeded ? 'Objectif dépassé' : 'Journée incomplète') : `Bilan ${activeSlot ? SLOT_LABELS[activeSlot] : ''}`
-    const bilanColor = goalReached ? '#10b981' : exceeded ? '#ef4444' : '#f59e0b'
+    const bilanColor = goalReached ? 'var(--success)' : exceeded ? 'var(--danger)' : 'var(--warning)'
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const [showSupportModal, setShowSupportModal] = useState(false)
@@ -216,55 +216,55 @@ export default function ProfilPage() {
     const { message: autoMessage, yaoNudge } = getAutomatedBilan()
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative', overflow: 'hidden', color: 'var(--text-primary)' }}>
 
             {/* Halos d'ambiance */}
-            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div style={{ padding: `52px 20px ${isExpiringSoon ? '8px' : '6px'}` }}>
-                <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', marginBottom: '24px', letterSpacing: '-0.5px' }}>Mon Profil</h1>
+                <h1 style={{ color: 'var(--text-primary)', fontSize: '24px', fontWeight: '800', marginBottom: '24px', letterSpacing: '-0.5px' }}>Mon Profil</h1>
 
                 {/* BLOC PROFIL CONSOLIDÉ */}
                 <div style={{
-                    background: '#141414',
+                    background: 'var(--bg-secondary)',
                     borderRadius: '24px',
                     padding: '20px',
                     marginBottom: isExpiringSoon ? '8px' : '6px',
-                    border: '0.5px solid #222',
+                    border: '0.5px solid var(--border-color)',
                     position: 'relative',
                     overflow: 'hidden',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
                 }}>
                     {/* Décoration en arrière-plan */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success))' }} />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                         <div style={{
                             width: '68px', height: '68px', borderRadius: '22px',
-                            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+                            background: 'linear-gradient(135deg, var(--accent), #ec4899)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '30px', fontWeight: 'bold', color: '#fff',
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                            boxShadow: '0 8px 16px rgba(var(--bg-primary-rgb),0.4)',
                             flexShrink: 0
                         }}>
                             {profile?.name?.charAt(0).toUpperCase() || 'U'}
                         </div>
                         <div style={{ flex: 1 }}>
-                            <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
+                            <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                                <p style={{ color: '#666', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ opacity: 0.7 }}>🌍</span> {profile?.country || 'Afrique de l\'Ouest'}
                                 </p>
-                                <p style={{ color: '#666', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ opacity: 0.7 }}>🎯</span> {GOAL_LABELS[profile?.goal || ''] || 'Définir un objectif'}
                                 </p>
                             </div>
-                            <div style={{
+                             <div style={{
                                 display: 'inline-flex', padding: '4px 10px', borderRadius: '10px',
-                                background: effectiveTier === 'pro' ? 'rgba(99,102,241,0.15)' : effectiveTier === 'premium' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                                color: effectiveTier === 'pro' ? '#818cf8' : effectiveTier === 'premium' ? '#34d399' : '#888',
-                                fontSize: '10px', fontWeight: '900', letterSpacing: '0.8px', border: '0.5px solid rgba(255,255,255,0.08)',
+                                background: effectiveTier === 'pro' ? 'rgba(var(--accent-rgb), 0.15)' : effectiveTier === 'premium' ? 'rgba(var(--success-rgb), 0.15)' : 'rgba(var(--text-primary-rgb), 0.05)',
+                                color: effectiveTier === 'pro' ? 'var(--accent)' : effectiveTier === 'premium' ? 'var(--success)' : 'var(--text-muted)',
+                                fontSize: '10px', fontWeight: '900', letterSpacing: '0.8px', border: '0.5px solid rgba(var(--text-primary-rgb),0.08)',
                                 textTransform: 'uppercase'
                             }}>
                                 PLAN {effectiveTier.toUpperCase()}
@@ -272,7 +272,7 @@ export default function ProfilPage() {
                             {profile?.subscription_expires_at && effectiveTier !== 'free' && (
                                 <div style={{ marginTop: '10px' }}>
                                     <p style={{
-                                        color: isExpiringSoon ? '#ef4444' : '#444',
+                                        color: isExpiringSoon ? 'var(--danger)' : 'var(--text-muted)',
                                         fontSize: '11px',
                                         fontWeight: isExpiringSoon ? '700' : '400',
                                         display: 'flex',
@@ -281,7 +281,7 @@ export default function ProfilPage() {
                                     }}>
                                         {isExpiringSoon ? '⚠️ Expiration imminente' : 'Abonnement valide'}
                                     </p>
-                                    <p style={{ color: '#666', fontSize: '13px', marginTop: '2px' }}>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '2px' }}>
                                         Fin le {new Date(profile.subscription_expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                                     </p>
 
@@ -304,7 +304,7 @@ export default function ProfilPage() {
                     justifyContent: 'space-between',
                     gap: '10px',
                 }}>
-                    <p style={{ color: '#fca5a5', fontSize: '11px', fontWeight: '600' }}>
+                    <p style={{ color: 'var(--danger)', fontSize: '11px', fontWeight: '600' }}>
                         {daysLeft === 0 ? "Expire aujourd'hui." : `Expiration imminente: ${daysLeft} jour${(daysLeft || 0) > 1 ? 's' : ''} restants.`}
                     </p>
                     <button
@@ -312,10 +312,10 @@ export default function ProfilPage() {
                         disabled={isRenewing}
                         style={{
                             padding: '7px 10px',
-                            background: isRenewing ? 'rgba(255,255,255,0.05)' : 'rgba(239,68,68,0.2)',
-                            border: '1px solid rgba(239,68,68,0.5)',
+                            background: isRenewing ? 'rgba(var(--text-primary-rgb), 0.05)' : 'rgba(var(--danger-rgb), 0.2)',
+                            border: '1px solid rgba(var(--danger-rgb), 0.5)',
                             borderRadius: '8px',
-                            color: '#ef4444',
+                            color: 'var(--danger)',
                             fontSize: '11px',
                             fontWeight: '700',
                             cursor: isRenewing ? 'default' : 'pointer',
@@ -331,32 +331,32 @@ export default function ProfilPage() {
             <div style={{
                 margin: '0 20px 10px',
                 padding: '10px 16px',
-                background: 'rgba(255,255,255,0.03)',
+                background: 'var(--bg-secondary)',
                 borderRadius: '12px',
-                border: '0.5px solid #1a1a1a',
+                border: '0.5px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px'
             }}>
                 <span style={{ fontSize: '14px' }}>📊</span>
-                <p style={{ color: '#666', fontSize: '11px', fontWeight: '500' }}>
-                    Ton bilan mensuel détaillé arrive dans <span style={{ color: '#fff', fontWeight: '700' }}>{daysUntilMonthlyBilan} jours</span>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '500' }}>
+                    Ton bilan mensuel détaillé arrive dans <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{daysUntilMonthlyBilan} jours</span>
                 </p>
             </div>
 
             {/* MESSAGE PRO (creneaux) : pas de génération ni affichage bilan */}
             {effectiveTier === 'pro' && activeSlot && activeSlot !== 'diner' && (
-                <div style={{ background: '#141414', border: '0.5px solid #222', borderRadius: '16px', padding: '16px', margin: '0 20px 20px' }}>
-                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
+                <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '16px', padding: '16px', margin: '0 20px 20px' }}>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
                         📌 Bilan de journée disponible à 23h00 dans cette section Profil.
                     </p>
-                    <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.6', marginBottom: '12px' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6', marginBottom: '12px' }}>
                         En plan Pro, tu reçois un bilan Coach Yao de fin de journée. Pour un bilan à chaque créneau, passe au Premium.
                     </p>
                     <div
                         onClick={() => router.push('/upgrade')}
-                        style={{ display: 'inline-block', padding: '8px 12px', background: 'rgba(99,102,241,0.15)', border: '0.5px solid rgba(99,102,241,0.35)', borderRadius: '10px', color: '#818cf8', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                        style={{ display: 'inline-block', padding: '8px 12px', background: 'rgba(var(--accent-rgb), 0.15)', border: '0.5px solid rgba(var(--accent-rgb), 0.35)', borderRadius: '10px', color: 'var(--accent)', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
                     >
                         Passer au Premium →
                     </div>
@@ -365,13 +365,13 @@ export default function ProfilPage() {
 
             {/* SECTION BILAN COACH YAO (uniquement quand le plan y a droit) */}
             {canUseAIBilanForActiveSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') && (
-                <div style={{ background: '#141414', border: `0.5px solid ${bilanStatus === 'loading' ? '#222' : (bilanColor + '40')}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ background: 'var(--bg-secondary)', border: `0.5px solid ${bilanStatus === 'loading' ? 'var(--border-color)' : (bilanColor + '40')}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
                     {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
 
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>⏳</div>
-                            <p style={{ color: '#555', fontSize: '13px', fontStyle: 'italic' }}>Génération du bilan...</p>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(var(--accent-rgb), 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>⏳</div>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>Génération du bilan...</p>
                         </div>
                     )}
 
@@ -381,7 +381,7 @@ export default function ProfilPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${bilanColor}15`, border: `0.5px solid ${bilanColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{bilanEmoji}</div>
                                 <div>
-                                    <p style={{ color: '#fff', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
+                                    <p style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '15px' }}>{bilanTitle}</p>
                                     <p style={{ color: bilanColor, fontSize: '11px', marginTop: '1px' }}>{activeSlot === 'diner' ? 'Résumé de la journée' : `Créneau ${SLOT_LABELS[activeSlot]}`}</p>
                                 </div>
                             </div>
@@ -390,17 +390,17 @@ export default function ProfilPage() {
                             {bilanStatus === 'done' && (
                                 <>
                                     {checkPermission(profile, 'hasCoachYao') ? (
-                                        bilanMessage && <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px', borderLeft: `2px solid ${bilanColor}40`, paddingLeft: '12px' }}>{bilanMessage}</p>
+                                        bilanMessage && <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px', borderLeft: `2px solid ${bilanColor}40`, paddingLeft: '12px' }}>{bilanMessage}</p>
                                     ) : (
                                         <div style={{ marginBottom: '20px' }}>
-                                            <p style={{ color: '#aaa', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>{autoMessage}</p>
+                                            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>{autoMessage}</p>
                                             <div
                                                 onClick={() => router.push('/upgrade')}
-                                                style={{ background: 'rgba(245,158,11,0.05)', borderRadius: '12px', padding: '12px', border: '0.5px dashed rgba(245,158,11,0.3)', cursor: 'pointer' }}>
-                                                <p style={{ color: '#f59e0b', fontSize: '11px', lineHeight: '1.5', fontWeight: '500', marginBottom: '8px' }}>
+                                                style={{ background: 'rgba(var(--warning-rgb), 0.05)', borderRadius: '12px', padding: '12px', border: '0.5px dashed rgba(var(--warning-rgb), 0.3)', cursor: 'pointer' }}>
+                                                <p style={{ color: 'var(--warning)', fontSize: '11px', lineHeight: '1.5', fontWeight: '500', marginBottom: '8px' }}>
                                                     {yaoNudge}
                                                 </p>
-                                                <p style={{ color: '#6366f1', fontSize: '10px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                                <p style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: '900', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                                                     PASSEZ À PREMIUM POUR DÉCOUVRIR COACH YAO →
                                                 </p>
                                             </div>
@@ -410,23 +410,23 @@ export default function ProfilPage() {
                                     {activeSlot === 'diner' ? (
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                             {stats.map(stat => (
-                                                <div key={stat.label} style={{ background: '#0a0a0a', borderRadius: '10px', padding: '10px', border: `0.5px solid ${stat.color}15` }}>
-                                                    <p style={{ color: stat.color, fontSize: '16px', fontWeight: '600' }}>{Math.round(stat.current)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {stat.target}{stat.unit}</span></p>
-                                                    <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '6px 0 4px' }}>
+                                                <div key={stat.label} style={{ background: 'var(--bg-primary)', borderRadius: '10px', padding: '10px', border: `0.5px solid ${stat.color}15` }}>
+                                                    <p style={{ color: stat.color, fontSize: '16px', fontWeight: '600' }}>{Math.round(stat.current)}<span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '400' }}> / {stat.target}{stat.unit}</span></p>
+                                                    <div style={{ width: '100%', height: '3px', background: 'var(--bg-tertiary)', borderRadius: '2px', margin: '6px 0 4px' }}>
                                                         <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((stat.current / stat.target) * 100))}%`, background: stat.color }} />
                                                     </div>
-                                                    <p style={{ color: '#444', fontSize: '11px' }}>{stat.label}</p>
+                                                    <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{stat.label}</p>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
                                         slots[activeSlot] && (
-                                            <div style={{ background: '#0a0a0a', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `0.5px solid ${bilanColor}15` }}>
+                                            <div style={{ background: 'var(--bg-primary)', borderRadius: '10px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `0.5px solid ${bilanColor}15` }}>
                                                 <div>
-                                                    <p style={{ color: bilanColor, fontSize: '17px', fontWeight: '700' }}>{Math.round(slots[activeSlot].consumed)}<span style={{ color: '#333', fontSize: '11px', fontWeight: '400' }}> / {slots[activeSlot].target} kcal</span></p>
-                                                    <p style={{ color: '#444', fontSize: '11px', marginTop: '4px' }}>Calories {SLOT_LABELS[activeSlot]}</p>
+                                                    <p style={{ color: bilanColor, fontSize: '17px', fontWeight: '700' }}>{Math.round(slots[activeSlot].consumed)}<span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '400' }}> / {slots[activeSlot].target} kcal</span></p>
+                                                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' }}>Calories {SLOT_LABELS[activeSlot]}</p>
                                                 </div>
-                                                <div style={{ width: '70px', height: '3px', background: '#1e1e1e', borderRadius: '2px' }}>
+                                                <div style={{ width: '70px', height: '3px', background: 'var(--bg-tertiary)', borderRadius: '2px' }}>
                                                     <div style={{ height: '100%', borderRadius: '2px', width: `${Math.min(100, Math.round((slots[activeSlot].consumed / slots[activeSlot].target) * 100))}%`, background: bilanColor }} />
                                                 </div>
                                             </div>
@@ -438,10 +438,10 @@ export default function ProfilPage() {
                             {/* SI VIDE */}
                             {bilanStatus === 'empty' && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🍽️</div>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(var(--text-primary-rgb), 0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🍽️</div>
                                     <div>
-                                        <p style={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}>Aucun repas détecté</p>
-                                        <p style={{ color: '#444', fontSize: '11px' }}>Scannez vos plats pour voir le bilan {SLOT_LABELS[activeSlot]}</p>
+                                        <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '500' }}>Aucun repas détecté</p>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Scannez vos plats pour voir le bilan {SLOT_LABELS[activeSlot]}</p>
                                     </div>
                                 </div>
                             )}
@@ -455,22 +455,22 @@ export default function ProfilPage() {
                 <div
                     onClick={() => router.push('/upgrade')}
                     style={{
-                        margin: '0 20px 20px', background: '#141414', border: '1px solid #222',
+                        margin: '0 20px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
                         borderRadius: '24px', padding: '24px', overflow: 'hidden', cursor: 'pointer',
                         position: 'relative'
                     }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #6366f1, #10b981)' }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, var(--accent), var(--success))' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🔒</div>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🔒</div>
                         <div>
-                            <p style={{ color: '#fff', fontWeight: '700', fontSize: '16px' }}>Bilan de ta journée</p>
-                            <p style={{ color: '#555', fontSize: '12px' }}>Par Coach Yao</p>
+                            <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '16px' }}>Bilan de ta journée</p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Par Coach Yao</p>
                         </div>
                     </div>
-                    <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
                         Coach Yao analyse tes repas et tes macros pour te donner un bilan précis de ta journée. Débloque le plan Pro pour y accéder !
                     </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6366f1', fontWeight: '800', fontSize: '12px', letterSpacing: '0.5px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent)', fontWeight: '800', fontSize: '12px', letterSpacing: '0.5px' }}>
                         DÉCOUVRIR LE PLAN PRO <span style={{ fontSize: '16px' }}>→</span>
                     </div>
                 </div>
@@ -480,19 +480,19 @@ export default function ProfilPage() {
 
             <div style={{ padding: '0 20px' }}>
 
-                <p style={{ color: '#444', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Aujourd'hui</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Aujourd'hui</p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
                     {stats.map((stat) => (
-                        <div key={stat.label} style={{ background: '#141414', border: `0.5px solid ${stat.color}20`, borderRadius: '14px', padding: '14px', position: 'relative', overflow: 'hidden' }}>
+                        <div key={stat.label} style={{ background: 'var(--bg-secondary)', border: `0.5px solid var(--border-color)`, borderRadius: '14px', padding: '14px', position: 'relative', overflow: 'hidden' }}>
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color }} />
                             <p style={{ color: stat.color, fontSize: '22px', fontWeight: '700', letterSpacing: '-0.5px' }}>
-                                {Math.round(stat.current)}<span style={{ color: '#333', fontSize: '12px', fontWeight: '400', marginLeft: '3px' }}>{stat.unit}</span>
+                                {Math.round(stat.current)}<span style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '400', marginLeft: '3px' }}>{stat.unit}</span>
                             </p>
-                            <div style={{ width: '100%', height: '3px', background: '#1e1e1e', borderRadius: '2px', margin: '8px 0 6px' }}>
+                            <div style={{ width: '100%', height: '3px', background: 'var(--bg-tertiary)', borderRadius: '2px', margin: '8px 0 6px' }}>
                                 <div style={{ height: '100%', borderRadius: '2px', width: `${getProgressPercent(stat.current, stat.target)}%`, background: stat.color, transition: 'width 0.5s ease' }} />
                             </div>
-                            <p style={{ color: '#444', fontSize: '11px' }}>{stat.label} · {stat.target}{stat.unit}</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{stat.label} · {stat.target}{stat.unit}</p>
                         </div>
                     ))}
                 </div>
@@ -522,44 +522,44 @@ export default function ProfilPage() {
 
 
                 {/* NOUVEAU MENU (Paramètres, Notifications, etc.) */}
-                <div style={{ background: '#121212', border: '0.5px solid #222', borderRadius: '16px', overflow: 'hidden', marginTop: '32px', marginBottom: '24px' }}>
-                    <button onClick={() => router.push('/settings')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden', marginTop: '32px', marginBottom: '24px' }}>
+                    <button onClick={() => router.push('/settings')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--border-color)', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <Settings size={20} color="#ddd" strokeWidth={1.5} />
-                            <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Paramètres</span>
+                            <Settings size={20} color="var(--text-secondary)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Paramètres</span>
                         </div>
-                        <ChevronRight size={18} color="#555" strokeWidth={2} />
+                        <ChevronRight size={18} color="var(--text-muted)" strokeWidth={2} />
                     </button>
 
-                    <button onClick={() => router.push('/notifications')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                    <button onClick={() => router.push('/notifications')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--border-color)', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <Bell size={20} color="#ddd" strokeWidth={1.5} />
-                            <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Notifications</span>
+                            <Bell size={20} color="var(--text-secondary)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Notifications</span>
                         </div>
-                        <ChevronRight size={18} color="#555" strokeWidth={2} />
+                        <ChevronRight size={18} color="var(--text-muted)" strokeWidth={2} />
                     </button>
 
-                    <button onClick={() => setShowSupportModal(true)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid #1a1a1a', cursor: 'pointer' }}>
+                    <button onClick={() => setShowSupportModal(true)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--border-color)', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <HelpCircle size={20} color="#ddd" strokeWidth={1.5} />
-                            <span style={{ color: '#fff', fontSize: '15px', fontWeight: '500' }}>Aide & Support</span>
+                            <HelpCircle size={20} color="var(--text-secondary)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Aide & Support</span>
                         </div>
-                        <ChevronRight size={18} color="#555" strokeWidth={2} />
+                        <ChevronRight size={18} color="var(--text-muted)" strokeWidth={2} />
                     </button>
 
                     <button onClick={handleLogoutTrigger} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <LogOut size={20} color="#ef4444" strokeWidth={1.5} />
-                            <span style={{ color: '#ef4444', fontSize: '15px', fontWeight: '600' }}>Déconnexion</span>
+                            <LogOut size={20} color="var(--danger)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--danger)', fontSize: '15px', fontWeight: '600' }}>Déconnexion</span>
                         </div>
-                        <ChevronRight size={18} color="#ef4444" strokeWidth={2} />
+                        <ChevronRight size={18} color="var(--danger)" strokeWidth={2} />
                     </button>
                 </div>
 
                 {/* FOOTER */}
                 <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '32px' }}>
-                    <p style={{ color: '#666', fontSize: '12px', marginBottom: '4px' }}>Cal Afrik v1.0.0</p>
-                    <p style={{ color: '#333', fontSize: '11px' }}>© 2026 Nutrition africaine</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>Cal Afrik v1.0.0</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '11px', opacity: 0.5 }}>© 2026 Nutrition africaine</p>
                 </div>
 
             </div>
@@ -573,7 +573,7 @@ export default function ProfilPage() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowSupportModal(false)}
-                            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+                            style={{ position: 'absolute', inset: 0, background: 'rgba(var(--bg-primary-rgb), 0.8)', backdropFilter: 'blur(8px)' }}
                         />
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -582,19 +582,19 @@ export default function ProfilPage() {
                             style={{
                                 width: '100%',
                                 maxWidth: '340px',
-                                background: '#141414',
+                                background: 'var(--bg-secondary)',
                                 borderRadius: '28px',
                                 padding: '32px 24px',
-                                border: '0.5px solid #222',
+                                border: '0.5px solid var(--border-color)',
                                 textAlign: 'center',
                                 position: 'relative',
                                 zIndex: 3001,
-                                boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
                             }}
                         >
-                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 20px' }}>🎧</div>
-                            <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Besoin d'aide ?</h3>
-                            <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 20px' }}>🎧</div>
+                            <h3 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Besoin d'aide ?</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>
                                 Par quel canal préfères-tu échanger avec notre équipe ?
                             </p>
 
@@ -608,13 +608,13 @@ export default function ProfilPage() {
                                 </button>
                                 <button
                                     onClick={() => { window.location.href = 'mailto:support@cal-afrik.com?subject=Aide%20Cal-Afrik'; setShowSupportModal(false) }}
-                                    style={{ width: '100%', padding: '16px', background: 'rgba(99,102,241,0.15)', borderRadius: '16px', color: '#818cf8', border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                    style={{ width: '100%', padding: '16px', background: 'rgba(var(--accent-rgb), 0.15)', borderRadius: '16px', color: 'var(--accent)', border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                                 >
                                     📩 E-mail (support@cal-afrik.com)
                                 </button>
                                 <button
                                     onClick={() => setShowSupportModal(false)}
-                                    style={{ width: '100%', padding: '12px', background: 'transparent', color: '#666', border: 'none', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '4px' }}
+                                    style={{ width: '100%', padding: '12px', background: 'transparent', color: 'var(--text-muted)', border: 'none', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '4px' }}
                                 >
                                     Annuler
                                 </button>
@@ -633,7 +633,7 @@ export default function ProfilPage() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowLogoutConfirm(false)}
-                            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+                            style={{ position: 'absolute', inset: 0, background: 'rgba(var(--bg-primary-rgb), 0.8)', backdropFilter: 'blur(8px)' }}
                         />
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -642,19 +642,19 @@ export default function ProfilPage() {
                             style={{
                                 width: '100%',
                                 maxWidth: '340px',
-                                background: '#141414',
+                                background: 'var(--bg-secondary)',
                                 borderRadius: '28px',
                                 padding: '32px 24px',
-                                border: '0.5px solid #222',
+                                border: '0.5px solid var(--border-color)',
                                 textAlign: 'center',
                                 position: 'relative',
                                 zIndex: 3001,
-                                boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
                             }}
                         >
-                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 20px' }}>👋</div>
-                            <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Déconnexion ?</h3>
-                            <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(var(--danger-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 20px' }}>👋</div>
+                            <h3 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Déconnexion ?</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>
                                 Es-tu sûr de vouloir te déconnecter de ton coach Yao ?
                             </p>
 
@@ -664,7 +664,7 @@ export default function ProfilPage() {
                                     style={{
                                         width: '100%',
                                         padding: '16px',
-                                        background: '#ef4444',
+                                        background: 'var(--danger)',
                                         borderRadius: '16px',
                                         color: '#fff',
                                         border: 'none',
@@ -681,7 +681,7 @@ export default function ProfilPage() {
                                         width: '100%',
                                         padding: '16px',
                                         background: 'transparent',
-                                        color: '#666',
+                                        color: 'var(--text-muted)',
                                         border: 'none',
                                         fontSize: '15px',
                                         fontWeight: '600',

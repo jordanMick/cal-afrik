@@ -29,8 +29,8 @@ const CATEGORIES = [
 
 const LAST_SLOT = 'diner'
 
-const ACCENT_COLOR = '#6366f1'
-const GRADIENT = 'linear-gradient(90deg, #6366f1, #10b981)'
+const ACCENT_COLOR = 'var(--accent)'
+const GRADIENT = 'linear-gradient(90deg, var(--accent), #10b981)'
 
 function normalizeMenuText(raw: string): string {
     const base = raw
@@ -88,10 +88,10 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 marginTop: '12px', 
                 marginBottom: '16px',
                 padding: '16px', 
-                background: 'rgba(255,255,255,0.03)', 
-                border: '1px solid rgba(255,255,255,0.05)', 
+                background: 'var(--bg-secondary)', 
+                border: '1px solid var(--border-color)', 
                 borderRadius: '20px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
             }}>
                 {currentDayBlock}
             </div>
@@ -109,7 +109,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
             if (/^menu\s+/i.test(line)) {
                 flushDayBlock()
                 rows.push(
-                    <p key={`menu-line-${idx}`} style={{ color: '#c7d2fe', fontSize: '12px', fontWeight: '800', marginTop: idx === 0 ? '0' : '12px', letterSpacing: '0.2px' }}>
+                    <p key={`menu-line-${idx}`} style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: '800', marginTop: idx === 0 ? '0' : '12px', letterSpacing: '0.2px' }}>
                         {line}
                     </p>
                 )
@@ -124,11 +124,11 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                         display: 'inline-flex', 
                         alignItems: 'center', 
                         gap: '6px', 
-                        background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
+                        background: 'linear-gradient(135deg, var(--warning), #d97706)', 
                         padding: '4px 14px', 
                         borderRadius: '99px', 
                         marginBottom: '12px',
-                        boxShadow: '0 4px 12px rgba(245,158,11,0.2)'
+                        boxShadow: '0 4px 12px rgba(var(--warning-rgb), 0.2)'
                     }}>
                         <span style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(0,0,0,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Jour</span>
                         <span style={{ color: '#fff', fontSize: '13px', fontWeight: '800' }}>{dateTitle}</span>
@@ -136,7 +136,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                 )
                 if (trailing) {
                     currentDayBlock.push(
-                        <p key={`menu-line-trailing-${idx}`} style={{ color: '#e5e7eb', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
+                        <p key={`menu-line-trailing-${idx}`} style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
                             {trailing}
                         </p>
                     )
@@ -182,8 +182,8 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
                             padding: '8px 16px',
                             borderRadius: '12px',
                             border: 'none',
-                            background: buttonDisabled ? 'rgba(255,255,255,0.05)' : `linear-gradient(135deg, ${slotColor}, ${slotColor}dd)`,
-                            color: buttonDisabled ? '#444' : '#fff',
+                            background: buttonDisabled ? 'var(--bg-tertiary)' : `linear-gradient(135deg, ${slotColor}, ${slotColor}dd)`,
+                            color: buttonDisabled ? 'var(--text-muted)' : '#fff',
                             fontSize: '11px',
                             fontWeight: '800',
                             cursor: buttonDisabled ? 'default' : 'pointer',
@@ -215,7 +215,7 @@ function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', 
         }
 
         const node = (
-            <p key={`menu-line-${idx}`} style={{ color: '#ddd', fontSize: '12px', lineHeight: '1.55', marginTop: '6px', wordBreak: 'break-word' }}>
+            <p key={`menu-line-${idx}`} style={{ color: 'var(--text-primary)', fontSize: '12px', lineHeight: '1.55', marginTop: '6px', wordBreak: 'break-word' }}>
                 {line}
             </p>
         )
@@ -515,8 +515,8 @@ export default function ScannerPage() {
 
 
 
-    const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: '10px', background: '#0f0f0f', border: '0.5px solid #2a2a2a', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }
-    const labelStyle: React.CSSProperties = { color: '#555', fontSize: '12px', marginBottom: '4px', display: 'block', fontWeight: '500' }
+    const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '14px', boxSizing: 'border-box' }
+    const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '4px', display: 'block', fontWeight: '500' }
 
     useEffect(() => { loadFoods() }, [])
 
@@ -1018,35 +1018,35 @@ export default function ScannerPage() {
     const displayedRemainingLabel = isLastSlot ? "Restant journée" : "Restant créneau"
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative', overflow: 'hidden' }}>
 
             {/* Halo couleur du créneau */}
             <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: `radial-gradient(circle, ${slotColor}15 0%, transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '80px', left: '-40px', width: '180px', height: '180px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div style={{ padding: '24px 0 16px' }}>
-                <h1 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', letterSpacing: '-0.5px' }}>Scanner</h1>
-                <p style={{ color: '#555', fontSize: '13px', fontWeight: '500', marginTop: '4px' }}>Analyse ton assiette instantanément</p>
+                <h1 style={{ color: 'var(--text-primary)', fontSize: '24px', fontWeight: '800', letterSpacing: '-0.5px' }}>Scanner</h1>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '500', marginTop: '4px' }}>Analyse ton assiette instantanément</p>
             </div>
 
             {/* CRÉNEAU */}
-            <div style={{ background: '#141414', border: `0.5px solid ${slotColor}30`, borderRadius: '24px', padding: '18px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--bg-secondary)', border: `0.5px solid ${slotColor}30`, borderRadius: '24px', padding: '18px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2.5px', background: slotColor }} />
                 <div>
-                    <p style={{ color: '#444', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Créneau</p>
-                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '15px', marginTop: '2px' }}>{slotLabel}</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Créneau</p>
+                    <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '15px', marginTop: '2px' }}>{slotLabel}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                    <p style={{ color: '#444', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{displayedRemainingLabel}</p>
-                    <p style={{ color: displayedRemaining < 0 ? '#f87171' : (displayedRemaining === 0 ? '#fbbf24' : slotColor), fontWeight: '800', fontSize: '16px', marginTop: '2px' }}>{displayedRemaining} kcal</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{displayedRemainingLabel}</p>
+                    <p style={{ color: displayedRemaining < 0 ? 'var(--danger)' : (displayedRemaining === 0 ? 'var(--warning)' : slotColor), fontWeight: '800', fontSize: '16px', marginTop: '2px' }}>{displayedRemaining} kcal</p>
                 </div>
             </div>
 
             {/* Menus suggérés par Yao (via chat) */}
             {!image && !isAnalyzing && (
                 <div style={{ marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '10px' }}>
-                        <button onClick={() => setMenuTab('today')} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'today' ? '#1e1e1e' : 'transparent', color: menuTab === 'today' ? '#fff' : '#555', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}>
+                    <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '14px', padding: '4px', marginBottom: '10px' }}>
+                        <button onClick={() => setMenuTab('today')} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'today' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'today' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}>
                             Aujourd'hui
                         </button>
                         <button
@@ -1057,7 +1057,7 @@ export default function ScannerPage() {
                                 }
                                 setMenuTab('tomorrow')
                             }}
-                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'tomorrow' ? '#1e1e1e' : 'transparent', color: menuTab === 'tomorrow' ? '#fff' : '#555', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'tomorrow' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'tomorrow' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
                         >
                             Demain {!canAccessFutureMenus ? '🔒' : ''}
                         </button>
@@ -1069,19 +1069,19 @@ export default function ScannerPage() {
                                 }
                                 setMenuTab('week')
                             }}
-                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'week' ? '#1e1e1e' : 'transparent', color: menuTab === 'week' ? '#fff' : '#555', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'week' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'week' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
                         >
                             Semaine {!canAccessFutureMenus ? '🔒' : ''}
                         </button>
                     </div>
 
                     <div style={{ 
-                        background: 'rgba(20,20,20,0.4)', 
+                        background: 'rgba(var(--bg-secondary-rgb), 0.4)', 
                         backdropFilter: 'blur(20px)',
                         border: `1px solid ${slotColor}20`, 
                         borderRadius: '24px', 
                         padding: '18px 20px',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1089,13 +1089,13 @@ export default function ScannerPage() {
                                     Menu suggéré par Yao
                                 </p>
                                 {activeMenuText && (
-                                    <button
+                                        <button
                                         onClick={() => {
                                             if (confirm("Effacer cette suggestion ?")) {
                                                 clearChatSuggestedMenu(menuTab, menuTab === 'today' ? currentSlotKey : undefined)
                                             }
                                         }}
-                                        style={{ background: 'transparent', border: 'none', color: '#444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
                                         title="Supprimer la suggestion"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6m4-6v6"/></svg>
@@ -1130,7 +1130,7 @@ export default function ScannerPage() {
                                 {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots, slotColor)}
                             </div>
                         ) : (
-                            <p style={{ color: '#888', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
                                 Tu verras le menu suggéré par Yao ici. Demande un menu depuis le chat.
                             </p>
                         )}
@@ -1179,17 +1179,18 @@ export default function ScannerPage() {
                         maxWidth: '460px',
                         maxHeight: '82vh',
                         overflowY: 'auto',
-                        background: '#111',
-                        border: '0.5px solid #252525',
+                        background: 'var(--bg-primary)',
+                        border: '0.5px solid var(--border-color)',
                         borderRadius: '18px',
                         padding: '14px',
                         zIndex: 1210,
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <p style={{ color: '#f59e0b', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase' }}>Menu semaine</p>
+                            <p style={{ color: 'var(--warning)', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase' }}>Menu semaine</p>
                             <button
                                 onClick={() => setShowWeekMenuPopup(false)}
-                                style={{ background: 'transparent', border: '0.5px solid #333', borderRadius: '8px', color: '#aaa', cursor: 'pointer', width: '28px', height: '28px' }}
+                                style={{ background: 'transparent', border: '0.5px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-muted)', cursor: 'pointer', width: '28px', height: '28px' }}
                             >
                                 ✕
                             </button>
@@ -1200,11 +1201,11 @@ export default function ScannerPage() {
             )}
 
             {/* SWITCH MODE SCAN */}
-            <div style={{ display: 'flex', background: '#141414', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>
-                <button onClick={() => { setScanMode('ai'); (window as any).isLastScanFromBarcode = false; }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? '#1e1e1e' : 'transparent', color: scanMode === 'ai' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>
+                <button onClick={() => { setScanMode('ai'); (window as any).isLastScanFromBarcode = false; }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? 'var(--bg-tertiary)' : 'transparent', color: scanMode === 'ai' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
                     📸 Photo
                 </button>
-                <button onClick={() => setScanMode('barcode')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'barcode' ? '#1e1e1e' : 'transparent', color: scanMode === 'barcode' ? '#fff' : '#555', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
+                <button onClick={() => setScanMode('barcode')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'barcode' ? 'var(--bg-tertiary)' : 'transparent', color: scanMode === 'barcode' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
                     🏷️ Code-barres
                 </button>
             </div>
@@ -1212,9 +1213,9 @@ export default function ScannerPage() {
             {/* AI SCAN VIEW */}
             {scanMode === 'ai' && !image && (
                 <>
-                    <div onClick={() => fileInputRef.current?.click()} style={{ height: '200px', borderRadius: '24px', background: '#141414', border: `1px dashed ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                        <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: `${slotColor}12`, border: `0.5px solid ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 8px 16px ${slotColor}15` }}>📷</div>
-                        <p style={{ color: '#555', fontSize: '14px', fontWeight: '600' }}>Scanner un plat</p>
+                    <div onClick={() => fileInputRef.current?.click()} style={{ height: '200px', borderRadius: '24px', background: 'var(--bg-secondary)', border: `1px dashed ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                        <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'rgba(var(--accent-rgb), 0.12)', border: `0.5px solid ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 8px 16px rgba(var(--accent-rgb), 0.15)` }}>📷</div>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '600' }}>Scanner un plat</p>
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (file) await processImage(file) }} style={{ display: 'none' }} />
                 </>
@@ -1223,11 +1224,11 @@ export default function ScannerPage() {
             {/* BARCODE SCAN VIEW */}
             {scanMode === 'barcode' && !image && (
                 <div style={{ marginBottom: '20px' }}>
-                    <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: '#141414', minHeight: '250px' }}></div>
-                    <p style={{ color: '#555', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres dans le carré</p>
+                    <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: 'var(--bg-secondary)', minHeight: '250px' }}></div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres dans le carré</p>
 
                     <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                        <p style={{ color: '#444', fontSize: '11px', marginBottom: '10px', textTransform: 'uppercase', fontWeight: '700' }}>Ou</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '10px', textTransform: 'uppercase', fontWeight: '700', opacity: 0.5 }}>Ou</p>
                         <button
                             onClick={() => {
                                 const input = document.createElement('input');
@@ -1275,32 +1276,32 @@ export default function ScannerPage() {
             )}
 
             {mealName && !isAnalyzing && (
-                <div style={{ marginBottom: '20px', padding: '16px 20px', background: '#141414', border: `0.5px solid ${slotColor}20`, borderRadius: '18px' }}>
-                    <p style={{ color: '#fff', fontWeight: '700', fontSize: '15px' }}>🍽️ {mealName}</p>
-                    {totalCaloriesCoach > 0 && <p style={{ color: '#555', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Estimation Coach Yao : ~{totalCaloriesCoach} kcal</p>}
+                <div style={{ marginBottom: '20px', padding: '16px 20px', background: 'var(--bg-secondary)', border: `0.5px solid ${slotColor}20`, borderRadius: '18px' }}>
+                    <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '15px' }}>🍽️ {mealName}</p>
+                    {totalCaloriesCoach > 0 && <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Estimation Coach Yao : ~{totalCaloriesCoach} kcal</p>}
                 </div>
             )}
 
             {/* SUGGESTIONS */}
             {suggestions.length > 0 && !isAnalyzing && (
                 <div style={{ marginBottom: '20px' }}>
-                    <p style={{ color: '#444', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px' }}>Vérifie la composition</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px' }}>Vérifie la composition</p>
                     {suggestions.map((food, idx) => {
                         const isSelected = !!selectedFoods.find(f => f.id === food.id)
                         return (
-                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)} style={{ padding: '16px 20px', borderRadius: '20px', marginBottom: '12px', background: isSelected ? 'rgba(99,102,241,0.08)' : '#141414', cursor: 'pointer', border: isSelected ? `1px solid ${ACCENT_COLOR}` : '0.5px solid #222', transition: 'all 0.2s ease', position: 'relative', overflow: 'hidden' }}>
+                            <div key={`${food.id}-${food.detected}`} onClick={() => selectFood(food)} style={{ padding: '16px 20px', borderRadius: '20px', marginBottom: '12px', background: isSelected ? 'rgba(var(--accent-rgb), 0.08)' : 'var(--bg-secondary)', cursor: 'pointer', border: isSelected ? `1px solid var(--accent)` : '0.5px solid var(--border-color)', transition: 'all 0.2s ease', position: 'relative', overflow: 'hidden' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: isSelected ? `1.5px solid ${ACCENT_COLOR}` : '1.5px solid #333', background: isSelected ? ACCENT_COLOR : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                                        <div style={{ width: '20px', height: '20px', borderRadius: '6px', border: isSelected ? `1.5px solid var(--accent)` : '1.5px solid var(--border-color)', background: isSelected ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
                                             {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>✓</span>}
                                         </div>
-                                        <p style={{ color: '#fff', fontWeight: '700', fontSize: '14px' }}>{food.name || 'Plat inconnu'}</p>
+                                        <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '14px' }}>{food.name || 'Plat inconnu'}</p>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ color: '#555', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">COACH YAO EN ACTION...</span>
-                                    <p style={{ color: isSelected ? ACCENT_COLOR : '#666', fontSize: '12px', fontWeight: '600' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600' }}>⚖️ {food.portion_g}g</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] opacity-30">COACH YAO EN ACTION...</span>
+                                    <p style={{ color: isSelected ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>
                                         {food.calories} kcal · {food.protein_g}g prot.
                                     </p>
                                 </div>
@@ -1318,20 +1319,20 @@ export default function ScannerPage() {
             )}
 
             {showManualForm && (
-                <div style={{ marginBottom: '14px', padding: '18px', borderRadius: '14px', background: '#141414', border: '0.5px solid #222' }}>
-                    <p style={{ color: '#fff', fontWeight: '500', fontSize: '15px', marginBottom: '2px' }}>✏️ Ajouter un aliment</p>
-                    <p style={{ color: '#444', fontSize: '12px', marginBottom: '14px' }}>Valeurs suggérées par Coach Yao</p>
+                <div style={{ marginBottom: '14px', padding: '18px', borderRadius: '14px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)' }}>
+                    <p style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '15px', marginBottom: '2px' }}>✏️ Ajouter un aliment</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '14px' }}>Valeurs suggérées par Coach Yao</p>
                     <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Nom *</label><input style={inputStyle} value={manualFood.name_fr} onChange={e => setManualFood(p => ({ ...p, name_fr: e.target.value }))} placeholder="ex: Rôti de porc" /></div>
                     <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Catégorie *</label><select style={inputStyle} value={manualFood.category} onChange={e => setManualFood(p => ({ ...p, category: e.target.value }))}>{CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
                     <div style={{ marginBottom: '4px' }}><label style={labelStyle}>Portion (g) *</label><input style={inputStyle} type="number" value={manualFood.portion_g} onChange={e => setManualFood(p => ({ ...p, portion_g: Number(e.target.value) }))} /></div>
-                    <p style={{ color: '#2a2a2a', fontSize: '11px', marginBottom: '10px' }}>Macros pour {manualFood.portion_g}g</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '10px', opacity: 0.5 }}>Macros pour {manualFood.portion_g}g</p>
                     <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Calories (kcal) *</label><input style={inputStyle} type="number" value={manualFood.calories} onChange={e => setManualFood(p => ({ ...p, calories: Number(e.target.value) }))} /></div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px' }}>
                         {[{ key: 'protein_g', label: 'Protéines' }, { key: 'carbs_g', label: 'Glucides' }, { key: 'fat_g', label: 'Lipides' }].map(f => (
                             <div key={f.key}><label style={labelStyle}>{f.label}</label><input style={inputStyle} type="number" value={(manualFood as any)[f.key]} onChange={e => setManualFood(p => ({ ...p, [f.key]: Number(e.target.value) }))} placeholder="0" /></div>
                         ))}
                     </div>
-                    <button onClick={handleSaveManualFood} disabled={isSavingManual || !manualFood.name_fr || manualFood.calories <= 0} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: (!manualFood.name_fr || manualFood.calories <= 0) ? '#1e1e1e' : `linear-gradient(135deg, ${slotColor}, #6366f1)`, color: (!manualFood.name_fr || manualFood.calories <= 0) ? '#333' : '#fff', border: 'none', fontWeight: '500', cursor: 'pointer', fontSize: '14px' }}>
+                    <button onClick={handleSaveManualFood} disabled={isSavingManual || !manualFood.name_fr || manualFood.calories <= 0} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: (!manualFood.name_fr || manualFood.calories <= 0) ? 'var(--bg-tertiary)' : `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: (!manualFood.name_fr || manualFood.calories <= 0) ? 'var(--text-muted)' : '#fff', border: 'none', fontWeight: '500', cursor: 'pointer', fontSize: '14px' }}>
                         {isSavingManual ? 'Sauvegarde...' : '✅ Sauvegarder et ajouter'}
                     </button>
                 </div>
@@ -1340,41 +1341,41 @@ export default function ScannerPage() {
             {/* BOUTON RÉCAP */}
             {selectedFoods.length > 0 && (
                 <div style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '0 20px' }}>
-                    <button onClick={() => { setShowRecap(true); setShowCoach(false); setCoachMessage('') }} style={{ width: '100%', padding: '14px', borderRadius: '14px', background: `linear-gradient(135deg, ${slotColor}, #6366f1)`, color: '#fff', border: 'none', fontWeight: '600', fontSize: '15px', cursor: 'pointer', boxShadow: `0 8px 24px ${slotColor}40` }}>
+                    <button onClick={() => { setShowRecap(true); setShowCoach(false); setCoachMessage('') }} style={{ width: '100%', padding: '14px', borderRadius: '14px', background: `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: '#fff', border: 'none', fontWeight: '600', fontSize: '15px', cursor: 'pointer', boxShadow: `0 8px 24px rgba(var(--accent-rgb), 0.4)` }}>
                         Voir le récap · {Math.round(totals.calories)} kcal
                     </button>
                 </div>
             )}
 
-            {showRecap && <div onClick={() => setShowRecap(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000 }} />}
+            {showRecap && <div onClick={() => setShowRecap(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--bg-primary-rgb), 0.85)', backdropFilter: 'blur(4px)', zIndex: 1000 }} />}
 
             {/* POPUP RÉCAP */}
             {showRecap && (
-                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: '#111', borderRadius: '24px 24px 0 0', border: '0.5px solid #222', zIndex: 1010, padding: '0 0 100px 0', maxHeight: '90vh', overflowY: 'auto' }}>
-                    <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: `linear-gradient(90deg, ${slotColor}, #6366f1)` }} />
+                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: 'var(--bg-secondary)', borderRadius: '24px 24px 0 0', border: '0.5px solid var(--border-color)', zIndex: 1010, padding: '0 0 100px 0', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 -10px 40px rgba(var(--bg-primary-rgb),0.2)' }}>
+                    <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: `linear-gradient(90deg, ${slotColor}, var(--accent))` }} />
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}>
-                        <div style={{ width: '36px', height: '4px', background: '#222', borderRadius: '2px' }} />
+                        <div style={{ width: '36px', height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px' }} />
                     </div>
                     <div style={{ padding: '18px 20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <h2 style={{ color: '#fff', fontSize: '18px', fontWeight: '600' }}>Récap de ton repas</h2>
+                            <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '600' }}>Récap de ton repas</h2>
                             <span style={{ color: slotColor, fontSize: '11px', background: `${slotColor}15`, padding: '4px 10px', borderRadius: '20px', border: `0.5px solid ${slotColor}40` }}>{slotLabel}</span>
                         </div>
-                        <p style={{ color: '#444', fontSize: '12px', marginBottom: '18px' }}>{selectedFoods.map(f => f.name).join(' · ')}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '18px' }}>{selectedFoods.map(f => f.name).join(' · ')}</p>
 
-                        <div style={{ background: '#0a0a0a', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '12px', border: `0.5px solid ${slotColor}20` }}>
-                            <p style={{ color: '#fff', fontSize: '52px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
-                            <p style={{ color: '#444', fontSize: '13px' }}>kilocalories</p>
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '12px', border: `0.5px solid ${slotColor}20` }}>
+                            <p style={{ color: 'var(--text-primary)', fontSize: '52px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>kilocalories</p>
                         </div>
 
-                        <div style={{ background: recapExceeded ? 'rgba(248,113,113,0.06)' : '#141414', border: `0.5px solid ${recapExceeded ? 'rgba(248,113,113,0.3)' : '#222'}`, borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ background: recapExceeded ? 'rgba(var(--danger-rgb), 0.06)' : 'var(--bg-primary)', border: `0.5px solid ${recapExceeded ? 'rgba(var(--danger-rgb), 0.3)' : 'var(--border-color)'}`, borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <p style={{ color: '#444', fontSize: '11px' }}>{isLastSlot ? `Journée · objectif ${calorieTarget} kcal` : `Créneau ${slotLabel}`}</p>
-                                <p style={{ color: '#333', fontSize: '12px', marginTop: '2px' }}>{isLastSlot ? `${Math.round(dailyConsumed)} + ${Math.round(totals.calories)} kcal` : `${Math.round(currentSlot.consumed)} + ${Math.round(totals.calories)} kcal`}</p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{isLastSlot ? `Journée · objectif ${calorieTarget} kcal` : `Créneau ${slotLabel}`}</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '2px' }}>{isLastSlot ? `${Math.round(dailyConsumed)} + ${Math.round(totals.calories)} kcal` : `${Math.round(currentSlot.consumed)} + ${Math.round(totals.calories)} kcal`}</p>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                                <p style={{ color: '#444', fontSize: '11px' }}>{recapExceeded ? '⚠️ Dépassement' : 'Restant après repas'}</p>
-                                <p style={{ color: recapExceeded ? '#f87171' : slotColor, fontWeight: '700', fontSize: '18px' }}>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{recapExceeded ? '⚠️ Dépassement' : 'Restant après repas'}</p>
+                                <p style={{ color: recapExceeded ? 'var(--danger)' : slotColor, fontWeight: '700', fontSize: '18px' }}>
                                     {recapExceeded ? `+${Math.abs(Math.round(recapRemainingAfter))} kcal` : `${Math.round(recapRemainingAfter)} kcal`}
                                 </p>
                             </div>
@@ -1382,13 +1383,13 @@ export default function ScannerPage() {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px' }}>
                             {[
-                                { label: 'Protéines', value: totals.protein_g, color: '#6366f1' },
-                                { label: 'Glucides', value: totals.carbs_g, color: '#f59e0b' },
-                                { label: 'Lipides', value: totals.fat_g, color: '#10b981' },
+                                { label: 'Protéines', value: totals.protein_g, color: 'var(--success)' },
+                                { label: 'Glucides', value: totals.carbs_g, color: 'var(--accent)' },
+                                { label: 'Lipides', value: totals.fat_g, color: 'var(--warning)' },
                             ].map(m => (
-                                <div key={m.label} style={{ background: '#0a0a0a', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
+                                <div key={m.label} style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
                                     <p style={{ color: m.color, fontSize: '20px', fontWeight: '600' }}>{Math.round(m.value * 10) / 10}g</p>
-                                    <p style={{ color: '#444', fontSize: '11px', marginTop: '2px' }}>{m.label}</p>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>{m.label}</p>
                                 </div>
                             ))}
                         </div>
@@ -1396,37 +1397,37 @@ export default function ScannerPage() {
                         {/* On n'affiche le conseil du coach QUE si ce n'est pas un menu déjà suggéré par Yao */}
                         {!selectedFoods.some(f => f.id.startsWith('suggested-')) && (
                             <>
-                                <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(245,158,11,0.08)' : 'transparent', border: '0.5px solid rgba(245,158,11,0.3)', color: '#f59e0b', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
+                                <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(var(--warning-rgb), 0.08)' : 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
                                     {showCoach ? 'Conseil personnalisé de votre coach' : 'Demander l\'avis du coach →'}
                                 </button>
                                 {showCoach && (
-                                    <div style={{ background: 'rgba(245,158,11,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
+                                    <div style={{ background: 'rgba(var(--warning-rgb), 0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(var(--warning-rgb), 0.2)' }}>
                                         {isLoadingCoach ? (
-                                            <p style={{ color: '#f59e0b', fontSize: '13px' }}>⏳ Yao analyse ton assiette...</p>
+                                            <p style={{ color: 'var(--warning)', fontSize: '13px' }}>⏳ Yao analyse ton assiette...</p>
                                         ) : coachMessage === '__FREE_USED__' ? (
                                             <div style={{ textAlign: 'center' }}>
-                                                <p className="text-[10px] font-bold text-white/30 mt-1 uppercase tracking-widest">ANALYSE COACH YAO</p>
-                                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Essai gratuit déjà utilisé</p>
-                                                <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Tu as déjà vu le talent de Coach Yao ! Passe au Plan Pro pour ses conseils chaque jour.</p>
-                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: '#f59e0b', color: '#000', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Voir le Plan Pro →</div>
+                                                <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase tracking-widest opacity-50">ANALYSE COACH YAO</p>
+                                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Essai gratuit déjà utilisé</p>
+                                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Tu as déjà vu le talent de Coach Yao ! Passe au Plan Pro pour ses conseils chaque jour.</p>
+                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'var(--warning)', color: '#000', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Voir le Plan Pro →</div>
                                             </div>
                                         ) : coachMessage === '__PRO_LIMIT__' ? (
                                             <div style={{ textAlign: 'center' }}>
                                                 <p style={{ fontSize: '24px', marginBottom: '8px' }}>⏰</p>
-                                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Conseil du jour déjà utilisé</p>
-                                                <p style={{ color: '#888', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Yao vous a déjà conseillé aujourd'hui. Passez au Premium pour un accès illimité !</p>
-                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: '#fff', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Débloquer le Premium →</div>
+                                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Conseil du jour déjà utilisé</p>
+                                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Yao vous a déjà conseillé aujourd'hui. Passez au Premium pour un accès illimité !</p>
+                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'var(--accent)', color: '#fff', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Débloquer le Premium →</div>
                                             </div>
                                         ) : coachMessage ? (
                                             <div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                                                     <span style={{ fontSize: '18px' }}>💡</span>
-                                                    <span style={{ color: '#f59e0b', fontSize: '13px', fontWeight: '600' }}>Coach Yao</span>
+                                                    <span style={{ color: 'var(--warning)', fontSize: '13px', fontWeight: '600' }}>Coach Yao</span>
                                                     {profile?.subscription_tier === 'free' && (
-                                                        <span style={{ marginLeft: 'auto', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>
+                                                        <span style={{ marginLeft: 'auto', background: 'rgba(var(--warning-rgb), 0.15)', color: 'var(--warning)', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>
                                                     )}
                                                 </div>
-                                                <p style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
+                                                <p style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
                                             </div>
                                         ) : null}
                                     </div>
@@ -1435,8 +1436,8 @@ export default function ScannerPage() {
                         )}
 
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => setShowRecap(false)} style={{ flex: 1, padding: '14px', borderRadius: '12px', background: '#1a1a1a', border: '0.5px solid #222', color: '#fff', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>← Modifier</button>
-                            <button onClick={handleSaveMeal} disabled={isSaving} style={{ flex: 2, padding: '14px', borderRadius: '12px', background: `linear-gradient(135deg, ${slotColor}, #6366f1)`, color: '#fff', border: 'none', fontWeight: '600', fontSize: '14px', cursor: 'pointer', opacity: isSaving ? 0.7 : 1 }}>
+                            <button onClick={() => setShowRecap(false)} style={{ flex: 1, padding: '14px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>← Modifier</button>
+                            <button onClick={handleSaveMeal} disabled={isSaving} style={{ flex: 2, padding: '14px', borderRadius: '12px', background: `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: '#fff', border: 'none', fontWeight: '600', fontSize: '14px', cursor: 'pointer', opacity: isSaving ? 0.7 : 1 }}>
                                 {isSaving ? 'Ajout...' : '✅ Ajouter au journal'}
                             </button>
                         </div>
