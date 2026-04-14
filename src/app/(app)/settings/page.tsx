@@ -1,14 +1,19 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, User, CreditCard, UserMinus, ShieldAlert, ChevronRight } from 'lucide-react'
+import { ChevronLeft, User, CreditCard, UserMinus, ShieldAlert, ChevronRight, Target, Crown } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ThemeSelector from '@/components/ThemeSelector'
+import { useAppStore } from '@/store/useAppStore'
+import { getEffectiveTier } from '@/lib/subscription'
 
 export default function SettingsPage() {
     const router = useRouter()
+    const { profile } = useAppStore()
     const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+    const effectiveTier = getEffectiveTier(profile)
 
     const handleDeleteAccount = () => {
         alert("Demande de suppression enregistrée. Cela peut prendre jusqu'à 72h.")
@@ -35,6 +40,16 @@ export default function SettingsPage() {
                             <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Informations personnelles</span>
                         </div>
                         <ChevronRight size={16} color="var(--text-muted)" />
+                    </button>
+                    <button onClick={() => router.push('/settings/macros')} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Target size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Stratégie nutritionnelle</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {effectiveTier !== 'premium' && <Crown size={12} color="var(--warning)" />}
+                            <ChevronRight size={16} color="var(--text-muted)" />
+                        </div>
                     </button>
                     <button onClick={() => router.push('/settings/subscription')} style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

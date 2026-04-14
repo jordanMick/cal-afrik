@@ -129,21 +129,33 @@ interface AppState {
         slot: string
     } | null
     setPendingScannerPrefill: (data: { items: Array<{ name: string; volume_ml: number }>; slot: string } | null) => void
+
+    // ─── Distributions Macros (Premium) ────────────────────────
+    macroDistributions: Record<string, Record<MealSlotKey, number>>
+    updateMacroDistribution: (nutrient: string, slot: MealSlotKey, pct: number) => void
 }
 
-const buildInitialSlots = (cal: number, prot: number, carbs: number, fat: number): Record<MealSlotKey, SlotState> => {
+const DEFAULT_DIST: Record<MealSlotKey, number> = {
+    petit_dejeuner: 0.25,
+    dejeuner: 0.35,
+    collation: 0.10,
+    diner: 0.30,
+}
+
+const buildInitialSlots = (cal: number, prot: number, carbs: number, fat: number, dists?: Record<string, Record<MealSlotKey, number>>): Record<MealSlotKey, SlotState> => {
     const res = {} as Record<MealSlotKey, SlotState>
+    const d = dists || { calories: DEFAULT_DIST, protein: DEFAULT_DIST, carbs: DEFAULT_DIST, fat: DEFAULT_DIST }
+    
     for (const key of SLOT_ORDER) {
-        const pct = SLOT_PCT[key]
         res[key] = {
-            target: Math.round(cal * pct),
+            target: Math.round(cal * (d.calories?.[key] ?? DEFAULT_DIST[key])),
             consumed: 0,
-            remaining: Math.round(cal * pct),
-            protein_target: Math.round(prot * pct),
+            remaining: Math.round(cal * (d.calories?.[key] ?? DEFAULT_DIST[key])),
+            protein_target: Math.round(prot * (d.protein?.[key] ?? DEFAULT_DIST[key])),
             protein_consumed: 0,
-            carbs_target: Math.round(carbs * pct),
+            carbs_target: Math.round(carbs * (d.carbs?.[key] ?? DEFAULT_DIST[key])),
             carbs_consumed: 0,
-            fat_target: Math.round(fat * pct),
+            fat_target: Math.round(fat * (d.fat?.[key] ?? DEFAULT_DIST[key])),
             fat_consumed: 0,
             locked: false
         }
@@ -182,7 +194,8 @@ export const useAppStore = create<AppState>()(
                             profile.calorie_target, 
                             profile.protein_target_g || 100, 
                             profile.carbs_target_g || 250, 
-                            profile.fat_target_g || 65
+                            profile.fat_target_g || 65,
+                            get().macroDistributions
                         ) 
                     })
                 }
@@ -197,7 +210,7 @@ export const useAppStore = create<AppState>()(
             },
 
             syncSlots: () => {
-                const { todayMeals, profile } = get()
+                const { todayMeals, profile, macroDistributions } = get()
                 if (!profile) return
 
                 const calorieTarget = profile.calorie_target
@@ -205,7 +218,7 @@ export const useAppStore = create<AppState>()(
                 const carbsTarget = profile.carbs_target_g || 250
                 const fatTarget = profile.fat_target_g || 65
 
-                let newSlots = buildInitialSlots(calorieTarget, protTarget, carbsTarget, fatTarget)
+                let newSlots = buildInitialSlots(calorieTarget, protTarget, carbsTarget, fatTarget, macroDistributions)
                 
                 // 1. Calculer les consommations par créneau
                 for (const meal of todayMeals) {
@@ -242,19 +255,47 @@ export const useAppStore = create<AppState>()(
                 const remFat = Math.max(0, fatTarget - consFatPast)
 
                 const remainingSlots = SLOT_ORDER.slice(currentIdx)
-                const totalPctRemaining = remainingSlots.reduce((sum, s) => sum + SLOT_PCT[s], 0)
+                
+                // On utilise les distributions personnalisées
+                const d = macroDistributions
+                const totalPctRemCal = remainingSlots.reduce((sum, s) => sum + (d.calories?.[s] ?? DEFAULT_DIST[s]), 0)
+                const totalPctRemProt = remainingSlots.reduce((sum, s) => sum + (d.protein?.[s] ?? DEFAULT_DIST[s]), 0)
+                const totalPctRemCarbs = remainingSlots.reduce((sum, s) => sum + (d.carbs?.[s] ?? DEFAULT_DIST[s]), 0)
+                const totalPctRemFat = remainingSlots.reduce((sum, s) => sum + (d.fat?.[s] ?? DEFAULT_DIST[s]), 0)
 
                 for (const slotKey of remainingSlots) {
-                    const share = SLOT_PCT[slotKey] / totalPctRemaining
-                    newSlots[slotKey].target = Math.round(remCal * share)
+                    const shareCal = (d.calories?.[slotKey] ?? DEFAULT_DIST[slotKey]) / (totalPctRemCal || 1)
+                    newSlots[slotKey].target = Math.round(remCal * shareCal)
                     newSlots[slotKey].remaining = Math.max(0, newSlots[slotKey].target - newSlots[slotKey].consumed)
                     
-                    newSlots[slotKey].protein_target = Math.round(remProt * share)
-                    newSlots[slotKey].carbs_target = Math.round(remCarbs * share)
-                    newSlots[slotKey].fat_target = Math.round(remFat * share)
+                    const shareProt = (d.protein?.[slotKey] ?? DEFAULT_DIST[slotKey]) / (totalPctRemProt || 1)
+                    newSlots[slotKey].protein_target = Math.round(remProt * shareProt)
+
+                    const shareCarbs = (d.carbs?.[slotKey] ?? DEFAULT_DIST[slotKey]) / (totalPctRemCarbs || 1)
+                    newSlots[slotKey].carbs_target = Math.round(remCarbs * shareCarbs)
+
+                    const shareFat = (d.fat?.[slotKey] ?? DEFAULT_DIST[slotKey]) / (totalPctRemFat || 1)
+                    newSlots[slotKey].fat_target = Math.round(remFat * shareFat)
                 }
 
                 set({ slots: newSlots })
+            },
+
+            macroDistributions: {
+                calories: DEFAULT_DIST,
+                protein: DEFAULT_DIST,
+                carbs: DEFAULT_DIST,
+                fat: DEFAULT_DIST,
+            },
+
+            updateMacroDistribution: (nutrient, slot, pct) => {
+                set((state) => {
+                    const nutrientDist = { ...state.macroDistributions[nutrient], [slot]: pct }
+                    return {
+                        macroDistributions: { ...state.macroDistributions, [nutrient]: nutrientDist }
+                    }
+                })
+                get().syncSlots()
             },
 
             addMeal: (meal) => {
@@ -387,10 +428,10 @@ export const useAppStore = create<AppState>()(
             },
 
             initSlots: (cal, prot, carbs, fat) => {
-                set({ slots: buildInitialSlots(cal, prot, carbs, fat) })
+                set({ slots: buildInitialSlots(cal, prot, carbs, fat, get().macroDistributions) })
             },
 
-            slots: buildInitialSlots(2000, 100, 250, 65),
+            slots: buildInitialSlots(2000, 100, 250, 65, { calories: DEFAULT_DIST, protein: DEFAULT_DIST, carbs: DEFAULT_DIST, fat: DEFAULT_DIST }),
 
             onboardingStep: 0,
             setOnboardingStep: (step) => set({ onboardingStep: step }),
@@ -409,6 +450,7 @@ export const useAppStore = create<AppState>()(
                 onboardingStep: state.onboardingStep,
                 onboardingForm: state.onboardingForm,
                 chatSuggestedMenus: state.chatSuggestedMenus,
+                macroDistributions: state.macroDistributions,
             }),
         }
     )
