@@ -122,10 +122,10 @@ export async function DELETE(req: NextRequest) {
         )
 
         // 1. Supprimer en PREMIER l'utilisateur de l'auth (opération critique)
-        // Revoquer l'accès avant toute autre chose
         const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
 
-        if (deleteAuthError) {
+        // "User not found" = déjà supprimé de l'auth lors d'une tentative précédente → on continue le nettoyage
+        if (deleteAuthError && !deleteAuthError.message?.toLowerCase().includes('not found')) {
             console.error('Delete auth error:', deleteAuthError)
             return NextResponse.json({ error: `Erreur lors de la suppression du compte: ${deleteAuthError.message}` }, { status: 500 })
         }
