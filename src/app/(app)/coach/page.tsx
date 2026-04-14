@@ -326,18 +326,31 @@ export default function CoachChatPage() {
             const todayKey = toLocalDateKey()
             const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
             
+            // Calcul des ratios en temps réel (même si l'alerte est supprimée de la UI)
+            const calTarget = profile?.calorie_target || 2000
+            const protTarget = profile?.protein_target_g || 100
+            const carbTarget = profile?.carbs_target_g || 250
+            const fatTarget = profile?.fat_target_g || 65
+
+            const calRatio = Math.round((dailyConsumed / calTarget) * 100)
+            const protRatio = Math.round((dailyProtein / protTarget) * 100)
+            const carbRatio = Math.round((dailyCarbs / carbTarget) * 100)
+            const fatRatio = Math.round((dailyFat / fatTarget) * 100)
+
             let alertInfo = ""
             if (smartAlert && smartAlert.date === todayKey) {
-                alertInfo = `\n[ALERTE COACH] : ${smartAlert.message}`
+                alertInfo = `\n[ALERTE ACTIVE] : ${smartAlert.message}`
             }
 
-            const stratInfo = `\n[STRATÉGIE NUTRITIONNELLE (% du total jour)] : 
-            Calories: Petit-déj:${macroDistributions.calories.petit_dejeuner*100}%, Déj:${macroDistributions.calories.dejeuner*100}%, Coll:${macroDistributions.calories.collation*100}%, Dîner:${macroDistributions.calories.diner*100}%
-            Protéines: Petit-déj:${macroDistributions.protein.petit_dejeuner*100}%, Déj:${macroDistributions.protein.dejeuner*100}%, Coll:${macroDistributions.protein.collation*100}%, Dîner:${macroDistributions.protein.diner*100}%
-            Glucides: Petit-déj:${macroDistributions.carbs.petit_dejeuner*100}%, Déj:${macroDistributions.carbs.dejeuner*100}%, Coll:${macroDistributions.carbs.collation*100}%, Dîner:${macroDistributions.carbs.diner*100}%
-            Lipides: Petit-déj:${macroDistributions.fat.petit_dejeuner*100}%, Déj:${macroDistributions.fat.dejeuner*100}%, Coll:${macroDistributions.fat.collation*100}%, Dîner:${macroDistributions.fat.diner*100}%`
+            const stratInfo = `\n[STRATÉGIE PAR REPAS] : 
+            Calories: P.Dej:${macroDistributions.calories.petit_dejeuner*100}%, Dej:${macroDistributions.calories.dejeuner*100}%, Col:${macroDistributions.calories.collation*100}%, Din:${macroDistributions.calories.diner*100}%
+            (Applique ces % à la cible de ${calTarget}kcal)`
 
-            const statsInfo = `\n[STATS AUJOURD'HUI] : Consommé: ${Math.round(dailyConsumed)}kcal, P:${dailyProtein}g, G:${dailyCarbs}g, L:${dailyFat}g.`
+            const statsInfo = `\n[ÉTAT DE CONSOMMATION DU JOUR] : 
+            - Calories : ${Math.round(dailyConsumed)} / ${calTarget} kcal (${calRatio}%)
+            - Protéines : ${dailyProtein} / ${protTarget} g (${protRatio}%)
+            - Glucides : ${dailyCarbs} / ${carbTarget} g (${carbRatio}%)
+            - Lipides : ${dailyFat} / ${fatTarget} g (${fatRatio}%)`
 
             const contextStr = `${statsInfo}${alertInfo}${stratInfo}`
 
