@@ -47,7 +47,7 @@ export default function SettingsPage() {
                             <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Stratégie nutritionnelle</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {effectiveTier !== 'premium' && <Crown size={12} color="var(--warning)" />}
+                            {effectiveTier !== 'premium' && <Crown size={12} color="var(--success)" />}
                             <ChevronRight size={16} color="var(--text-muted)" />
                         </div>
                     </button>

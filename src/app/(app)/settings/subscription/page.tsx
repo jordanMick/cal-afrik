@@ -28,11 +28,11 @@ const TIER_CONFIG = {
     },
     premium: {
         label: 'PREMIUM',
-        icon: <Crown size={22} color="var(--warning)" />,
-        color: 'var(--warning)',
-        bg: 'rgba(var(--warning-rgb), 0.1)',
-        border: 'rgba(var(--warning-rgb), 0.25)',
-        gradient: 'linear-gradient(135deg, var(--warning), #d97706)',
+        icon: <Crown size={22} color="var(--success)" />,
+        color: 'var(--success)',
+        bg: 'rgba(var(--success-rgb), 0.1)',
+        border: 'rgba(var(--success-rgb), 0.25)',
+        gradient: 'linear-gradient(135deg, var(--success), #059669)',
         textColor: '#fff',
     },
 }
@@ -222,7 +222,7 @@ export default function SubscriptionPage() {
                 {effectiveTier === 'pro' && (
                     <button
                         onClick={() => router.push('/upgrade?plan=premium')}
-                        style={{ width: '100%', padding: '14px', background: 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', borderRadius: '16px', color: 'var(--warning)', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        style={{ width: '100%', padding: '14px', background: 'transparent', border: '0.5px solid rgba(var(--success-rgb), 0.3)', borderRadius: '16px', color: 'var(--success)', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
                         <Crown size={16} />
                         Passer au Premium →
