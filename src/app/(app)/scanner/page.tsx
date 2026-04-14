@@ -522,6 +522,7 @@ export default function ScannerPage() {
 
     const [scanStep, setScanStep] = useState(0)
     const [isSuggestionsExpanded, setIsSuggestionsExpanded] = useState(false)
+    const [isChatMenuExpanded, setIsChatMenuExpanded] = useState(false)
     const scanSteps = [
         "Identification des aliments...",
         "Estimation des portions...",
@@ -1108,14 +1109,18 @@ export default function ScannerPage() {
                         padding: '18px 20px',
                         boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <button 
+                            onClick={() => setIsChatMenuExpanded(!isChatMenuExpanded)}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', padding: '0' }}
+                        >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <p style={{ color: slotColor, fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                                <p style={{ color: slotColor, fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                                     Menu suggéré par Yao
                                 </p>
                                 {activeMenuText && (
-                                        <button
-                                        onClick={() => {
+                                        <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
                                             if (confirm("Effacer cette suggestion ?")) {
                                                 clearChatSuggestedMenu(menuTab, menuTab === 'today' ? currentSlotKey : undefined)
                                             }
@@ -1124,41 +1129,49 @@ export default function ScannerPage() {
                                         title="Supprimer la suggestion"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6m4-6v6"/></svg>
-                                    </button>
+                                    </div>
                                 )}
                             </div>
-                            {menuTab === 'week' && activeMenuText && (
-                                <button
-                                    onClick={() => setShowWeekMenuPopup(true)}
-                                    style={{
-                                        width: '28px',
-                                        height: '28px',
-                                        borderRadius: '999px',
-                                        border: `0.5px solid ${slotColor}50`,
-                                        background: 'transparent',
-                                        color: slotColor,
-                                        fontSize: '16px',
-                                        fontWeight: '700',
-                                        lineHeight: 1,
-                                        cursor: 'pointer',
-                                        flexShrink: 0,
-                                    }}
-                                    aria-label="Afficher le menu semaine en popup"
-                                    title="Voir tout"
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {menuTab === 'week' && activeMenuText && (
+                                    <div
+                                        onClick={(e) => { e.stopPropagation(); setShowWeekMenuPopup(true); }}
+                                        style={{ width: '24px', height: '24px', borderRadius: '999px', border: `0.5px solid ${slotColor}50`, background: 'transparent', color: slotColor, fontSize: '14px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                        title="Voir tout"
+                                    >
+                                        →
+                                    </div>
+                                )}
+                                <motion.div
+                                    animate={{ rotate: isChatMenuExpanded ? 180 : 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    style={{ color: slotColor }}
                                 >
-                                    →
-                                </button>
-                            )}
-                        </div>
-                        {activeMenuText ? (
-                            <div style={{ marginTop: '8px', maxHeight: menuTab === 'week' ? '450px' : 'none', overflowY: 'auto', paddingRight: '4px' }}>
-                                {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots, slotColor)}
+                                    <ChevronDown size={14} />
+                                </motion.div>
                             </div>
-                        ) : (
-                            <p style={{ color: 'var(--text-muted)', fontSize: '12px', lineHeight: '1.55', marginTop: '8px' }}>
-                                Tu verras le menu suggéré par Yao ici. Demande un menu depuis le chat.
-                            </p>
-                        )}
+                        </button>
+
+                        <AnimatePresence>
+                            {isChatMenuExpanded && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                                >
+                                    {activeMenuText ? (
+                                        <div style={{ marginTop: '16px', maxHeight: menuTab === 'week' ? '450px' : 'none', overflowY: 'auto', paddingRight: '4px' }}>
+                                            {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots, slotColor)}
+                                        </div>
+                                    ) : (
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '12px', lineHeight: '1.55', marginTop: '16px' }}>
+                                            Tu verras le menu suggéré par Yao ici. Demande un menu depuis le chat.
+                                        </p>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Rappel permanent pour le prochain repas si prêt */}
                         {(() => {
