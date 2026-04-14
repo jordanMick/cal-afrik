@@ -521,7 +521,7 @@ export default function ScannerPage() {
     const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '4px', display: 'block', fontWeight: '500' }
 
     const [scanStep, setScanStep] = useState(0)
-    const [isSuggestionsExpanded, setIsSuggestionsExpanded] = useState(true)
+    const [isSuggestionsExpanded, setIsSuggestionsExpanded] = useState(false)
     const scanSteps = [
         "Identification des aliments...",
         "Estimation des portions...",
@@ -1066,37 +1066,6 @@ export default function ScannerPage() {
                 </div>
             </div>
 
-            {/* ASTUCE PRÉCISION */}
-            {!image && !isAnalyzing && (
-                <div style={{ 
-                    background: 'rgba(var(--accent-rgb), 0.05)', 
-                    border: '1px solid rgba(var(--accent-rgb), 0.15)', 
-                    borderRadius: '20px', 
-                    padding: '16px', 
-                    display: 'flex', 
-                    gap: '12px', 
-                    marginBottom: '20px' 
-                }}>
-                    <div style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '10px', 
-                        background: 'rgba(var(--accent-rgb), 0.1)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        flexShrink: 0 
-                    }}>
-                        <Info size={18} color="var(--accent)" />
-                    </div>
-                    <div>
-                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>Astuce Précision</p>
-                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                            Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
-                        </p>
-                    </div>
-                </div>
-            )}
 
             {/* Menus suggérés par Yao (via chat) */}
             {!image && !isAnalyzing && (
@@ -1482,6 +1451,39 @@ export default function ScannerPage() {
                     <button onClick={handleSaveManualFood} disabled={isSavingManual || !manualFood.name_fr || manualFood.calories <= 0} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: (!manualFood.name_fr || manualFood.calories <= 0) ? 'var(--bg-tertiary)' : `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: (!manualFood.name_fr || manualFood.calories <= 0) ? 'var(--text-muted)' : '#fff', border: 'none', fontWeight: '500', cursor: 'pointer', fontSize: '14px' }}>
                         {isSavingManual ? 'Sauvegarde...' : '✅ Sauvegarder et ajouter'}
                     </button>
+                </div>
+            )}
+
+            {/* ASTUCE PRÉCISION (Repositionnée en bas) */}
+            {!image && !isAnalyzing && (
+                <div style={{ 
+                    background: 'rgba(var(--accent-rgb), 0.05)', 
+                    border: '1px solid rgba(var(--accent-rgb), 0.15)', 
+                    borderRadius: '20px', 
+                    padding: '16px', 
+                    display: 'flex', 
+                    gap: '12px', 
+                    marginTop: '20px',
+                    marginBottom: '20px' 
+                }}>
+                    <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '10px', 
+                        background: 'rgba(var(--accent-rgb), 0.1)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flexShrink: 0 
+                    }}>
+                        <Info size={18} color="var(--accent)" />
+                    </div>
+                    <div>
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>Astuce Précision</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                            Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
+                        </p>
+                    </div>
                 </div>
             )}
 
