@@ -117,6 +117,13 @@ export async function DELETE(req: NextRequest) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
+        // 0. Enregistrer la suppression dans l'audit Log (Nouveau !)
+        await supabaseAdmin.from('account_deletions').insert({
+            user_id: user.id,
+            email: user.email,
+            reason: 'Suppression manuelle par l\'utilisateur'
+        })
+
         // 1. Supprimer les données de l'utilisateur
         await supabaseAdmin.from('meals').delete().eq('user_id', user.id)
         await supabaseAdmin.from('weight_logs').delete().eq('user_id', user.id)
