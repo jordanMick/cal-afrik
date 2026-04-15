@@ -72,61 +72,89 @@ export async function POST(req: Request) {
             });
 
             // FALLBACK 1 : Extraction depuis la description (ID: <user_id>)
-            if (!targetUserId && description.includes('ID:')) {
-                const parts = description.split('ID:');
-                if (parts.length > 1) {
-                    targetUserId = parts[1].trim().split(' ')[0].trim();
-                    console.log(`[FedaPay Webhook] Identifié via description: ${targetUserId}`);
+            if (!targetUserId && description && description.includes('ID:')) {
+                try {
+                    const parts = description.split('ID:');
+                    if (parts.length > 1) {
+                        targetUserId = parts[1].trim().split(' ')[0].trim();
+                        console.log(`[FedaPay Webhook] Identifié via description: ${targetUserId}`);
+                    }
+                } catch (e) {
+                    console.error('[FedaPay Webhook] Erreur extraction description:', e);
                 }
             }
 
-            // FALLBACK 2 : Recherche par email si toujours pas d'ID
+            // FALLBACK 2 : Recherche par email (On tente sur user_profiles au cas où la colonne existe, sinon on log)
             if (!targetUserId && customerEmail) {
-                const { data: userByEmail } = await supabaseAdmin
-                    .from('user_profiles')
-                    .select('user_id')
-                    .eq('email', customerEmail)
-                    .single();
-                
-                if (userByEmail) {
-                    targetUserId = userByEmail.user_id;
-                    console.log(`[FedaPay Webhook] Identifié via email: ${targetUserId}`);
+                console.log(`[FedaPay Webhook] Recherche par email: ${customerEmail}`);
+                try {
+                    const { data: userByEmail, error: emailErr } = await supabaseAdmin
+                        .from('user_profiles')
+                        .select('user_id')
+                        .ilike('email', customerEmail) // Suppression de eq pour ilike
+                        .maybeSingle();
+                    
+                    if (userByEmail) {
+                        targetUserId = userByEmail.user_id;
+                        console.log(`[FedaPay Webhook] Identifié via email: ${targetUserId}`);
+                    } else if (emailErr) {
+                        console.warn('[FedaPay Webhook] Recherche email échouée (la colonne existe peut-être pas):', emailErr.message);
+                    }
+                } catch (e) {
+                    console.error('[FedaPay Webhook] Erreur lors de la recherche par email');
                 }
             }
 
             if (!targetUserId) {
-                console.error('[FedaPay Webhook] ❌ ÉCHEC CRITIQUE : Impossible d\'identifier l\'utilisateur pour la transaction', transactionId);
+                console.error('[FedaPay Webhook] ❌ ÉCHEC CRITIQUE : UNABLE TO IDENTIFY USER. Metadata:', JSON.stringify(metadata));
                 return NextResponse.json({ error: 'User identification failed' }, { status: 400 });
             }
 
-            // Mise à jour de l'abonnement
-            const { data: profile } = await supabaseAdmin
+            console.log(`[FedaPay Webhook] 🔄 Début mise à jour pour: ${targetUserId} (Plan: ${tier})`);
+
+            // Récupération de l'expiration actuelle
+            const { data: profile, error: fetchError } = await supabaseAdmin
                 .from('user_profiles')
                 .select('subscription_expires_at')
                 .eq('user_id', targetUserId)
                 .single();
 
+            if (fetchError) {
+                console.error('[FedaPay Webhook] Erreur fetch profil:', fetchError.message);
+            }
+
             let baseDate = new Date();
             if (profile?.subscription_expires_at) {
                 const currentExp = new Date(profile.subscription_expires_at);
-                if (currentExp > baseDate) baseDate = currentExp;
+                if (currentExp > baseDate) {
+                    baseDate = currentExp;
+                    console.log('[FedaPay Webhook] Prolongation basée sur date future:', baseDate.toISOString());
+                }
             }
+            
             // Ajouter 30 jours
             baseDate.setDate(baseDate.getDate() + 30);
+            const newExpiry = baseDate.toISOString();
+
+            console.log(`[FedaPay Webhook] Nouvelle date prévue: ${newExpiry}`);
 
             const { error: updateError } = await supabaseAdmin
                 .from('user_profiles')
                 .update({ 
                     subscription_tier: tier.toLowerCase(),
-                    subscription_expires_at: baseDate.toISOString(),
-                    updated_at: new Date().toISOString(),
+                    subscription_expires_at: newExpiry
+                    // updated_at retiré car possiblement absent de la table
                 })
                 .eq('user_id', targetUserId);
 
-            if (updateError) throw updateError;
-            console.log(`[FedaPay Webhook] ✅ ABONNEMENT ACTIVÉ pour ${targetUserId}`);
+            if (updateError) {
+                console.error('[FedaPay Webhook] ❌ ERREUR SQL UPDATE:', updateError.message);
+                throw updateError;
+            }
+            
+            console.log(`[FedaPay Webhook] ✅ UPDATE RÉUSSI EN BASE pour ${targetUserId}`);
         } else {
-            console.warn(`[FedaPay Webhook] Transaction non approuvée ignorée (Statut: ${officialTransaction.status})`);
+            console.warn(`[FedaPay Webhook] Transaction ignorée (Status: ${officialTransaction.status})`);
         }
         
         return NextResponse.json({ success: true });
