@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChevronLeft, Calendar, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -176,9 +177,11 @@ export default function HistoriquePage() {
             <div style={{ position: 'fixed', top: '-60px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--accent-rgb), 0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             {/* HEADER */}
-            <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '14px', borderBottom: '0.5px solid var(--border-color)' }}>
-                <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '8px', width: '32px', height: '32px', color: 'var(--text-primary)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
-                <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '600' }}>Historique</h1>
+            <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <ChevronLeft color="var(--text-primary)" size={24} />
+                </button>
+                <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800' }}>Historique</h1>
             </div>
 
             <div style={{ padding: '20px' }}>

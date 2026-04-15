@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChevronLeft } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { calculateCalorieTarget } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
@@ -330,14 +331,26 @@ export default function OnboardingPage() {
                 div::-webkit-scrollbar { display: none; }
             `}</style>
 
-            {/* PROGRESS BAR */}
+            {/* HEADER & PROGRESS BAR */}
             {step < 12 && (
-                <div style={{ width: '100%', height: '4px', background: '#111', borderRadius: '2px', marginBottom: '40px' }}>
-                    <div style={{
-                        width: `${(step / 12) * 100}%`, height: '100%',
-                        background: 'linear-gradient(90deg, #22c55e, #10b981)',
-                        borderRadius: '2px', transition: 'width 0.4s ease'
-                    }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
+                    {step > 0 && step < 11 ? (
+                        <button onClick={back} style={{ background: '#111', border: '1.5px solid #222', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                            <ChevronLeft color="#fff" size={24} />
+                        </button>
+                    ) : (
+                        // Placeholder to maintain layout when no back button
+                        <div style={{ width: '40px', height: '40px', flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, height: '4px', background: '#111', borderRadius: '2px' }}>
+                        <div style={{
+                            width: `${(step / 12) * 100}%`, height: '100%',
+                            background: 'linear-gradient(90deg, #22c55e, #10b981)',
+                            borderRadius: '2px', transition: 'width 0.4s ease'
+                        }} />
+                    </div>
+                    {/* Right placeholder to center the progress bar correctly */}
+                    <div style={{ width: '40px', height: '40px', flexShrink: 0 }} />
                 </div>
             )}
 
@@ -655,10 +668,7 @@ export default function OnboardingPage() {
                 </StepWrapper>
             )}
 
-            {/* BTN RETOUR */}
-            {step > 0 && step < 11 && (
-                <button onClick={back} style={{ position: 'fixed', bottom: '40px', left: '24px', background: 'transparent', border: 'none', color: '#444', fontSize: '14px', fontWeight: '700', cursor: 'pointer', zIndex: 10 }}>← Précédent</button>
-            )}
+
         </div>
     )
 }

@@ -84,7 +84,7 @@ export default function NotificationsPage() {
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '40px' }}>
             {/* Header */}
             <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                     <ChevronLeft color="var(--text-primary)" size={24} />
                 </button>
                 <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800' }}>Notifications</h1>

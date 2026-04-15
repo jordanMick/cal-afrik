@@ -48,20 +48,27 @@ export default function MacroStrategyPage() {
 
     if (effectiveTier !== 'premium') {
         return (
-             <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', textAlign: 'center' }}>
-                <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(var(--warning-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-                    <Crown size={40} color="var(--warning)" />
+             <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', paddingBottom: '100px' }}>
+                {/* Header Unifié */}
+                <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <ChevronLeft color="var(--text-primary)" size={24} />
+                    </button>
+                    <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800' }}>Stratégie nutritionnelle</h1>
                 </div>
-                <h1 style={{ fontSize: '24px', fontWeight: '900', marginBottom: '16px' }}>Fonctionnalité Premium</h1>
-                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '32px' }}>
-                    La personnalisation avancée des cibles par repas est réservée aux abonnés Premium Cal-Afrik.
-                </p>
-                <button onClick={() => router.push('/settings/subscription')} style={{ width: '100%', padding: '18px', background: 'var(--warning)', borderRadius: '20px', color: '#fff', border: 'none', fontSize: '16px', fontWeight: '800', cursor: 'pointer' }}>
-                    Découvrir le Premium
-                </button>
-                <button onClick={() => router.back()} style={{ marginTop: '20px', background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
-                    Retour
-                </button>
+
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 40px', textAlign: 'center' }}>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(var(--warning-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                        <Crown size={40} color="var(--warning)" />
+                    </div>
+                    <h2 style={{ fontSize: '22px', fontWeight: '900', marginBottom: '16px' }}>Fonctionnalité Premium</h2>
+                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '32px' }}>
+                        La personnalisation avancée des cibles par repas est réservée aux abonnés Premium Cal-Afrik.
+                    </p>
+                    <button onClick={() => router.push('/settings/subscription')} style={{ width: '100%', padding: '18px', background: 'var(--warning)', borderRadius: '20px', color: '#fff', border: 'none', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 10px 20px rgba(var(--warning-rgb), 0.2)' }}>
+                        Découvrir le Premium
+                    </button>
+                </div>
              </div>
         )
     }
