@@ -229,11 +229,15 @@ export async function POST(req: NextRequest) {
         let allFoodsDB: any[] = [] // Hoissé pour la validation post-réponse du bloc ---DATA---
 
         if (wantsMenuAny) {
-            console.log("🔍 Coach Yao interroge la BD food_items...")
-            const { data: allFoods, error: foodsError } = await supabase.from('food_items').select('*')
+            console.log("🔍 Coach Yao interroge la BD food_items (Filtre Sécurité)...")
+            const { data: allFoods, error: foodsError } = await supabase
+                .from('food_items')
+                .select('*, verified, user_id')
+                .or(`verified.eq.true,user_id.eq.${user.id}`)
+
             if (foodsError) console.error("❌ Erreur Supabase food_items:", foodsError)
             if (allFoods) allFoodsDB = allFoods  // Sauvegarde pour correction DATA post-IA
-            console.log(`✅ ${allFoods?.length || 0} aliments trouvés dans la BD.`)
+            console.log(`✅ ${allFoods?.length || 0} aliments sécurisés trouvés dans la BD.`)
 
             if (allFoods && allFoods.length > 0) {
                 // ── Détection d'ingrédients précisés par l'utilisateur ──────────

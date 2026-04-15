@@ -313,10 +313,12 @@ export async function POST(req: Request) {
         console.log("📸 TYPE:", image.mimeType)
         console.log("📸 BASE64 SIZE:", image.data.length)
 
-        // Préchargement SQL: source de vérité nutritionnelle
+        // Préchargement SQL: source de vérité nutritionnelle (Officiels + Persos)
         const { data: foodItems, error: foodItemsError } = await supabase
             .from("food_items")
-            .select("id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, lipids_100g, carbs_100g")
+            .select("id, name_standard, display_name, density_g_ml, calories_per_100g, proteins_100g, lipids_100g, carbs_100g, verified, user_id")
+            .or(`verified.eq.true,user_id.eq.${user.id}`)
+
         const { data: foodAliases, error: foodAliasesError } = await supabase
             .from("food_aliases")
             .select("alias_name, food_item_id")
