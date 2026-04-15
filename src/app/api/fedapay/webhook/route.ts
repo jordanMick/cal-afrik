@@ -142,8 +142,9 @@ export async function POST(req: Request) {
                 .from('user_profiles')
                 .update({ 
                     subscription_tier: tier.toLowerCase(),
-                    subscription_expires_at: newExpiry
-                    // updated_at retiré car possiblement absent de la table
+                    subscription_expires_at: newExpiry,
+                    email: customerEmail, // On en profite pour remplir l'email s'il était NULL
+                    updated_at: new Date().toISOString()
                 })
                 .eq('user_id', targetUserId);
 
