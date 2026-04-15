@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { GoogleGenAI } from "@google/genai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import type { ScanApiResponse } from "@/types"
 
-const genAI = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY as string,
-    apiVersion: "v1",
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -355,22 +352,21 @@ export async function POST(req: Request) {
         for (const modelName of GEMINI_MODEL_CANDIDATES) {
             lastTriedModel = modelName
             console.log("[ANALYZE] Trying Gemini model", modelName)
+            const model = genAI.getGenerativeModel({ model: modelName })
+            
             try {
                 const maxAttempts = 3
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                     try {
                         console.log("[ANALYZE] Gemini attempt", { modelName, attempt, maxAttempts })
-                        const result = await genAI.models.generateContent({
-                            model: modelName,
-                            contents: inputParts as any,
-                            config: {
+                        const result = await model.generateContent({
+                            contents: [{ role: 'user', parts: inputParts as any }],
+                            generationConfig: {
                                 temperature: 0.1,
-                                response_mime_type: "application/json",
+                                responseMimeType: "application/json",
                             },
                         })
-                        responseText = typeof (result as any).text === "function"
-                            ? (result as any).text()
-                            : String((result as any).text || "")
+                        responseText = result.response.text()
                         generationError = null
                         console.log(`✅ Gemini modèle utilisé: ${modelName} (attempt ${attempt}/${maxAttempts})`)
                         break
