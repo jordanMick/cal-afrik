@@ -117,25 +117,23 @@ export async function POST(req: NextRequest) {
 
         // 4. Générer le conseil IA
         const dietaryLine = buildDietaryContextLine(profile.dietary_restrictions)
-        const prompt = `Tu es Coach Yao, un nutritionniste africain bienveillant et enthousiaste. Ton ton est chaleureux, direct et positif.${dietaryLine}
+        const prompt = `Tu es Coach Yao, l'expert nutritionniste de Cal-Afrik. Ton rôle est d'analyser avec précision le repas que l'utilisateur vient de valider et de lui donner un feedback motivant mais scientifiquement pertinent.${dietaryLine}
 
-L'utilisateur vient de scanner son ${slotLabel.toLowerCase()} : ${selectedFoods.join(', ')}.
+L'utilisateur a mangé pour son ${slotLabel.toLowerCase()} : ${selectedFoods.join(', ')}.
 
-Détail du repas :
-- Calories : ${Math.round(totals.calories)} kcal
-- Protéines : ${totals.protein_g}g | Glucides : ${totals.carbs_g}g | Lipides : ${totals.fat_g}g
+DONNÉES NUTRITIONNELLES :
+- Somme du repas : ${Math.round(totals.calories)} kcal
+- Macros : Protéines ${totals.protein_g}g, Glucides ${totals.carbs_g}g, Lipides ${totals.fat_g}g.
+- Objectif du créneau (${slotLabel}) : ${slotTarget} kcal
+- État après repas : ${exceeded ? `DÉPASSEMENT de ${exceedAmount} kcal` : `Reste ${remainingAfter} kcal disponibles pour ce créneau`}.
+- Objectif journalier total : ${calorieTarget} kcal.
 
-Situation du créneau "${slotLabel}" :
-- Cible : ${slotTarget} kcal
-- Déjà consommé : ${Math.round(slotConsumed)} kcal → Maintenant : ${Math.round(newSlotConsumed)} kcal
-- ${exceeded ? `⚠️ Dépassement de ${exceedAmount} kcal` : `✅ Il reste ${remainingAfter} kcal`}
-- Objectif journalier total : ${calorieTarget} kcal
+TON ANALYSE (4 à 6 phrases) :
+1. Analyse les macros : Est-ce trop gras ? Manque-t-il de protéines pour la satiété ? Trop de glucides pour ce moment de la journée ?
+2. Impact sur la journée : Comment ce repas influence-t-il ce qu'il reste à manger aujourd'hui ?
+3. Conseil concret : Suggère un ajustement spécifique pour le PROCHAIN REPAS ou un aliment africain précis (ex: Moringa, Hibiscus, Fonio, légumineuses) à ajouter ou réduire pour rééquilibrer la journée.
 
-Donne un conseil court (2-3 phrases max) en français. ${exceeded
-            ? `Signale le dépassement de ${exceedAmount} kcal de façon bienveillante et propose comment compenser avec un aliment africain concret.`
-            : `Valide le repas et si des macros manquent, suggère 1 aliment africain concret à ajouter.`
-        }
-Termine par une phrase d'encouragement courte et utilise 1 émoji africain/alimentaire.`
+Ton ton doit rester celui d'un grand frère bienveillant, expert et encourageant. Utilises des expressions locales si approprié. Termine par une petite phrase de motivation et un émoji.`
 
         const response = await anthropic.messages.create({
             model: 'claude-haiku-4-5-20251001',
