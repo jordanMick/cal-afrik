@@ -14,6 +14,15 @@ export default function LoginPage() {
     const [successMsg, setSuccessMsg] = useState('')
     const [isRegister, setIsRegister] = useState(false)
 
+    const translateError = (err: string) => {
+        if (err.includes('Invalid login credentials')) return "Email ou mot de passe incorrect 🧐"
+        if (err.includes('User already registered')) return "Un compte existe déjà avec cet email ✉️"
+        if (err.includes('at least 6 characters')) return "Le mot de passe doit faire au moins 6 caractères 🔑"
+        if (err.includes('Email not confirmed')) return "Vérifie tes emails pour confirmer ton compte ! 📧"
+        if (err.includes('rate limit')) return "Trop de tentatives ! Réessaie dans quelques minutes ⏳"
+        return err // Retourne l'erreur originale si non gérée
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
@@ -27,19 +36,19 @@ export default function LoginPage() {
                     password,
                     options: { emailRedirectTo: `${siteUrl}/onboarding` }
                 })
-                if (error) { setError(error.message); return }
+                if (error) { setError(translateError(error.message)); return }
                 if (!data.session) {
-                    setSuccessMsg('Compte créé ! Veuillez vérifier votre boîte de réception.')
+                    setSuccessMsg('Compte créé ! Vérifie ta boîte mail pour valider ton inscription 📧')
                     return
                 }
                 router.push('/onboarding')
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password })
-                if (error) { setError(error.message); return }
+                if (error) { setError(translateError(error.message)); return }
                 router.push('/dashboard')
             }
         } catch {
-            setError('Une erreur est survenue')
+            setError('Une erreur est survenue lors de la connexion')
         } finally {
             setIsLoading(false)
         }
@@ -53,7 +62,7 @@ export default function LoginPage() {
                     redirectTo: `${window.location.origin}/dashboard`
                 }
             })
-            if (error) setError(error.message)
+            if (error) setError(translateError(error.message))
         } catch (e) {
             setError('Erreur lors de la connexion avec Google')
         }
