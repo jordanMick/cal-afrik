@@ -365,7 +365,7 @@ export async function POST(req: Request) {
                             contents: inputParts as any,
                             config: {
                                 temperature: 0.1,
-                                responseMimeType: "application/json",
+                                response_mime_type: "application/json",
                             },
                         })
                         responseText = typeof (result as any).text === "function"
