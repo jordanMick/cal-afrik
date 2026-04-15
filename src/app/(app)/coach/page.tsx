@@ -147,6 +147,7 @@ export default function CoachChatPage() {
     const [isLoadingThreads, setIsLoadingThreads] = useState(false)
     const [showScrollButton, setShowScrollButton] = useState(false)
     const scrollContainerRef = useRef<HTMLDivElement>(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
 
     // ── Sauvegarde asynchrone d'un thread vers Supabase ──────────────
     const saveThreadToSupabase = async (thread: ChatThread, userId: string) => {
@@ -170,6 +171,14 @@ export default function CoachChatPage() {
     useEffect(() => {
         setMessagesUsedToday(profile?.last_usage_reset_date === todayDate ? (profile?.chat_messages_today || 0) : 0)
     }, [profile, todayDate])
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto'
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`
+        }
+    }, [input])
 
     // Historique persistant : chargé depuis Supabase (sync cross-device)
     useEffect(() => {
@@ -599,7 +608,8 @@ export default function CoachChatPage() {
                                 fontSize: '15px',
                                 lineHeight: '1.6',
                                 boxShadow: isCoach ? 'none' : '0 10px 20px rgba(var(--accent-rgb), 0.2)',
-                                border: isCoach ? '0.5px solid var(--border-color)' : 'none'
+                                border: isCoach ? '0.5px solid var(--border-color)' : 'none',
+                                whiteSpace: 'pre-wrap'
                             }}>
                                 {isCoach ? (
                                     <ReactMarkdown
@@ -783,17 +793,33 @@ export default function CoachChatPage() {
                         </div>
                     )
                 ) : (
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <input
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                        <textarea
+                            ref={textareaRef}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    handleSendMessage()
+                                }
+                            }}
                             placeholder="Pose ta question à Yao..."
+                            rows={1}
                             style={{
-                                flex: 1, padding: '18px 24px', borderRadius: '24px',
-                                background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)',
-                                color: 'var(--text-primary)', fontSize: '15px', outline: 'none',
-                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                                flex: 1,
+                                padding: '16px 24px',
+                                borderRadius: '24px',
+                                background: 'var(--bg-secondary)',
+                                border: '0.5px solid var(--border-color)',
+                                color: 'var(--text-primary)',
+                                fontSize: '15px',
+                                outline: 'none',
+                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                                resize: 'none',
+                                overflowY: (textareaRef.current?.scrollHeight || 0) > 120 ? 'auto' : 'hidden',
+                                fontFamily: 'inherit',
+                                lineHeight: '1.4'
                             }}
                         />
                         <button
