@@ -1,0 +1,61 @@
+================================================================================
+CAL-AFRIK : PRÉSENTATION GÉNÉRALE DES FONCTIONNALITÉS
+================================================================================
+
+Cal-Afrik est une application de nutrition et de fitness spécialisée pour la région 
+UEMOA (Afrique de l'Ouest). Elle combine l'intelligence artificielle et une base 
+de données alimentaire locale pour aider les utilisateurs à atteindre leurs 
+objectifs de poids et de santé.
+
+--------------------------------------------------------------------------------
+1. SYSTÈME D'AUTHENTIFICATION & PROFIL
+--------------------------------------------------------------------------------
+- Inscription et Connexion : Supporte Google OAuth et l'email/mot de passe.
+- Onboarding : Un tunnel captivant pour collecter les données biométriques (âge, 
+  poids, taille, niveau d'activité) et les objectifs de l'utilisateur.
+- Gestion du Profil : Mise à jour des données personnelles, changement de mot 
+  de passe sécurisé et suppression de compte avec audit log.
+
+--------------------------------------------------------------------------------
+2. SCANNER NUTRITIONNEL IA (FRONT & BACK)
+--------------------------------------------------------------------------------
+- Capture d'image : Les utilisateurs photographient leurs plats.
+- Analyse IA (API Gemini/Vision) : Reconnaissance automatique des aliments 
+  africains (ex: Garba, Tiep, Foutou) et estimation des portions.
+- Calcul des Macros : Conversion instantanée de l'image en Calories, Protéines, 
+  Glucides et Lipides.
+- Journal de bord : Ajout manuel ou automatique des repas scannés au journal quotidien.
+
+--------------------------------------------------------------------------------
+3. COACH YAO : L'IA NUTRITIONNISTE
+--------------------------------------------------------------------------------
+- Chat Interactif : Coaching personnalisé disponible 24/7.
+- Spécialisation Régionale : Connaît les ingrédients locaux et les variations 
+  culturelles (Bénin vs Côte d'Ivoire vs Togo vs Sénégal).
+- Analyse de l'Historique : Le coach peut voir vos repas passés pour donner 
+  des conseils basés sur votre consommation réelle.
+- Database Locale (35 Aliments Certifiés) : Utilise une base de données stricte 
+  pour garantir la précision des recommandations.
+
+--------------------------------------------------------------------------------
+4. SUIVI DU POIDS & GRAPHES
+--------------------------------------------------------------------------------
+- Journal de Pesée : Les utilisateurs enregistrent leur poids régulièrement.
+- Visualisation (Chart.js/SVG Custom) : Graphique dynamique montrant la progression 
+  sur 8 semaines, 6 mois ou 1 an (selon le plan).
+- Recalcul Automatique : Mise à jour dynamique des objectifs caloriques 
+  quand le poids change (Feature Premium).
+
+--------------------------------------------------------------------------------
+5. SYSTÈME DE NOTIFICATIONS PUSH
+--------------------------------------------------------------------------------
+- Rappels de Repas : Notifications aux heures de petit-déjeuner, déjeuner et dîner.
+- Rappels d'Hydratation : Pour encourager la consommation d'eau.
+- Alertes de Subscription : Notification avant l'expiration du plan.
+
+--------------------------------------------------------------------------------
+6. ABONNEMENTS ET MONÉTISATION
+--------------------------------------------------------------------------------
+- Tiers : Gratuit (limité), Pro (Fonctions avancées), Premium (Support IA illimité).
+- Paiements Fedapay : Intégration locale sécurisée (Mobile Money, Carte Bancaire).
+- Webhooks backend : Synchronisation automatique des droits d'accès après paiement.

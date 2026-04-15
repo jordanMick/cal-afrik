@@ -1,0 +1,45 @@
+================================================================================
+ARCHITECTURE FRONTEND (CLIENT REACT & UX)
+================================================================================
+
+Le frontend est une Application Web Progressive (PWA) construite avec React, 
+Next.js (App Router), et Vanilla CSS pour un design premium et rapide.
+
+--------------------------------------------------------------------------------
+1. GESTION D'ÉTAT (Zustand)
+--------------------------------------------------------------------------------
+- Store Central (src/store/useAppStore.ts) : Centralise le profil utilisateur, 
+  le statut de l'abonnement, et les préférences. Évite les requêtes API redondantes 
+  en mettant en cache les données récupérées.
+
+--------------------------------------------------------------------------------
+2. COMPOSANTS CLÉS
+--------------------------------------------------------------------------------
+- Scanner UI : Interface de capture photo avec prévisualisation. Utilise l'API 
+  Canvas pour redimensionner les images avant l'envoi pour économiser la bande passante.
+- Journal Interactif : Une vue chronologique des repas avec agrégation quotidienne 
+  des calories. Permet la suppression et la consultation détaillée.
+- Graphes Dynamiques : Implémentation custom en SVG avec animations CSS pour 
+  montrer les variations de poids de manière esthétique.
+- Coach Yao Sidebar : Fenêtre de chat flottante optimisée pour mobile avec 
+  auto-scroll et rendu Markdown pour les conseils structurés.
+
+--------------------------------------------------------------------------------
+3. LOGIQUE MÉTIER CLIENT (src/lib)
+--------------------------------------------------------------------------------
+- nutrition.ts : Contient les algorithmes de calcul (Mifflin-St Jeor) pour 
+  déterminer les besoins caloriques de base (BMR) et les cibles quotidiennes.
+- subscription.ts : Logique de vérification des permissions (hasAutomaticRecalculation, 
+  hasGraph, hasWeeklyMenu). Gère l'affichage des verrous 🔒 sur les fonctions payantes.
+- dietaryContext.ts : Structure les informations envoyées au coach (ex: allergies, 
+  cuisines préférées) pour une meilleure personnalisation.
+
+--------------------------------------------------------------------------------
+4. DESIGN SYSTEM (src/app/globals.css)
+--------------------------------------------------------------------------------
+- Thème Sombre Premium : Couleurs de fond sombres (#0a0a0a, #141414) avec des 
+  accents vibrants (Indigo, Emeraude, Ambre).
+- Halos d'Ambiance : Utilisation massive de gradients radiaux fixes pour créer 
+  un sentiment de profondeur (Glassmorphism).
+- Micro-interactions : Animations d'entrée (slideIn), effets de hover sur les 
+  cartes, et transitions fluides entre les pages.

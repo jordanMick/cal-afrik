@@ -1,0 +1,52 @@
+================================================================================
+ARCHITECTURE BACKEND (API & BASE DE DONNÉES)
+================================================================================
+
+Le backend de Cal-Afrik repose sur Next.js App Router (API Routes) et Supabase 
+pour la persistance des données et l'authentification.
+
+--------------------------------------------------------------------------------
+1. GESTION DES UTILISATEURS (src/app/api/user)
+--------------------------------------------------------------------------------
+- GET /api/user : Récupère le profil complet (données physiques, objectifs).
+- POST /api/user : Initialise ou met à jour le profil lors de l'onboarding.
+- PATCH /api/user/weight : Point d'entrée spécifique pour la mise à jour du poids 
+  avec calculatrice nutritionnelle intégrée au serveur.
+- DELETE /api/user : Suppression sécurisée. Supprime d'abord l'utilisateur dans 
+  l'Auth Supabase, puis nettoie les tables 'meals', 'weight_logs' et 'user_profiles'.
+
+--------------------------------------------------------------------------------
+2. REPAS ET ANALYSE (src/app/api/meals & /api/scan)
+--------------------------------------------------------------------------------
+- POST /api/scan : Reçoit un fichier image (multipart/form-data). Utilise l'IA 
+  pour identifier les composants du plat et renvoie une estimation nutritionnelle.
+- GET /api/meals : Récupère l'historique des repas filtré par date ou par plage. 
+  Gère automatiquement le décalage horaire (timezone offset) client.
+- POST /api/meals : Enregistre un repas dans la table 'meals' avec son horodatage complexe.
+
+--------------------------------------------------------------------------------
+3. COACH YAO & CHAT (src/app/api/chat)
+--------------------------------------------------------------------------------
+- POST /api/chat : Le hub central du coaching. 
+  1. Identifie l'utilisateur via son token.
+  2. Récupère le profil (poids, but, pays).
+  3. Récupère les repas des dernières 24h ou 7 jours.
+  4. Envoie le contexte complet à l'IA pour une réponse ultra-pertinente.
+  5. Stocke l'interaction dans 'chat_messages'.
+
+--------------------------------------------------------------------------------
+4. PAIEMENTS FEDAPAY (src/app/api/fedapay)
+--------------------------------------------------------------------------------
+- POST /api/fedapay : Crée une session de paiement FedaPay. Renvoie un lien vers 
+  le portail de paiement.
+- POST /api/fedapay/webhook : Point de terminaison critique appelé par FedaPay 
+  une fois la transaction terminée. Vérifie l'authenticité et met à jour le 
+  'subscription_tier' et 'subscription_expires_at' dans la DB.
+
+--------------------------------------------------------------------------------
+5. NOTIFICATIONS PUSH (src/app/api/push)
+--------------------------------------------------------------------------------
+- POST /api/push/subscribe : Stocke le 'push_subscription' (endpoint, keys) 
+  de l'utilisateur dans la table 'push_subscriptions'.
+- Envoi Broadcast : Scripts serveurs qui parcourent la table et envoient des 
+  WebPushes via la bibliothèque 'web-push' de Node.js.

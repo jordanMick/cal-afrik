@@ -1,0 +1,44 @@
+================================================================================
+LOGIQUE COACH YAO & BASE DE DONNÉES LOCALE
+================================================================================
+
+Le "Coach Yao" est l'âme de Cal-Afrik. Voici comment il fonctionne en profondeur.
+
+--------------------------------------------------------------------------------
+1. LA BASE DE DONNÉES DE RÉFÉRENCE (src/app/api/foods)
+--------------------------------------------------------------------------------
+L'IA Scan ne devine pas tout au hasard. Elle s'appuie sur une liste stricte de 35 
+groupes d'aliments africains certifiés. 
+- Structure : Nom Local | Calories/100g | Macros | Groupe Alimentaire.
+- Exemples clés : 
+  - Foutou (Igname/Banane)
+  - Plali (Pâte Noire)
+  - Atchéké (Côte d'Ivoire)
+  - Riz Jollof / Gras
+  - Sauces : Gombo, Arachide, Feuilles.
+
+--------------------------------------------------------------------------------
+2. PERSONNALISATION PAR PAYS
+--------------------------------------------------------------------------------
+Le coach adapte son langage selon le pays configuré dans le profil :
+- Togo/Bénin : Priorité aux noms comme "Pâte", "Sodabi" (modération), "Adémè".
+- Côte d'Ivoire : Focus sur "Attiéké", "Alloco", "Kedjenou".
+- Sénégal : Focus sur "Tiep", "Mafe", "Yassa".
+
+--------------------------------------------------------------------------------
+3. LOGIQUE DE PLANIFICATION (CONFLICT RESOLUTION)
+--------------------------------------------------------------------------------
+Avant de suggérer un menu pour le lendemain, Yao :
+1. Analyse ce qui est déjà prévu (dans la table 'planning').
+2. Vérifie les calories déjà consommées.
+3. Résout les conflits : si un utilisateur a déjà prévu un plat lourd le soir, 
+   Yao proposera une collation ou un déjeuner léger pour rester dans la cible.
+
+--------------------------------------------------------------------------------
+4. TON ET POSITIONNEMENT
+--------------------------------------------------------------------------------
+- Ton : Fraternel, encourageant, mais ferme sur les objectifs.
+- Culture : Yao connaît les réalités locales (ex: fêtes, repas de famille 
+  copieux) et suggère des ajustements plutôt que des privations impossibles.
+- Langue : Utilise des expressions locales familières pour renforcer le lien 
+  avec l'utilisateur.
