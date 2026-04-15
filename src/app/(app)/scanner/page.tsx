@@ -712,6 +712,7 @@ export default function ScannerPage() {
             }
             setMealName(json.meal_name || 'Repas détecté')
             setTotalCaloriesCoach(json.total_calories || 0)
+            setCoachMessage(json.coach_message || '')
             const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[]).flatMap((item): EnrichedSuggestion[] => {
                 const suggs = item.suggestions ?? []
                 if (suggs.length > 0) return suggs.map((s): EnrichedSuggestion => ({ ...s, portion_g: item.portion_g ?? 0, calories_detected: item.calories_detected ?? 0, protein_detected: item.protein_detected ?? 0, carbs_detected: item.carbs_detected ?? 0, fat_detected: item.fat_detected ?? 0, confidence: item.confidence ?? 0, detected: item.detected ?? 'Inconnu', fromCoach: false }))
@@ -1441,6 +1442,33 @@ export default function ScannerPage() {
                         )}
                     </AnimatePresence>
                 </div>
+            )}
+
+            {/* MESSAGE SI AUCUNE SUGGESTION DÉTECTÉE */}
+            {!isAnalyzing && image && suggestions.length === 0 && coachMessage && (
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{ 
+                        background: 'rgba(var(--warning-rgb), 0.1)', 
+                        border: '1px solid rgba(var(--warning-rgb), 0.3)', 
+                        borderRadius: '20px', 
+                        padding: '20px', 
+                        marginBottom: '24px',
+                        textAlign: 'center' 
+                    }}
+                >
+                    <div style={{ fontSize: '32px', marginBottom: '12px' }}>🤔</div>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600', lineHeight: '1.5', marginBottom: '16px' }}>
+                        {coachMessage}
+                    </p>
+                    <button 
+                        onClick={() => setShowManualForm(true)}
+                        style={{ background: 'var(--warning)', color: '#000', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                    >
+                        Ajouter manuellement
+                    </button>
+                </motion.div>
             )}
 
             {/* AJOUT MANUEL */}

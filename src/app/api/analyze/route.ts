@@ -760,6 +760,7 @@ export async function POST(req: Request) {
             meal_name: finalMealName,
             total_calories: totalCalories,
             data: results,
+            coach_message: results.length === 0 ? "Je n'ai pas réussi à identifier d'aliments sur cette photo. Assure-toi que ton plat est bien visible et éclairé, ou ajoute-le manuellement." : null
         })
 
     } catch (err: any) {
