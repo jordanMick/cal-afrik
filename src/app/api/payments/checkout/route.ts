@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { FedaPay, Transaction } from 'fedapay';
 
 const PRICES = {
-    pro: 1,
-    premium: 1
+    pro: 100,
+    premium: 100
 };
 
 export async function POST(req: Request) {
@@ -72,7 +72,12 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        console.error('[FedaPay] Erreur fatale Checkout:', error.message);
-        return NextResponse.json({ error: error.message || 'Erreur serveur' }, { status: 500 });
+        console.error('[FedaPay] Erreur Checkout Detail:', {
+            message: error.message,
+            response: error.response?.data, // Très important pour FedaPay
+            status: error.response?.status
+        });
+        const msg = error.response?.data?.message || error.message || 'Erreur de communication avec FedaPay';
+        return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
