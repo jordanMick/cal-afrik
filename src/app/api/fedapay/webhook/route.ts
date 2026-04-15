@@ -44,37 +44,58 @@ export async function POST(req: Request) {
         if (officialTransaction.status === 'approved') {
             
             // Extraction des métadonnées (de la transaction officielle pour plus de sécurité)
+            // FedaPay peut renvoyer metadata ou custom_metadata, parfois stringifié
             const rawMeta = officialTransaction.metadata || officialTransaction.custom_metadata || {};
             let metadata: any = {};
+            
             if (typeof rawMeta === 'string') {
-                try { metadata = JSON.parse(rawMeta); } catch (e) {}
-            } else { metadata = rawMeta; }
+                try { 
+                    metadata = JSON.parse(rawMeta); 
+                } catch (e) {
+                    console.warn('[FedaPay Webhook] Échec du parse JSON des métadonnées:', rawMeta);
+                }
+            } else { 
+                metadata = rawMeta; 
+            }
 
-            const userId = metadata.user_id || metadata.userId;
-            const tier = metadata.tier || metadata.plan || "premium";
+            // On cherche le userId sous toutes ses formes possibles
+            let targetUserId = metadata.user_id || metadata.userId || officialTransaction.external_id;
+            const tier = (metadata.tier || metadata.plan || "premium").toLowerCase();
             const customerEmail = officialTransaction.customer?.email;
             const description = officialTransaction.description || "";
 
-            let targetUserId = userId;
+            console.log(`[FedaPay Webhook] Tentative identification pour:`, { 
+                targetUserId, 
+                customerEmail, 
+                tier,
+                hasDescription: !!description 
+            });
 
-            // FALLBACK 1: Chercher dans la description (Format: "... ID: user_id")
+            // FALLBACK 1 : Extraction depuis la description (ID: <user_id>)
             if (!targetUserId && description.includes('ID:')) {
                 const parts = description.split('ID:');
-                if (parts.length > 1) targetUserId = parts[1].trim();
+                if (parts.length > 1) {
+                    targetUserId = parts[1].trim().split(' ')[0].trim();
+                    console.log(`[FedaPay Webhook] Identifié via description: ${targetUserId}`);
+                }
             }
 
-            // FALLBACK 2: Chercher par email
+            // FALLBACK 2 : Recherche par email si toujours pas d'ID
             if (!targetUserId && customerEmail) {
                 const { data: userByEmail } = await supabaseAdmin
                     .from('user_profiles')
                     .select('user_id')
                     .eq('email', customerEmail)
                     .single();
-                if (userByEmail) targetUserId = userByEmail.user_id;
+                
+                if (userByEmail) {
+                    targetUserId = userByEmail.user_id;
+                    console.log(`[FedaPay Webhook] Identifié via email: ${targetUserId}`);
+                }
             }
 
             if (!targetUserId) {
-                console.error('[FedaPay Webhook] User ID non identifié même après vérification officielle');
+                console.error('[FedaPay Webhook] ❌ ÉCHEC CRITIQUE : Impossible d\'identifier l\'utilisateur pour la transaction', transactionId);
                 return NextResponse.json({ error: 'User identification failed' }, { status: 400 });
             }
 

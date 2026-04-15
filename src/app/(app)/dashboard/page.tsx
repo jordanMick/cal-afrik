@@ -209,22 +209,29 @@ export default function DashboardPage() {
         if (status === 'approved' || params.get('payment') === 'success') {
             setShowPaymentSuccess(true)
             
-            // 1. Un petit délai pour laisser au webhook le temps de passer
-            const timer = setTimeout(() => {
-                fetchProfile()
-            }, 2000)
+            // 1. On rafraîchit plusieurs fois pour laisser le temps au webhook
+            let attempts = 0
+            const interval = setInterval(async () => {
+                attempts++
+                await fetchProfile()
+                // Si le profil est déjà mis à jour (plus "free"), on arrête
+                if (profile?.subscription_tier && profile.subscription_tier !== 'free') {
+                    clearInterval(interval)
+                }
+                if (attempts >= 5) clearInterval(interval) // Stop après 15-20s
+            }, 3000)
 
-            // 2. Faire disparaître le message après 6 secondes
+            // 2. Faire disparaître le message après 8 secondes
             const hideTimer = setTimeout(() => {
                 setShowPaymentSuccess(false)
-            }, 6000)
+            }, 8000)
 
-            // 3. Nettoyer l'URL pour ne pas que le message revienne au refresh
+            // 3. Nettoyer l'URL
             const newUrl = window.location.pathname
             window.history.replaceState({}, '', newUrl)
 
             return () => {
-                clearTimeout(timer)
+                clearInterval(interval)
                 clearTimeout(hideTimer)
             }
         }
