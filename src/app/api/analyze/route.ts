@@ -364,7 +364,8 @@ export async function POST(req: Request) {
                             model: modelName,
                             contents: inputParts as any,
                             config: {
-                                temperature: 0.2,
+                                temperature: 0.1,
+                                responseMimeType: "application/json",
                             },
                         })
                         responseText = typeof (result as any).text === "function"
@@ -439,17 +440,46 @@ export async function POST(req: Request) {
 
         console.log("🔥 RAW RESPONSE:", responseText)
 
-        // ─── PARSE JSON ───────────────────────────────────────
-        // Parse Gemini JSON response
+        // ─── PARSE & REPAIR JSON ──────────────────────────────
+        function repairJson(badJson: string): any {
+            let jsonString = badJson.trim();
+            // Nettoyage Markdown si présent (même si avec JSON mode ça ne devrait pas)
+            jsonString = jsonString.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+            try {
+                return JSON.parse(jsonString);
+            } catch (err) {
+                console.warn("[ANALYZE] Tentative de réparation du JSON...");
+                
+                // Réparation 1 : Ajout de l'accolade manquante avant une virgule dans un tableau (cas signalé par l'utilisateur)
+                // Cherche un objet de type {... , { et insère } si manquant
+                let repaired = jsonString.replace(/(\{[^{}]*?)\s*,(\s*\{)/g, (match, p1, p2) => {
+                    return p1.includes('}') ? match : p1 + '}' + ',' + p2;
+                });
+
+                // Réparation 2 : Équilibrage des accolades/crochets à la fin (tronquage)
+                let openBraces = (repaired.match(/\{/g) || []).length;
+                let closeBraces = (repaired.match(/\}/g) || []).length;
+                let openBrackets = (repaired.match(/\[/g) || []).length;
+                let closeBrackets = (repaired.match(/\]/g) || []).length;
+
+                while (openBraces > closeBraces) { repaired += '}'; closeBraces++; }
+                while (openBrackets > closeBrackets) { repaired += ']'; closeBrackets++; }
+
+                try {
+                    return JSON.parse(repaired);
+                } catch (err2) {
+                    console.error("❌ Échec critique de réparation JSON:", err2);
+                    throw new Error("JSON structure fundamentally broken");
+                }
+            }
+        }
+
         let geminiResult: any = null;
         try {
-            const cleaned = responseText
-                .replace(/```json\n?/g, "")
-                .replace(/```\n?/g, "")
-                .trim();
-            geminiResult = JSON.parse(cleaned);
+            geminiResult = repairJson(responseText);
         } catch (err) {
-            console.error("❌ JSON Gemini invalide:", err);
+            console.error("❌ JSON Gemini invalide même après réparation:", err);
             return NextResponse.json({
                 success: false,
                 meal_name: "",
