@@ -41,6 +41,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 if (!pathname.startsWith('/login') && !pathname.startsWith('/onboarding') && !pathname.startsWith('/reset-password')) {
                     console.log('--- Auth: No session found after retries, redirecting to login ---')
                     router.push('/login')
+                    // Garder le loading pour éviter le flash
+                    return 
                 }
                 setLoading(false)
                 return
@@ -55,7 +57,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
             if (profileError || !profile) {
                 if (!pathname.startsWith('/onboarding') && !pathname.startsWith('/login')) {
+                    console.log('--- Auth: No profile found, redirecting to onboarding ---')
                     router.push('/onboarding')
+                    // 🚨 On ne met PAS loading à false ici pour éviter le flash du Dashboard
+                    return
                 }
                 setLoading(false)
                 return

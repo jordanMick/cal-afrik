@@ -484,6 +484,7 @@ export const useAppStore = create<AppState>()(
         {
             name: 'app-storage',
             partialize: (state) => ({
+                profile: state.profile,
                 slots: state.slots,
                 todayMeals: state.todayMeals,
                 slotBilans: state.slotBilans,
