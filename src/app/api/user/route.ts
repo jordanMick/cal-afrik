@@ -137,13 +137,17 @@ export async function DELETE(req: NextRequest) {
             if (tableError) console.warn(`Suppression ${table} ignorée:`, tableError.message)
         }
 
-        // 3. Audit log optionnel (non-bloquant, on ignore si la table n'existe pas)
-        supabaseAdmin.from('account_deletions').insert({
-            user_id: user.id,
-            email: user.email,
-            reason: 'Suppression manuelle par l\'utilisateur',
-            deleted_at: new Date().toISOString()
-        }).then(() => {}).catch(() => {})
+        // 3. Audit log optionnel (non-bloquant, on ignore si l'insertion échoue)
+        try {
+            await supabaseAdmin.from('account_deletions').insert({
+                user_id: user.id,
+                email: user.email,
+                reason: 'Suppression manuelle par l\'utilisateur',
+                deleted_at: new Date().toISOString()
+            })
+        } catch (auditError) {
+            console.warn('Audit log suppression échoué:', auditError)
+        }
 
         return NextResponse.json({ success: true, message: 'Compte supprimé avec succès' })
 
