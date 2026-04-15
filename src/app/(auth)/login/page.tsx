@@ -1,5 +1,3 @@
-'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -8,6 +6,7 @@ export default function LoginPage() {
     const router = useRouter()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
     const [successMsg, setSuccessMsg] = useState('')
@@ -24,18 +23,13 @@ export default function LoginPage() {
                 const { data, error } = await supabase.auth.signUp({ 
                     email, 
                     password,
-                    options: {
-                        emailRedirectTo: `${siteUrl}/onboarding`
-                    }
+                    options: { emailRedirectTo: `${siteUrl}/onboarding` }
                 })
                 if (error) { setError(error.message); return }
-                
-                // Si la confirmation d'email est activée sur Supabase, la session sera nulle
                 if (!data.session) {
-                    setSuccessMsg('Compte créé ! Veuillez vérifier votre boîte de réception pour confirmer votre inscription.')
+                    setSuccessMsg('Compte créé ! Veuillez vérifier votre boîte de réception.')
                     return
                 }
-
                 router.push('/onboarding')
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -49,213 +43,203 @@ export default function LoginPage() {
         }
     }
 
+    const handleGoogleLogin = async () => {
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/dashboard`
+                }
+            })
+            if (error) setError(error.message)
+        } catch (e) {
+            setError('Erreur lors de la connexion avec Google')
+        }
+    }
+
+    const ACCENT_GRADIENT = 'linear-gradient(135deg, #6366f1, #10b981)'
+    const INPUT_BG = '#111'
+    const CARD_BG = '#0a0a0a'
+
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#0a0a0a',
+            background: '#040404',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '24px',
-            fontFamily: 'system-ui, sans-serif',
+            padding: '20px',
+            fontFamily: 'Inter, system-ui, sans-serif',
             position: 'relative',
             overflow: 'hidden',
+            color: '#fff'
         }}>
 
-            {/* Halos colorés d'ambiance */}
-            <div style={{
-                position: 'fixed', top: '-100px', right: '-100px',
-                width: '350px', height: '350px', borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none',
-            }} />
-            <div style={{
-                position: 'fixed', bottom: '-80px', left: '-60px',
-                width: '280px', height: '280px', borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)',
-                pointerEvents: 'none',
-            }} />
-            <div style={{
-                position: 'fixed', top: '50%', left: '-40px',
-                width: '180px', height: '180px', borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%)',
-                pointerEvents: 'none',
-            }} />
+            {/* Halos d'ambiance */}
+            <div style={{ position: 'fixed', top: '-10%', right: '-10%', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            {/* LOGO */}
-            <div style={{ textAlign: 'center', marginBottom: '36px', position: 'relative', zIndex: 1 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                    <div style={{
-                        width: '44px', height: '44px', borderRadius: '14px',
-                        background: 'linear-gradient(135deg, #6366f1, #10b981)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '22px',
-                    }}>🌍</div>
-                    <span style={{ fontSize: '26px', fontWeight: '700', color: '#fff', letterSpacing: '-0.5px' }}>
-                        Cal Afrik
-                    </span>
-                </div>
-                <p style={{ color: '#555', fontSize: '14px' }}>Suivez vos calories, mangez bien</p>
-            </div>
-
-            {/* CARD */}
-            <div style={{
-                width: '100%', maxWidth: '400px',
-                background: '#141414',
-                borderRadius: '24px',
-                padding: '28px',
-                border: '0.5px solid #222',
-                position: 'relative', zIndex: 1,
-            }}>
-
-                {/* Ligne déco en haut de la card */}
-                <div style={{
-                    position: 'absolute', top: 0, left: '10%', right: '10%', height: '2px',
-                    background: 'linear-gradient(90deg, #6366f1, #10b981, #f59e0b)',
-                    borderRadius: '0 0 4px 4px',
-                }} />
-
-                {/* TABS */}
-                <div style={{
-                    display: 'flex', gap: '4px',
-                    background: '#0a0a0a',
-                    borderRadius: '12px', padding: '4px', marginBottom: '24px',
-                }}>
-                    {['Se connecter', "S'inscrire"].map((tab, i) => (
-                        <button key={tab}
-                            onClick={() => { setIsRegister(i === 1); setError('') }}
-                            style={{
-                                flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-                                cursor: 'pointer', fontSize: '13px', fontWeight: '500',
-                                background: isRegister === (i === 1)
-                                    ? 'linear-gradient(135deg, #6366f1, #818cf8)'
-                                    : 'transparent',
-                                color: isRegister === (i === 1) ? '#fff' : '#555',
-                                transition: 'all 0.2s',
-                            }}
-                        >{tab}</button>
-                    ))}
+            <div style={{ width: '100%', maxWidth: '380px', textAlign: 'center', position: 'relative', zIndex: 10 }}>
+                
+                {/* Header Section */}
+                <div style={{ marginBottom: '32px' }}>
+                    <div style={{ fontSize: '42px', marginBottom: '16px', display: 'block' }}>
+                        {isRegister ? '🔥' : '👋'}
+                    </div>
+                    <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.5px' }}>
+                        {isRegister ? 'Crée ton compte gratuit' : 'Bon retour !'}
+                    </h1>
+                    <p style={{ color: '#888', fontSize: '15px' }}>
+                        {isRegister ? '2 analyses offertes à l’inscription' : 'Connecte-toi pour continuer'}
+                    </p>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Main Action Area */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    
+                    {/* Google Login */}
+                    <button 
+                        onClick={handleGoogleLogin}
+                        style={{
+                            width: '100%',
+                            height: '52px',
+                            background: CARD_BG,
+                            border: '1px solid #222',
+                            borderRadius: '14px',
+                            color: '#fff',
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#EA4335" d="M12.48 10.92v3.28h7.84c-.24 1.84-.9 3.47-2.13 4.68l-2.73-2.73c.7-.48 1.25-1.15 1.58-1.95h-4.56z"/>
+                            <path fill="#FBBC05" d="M7.7 14.64L5 17.34c-1.39-1.38-2.2-3.3-2.2-5.34 0-2.04.81-3.96 2.2-5.34l2.7 2.7c-.5.5-.8 1.1-.8 1.8 0 .7.3 1.3.8 1.8z"/>
+                            <path fill="#4285F4" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.14 2.43C6.11 7.15 8.84 5.38 12 5.38z"/>
+                            <path fill="#34A853" d="M12 22.62c3.24 0 5.95-1.08 7.93-2.91l-3.15-3.15c-1.18.79-2.69 1.26-4.78 1.26-3.89 0-7.18-2.63-8.36-6.18l-3.14 2.43c1.81 3.6 5.52 6.07 9.82 6.07z"/>
+                        </svg>
+                        {isRegister ? "S'inscrire avec Google" : "Se connecter avec Google"}
+                    </button>
 
-                    <div>
-                        <label style={{ display: 'block', color: '#666', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>
-                            Adresse email
-                        </label>
-                        <input
-                            type="email" value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="vous@email.com" required
-                            style={{
-                                width: '100%', height: '46px', padding: '0 14px',
-                                background: '#0a0a0a', border: '0.5px solid #2a2a2a',
-                                borderRadius: '10px', color: '#fff', fontSize: '14px',
-                                outline: 'none', boxSizing: 'border-box',
-                            }}
-                        />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0' }}>
+                        <div style={{ flex: 1, height: '1px', background: '#222' }} />
+                        <span style={{ fontSize: '13px', color: '#555', fontWeight: '500' }}>ou par email</span>
+                        <div style={{ flex: 1, height: '1px', background: '#222' }} />
                     </div>
 
-                    <div style={{ position: 'relative' }}>
-                        <label style={{ display: 'block', color: '#666', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>
-                            Mot de passe
-                        </label>
-                        <input
-                            type="password" value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••" required
-                            style={{
-                                width: '100%', height: '46px', padding: '0 14px',
-                                background: '#0a0a0a', border: '0.5px solid #2a2a2a',
-                                borderRadius: '10px', color: '#fff', fontSize: '14px',
-                                outline: 'none', boxSizing: 'border-box',
-                            }}
-                        />
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type="email" value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="ton@email.com" required
+                                style={{
+                                    width: '100%', height: '54px', padding: '0 18px',
+                                    background: INPUT_BG, border: '1px solid #222',
+                                    borderRadius: '16px', color: '#fff', fontSize: '15px',
+                                    outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type={showPassword ? "text" : "password"} value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder={isRegister ? "Mot de passe (6+ caractères)" : "Ton mot de passe"} required
+                                style={{
+                                    width: '100%', height: '54px', padding: '0 50px 0 18px',
+                                    background: INPUT_BG, border: '1px solid #222',
+                                    borderRadius: '16px', color: '#fff', fontSize: '15px',
+                                    outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box'
+                                }}
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                                    background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '18px'
+                                }}
+                            >
+                                {showPassword ? '👁️‍🗨️' : '👁️'}
+                            </button>
+                        </div>
+
                         {!isRegister && (
-                            <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                            <div style={{ textAlign: 'right' }}>
                                 <button 
                                     type="button"
                                     onClick={() => router.push('/forgot-password')}
-                                    style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', cursor: 'pointer', padding: '4px' }}
+                                    style={{ background: 'none', border: 'none', color: '#888', fontSize: '13px', cursor: 'pointer', opacity: 0.8 }}
                                 >
                                     Mot de passe oublié ?
                                 </button>
                             </div>
                         )}
+
+                        {error && (
+                            <div style={{ padding: '12px', background: 'rgba(239,68,68,0.1)', borderRadius: '12px', color: '#f87171', fontSize: '13px', border: '1px solid rgba(239,68,68,0.2)' }}>
+                                {error}
+                            </div>
+                        )}
+
+                        {successMsg && (
+                            <div style={{ padding: '12px', background: 'rgba(16,185,129,0.1)', borderRadius: '12px', color: '#10b981', fontSize: '13px', border: '1px solid rgba(16,185,129,0.2)' }}>
+                                {successMsg}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit" disabled={isLoading}
+                            style={{
+                                width: '100%', height: '56px',
+                                background: isLoading ? '#333' : ACCENT_GRADIENT,
+                                border: 'none', borderRadius: '16px',
+                                color: '#fff', fontSize: '16px', fontWeight: '700',
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                marginTop: '8px',
+                                boxShadow: '0 4px 15px rgba(99,102,241,0.2)'
+                            }}
+                        >
+                            {isLoading ? 'Un instant...' : isRegister ? 'Créer mon compte ✨' : 'Se connecter 🔒'}
+                        </button>
+                    </form>
+
+                    <div style={{ margin: '16px 0 8px' }}>
+                        <span style={{ fontSize: '13px', color: '#555' }}>
+                            {isRegister ? 'déjà inscrit ?' : 'pas encore de compte ?'}
+                        </span>
                     </div>
 
-                    {error && (
-                        <div style={{
-                            padding: '11px 14px',
-                            background: 'rgba(239,68,68,0.08)',
-                            border: '0.5px solid rgba(239,68,68,0.3)',
-                            borderRadius: '10px', color: '#f87171', fontSize: '13px',
-                        }}>{error}</div>
-                    )}
-
-                    {successMsg && (
-                        <div style={{
-                            padding: '11px 14px',
-                            background: 'rgba(16,185,129,0.08)',
-                            border: '0.5px solid rgba(16,185,129,0.3)',
-                            borderRadius: '10px', color: '#10b981', fontSize: '13px',
-                            textAlign: 'center'
-                        }}>{successMsg}</div>
-                    )}
-
-                    <button
-                        type="submit" disabled={isLoading}
+                    <button 
+                        onClick={() => { setIsRegister(!isRegister); setError(''); setSuccessMsg('') }}
                         style={{
-                            width: '100%', height: '48px',
-                            background: isLoading
-                                ? '#1e1e1e'
-                                : 'linear-gradient(135deg, #6366f1, #10b981)',
-                            border: 'none', borderRadius: '12px',
-                            color: isLoading ? '#444' : '#fff',
-                            fontSize: '14px', fontWeight: '600',
-                            cursor: isLoading ? 'not-allowed' : 'pointer',
-                            marginTop: '4px',
-                            letterSpacing: '0.01em',
+                            width: '100%',
+                            height: '52px',
+                            background: 'transparent',
+                            border: '1px solid #222',
+                            borderRadius: '14px',
+                            color: '#fff',
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
                         }}
                     >
-                        {isLoading ? 'Chargement...' : isRegister ? 'Créer mon compte →' : 'Se connecter →'}
+                        {isRegister ? 'Se connecter →' : 'Créer un compte gratuit ✨'}
                     </button>
-                </form>
+                </div>
 
-                {isRegister && (
-                    <p style={{ color: '#333', fontSize: '12px', textAlign: 'center', marginTop: '14px' }}>
-                        Minimum 6 caractères pour le mot de passe
-                    </p>
-                )}
+                <div style={{ marginTop: '40px', fontSize: '11px', color: '#444', lineHeight: '1.6' }}>
+                    En continuant, tu acceptes nos <span style={{ textDecoration: 'underline' }}>CGU</span> et <span style={{ textDecoration: 'underline' }}>politique de confidentialité</span>
+                </div>
             </div>
-
-            {/* Features rapides */}
-            <div style={{
-                display: 'flex', gap: '16px', marginTop: '28px',
-                position: 'relative', zIndex: 1,
-            }}>
-                {[
-                    { icon: '📷', label: 'Scan IA', color: '#6366f1' },
-                    { icon: '📊', label: 'Suivi', color: '#10b981' },
-                    { icon: '🎯', label: 'Objectifs', color: '#f59e0b' },
-                ].map(f => (
-                    <div key={f.label} style={{ textAlign: 'center' }}>
-                        <div style={{
-                            width: '40px', height: '40px', borderRadius: '12px',
-                            background: `${f.color}18`,
-                            border: `0.5px solid ${f.color}40`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '18px', margin: '0 auto 4px',
-                        }}>{f.icon}</div>
-                        <p style={{ color: '#444', fontSize: '11px' }}>{f.label}</p>
-                    </div>
-                ))}
-            </div>
-
-            <p style={{ color: '#2a2a2a', fontSize: '12px', marginTop: '24px', position: 'relative', zIndex: 1 }}>
-                Cal Afrik • Fait avec ❤️ pour l'Afrique
-            </p>
         </div>
     )
-}
+}
