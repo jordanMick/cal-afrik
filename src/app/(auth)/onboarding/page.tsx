@@ -194,7 +194,9 @@ export default function OnboardingPage() {
         country: profile?.country || 'TG',
     }
 
-    const form = onboardingForm || initialForm
+    // 🛡️ Corrigé : On fusionne initialForm et onboardingForm pour éviter les champs manquants
+    // si un ancien onboarding partiel est stocké en local.
+    const form = { ...initialForm, ...(onboardingForm || {}) }
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -280,7 +282,7 @@ export default function OnboardingPage() {
                 height_cm: Number(form.height_cm),
                 activity_level: form.activity_level,
                 goal: form.goal,
-                goal_weight_kg: Number(form.target_weight_kg),
+                goal_weight_kg: Number(form.target_weight_kg) || 65,
                 country: form.country,
                 preferred_cuisines: form.preferred_cuisines,
                 dietary_restrictions: form.dietary_restrictions || [],
