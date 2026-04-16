@@ -224,6 +224,10 @@ export async function POST(req: NextRequest) {
 
         const messageLower = normalizedUserMessage
         const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit dejeuner') || messageLower.includes('dejeuner') || messageLower.includes('diner') || messageLower.includes('ingredient') || messageLower.includes('j\'ai') || messageLower.includes('j\'ai seulement')
+        let foodsContext = ""
+        let hasIngredientConstraint = false
+        let allFoodsDB: any[] = [] 
+
         // 🔍 Coach Yao interroge TOUJOURS la BD pour avoir le contexte (Filtre Sécurité)
         const { data: allFoods, error: foodsError } = await supabase
             .from('food_items')
