@@ -683,7 +683,20 @@ export default function ScannerPage() {
             const json = await res.json()
             console.log("💡 Réponse Coach Yao (/api/analyze):", json)
 
-            // On ne bloque plus le scan IA, le quota est vérifié à l'enregistrement du repas.
+            // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
+            const effectiveTier = profile?.subscription_tier || 'free';
+            if (effectiveTier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
+                alert("Tu as atteint ta limite de 2 actions gratuites pour aujourd'hui (Scans + Suggestions).")
+                router.push('/upgrade')
+                return
+            }
+
+            if (json.error && json.code === 'LIMIT_REACHED') {
+                setIsAnalyzing(false)
+                alert("🚀 Limite de scan atteinte ! Passez au plan Pro pour scanner sans limite.")
+                router.push('/upgrade')
+                return
+            }
 
             if (!json.success || !json.data) {
                 if (json?.code === 'GEMINI_QUOTA_EXCEEDED') {
@@ -764,6 +777,12 @@ export default function ScannerPage() {
 
         const { data: { session } } = await supabase.auth.getSession();
 
+        if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
+            alert("Tu as atteint ta limite de 2 actions gratuites (Scans + Suggestions).")
+            router.push('/upgrade')
+            return
+        }
+
         (window as any).isLastScanFromBarcode = true;
         setScanMode('ai');
         setIsAnalyzing(true);
@@ -787,7 +806,10 @@ export default function ScannerPage() {
                 setShowManualForm(true);
                 if (p.image_front_url) setImage(p.image_front_url);
 
-                // Le jeton gratuit n'est plus décompté lors du scan.
+                // ✅ Décompte du jeton pour les gratuits
+                if (session && profile?.subscription_tier === 'free') {
+                    await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
+                }
             } else {
                 alert("Produit non trouvé.");
             }

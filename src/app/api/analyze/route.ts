@@ -235,7 +235,17 @@ export async function POST(req: Request) {
         }
     }
 
-    // La limite ne s'applique plus au scan (on la reporte au moment d'enregistrer le repas).
+    if (tier === 'free') {
+        const actionsUsed = (profile?.scan_feedbacks_today || 0)
+
+        if (actionsUsed >= 2) {
+            return new Response(JSON.stringify({
+                success: false,
+                error: "Tu as atteint ta limite de 2 analyses. Reviens demain ou passe au Plan Pro.",
+                code: "LIMIT_REACHED"
+            }), { status: 403 })
+        }
+    }
 
     const MOCK_MODE = false
     if (MOCK_MODE) {
@@ -263,6 +273,10 @@ export async function POST(req: Request) {
             }
         ]
 
+
+        if (tier === 'free') {
+            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
+        }
 
         return NextResponse.json({
             success: true,
@@ -734,6 +748,11 @@ export async function POST(req: Request) {
             componentsReturned: results.length,
             mealName: finalMealName,
         })
+
+        // ✅ Décompte du jeton pour les gratuits
+        if (tier === 'free') {
+            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
+        }
 
         console.log("✅ Analysis successful")
         return NextResponse.json({
