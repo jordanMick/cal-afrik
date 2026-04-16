@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         // Récupérer tous les abonnements AVEC les préférences
         const { data: subs, error } = await supabase
             .from('push_subscriptions')
-            .select('*, profile:user_profiles(notify_meals)')
+            .select('*, profile:user_profiles(notify_meals, notify_reports)')
 
         if (error) throw error
 
@@ -52,16 +52,25 @@ export async function GET(req: NextRequest) {
         } else if (hour >= 19 && hour < 22) {
             slotTitle = 'Dîner 🍲'
             slotBody = 'C\'est l\'heure du dîner ! Une dernière étape pour aujourd\'hui.'
+        } else if (hour >= 22) {
+            slotTitle = 'Bilan de Soirée 🏆'
+            slotBody = 'Coach Yao a analysé ta journée. Viens découvrir ton score !'
         }
+
+        const isBilan = hour >= 22;
+        const notifUrl = isBilan ? '/dashboard' : '/scanner';
 
         const payload = JSON.stringify({
             title: slotTitle,
             body: slotBody,
-            url: '/scanner'
+            url: notifUrl
         })
 
-        // Filtrer les utilisateurs qui ont désactivé les rappels de repas
-        const activeSubs = subs.filter((s: any) => s.profile?.notify_meals !== false)
+        // Filtrer les utilisateurs selon la préférence concernée
+        const activeSubs = subs.filter((s: any) => {
+            if (isBilan) return s.profile?.notify_reports !== false
+            return s.profile?.notify_meals !== false
+        })
 
         // Envoi parallèle
         await Promise.all(activeSubs.map(async (s: any) => {
