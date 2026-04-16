@@ -1,10 +1,9 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ArrowLeft, UtensilsCrossed, MessageSquareText } from 'lucide-react'
+import { ChevronDown, ArrowLeft, UtensilsCrossed, MessageSquareText, Flame } from 'lucide-react'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
 
@@ -14,24 +13,172 @@ function normalizeMenuText(raw: string): string {
     const base = raw
         .replace(/\*\*/g, '')
         .replace(/\s{2,}/g, ' ')
-        // Force le passage à la ligne avant chaque jour
         .replace(/\s+(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/gi, '\n$1')
-        // Force le passage à la ligne avant chaque créneau
         .replace(/\s+(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b/gi, '\n$1')
-        // Force le passage à la ligne avant les puces et les flèches
         .replace(/\s*-\s+/g, '\n- ')
         .replace(/\s*→\s*/g, '\n→ ')
         .replace(/a definir/gi, 'Repas local équilibré')
         .trim()
-
     return base
+}
+
+interface ParsedFood {
+    name: string
+    portion_g: number
+    calories: number
+    protein_g: number
+    carbs_g: number
+    fat_g: number
+}
+
+function extractFoodsFromMenu(menuText: string): ParsedFood[] {
+    const sep = '---DATA---'
+    const dataIdx = menuText.indexOf(sep)
+
+    if (dataIdx !== -1) {
+        try {
+            const jsonPart = menuText.substring(dataIdx + sep.length).trim()
+            const data = JSON.parse(jsonPart)
+            if (data.items && Array.isArray(data.items)) {
+                return data.items.map((item: any) => ({
+                    name: item.name || 'Aliment inconnu',
+                    portion_g: item.volume_ml || item.portion_g || 150,
+                    calories: item.calories || 0,
+                    protein_g: item.protein_g || 0,
+                    carbs_g: item.carbs_g || 0,
+                    fat_g: item.fat_g || 0
+                }))
+            }
+        } catch (e) {
+            // JSON parsing échoué, fallback
+        }
+    }
+    return []
+}
+
+function FoodCard({ food, index }: { food: ParsedFood; index: number }) {
+    const [expanded, setExpanded] = useState(false)
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => setExpanded(!expanded)}
+            style={{
+                cursor: 'pointer',
+                borderRadius: '18px',
+                background: 'var(--bg-primary)',
+                border: expanded ? '1.5px solid var(--accent)' : '1px solid var(--border-color)',
+                padding: '14px',
+                marginBottom: '10px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: expanded ? '0 8px 24px rgba(var(--accent-rgb), 0.15)' : '0 2px 8px rgba(0,0,0,0.05)'
+            }}
+        >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                    <p style={{
+                        color: 'var(--text-primary)',
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        marginBottom: '6px'
+                    }}>
+                        {food.name}
+                    </p>
+                    <p style={{
+                        color: 'var(--text-secondary)',
+                        fontSize: '12px',
+                        fontWeight: '500'
+                    }}>
+                        ⚖️ {food.portion_g}g
+                    </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        marginBottom: '4px'
+                    }}>
+                        <Flame size={14} color='#ef4444' fill='#ef4444' />
+                        <span style={{
+                            color: 'var(--text-primary)',
+                            fontSize: '16px',
+                            fontWeight: '800'
+                        }}>
+                            {Math.round(food.calories)}
+                        </span>
+                    </div>
+                    <p style={{
+                        color: 'var(--text-muted)',
+                        fontSize: '10px',
+                        fontWeight: '600'
+                    }}>
+                        kcal
+                    </p>
+                </div>
+            </div>
+
+            <AnimatePresence>
+                {expanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        style={{ overflow: 'hidden' }}
+                    >
+                        <div style={{
+                            marginTop: '12px',
+                            paddingTop: '12px',
+                            borderTop: '1px solid var(--border-color)',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr 1fr',
+                            gap: '8px'
+                        }}>
+                            {[
+                                { label: 'Protéines', value: food.protein_g, unit: 'g', icon: '💪', color: '#3b82f6' },
+                                { label: 'Glucides', value: food.carbs_g, unit: 'g', icon: '⚡', color: '#f59e0b' },
+                                { label: 'Lipides', value: food.fat_g, unit: 'g', icon: '🫒', color: '#8b5cf6' }
+                            ].map(macro => (
+                                <div key={macro.label} style={{
+                                    background: 'var(--bg-secondary)',
+                                    borderRadius: '10px',
+                                    padding: '8px 6px',
+                                    textAlign: 'center',
+                                    border: '0.5px solid var(--border-color)'
+                                }}>
+                                    <p style={{ fontSize: '16px', marginBottom: '2px' }}>{macro.icon}</p>
+                                    <p style={{
+                                        color: 'var(--text-primary)',
+                                        fontSize: '13px',
+                                        fontWeight: '700'
+                                    }}>
+                                        {Math.round(macro.value * 10) / 10}
+                                    </p>
+                                    <p style={{
+                                        color: 'var(--text-muted)',
+                                        fontSize: '9px',
+                                        marginTop: '1px'
+                                    }}>
+                                        {macro.label}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    )
 }
 
 function renderMenuBlock(menuText: string) {
     const sep = '---DATA---'
     const dataIdx = menuText.indexOf(sep)
     const cleanMenuText = dataIdx !== -1 ? menuText.substring(0, dataIdx).trim() : menuText
-    
+
     const normalized = normalizeMenuText(cleanMenuText)
     const lines = normalized.split('\n').map(l => l.trim()).filter(Boolean)
 
@@ -43,12 +190,12 @@ function renderMenuBlock(menuText: string) {
         if (!currentDayKey || currentDayBlock.length === 0) return
 
         rows.push(
-            <div key={`day-${currentDayKey}`} style={{ 
-                marginTop: '12px', 
+            <div key={`day-${currentDayKey}`} style={{
+                marginTop: '12px',
                 marginBottom: '16px',
-                padding: '16px', 
-                background: 'var(--bg-secondary)', 
-                border: '1px solid var(--border-color)', 
+                padding: '16px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '20px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
             }}>
@@ -60,8 +207,8 @@ function renderMenuBlock(menuText: string) {
     }
 
     lines.forEach((line, idx) => {
-        const isHeader = /^(menu\s+)/i.test(line) || 
-                         /^[-*\s]*(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?[:\s]*/i.test(line)
+        const isHeader = /^(menu\s+)/i.test(line) ||
+            /^[-*\s]*(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?[:\s]*/i.test(line)
         const isMealLine = /^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i.test(line)
 
         if (isHeader) {
@@ -79,13 +226,13 @@ function renderMenuBlock(menuText: string) {
                 const trailing = forcedSplit ? forcedSplit[2] : ''
                 currentDayKey = `${idx}-${dateTitle}`
                 currentDayBlock.push(
-                    <div key={`header-tag-${idx}`} style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        background: 'linear-gradient(135deg, var(--warning), #d97706)', 
-                        padding: '4px 14px', 
-                        borderRadius: '99px', 
+                    <div key={`header-tag-${idx}`} style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: 'linear-gradient(135deg, var(--warning), #d97706)',
+                        padding: '4px 14px',
+                        borderRadius: '99px',
                         marginBottom: '12px',
                         boxShadow: '0 4px 12px rgba(var(--warning-rgb), 0.2)'
                     }}>
@@ -127,13 +274,128 @@ function renderMenuBlock(menuText: string) {
     })
 
     flushDayBlock()
+
+    // Extraire et afficher les aliments structurés
+    const foods = extractFoodsFromMenu(menuText)
+    if (foods.length > 0) {
+        const totalCalories = foods.reduce((sum, f) => sum + f.calories, 0)
+        const totalProtein = foods.reduce((sum, f) => sum + f.protein_g, 0)
+
+        rows.push(
+            <motion.div
+                key="foods-section"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                style={{
+                    marginTop: '24px',
+                    marginBottom: '20px',
+                    padding: '18px',
+                    background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.08), rgba(var(--success-rgb), 0.05))',
+                    border: '1px solid rgba(var(--accent-rgb), 0.15)',
+                    borderRadius: '24px'
+                }}
+            >
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '16px'
+                }}>
+                    <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '14px',
+                        background: 'rgba(var(--accent-rgb), 0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '22px',
+                        boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.1)'
+                    }}>
+                        🍽️
+                    </div>
+                    <div>
+                        <p style={{
+                            color: 'var(--text-primary)',
+                            fontSize: '15px',
+                            fontWeight: '800',
+                            margin: 0
+                        }}>
+                            Aliments détectés
+                        </p>
+                        <p style={{
+                            color: 'var(--text-secondary)',
+                            fontSize: '12px',
+                            margin: '4px 0 0 0',
+                            fontWeight: '600'
+                        }}>
+                            {foods.length} {foods.length === 1 ? 'aliment' : 'aliments'} · {totalCalories} kcal
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {foods.map((food, idx) => (
+                        <FoodCard key={`${food.name}-${idx}`} food={food} index={idx} />
+                    ))}
+                </div>
+
+                {/* Summary Stats */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    style={{
+                        marginTop: '14px',
+                        paddingTop: '14px',
+                        borderTop: '1px solid rgba(var(--accent-rgb), 0.2)',
+                        display: 'flex',
+                        gap: '8px'
+                    }}
+                >
+                    {[
+                        { icon: '🔥', label: 'Calories', value: totalCalories },
+                        { icon: '💪', label: 'Protéines', value: Math.round(totalProtein * 10) / 10 }
+                    ].map(stat => (
+                        <div key={stat.label} style={{
+                            flex: 1,
+                            background: 'rgba(var(--accent-rgb), 0.08)',
+                            borderRadius: '10px',
+                            padding: '8px',
+                            textAlign: 'center',
+                            border: '0.5px solid rgba(var(--accent-rgb), 0.2)'
+                        }}>
+                            <p style={{ fontSize: '14px', margin: 0 }}>{stat.icon}</p>
+                            <p style={{
+                                color: 'var(--text-primary)',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                margin: '4px 0 0 0'
+                            }}>
+                                {stat.value}
+                            </p>
+                            <p style={{
+                                color: 'var(--text-muted)',
+                                fontSize: '9px',
+                                margin: '2px 0 0 0'
+                            }}>
+                                {stat.label}
+                            </p>
+                        </div>
+                    ))}
+                </motion.div>
+            </motion.div>
+        )
+    }
+
     return rows
 }
 
 export default function MenusPage() {
     const router = useRouter()
     const { profile, chatSuggestedMenus } = useAppStore()
-    
+
     const [menuTab, setMenuTab] = useState<'today' | 'tomorrow' | 'week'>('today')
 
     const effectiveTier = getEffectiveTier(profile)
@@ -151,22 +413,22 @@ export default function MenusPage() {
                 : chatSuggestedMenus.week)
         : null
 
-    // Fallback intelligent (copié du scanner)
+    // Fallback intelligent
     if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
         const targetDate = new Date()
         if (menuTab === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1)
-        
+
         const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
         const targetDay = dayNames[targetDate.getDay()]
         const formattedDate = `${String(targetDate.getDate()).padStart(2, '0')}/${String(targetDate.getMonth() + 1).padStart(2, '0')}`
         const dateKey = `${targetDay} ${formattedDate}`
-        
+
         const weekText = chatSuggestedMenus.week
         const dateIdx = weekText?.toLowerCase().indexOf(dateKey.toLowerCase()) ?? -1
-        
+
         if (dateIdx !== -1) {
             const nextDayIdx = weekText.toLowerCase().indexOf(dayNames[(targetDate.getDay() + 1) % 7], dateIdx + 10)
-            let dayContent = nextDayIdx !== -1 
+            let dayContent = nextDayIdx !== -1
                 ? weekText.substring(dateIdx, nextDayIdx).trim()
                 : weekText.substring(dateIdx).trim()
 
@@ -180,13 +442,13 @@ export default function MenusPage() {
                     diner: ['diner', 'soir']
                 }
                 const keywords = slotKeywords[currentSlotKey] || []
-                
+
                 const sep = '---DATA---'
                 const dataIdx = dayContent.indexOf(sep)
                 const displayText = dataIdx !== -1 ? dayContent.substring(0, dataIdx).trim() : dayContent
                 const lines = displayText.split('\n')
                 const slotLineIdx = lines.findIndex(l => keywords.some(k => l.toLowerCase().includes(k)))
-                
+
                 if (slotLineIdx !== -1) {
                     const allSlots = ['petit', 'dejeuner', 'collation', 'diner']
                     let extracted = lines[slotLineIdx]
@@ -208,9 +470,9 @@ export default function MenusPage() {
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative', overflowX: 'hidden' }}>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', gap: '16px' }}>
-                <button 
+                <button
                     onClick={() => router.back()}
                     style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)' }}
                 >
@@ -266,10 +528,10 @@ export default function MenusPage() {
                         <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '32px', maxWidth: '80%' }}>
                             Tu n'as pas encore d'idées de plats ? Demande à Coach Yao de te composer un menu adapté à tes objectifs !
                         </p>
-                        
+
                         <button
                             onClick={() => router.push('/coach')}
-                            style={{ 
+                            style={{
                                 display: 'flex', alignItems: 'center', gap: '10px',
                                 background: 'linear-gradient(135deg, var(--accent), var(--success))',
                                 color: '#fff', border: 'none', padding: '14px 24px', borderRadius: '16px',
@@ -278,7 +540,7 @@ export default function MenusPage() {
                             }}
                         >
                             <MessageSquareText size={20} />
-                            Parler au Coach 
+                            Parler au Coach
                         </button>
                     </div>
                 )}
