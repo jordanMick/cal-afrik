@@ -34,200 +34,7 @@ const LAST_SLOT = 'diner'
 const ACCENT_COLOR = 'var(--accent)'
 const GRADIENT = 'linear-gradient(90deg, var(--accent), #10b981)'
 
-function normalizeMenuText(raw: string): string {
-    const base = raw
-        .replace(/\*\*/g, '')
-        .replace(/\s{2,}/g, ' ')
-        // Force le passage à la ligne avant chaque jour (ex: Lundi, Mardi)
-        .replace(/\s+(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/gi, '\n$1')
-        // Force le passage à la ligne avant chaque créneau (ex: Petit-déjeuner, Dîner)
-        .replace(/\s+(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b/gi, '\n$1')
-        // Force le passage à la ligne avant les puces et les flèches
-        .replace(/\s*-\s+/g, '\n- ')
-        .replace(/\s*→\s*/g, '\n→ ')
-        .replace(/a definir/gi, 'Repas local équilibré')
-        .trim()
 
-    return base
-}
-
-function renderMenuBlock(menuText: string, mode: 'today' | 'tomorrow' | 'week', currentSlotKey?: string, isSavingActivity?: boolean, onLogSuggestion?: (fullText: string, slotKey: string) => void, slots?: any, slotColor?: string) {
-    // On cache le bloc DATA pour le rendu UI mais on garde le texte propre
-    const sep = '---DATA---'
-    const dataIdx = menuText.indexOf(sep)
-    const cleanMenuText = dataIdx !== -1 ? menuText.substring(0, dataIdx).trim() : menuText
-    
-    const normalized = normalizeMenuText(cleanMenuText)
-    const lines = normalized
-        .split('\n')
-        .map(l => l.trim())
-        .filter(Boolean)
-
-    const rows: React.ReactNode[] = []
-    let currentDayBlock: React.ReactNode[] = []
-    let currentDayKey = ''
-    let pendingButtons: React.ReactNode[] = []
-    const renderedSlots = new Set<string>()
-
-    const flushDayBlock = () => {
-        // 1. Toujours vider les boutons en attente
-        if (pendingButtons.length > 0) {
-            const btns = (
-                <div key={`pending-btns-${Math.random()}`} style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {pendingButtons.map((b, i) => <div key={`pb-${i}`}>{b}</div>)}
-                </div>
-            )
-            if (currentDayKey) currentDayBlock.push(btns)
-            else rows.push(btns)
-            pendingButtons = []
-        }
-
-        // 2. Bloc de jour (Planning)
-        if (!currentDayKey || currentDayBlock.length === 0) return
-
-        rows.push(
-            <div key={`day-${currentDayKey}`} style={{ 
-                marginTop: '12px', 
-                marginBottom: '16px',
-                padding: '16px', 
-                background: 'var(--bg-secondary)', 
-                border: '1px solid var(--border-color)', 
-                borderRadius: '20px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-            }}>
-                {currentDayBlock}
-            </div>
-        )
-        currentDayBlock = []
-        currentDayKey = ''
-    }
-
-    lines.forEach((line, idx) => {
-        const isHeader = /^(menu\s+)/i.test(line) || 
-                         /^[-*\s]*(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?[:\s]*/i.test(line)
-        const isMealLine = /^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i.test(line)
-
-        if (isHeader) {
-            if (/^menu\s+/i.test(line)) {
-                flushDayBlock()
-                rows.push(
-                    <p key={`menu-line-${idx}`} style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: '800', marginTop: idx === 0 ? '0' : '12px', letterSpacing: '0.2px' }}>
-                        {line}
-                    </p>
-                )
-            } else {
-                flushDayBlock()
-                const forcedSplit = line.match(/^[-*\s]*((?:\d+\.\s*)?(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?)[:\s]*(.*)$/i)
-                const dateTitle = forcedSplit ? forcedSplit[1] : line
-                const trailing = forcedSplit ? forcedSplit[2] : ''
-                currentDayKey = `${idx}-${dateTitle}`
-                currentDayBlock.push(
-                    <div key={`header-tag-${idx}`} style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        background: 'linear-gradient(135deg, var(--warning), #d97706)', 
-                        padding: '4px 14px', 
-                        borderRadius: '99px', 
-                        marginBottom: '12px',
-                        boxShadow: '0 4px 12px rgba(var(--warning-rgb), 0.2)'
-                    }}>
-                        <span style={{ fontSize: '9px', fontWeight: '900', color: 'rgba(0,0,0,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Jour</span>
-                        <span style={{ color: '#fff', fontSize: '13px', fontWeight: '800' }}>{dateTitle}</span>
-                    </div>
-                )
-                if (trailing) {
-                    currentDayBlock.push(
-                        <p key={`menu-line-trailing-${idx}`} style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
-                            {trailing}
-                        </p>
-                    )
-                }
-            }
-            return
-        }
-
-        if (isMealLine) {
-            const mealMatch = line.match(/^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b.*?:/i)
-            let buttonNode = null
-
-            if (mealMatch && mode === 'today' && onLogSuggestion) {
-                const slotPrefix = mealMatch[1].toLowerCase()
-                const SLOT_MAP: Record<string, string> = {
-                    'petit-déjeuner': 'petit_dejeuner', 'petit-dejeuner': 'petit_dejeuner',
-                    'petit-déj': 'petit_dejeuner', 'petit-dej': 'petit_dejeuner',
-                    'déjeuner': 'dejeuner', 'dejeuner': 'dejeuner',
-                    'collation': 'collation', 'dîner': 'diner', 'diner': 'diner'
-                }
-                const lineSlotKey = SLOT_MAP[slotPrefix]
-
-                if (renderedSlots.has(lineSlotKey)) {
-                    buttonNode = null
-                } else {
-                    renderedSlots.add(lineSlotKey)
-                    const isCurrentSlot = lineSlotKey === currentSlotKey
-                const slotHasMeal = slots && slots[lineSlotKey] && slots[lineSlotKey].consumed > 0
-                const buttonDisabled = !isCurrentSlot || isSavingActivity || slotHasMeal
-
-                // Correction : On utilise les heures du store pour les messages
-                const SLOT_START_HOURS_STORE: Record<string, number> = { petit_dejeuner: 0, dejeuner: 12, collation: 16, diner: 19 }
-                const startHour = SLOT_START_HOURS_STORE[lineSlotKey] || 0
-                const currentHour = new Date().getHours()
-                const isFuture = currentHour < startHour
-
-                buttonNode = (
-                    <button
-                        disabled={buttonDisabled}
-                        onClick={() => onLogSuggestion(menuText, lineSlotKey)}
-                        style={{
-                            marginTop: '10px',
-                            padding: '8px 16px',
-                            borderRadius: '12px',
-                            border: 'none',
-                            background: buttonDisabled ? 'var(--bg-tertiary)' : `linear-gradient(135deg, ${slotColor}, ${slotColor}dd)`,
-                            color: buttonDisabled ? 'var(--text-muted)' : '#fff',
-                            fontSize: '11px',
-                            fontWeight: '800',
-                            cursor: buttonDisabled ? 'default' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            boxShadow: buttonDisabled ? 'none' : `0 4px 15px ${slotColor}40`,
-                            opacity: buttonDisabled && slotHasMeal ? 0.8 : 1,
-                        }}
-                    >
-                        {slotHasMeal ? '✨ Enregistré ✓' : <><span>Choisir ce menu</span> <span style={{ opacity: 0.7 }}>→</span></>}
-                    </button>
-                )
-                  }
-            }
-
-            const node = (
-                <div key={`menu-line-${idx}`} style={{ marginTop: '10px', marginBottom: '14px' }}>
-                    <p style={{ color: '#e5e7eb', fontSize: '12px', lineHeight: '1.6', wordBreak: 'break-word', marginTop: '6px' }}>
-                        {line}
-                    </p>
-                </div>
-            )
-            if (buttonNode) pendingButtons.push(buttonNode)
-            if (currentDayKey) currentDayBlock.push(node)
-            else rows.push(node)
-            return
-        }
-
-        const node = (
-            <p key={`menu-line-${idx}`} style={{ color: 'var(--text-primary)', fontSize: '12px', lineHeight: '1.55', marginTop: '6px', wordBreak: 'break-word' }}>
-                {line}
-            </p>
-        )
-        if (currentDayKey) currentDayBlock.push(node)
-        else rows.push(node)
-    })
-
-    flushDayBlock()
-    return rows
-}
 
 export default function ScannerPage() {
     const router = useRouter()
@@ -237,8 +44,6 @@ export default function ScannerPage() {
         slots, 
         dailyCalories, 
         setLastCoachMessage, 
-        chatSuggestedMenus, 
-        clearChatSuggestedMenu,
         pendingScannerPrefill,
         setPendingScannerPrefill,
     } = useAppStore()
@@ -261,8 +66,6 @@ export default function ScannerPage() {
     const [isLoadingCoach, setIsLoadingCoach] = useState(false)
     const [scanMode, setScanMode] = useState<'ai' | 'barcode'>('ai')
     const [isScanningBarcode, setIsScanningBarcode] = useState(false)
-    const [menuTab, setMenuTab] = useState<'today' | 'tomorrow' | 'week'>('today')
-    const [showWeekMenuPopup, setShowWeekMenuPopup] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
 
     // ─── Pont Coach → Scanner : traitement du pre-fill ───────────────
@@ -447,74 +250,7 @@ export default function ScannerPage() {
     const isLastSlot = currentSlotKey === LAST_SLOT
     const slotColor = ACCENT_COLOR
     const effectiveTier = getEffectiveTier(profile)
-    const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
-    const todayStr = new Date().toISOString().split('T')[0]
-    let activeMenuText = (chatSuggestedMenus.date === todayStr)
-        ? (menuTab === 'today'
-            ? chatSuggestedMenus.today?.[currentSlotKey]
-            : menuTab === 'tomorrow'
-                ? chatSuggestedMenus.tomorrow
-                : chatSuggestedMenus.week)
-        : null
 
-    // Fallback intelligent : si menuTab === 'today' ou 'tomorrow' est vide, on cherche dans 'week'
-    if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
-        const targetDate = new Date()
-        if (menuTab === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1)
-        
-        const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
-        const targetDay = dayNames[targetDate.getDay()]
-        const formattedDate = `${String(targetDate.getDate()).padStart(2, '0')}/${String(targetDate.getMonth() + 1).padStart(2, '0')}`
-        const dateKey = `${targetDay} ${formattedDate}`
-        
-        const weekText = chatSuggestedMenus.week
-        const dateIdx = weekText?.toLowerCase().indexOf(dateKey.toLowerCase()) ?? -1
-        
-        if (dateIdx !== -1) {
-            const nextDayIdx = weekText.toLowerCase().indexOf(dayNames[(targetDate.getDay() + 1) % 7], dateIdx + 10)
-            let dayContent = nextDayIdx !== -1 
-                ? weekText.substring(dateIdx, nextDayIdx).trim()
-                : weekText.substring(dateIdx).trim()
-
-            if (menuTab === 'tomorrow') {
-                activeMenuText = dayContent
-            } else {
-                // Pour 'today', on cherche le créneau spécifique (Petit-déj, Déjeuner, etc.)
-                const slotKeywords: Record<string, string[]> = {
-                    petit_dejeuner: ['petit', 'matin'],
-                    dejeuner: ['dejeuner', 'midi'],
-                    collation: ['collation', 'gouter', '4h'],
-                    diner: ['diner', 'soir']
-                }
-                const keywords = slotKeywords[currentSlotKey] || []
-                
-                // On cherche la ligne du créneau
-                // Extraction de la partie texte propre (avant ---DATA---)
-                const sep = '---DATA---'
-                const dataIdx = dayContent.indexOf(sep)
-                const displayText = dataIdx !== -1 ? dayContent.substring(0, dataIdx).trim() : dayContent
-                const lines = displayText.split('\n')
-                const slotLineIdx = lines.findIndex(l => keywords.some(k => l.toLowerCase().includes(k)))
-                
-                if (slotLineIdx !== -1) {
-                    // On prend la ligne du slot + les lignes suivantes jusqu'au prochain slot connu
-                    const allSlots = ['petit', 'dejeuner', 'collation', 'diner']
-                    let extracted = lines[slotLineIdx]
-                    for (let i = slotLineIdx + 1; i < lines.length; i++) {
-                        if (allSlots.some(s => lines[i].toLowerCase().includes(s))) break
-                        extracted += '\n' + lines[i]
-                    }
-                    activeMenuText = extracted.trim()
-                }
-            }
-        }
-    }
-
-    useEffect(() => {
-        if (!canAccessFutureMenus && (menuTab === 'tomorrow' || menuTab === 'week')) {
-            setMenuTab('today')
-        }
-    }, [canAccessFutureMenus, menuTab])
 
 
 
@@ -523,7 +259,6 @@ export default function ScannerPage() {
 
     const [scanStep, setScanStep] = useState(0)
     const [isSuggestionsExpanded, setIsSuggestionsExpanded] = useState(false)
-    const [isChatMenuExpanded, setIsChatMenuExpanded] = useState(false)
     const scanSteps = [
         "Identification des aliments...",
         "Estimation des portions...",
@@ -546,45 +281,7 @@ export default function ScannerPage() {
 
     useEffect(() => { loadFoods() }, [])
 
-    // Restauration des menus suggérés depuis Supabase (sync cross-device)
-    useEffect(() => {
-        const today = new Date().toISOString().split('T')[0]
-        const currentUid = profile?.user_id || profile?.id
-        
-        // Si le store local est déjà à jour pour aujourd'hui ET l'utilisateur actuel, pas besoin de fetcher
-        if (chatSuggestedMenus.date === today && chatSuggestedMenus.user_id === currentUid) return
 
-        const restoreMenusFromSupabase = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession()
-                if (!session) return
-
-                const { data: profileData } = await supabase
-                    .from('user_profiles')
-                    .select('suggested_menus_json')
-                    .eq('user_id', session.user.id)
-                    .single()
-
-                const remote = profileData?.suggested_menus_json
-                if (!remote || remote.date !== today) return
-
-                // Restaurer chaque type de menu dans le store
-                const { setChatSuggestedMenu } = useAppStore.getState()
-                if (remote.week) setChatSuggestedMenu('week', remote.week)
-                if (remote.tomorrow) setChatSuggestedMenu('tomorrow', remote.tomorrow)
-                if (remote.today && typeof remote.today === 'object') {
-                    for (const [slot, msg] of Object.entries(remote.today)) {
-                        if (msg) setChatSuggestedMenu('today', msg as string, slot)
-                    }
-                }
-                console.log('✅ Menus suggérés restaurés depuis Supabase')
-            } catch (err) {
-                console.error('⚠️ restoreMenusFromSupabase error:', err)
-            }
-        }
-
-        restoreMenusFromSupabase()
-    }, [])
 
 
     const loadFoods = async () => {
@@ -686,7 +383,7 @@ export default function ScannerPage() {
             // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
             const effectiveTier = profile?.subscription_tier || 'free';
             if (effectiveTier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-                alert("Tu as atteint ta limite de 2 actions gratuites pour aujourd'hui (Scans + Suggestions).")
+                alert("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
                 router.push('/upgrade')
                 return
             }
@@ -778,7 +475,7 @@ export default function ScannerPage() {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-            alert("Tu as atteint ta limite de 2 actions gratuites (Scans + Suggestions).")
+            alert("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
             router.push('/upgrade')
             return
         }
@@ -1079,178 +776,7 @@ export default function ScannerPage() {
             </div>
 
 
-            {/* Menus suggérés par Yao (via chat) */}
-            {!image && !isAnalyzing && (
-                <div style={{ marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '14px', padding: '4px', marginBottom: '10px' }}>
-                        <button onClick={() => setMenuTab('today')} style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'today' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'today' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}>
-                            Aujourd'hui
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (!canAccessFutureMenus) {
-                                    alert("Menu Demain réservé aux plans Pro et Premium.")
-                                    return
-                                }
-                                setMenuTab('tomorrow')
-                            }}
-                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'tomorrow' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'tomorrow' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
-                        >
-                            Demain {!canAccessFutureMenus ? '🔒' : ''}
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (getEffectiveTier(profile) !== 'premium') {
-                                    alert("Menu Semaine réservé exclusivement au plan Premium.")
-                                    return
-                                }
-                                setMenuTab('week')
-                            }}
-                            style={{ flex: 1, padding: '9px', borderRadius: '10px', border: 'none', background: menuTab === 'week' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'week' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
-                        >
-                            Semaine {getEffectiveTier(profile) !== 'premium' ? '🔒' : ''}
-                        </button>
-                    </div>
 
-                    <div style={{ 
-                        background: 'rgba(var(--bg-secondary-rgb), 0.4)', 
-                        backdropFilter: 'blur(20px)',
-                        border: `1px solid ${slotColor}20`, 
-                        borderRadius: '24px', 
-                        padding: '18px 20px',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-                    }}>
-                        <button 
-                            onClick={() => setIsChatMenuExpanded(!isChatMenuExpanded)}
-                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', padding: '0' }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <p style={{ color: slotColor, fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                                    Menu suggéré par Yao
-                                </p>
-                                {activeMenuText && (
-                                        <div
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (confirm("Effacer cette suggestion ?")) {
-                                                clearChatSuggestedMenu(menuTab, menuTab === 'today' ? currentSlotKey : undefined)
-                                            }
-                                        }}
-                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
-                                        title="Supprimer la suggestion"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6m4-6v6"/></svg>
-                                    </div>
-                                )}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                {menuTab === 'week' && activeMenuText && (
-                                    <div
-                                        onClick={(e) => { e.stopPropagation(); setShowWeekMenuPopup(true); }}
-                                        style={{ width: '24px', height: '24px', borderRadius: '999px', border: `0.5px solid ${slotColor}50`, background: 'transparent', color: slotColor, fontSize: '14px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                        title="Voir tout"
-                                    >
-                                        →
-                                    </div>
-                                )}
-                                <motion.div
-                                    animate={{ rotate: isChatMenuExpanded ? 180 : 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    style={{ color: slotColor }}
-                                >
-                                    <ChevronDown size={14} />
-                                </motion.div>
-                            </div>
-                        </button>
-
-                        <AnimatePresence>
-                            {isChatMenuExpanded && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                >
-                                    {activeMenuText ? (
-                                        <div style={{ marginTop: '16px', maxHeight: menuTab === 'week' ? '200px' : 'none', overflow: 'hidden', paddingRight: '4px', position: 'relative' }}>
-                                            {renderMenuBlock(activeMenuText, menuTab, currentSlotKey, isSaving, handleSelectSuggestion, slots, slotColor)}
-                                            {menuTab === 'week' && (
-                                                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', background: 'linear-gradient(transparent, var(--bg-secondary))' }} />
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <p style={{ color: 'var(--text-muted)', fontSize: '12px', lineHeight: '1.55', marginTop: '16px' }}>
-                                            Tu verras le menu suggéré par Yao ici. Demande un menu depuis le chat.
-                                        </p>
-                                    )}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Rappel permanent pour le prochain repas si prêt */}
-                        {(() => {
-                            if (menuTab !== 'today') return null
-                            const SLOT_ORDER: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
-                            const SLOT_HOURS: Record<string, number> = { petit_dejeuner: 0, dejeuner: 12, collation: 16, diner: 19 }
-                            const currentIndex = SLOT_ORDER.indexOf(currentSlotKey as MealSlotKey)
-                            const futureSlot = SLOT_ORDER.slice(currentIndex + 1).find(sk => 
-                                chatSuggestedMenus.today && chatSuggestedMenus.today[sk]
-                            )
-                            if (!futureSlot) return null
-
-                            return (
-                                <div style={{ marginTop: '12px', padding: '10px', borderRadius: '10px', background: `${slotColor}08`, border: `0.5px dashed ${slotColor}30` }}>
-                                    <p style={{ color: slotColor, fontSize: '11px', lineHeight: '1.4', fontWeight: '600' }}>
-                                        📅 Suggestion prête pour le <b>{SLOT_LABELS[futureSlot]}</b> à <b>{SLOT_HOURS[futureSlot]}:00</b>.
-                                    </p>
-                                </div>
-                            )
-                        })()}
-                        <button
-                            onClick={() => router.push('/coach')}
-                            style={{ marginTop: '10px', padding: '8px 10px', borderRadius: '10px', border: `0.5px solid ${slotColor}50`, background: 'transparent', color: slotColor, fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                        >
-                            Ouvrir le chat
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {showWeekMenuPopup && (
-                <>
-                    <div
-                        onClick={() => setShowWeekMenuPopup(false)}
-                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1200 }}
-                    />
-                    <div style={{
-                        position: 'fixed',
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: 'calc(100% - 32px)',
-                        maxWidth: '460px',
-                        maxHeight: '82vh',
-                        overflowY: 'auto',
-                        background: 'var(--bg-primary)',
-                        border: '0.5px solid var(--border-color)',
-                        borderRadius: '18px',
-                        padding: '14px',
-                        zIndex: 1210,
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <p style={{ color: 'var(--warning)', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase' }}>Menu semaine</p>
-                            <button
-                                onClick={() => setShowWeekMenuPopup(false)}
-                                style={{ background: 'transparent', border: '0.5px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-muted)', cursor: 'pointer', width: '28px', height: '28px' }}
-                            >
-                                ✕
-                            </button>
-                        </div>
-                        <div>{activeMenuText ? renderMenuBlock(activeMenuText, 'week', undefined, undefined, undefined, undefined, slotColor) : null}</div>
-                    </div>
-                </>
-            )}
 
             {/* SWITCH MODE SCAN */}
             <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>
