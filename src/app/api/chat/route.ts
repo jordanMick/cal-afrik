@@ -253,7 +253,7 @@ export async function POST(req: NextRequest) {
                 const foodsList = allFoods.map((f: any) =>
                     `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}]`
                 ).join('\n')
-                foodsContext = `\n\n[BASE DE DONNÉES : ${allFoods.length} ALIMENTS DISPONIBLES]\nUtilise ces aliments pour tes suggestions. Si l'utilisateur n'a pas encore ajouté ses propres aliments, utilise les aliments certifiés (Publics) listés ici :\n${foodsList}`
+                foodsContext = `\n\n[BASE DE DONNÉES : ${allFoods.length} ALIMENTS DISPONIBLES]\nUtilise ces aliments pour tes suggestions. Si l'utilisateur n'a pas encore ajouté ses propres aliments, encourage-le à utiliser le bouton SCANNER (icône bleue au centre) pour enregistrer ses vrais repas et "alimenter" ton savoir de coach :\n${foodsList}`
             }
         }
 
@@ -295,7 +295,7 @@ export async function POST(req: NextRequest) {
 - HORS-SUJET : Si l'utilisateur pose une question qui n'a AUCUN rapport avec la nutrition, la santé, le sport ou les traditions culinaires (ex: politique, mécanique, informatique, potins, etc.), refuse POLIMENT d'y répondre. Dis-lui que ton expertise se limite à l'assiette et à la forme physique pour l'aider à atteindre ses objectifs sur Cal-Afrik.
 - SANTÉ GLOBALE : Redirige toujours la conversation vers des conseils alimentaires ou d'hygiène de vie sains.
 
-${foodsContext || "[ALERTE : Base de données indisponible. Demande à l'utilisateur de charger ses aliments.]"}
+${foodsContext || "[ALERTE : Base de données vide. Demande à l'utilisateur d'utiliser le bouton SCANNER (au centre) pour enregistrer son premier repas. Explique que tout commence par une photo de son assiette pour que tu puisses apprendre ses habitudes.]"}
 
 === STRATÉGIE & ALERTES (OMNISCIENCE) ===
 - Si le contexte contient [ALERTE COACH], tu DOIS en tenir compte IMMEDIATEMENT dans ta prochaine suggestion (ex: proposer un repas pauvre en Glucides si l'alerte concerne les glucides).
