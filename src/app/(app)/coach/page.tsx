@@ -441,11 +441,11 @@ export default function CoachChatPage() {
     const activeThreadLimitReached = !!activeThread && (activeThread.messagesUsed >= activeThread.maxMessages)
 
     /**
-     * Ajoute le menu suggéré dans le bloc Scanner "Aujourd'hui" (slot concerné)
-     * puis navigue vers le Scanner. L'utilisateur pourra ensuite cliquer
-     * "Ajouter au journal" depuis les suggestions du Scanner.
+     * Ajoute le menu suggéré dans la vue de planning "Aujourd'hui" (slot concerné)
+     * puis navigue vers le Planning (/menus).
+     * L'utilisateur pourra ensuite cliquer "Ajouter au journal" depuis là-bas.
      */
-    const handleAddToScanner = (
+    const handleAddToPlanning = (
         dataItems: Array<{ name: string; volume_ml: number }>,
         slot: string,
         fullMessage: string
@@ -471,11 +471,11 @@ export default function CoachChatPage() {
                 .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
         })
 
-        router.push('/scanner')
+        router.push('/menus')
     }
 
-    /** Ajoute un menu demain/semaine dans les suggestions du Scanner (validation manuelle) */
-    const handleAddMenuToScanner = (kind: 'tomorrow' | 'week', cleanText: string) => {
+    /** Ajoute un menu demain/semaine dans les suggestions du Planning (validation manuelle) */
+    const handleAddMenuToPlanning = (kind: 'tomorrow' | 'week', cleanText: string) => {
         setChatSuggestedMenu(kind, cleanText)
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (!session) return
@@ -635,7 +635,7 @@ export default function CoachChatPage() {
                             {/* Bouton "Ajouter au Scanner" — menu créneau (DATA block) */}
                             {parsed && (
                                 <button
-                                    onClick={() => handleAddToScanner(parsed.dataItems, parsed.slot, msg.content)}
+                                    onClick={() => handleAddToPlanning(parsed.dataItems, parsed.slot, msg.content)}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
@@ -655,13 +655,13 @@ export default function CoachChatPage() {
                                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                                 >
-                                    📲 Ajouter au Scanner
+                                    📲 Envoyer au Planning
                                 </button>
                             )}
                             {/* Bouton "Ajouter au Scanner" — menu demain ou semaine */}
                             {menuKind && (
                                 <button
-                                    onClick={() => handleAddMenuToScanner(menuKind.kind, menuKind.cleanText)}
+                                    onClick={() => handleAddMenuToPlanning(menuKind.kind, menuKind.cleanText)}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
@@ -685,7 +685,7 @@ export default function CoachChatPage() {
                                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                                 >
-                                    {menuKind.kind === 'tomorrow' ? '📅 Ajouter au Scanner (Demain)' : '📆 Ajouter au Scanner (Semaine)'}
+                                    {menuKind.kind === 'tomorrow' ? '📅 Voir dans mon Planning (Demain)' : '📆 Voir dans mon Planning (Semaine)'}
                                 </button>
                             )}
                             <span style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '6px', margin: isCoach ? '0 0 0 4px' : '0 4px 0 0' }}>
