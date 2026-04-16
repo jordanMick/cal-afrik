@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
         }
 
         const messageLower = normalizedUserMessage
-        const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit déjeuner') || messageLower.includes('déjeuner') || messageLower.includes('dîner') || messageLower.includes('ingredient') || messageLower.includes('j\'ai') || messageLower.includes('j\'ai seulement')
+        const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit dejeuner') || messageLower.includes('dejeuner') || messageLower.includes('diner') || messageLower.includes('ingredient') || messageLower.includes('j\'ai') || messageLower.includes('j\'ai seulement')
         let foodsContext = ""
         let hasIngredientConstraint = false
         let allFoodsDB: any[] = [] // Hoissé pour la validation post-réponse du bloc ---DATA---
