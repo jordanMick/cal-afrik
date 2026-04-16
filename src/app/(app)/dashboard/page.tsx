@@ -457,33 +457,7 @@ export default function DashboardPage() {
             
             <PushNotificationManager />
 
-            {/* CARTE ACCÈS MENUS COACH YAO */}
-            <div 
-                onClick={() => router.push('/menus')}
-                style={{ 
-                    background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--success-rgb), 0.1))', 
-                    border: '1px solid rgba(var(--accent-rgb), 0.2)', 
-                    borderRadius: '24px', 
-                    padding: '20px', 
-                    marginBottom: '24px', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.05)'
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--accent), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)' }}>
-                        🍲
-                    </div>
-                    <div>
-                        <h2 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>Mon Planning & Menus</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Voir les suggestions de Coach Yao</p>
-                    </div>
-                </div>
-                <div style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: '800' }}>→</div>
-            </div>
+
 
             <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '24px', lineHeight: '1.4' }}>
                 Tu es sur la bonne voie pour tes objectifs !
@@ -644,6 +618,34 @@ export default function DashboardPage() {
             <WeeklyProgressChart targetKcal={calorieTarget} tier={effectiveTier} />
 
 
+
+            {/* CARTE ACCÈS MENUS COACH YAO */}
+            <div 
+                onClick={() => router.push('/menus')}
+                style={{ 
+                    background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--success-rgb), 0.1))', 
+                    border: '1px solid rgba(var(--accent-rgb), 0.2)', 
+                    borderRadius: '24px', 
+                    padding: '20px', 
+                    marginBottom: '24px', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.05)'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--accent), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)' }}>
+                        🍲
+                    </div>
+                    <div>
+                        <h2 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>Mon Planning & Menus</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Voir les suggestions de Coach Yao</p>
+                    </div>
+                </div>
+                <div style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: '800' }}>→</div>
+            </div>
 
             {/* REPAS GROUPÉS PAR SLOTS */}
             <div style={{ marginBottom: '32px' }}>
