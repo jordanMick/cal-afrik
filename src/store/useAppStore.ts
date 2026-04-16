@@ -473,6 +473,24 @@ export const useAppStore = create<AppState>()(
 
                         if (!currentAlert || currentAlert.date !== today || isStrongerAlert) {
                             set({ smartAlert: newAlert })
+                            // Sauvegarde automatique dans la cloche (NotificationCenter)
+                            import('@/lib/supabase').then(({ supabase }) => {
+                                supabase.auth.getSession().then(({ data: { session } }) => {
+                                    if (session) {
+                                        fetch('/api/notifications', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                                            body: JSON.stringify({
+                                                type: newAlert.level === 'danger' ? 'warning' : 'info',
+                                                title: newAlert.nutrient === 'calories' ? 'Objectif Calorique' : 
+                                                       newAlert.nutrient === 'carbs' ? 'Alerte Glucides' : 
+                                                       newAlert.nutrient === 'fat' ? 'Alerte Lipides' : 'Conseil Coach Yao',
+                                                message: newAlert.message
+                                            })
+                                        }).catch(err => console.error('Erreur sauvegarde alerte:', err))
+                                    }
+                                })
+                            })
                         } else if (!isSameAlertDismissed && !currentAlert.dismissed) {
                             // S'assurer qu'on ne remplace pas une alerte ignorée par la même "non ignorée"
                             set({ smartAlert: { ...newAlert, dismissed: currentAlert.dismissed } })

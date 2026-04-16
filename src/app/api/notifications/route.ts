@@ -43,6 +43,48 @@ export async function GET(req: NextRequest) {
     }
 }
 
+// ✍️ POST : Créer une notification (depuis les Smart Alerts)
+export async function POST(req: NextRequest) {
+    try {
+        const user = await getUser(req)
+        if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+        const { type, title, message } = await req.json()
+
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+
+        // Eviter de créer un double pour le même jour
+        const todayStr = new Date().toISOString().split('T')[0]
+        const { data: existing } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('title', title)
+            .gte('created_at', `${todayStr}T00:00:00Z`)
+            .limit(1)
+            .single()
+
+        if (!existing) {
+            await supabase.from('notifications').insert({
+                user_id: user.id,
+                type,
+                title,
+                message,
+                created_at: new Date().toISOString()
+            })
+        }
+
+        return NextResponse.json({ success: true })
+
+    } catch (err) {
+        console.error('POST /api/notifications error:', err)
+        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    }
+}
+
 // ✅ PATCH : Marquer comme lues
 export async function PATCH(req: NextRequest) {
     try {
