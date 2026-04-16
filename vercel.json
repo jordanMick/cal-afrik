@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/push/send?secret=cal_afrik_push_2024",
+      "schedule": "0 7,12,15,19 * * *"
+    }
+  ]
+}
