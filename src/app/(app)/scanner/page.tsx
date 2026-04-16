@@ -762,7 +762,7 @@ export default function ScannerPage() {
     async function onScanSuccess(decodedText: string) {
         if (qrScannerRef.current) qrScannerRef.current.stop().catch(e => console.error(e));
 
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session } } = await supabase.auth.getSession();
 
         (window as any).isLastScanFromBarcode = true;
         setScanMode('ai');
@@ -787,10 +787,7 @@ export default function ScannerPage() {
                 setShowManualForm(true);
                 if (p.image_front_url) setImage(p.image_front_url);
 
-                // ✅ Décompte du jeton pour les gratuits
-                if (session && profile?.subscription_tier === 'free') {
-                    await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
-                }
+                // Le jeton gratuit n'est plus décompté lors du scan.
             } else {
                 alert("Produit non trouvé.");
             }
