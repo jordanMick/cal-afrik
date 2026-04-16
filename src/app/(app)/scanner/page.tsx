@@ -683,20 +683,7 @@ export default function ScannerPage() {
             const json = await res.json()
             console.log("💡 Réponse Coach Yao (/api/analyze):", json)
 
-            // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
-            const effectiveTier = profile?.subscription_tier || 'free';
-            if (effectiveTier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-                alert("Tu as atteint ta limite de 2 actions gratuites pour aujourd'hui (Scans + Suggestions).")
-                router.push('/upgrade')
-                return
-            }
-
-            if (json.error && json.code === 'LIMIT_REACHED') {
-                setIsAnalyzing(false)
-                alert("🚀 Limite de scan atteinte ! Passez au plan Pro pour scanner sans limite.")
-                router.push('/upgrade')
-                return
-            }
+            // On ne bloque plus le scan IA, le quota est vérifié à l'enregistrement du repas.
 
             if (!json.success || !json.data) {
                 if (json?.code === 'GEMINI_QUOTA_EXCEEDED') {
@@ -775,13 +762,7 @@ export default function ScannerPage() {
     async function onScanSuccess(decodedText: string) {
         if (qrScannerRef.current) qrScannerRef.current.stop().catch(e => console.error(e));
 
-        // --- VÉRIFICATION LIMITE SCAN PRODUIT (COMBO 2) ---
         const { data: { session } } = await supabase.auth.getSession()
-        if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-            alert("Tu as atteint ta limite de 2 actions gratuites (Scans + Suggestions).")
-            router.push('/upgrade')
-            return
-        }
 
         (window as any).isLastScanFromBarcode = true;
         setScanMode('ai');
@@ -992,6 +973,11 @@ export default function ScannerPage() {
             if (jsonMeal.success && jsonMeal.data) {
                 addMeal(jsonMeal.data)
                 router.push('/journal')
+            } else if (jsonMeal.code === 'LIMIT_REACHED') {
+                alert(jsonMeal.error)
+                router.push('/upgrade')
+            } else {
+                throw new Error("Erreur lors de l'enregistrement du repas")
             }
 
         } catch (err) {
@@ -1021,6 +1007,9 @@ export default function ScannerPage() {
             if (json.success && json.data) {
                 addMeal(json.data)
                 router.push('/journal')
+            } else if (json.code === 'LIMIT_REACHED') {
+                alert(json.error)
+                router.push('/upgrade')
             } else {
                 alert(`Erreur enregistrement repas: ${json?.error || 'Insertion échouée'}`)
             }

@@ -235,19 +235,7 @@ export async function POST(req: Request) {
         }
     }
 
-    if (tier === 'free') {
-        const actionsUsed = (profile?.scan_feedbacks_today || 0)
-
-        // Limite de 2 actions (Scan + Suggestions) par jour en mode gratuit
-        if (actionsUsed >= 2) {
-            console.log("[ANALYZE] Free limit reached", { userId: user.id, actionsUsed })
-            return new Response(JSON.stringify({
-                success: false,
-                error: "Limite d'actions gratuite atteinte (2/jour). Passez au plan Pro !",
-                code: "LIMIT_REACHED"
-            }), { status: 403 })
-        }
-    }
+    // La limite ne s'applique plus au scan (on la reporte au moment d'enregistrer le repas).
 
     const MOCK_MODE = false
     if (MOCK_MODE) {
@@ -275,9 +263,6 @@ export async function POST(req: Request) {
             }
         ]
 
-        if (tier === 'free') {
-            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
-        }
 
         return NextResponse.json({
             success: true,
@@ -750,11 +735,7 @@ export async function POST(req: Request) {
             mealName: finalMealName,
         })
 
-        // ✅ Décompte du jeton pour les gratuits
-        if (tier === 'free') {
-            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
-        }
-
+        console.log("✅ Analysis successful")
         return NextResponse.json({
             success: true,
             meal_name: finalMealName,

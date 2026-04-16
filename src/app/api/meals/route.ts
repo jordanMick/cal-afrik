@@ -102,6 +102,47 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
 
+    // ─── VÉRIFICATION LIMITE AJOUT REPAS (FREE TIER: 2/jour) ───
+    const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('subscription_tier, subscription_expires_at')
+        .eq('user_id', user.id)
+        .single()
+
+    let tier = profile?.subscription_tier || 'free'
+    const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
+    if (expiresAt && expiresAt < new Date()) {
+        tier = 'free'
+    }
+
+    if (tier === 'free') {
+        const tzOffsetMin = Number(req.headers.get('x-tz-offset-min') || '0')
+        // Récupérer la date locale du client ou l'heure serveur formattée
+        const now = new Date()
+        now.setMinutes(now.getMinutes() - tzOffsetMin)
+        const todayStr = now.toISOString().split('T')[0]
+
+        const { start, end } = getUtcRangeForLocalDay(todayStr, tzOffsetMin)
+        
+        const { count, error: countError } = await supabaseAdmin
+            .from('meals')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .gte('logged_at', start)
+            .lte('logged_at', end)
+
+        if (countError) {
+             console.error("❌ Count error:", countError)
+        } else if ((count || 0) >= 2) {
+             return NextResponse.json({ 
+                 success: false, 
+                 code: 'LIMIT_REACHED', 
+                 error: 'Tu as atteint ta limite de 2 repas ajoutés par jour (mode Gratuit). Passe au plan Pro pour un suivi illimité !' 
+             }, { status: 403 })
+        }
+    }
+    // ────────────────────────────────────────────────────────长
+
     const mealData = {
         user_id: user.id,
         custom_name: body.custom_name || "Repas",
