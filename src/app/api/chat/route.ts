@@ -224,46 +224,35 @@ export async function POST(req: NextRequest) {
 
         const messageLower = normalizedUserMessage
         const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit dejeuner') || messageLower.includes('dejeuner') || messageLower.includes('diner') || messageLower.includes('ingredient') || messageLower.includes('j\'ai') || messageLower.includes('j\'ai seulement')
-        let foodsContext = ""
-        let hasIngredientConstraint = false
-        let allFoodsDB: any[] = [] // Hoissé pour la validation post-réponse du bloc ---DATA---
+        // 🔍 Coach Yao interroge TOUJOURS la BD pour avoir le contexte (Filtre Sécurité)
+        const { data: allFoods, error: foodsError } = await supabase
+            .from('food_items')
+            .select('*, verified, user_id')
+            .or(`verified.eq.true,user_id.eq.${user.id}`)
 
-        if (wantsMenuAny) {
-            console.log("🔍 Coach Yao interroge la BD food_items (Filtre Sécurité)...")
-            const { data: allFoods, error: foodsError } = await supabase
-                .from('food_items')
-                .select('*, verified, user_id')
-                .or(`verified.eq.true,user_id.eq.${user.id}`)
+        if (foodsError) console.error("❌ Erreur Supabase food_items:", foodsError)
+        if (allFoods) allFoodsDB = allFoods 
+        console.log(`✅ ${allFoods?.length || 0} aliments sécurisés trouvés dans la BD.`)
 
-            if (foodsError) console.error("❌ Erreur Supabase food_items:", foodsError)
-            if (allFoods) allFoodsDB = allFoods  // Sauvegarde pour correction DATA post-IA
-            console.log(`✅ ${allFoods?.length || 0} aliments sécurisés trouvés dans la BD.`)
+        if (allFoods && allFoods.length > 0) {
+            // ── Détection d'ingrédients précisés par l'utilisateur ──────────
+            const detectedIngredients = detectIngredientConstraint(messageContent)
+            const matchedFoods = detectedIngredients ? matchFoodsToIngredients(allFoods, detectedIngredients) : []
+            hasIngredientConstraint = matchedFoods.length > 0
 
-            if (allFoods && allFoods.length > 0) {
-                // ── Détection d'ingrédients précisés par l'utilisateur ──────────
-                const detectedIngredients = detectIngredientConstraint(messageContent)
-                const matchedFoods = detectedIngredients ? matchFoodsToIngredients(allFoods, detectedIngredients) : []
-                hasIngredientConstraint = matchedFoods.length > 0
-
-                console.log(`🧪 Ingrédients détectés : ${detectedIngredients?.join(', ') || 'aucun'}`)
-                console.log(`✅ Aliments matchés dans la BD : ${matchedFoods.length}`)
-
-                if (hasIngredientConstraint) {
-                    // Mode contraint : injecter UNIQUEMENT les aliments disponibles avec macros/100g
-                    const matchedList = matchedFoods.map((f: any) =>
-                        `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}] : ${f.calories_per_100g}kcal/100g | P:${f.proteins_100g || 0}g G:${f.carbs_100g || 0}g L:${f.lipids_100g || 0}g`
-                    ).join('\n')
-                    foodsContext = `\n\n[INGRÉDIENTS DISPONIBLES - LISTE EXCLUSIVE]\nL'utilisateur a UNIQUEMENT ces ${matchedFoods.length} aliment(s) à sa disposition. Tu DOIS composer le menu EN UTILISANT SEULEMENT ces ingrédients :\n${matchedList}\n\nCONSIGNE PORTIONS : Propose des portions précises en grammes pour atteindre l'objectif calorique du créneau (basé sur le profil utilisateur). Calcule et affiche en fin de réponse :\n- Total calories du repas\n- Total Protéines / Glucides / Lipides\nN'invente AUCUN autre ingrédient non listé ci-dessus.\n\n⚠️ RAPPEL ---DATA--- : Dans le champ "name", utilise UNIQUEMENT les valeurs [ID_BD:...] listées ci-dessus. Ex: [ID_BD: riz_blanc_vapeur] → "name":"riz_blanc_vapeur".`
-                } else {
-                    // Mode standard : toute la BD
-                    // On expose EXPLICITEMENT le name_standard pour le bloc ---DATA---
-                    const foodsList = allFoods.map((f: any) =>
-                        `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}] (cal: ${f.calories_per_100g}kcal, P: ${f.proteins_100g || 0}g, G: ${f.carbs_100g || 0}g, L: ${f.lipids_100g || 0}g)`
-                    ).join('\n')
-                    foodsContext = `\n\n[BASE DE DONNÉES CERTIFIÉE : ${allFoods.length} ALIMENTS DISPONIBLES]\nTu as INTERDICTION de proposer un aliment qui n'est pas dans cette liste. Pour chaque aliment, tu vois son [ID_BD: xxx] — c'est cet identifiant exact que tu DOIS utiliser dans le champ "name" du bloc ---DATA--- :\n${foodsList}\n\nCONSIGNE CRITIQUE CALCULS : Ne donne JAMAIS de total calorique ou de macros (Protéines/Lipides) dans ton texte de réponse. Contente-toi de décrire le menu. Le système calculera automatiquement le total certifié à partir de ton bloc ---DATA--- et l'affichera à l'utilisateur.`
-                }
+            if (hasIngredientConstraint) {
+                const matchedList = matchedFoods.map((f: any) =>
+                    `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}] : ${f.calories_per_100g}kcal/100g`
+                ).join('\n')
+                foodsContext = `\n\n[INGRÉDIENTS DISPONIBLES - LISTE EXCLUSIVE]\nL'utilisateur a UNIQUEMENT ces ${matchedFoods.length} aliment(s). Propose un menu avec SEULEMENT ceux-là :\n${matchedList}`
+            } else {
+                const foodsList = allFoods.map((f: any) =>
+                    `- ${f.display_name || f.name_standard} [ID_BD: ${f.name_standard}]`
+                ).join('\n')
+                foodsContext = `\n\n[BASE DE DONNÉES : ${allFoods.length} ALIMENTS DISPONIBLES]\nUtilise ces aliments pour tes suggestions. Si l'utilisateur n'a pas encore ajouté ses propres aliments, utilise les aliments certifiés (Publics) listés ici :\n${foodsList}`
             }
         }
+
 
         const now = new Date()
         const todayStr = now.toISOString().split('T')[0]
