@@ -491,7 +491,7 @@ export default function DashboardPage() {
 
             {/* SMART ALERT COACH YAO */}
             <AnimatePresence>
-                {smartAlert && smartAlert.date === toLocalDateString() && (
+                {smartAlert && !smartAlert.dismissed && smartAlert.date === toLocalDateString() && (
                     <motion.div
                         initial={{ opacity: 0, height: 0, scale: 0.95 }}
                         animate={{ opacity: 1, height: 'auto', scale: 1 }}

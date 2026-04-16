@@ -129,6 +129,7 @@ interface AppState {
         level: 'warning' | 'danger'
         message: string
         date: string
+        dismissed?: boolean
     } | null
     clearSmartAlert: () => void
 
@@ -465,14 +466,25 @@ export const useAppStore = create<AppState>()(
                         newAlert = { nutrient: 'calories', level: 'warning', message: "Cible calories en vue ! Tu approches de ta limite. Prends une collation légère si tu as faim.", date: today }
                     }
 
-                    if (newAlert && (!currentAlert || currentAlert.date !== today || (newAlert.level === 'danger' && currentAlert.level === 'warning'))) {
-                        set({ smartAlert: newAlert })
+                    if (newAlert) {
+                        // Si une alerte de haut niveau a déjà été dismissée aujourd'hui, on ne la relance pas
+                        const isSameAlertDismissed = currentAlert?.dismissed && currentAlert.date === today && currentAlert.nutrient === newAlert.nutrient && currentAlert.level === newAlert.level
+                        const isStrongerAlert = currentAlert?.level === 'warning' && newAlert.level === 'danger'
+
+                        if (!currentAlert || currentAlert.date !== today || isStrongerAlert) {
+                            set({ smartAlert: newAlert })
+                        } else if (!isSameAlertDismissed && !currentAlert.dismissed) {
+                            // S'assurer qu'on ne remplace pas une alerte ignorée par la même "non ignorée"
+                            set({ smartAlert: { ...newAlert, dismissed: currentAlert.dismissed } })
+                        }
                     }
                 }
             },
 
             smartAlert: null,
-            clearSmartAlert: () => set({ smartAlert: null }),
+            clearSmartAlert: () => set((state) => ({ 
+                smartAlert: state.smartAlert ? { ...state.smartAlert, dismissed: true } : null 
+            })),
 
             initSlots: (cal, prot, carbs, fat) => {
                 set({ slots: buildInitialSlots(cal, prot, carbs, fat, get().macroDistributions) })
