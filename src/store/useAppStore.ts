@@ -257,6 +257,13 @@ export const useAppStore = create<AppState>()(
                     consProtPast += newSlots[s].protein_consumed
                     consCarbsPast += newSlots[s].carbs_consumed
                     consFatPast += newSlots[s].fat_consumed
+                    
+                    // Pour les créneaux passés, l'objectif s'aligne sur la consommation réelle
+                    // afin que le reste soit redistribué aux créneaux futurs.
+                    newSlots[s].target = newSlots[s].consumed
+                    newSlots[s].protein_target = newSlots[s].protein_consumed
+                    newSlots[s].carbs_target = newSlots[s].carbs_consumed
+                    newSlots[s].fat_target = newSlots[s].fat_consumed
                     newSlots[s].locked = true
                 }
 
