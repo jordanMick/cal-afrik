@@ -55,11 +55,10 @@ export async function POST(req: Request) {
                 firstname: user.user_metadata?.full_name || 'Utilisateur',
                 email: user.email,
             },
-            metadata: {
+            custom_metadata: {
                 user_id: user.id,
                 tier: tier
-            },
-            external_id: user.id
+            }
         });
 
         // 4. Génération du token
