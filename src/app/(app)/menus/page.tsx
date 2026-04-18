@@ -23,7 +23,6 @@ function normalizeMenuText(raw: string): string {
     return base
 }
 
-
 function renderMenuBlock(menuText: string) {
     const sep = '---DATA---'
     const dataIdx = menuText.indexOf(sep)
@@ -125,7 +124,6 @@ function renderMenuBlock(menuText: string) {
 
     flushDayBlock()
 
-
     return rows
 }
 
@@ -150,8 +148,8 @@ export default function MenusPage() {
                 : chatSuggestedMenus.week)
         : null
 
-    // Fallback intelligent
-    if ((menuTab === 'today' || menuTab === 'tomorrow') && !activeMenuText && chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week) {
+    // Fallback intelligent depuis la semaine vers les jours individuels
+    if (chatSuggestedMenus.date === todayStr && chatSuggestedMenus.week && !activeMenuText) {
         const targetDate = new Date()
         if (menuTab === 'tomorrow') targetDate.setDate(targetDate.getDate() + 1)
 
@@ -171,7 +169,8 @@ export default function MenusPage() {
 
             if (menuTab === 'tomorrow') {
                 activeMenuText = dayContent
-            } else {
+            } else if (menuTab === 'today') {
+                // Essayer d'extraire le créneau actuel depuis le menu du jour de la semaine
                 const slotKeywords: Record<string, string[]> = {
                     petit_dejeuner: ['petit', 'matin'],
                     dejeuner: ['dejeuner', 'midi'],
@@ -179,18 +178,13 @@ export default function MenusPage() {
                     diner: ['diner', 'soir']
                 }
                 const keywords = slotKeywords[currentSlotKey] || []
-
-                const sep = '---DATA---'
-                const dataIdx = dayContent.indexOf(sep)
-                const displayText = dataIdx !== -1 ? dayContent.substring(0, dataIdx).trim() : dayContent
-                const lines = displayText.split('\n')
+                const lines = dayContent.split('\n')
                 const slotLineIdx = lines.findIndex(l => keywords.some(k => l.toLowerCase().includes(k)))
 
                 if (slotLineIdx !== -1) {
-                    const allSlots = ['petit', 'dejeuner', 'collation', 'diner']
                     let extracted = lines[slotLineIdx]
                     for (let i = slotLineIdx + 1; i < lines.length; i++) {
-                        if (allSlots.some(s => lines[i].toLowerCase().includes(s))) break
+                        if (['petit', 'dejeuner', 'collation', 'diner'].some(s => lines[i].toLowerCase().includes(s))) break
                         extracted += '\n' + lines[i]
                     }
                     activeMenuText = extracted.trim()
@@ -198,6 +192,113 @@ export default function MenusPage() {
             }
         }
     }
+
+    const renderTodaySlots = () => {
+        const slots: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
+        const todayMenus = chatSuggestedMenus.date === todayStr ? chatSuggestedMenus.today || {} : {}
+        const activeSlots = slots.filter(s => !!todayMenus[s])
+
+        if (activeSlots.length === 0 && !activeMenuText) {
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '40vh', textAlign: 'center' }}>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                        <UtensilsCrossed size={36} color="var(--accent)" />
+                    </div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
+                        Aucun menu prévu pour aujourd'hui
+                    </h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '32px', maxWidth: '80%' }}>
+                        Demande à Coach Yao de te composer un menu adapté à tes objectifs !
+                    </p>
+                    <button onClick={() => router.push('/coach')} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(135deg, var(--accent), var(--success))', color: '#fff', border: 'none', padding: '14px 24px', borderRadius: '16px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 8px 24px rgba(var(--accent-rgb), 0.3)' }}>
+                        <MessageSquareText size={20} /> Parler au Coach
+                    </button>
+                </div>
+            )
+        }
+
+        // Si on a un fallback depuis la semaine mais pas de menu "creneau" spécifique
+        if (activeSlots.length === 0 && activeMenuText) {
+            return (
+                <div>
+                  <div style={{ marginBottom: '12px', padding: '4px 10px', background: 'var(--accent)', borderRadius: '8px', color: '#fff', fontSize: '11px', fontWeight: '800', width: 'fit-content' }}>
+                      {SLOT_LABELS[currentSlotKey]} (Planning Semaine)
+                  </div>
+                  {renderMenuBlock(activeMenuText)}
+                </div>
+            )
+        }
+
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                {activeSlots.map(slot => {
+                    const text = todayMenus[slot]!
+                    return (
+                        <div key={slot} style={{ paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                <div style={{ padding: '4px 10px', background: slot === currentSlotKey ? 'var(--accent)' : 'var(--bg-tertiary)', borderRadius: '8px', color: slot === currentSlotKey ? '#fff' : 'var(--text-muted)', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>
+                                    {SLOT_LABELS[slot]} {slot === currentSlotKey ? ' (En cours)' : ''}
+                                </div>
+                            </div>
+                            
+                            {renderMenuBlock(text)}
+
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                                <button
+                                    onClick={() => {
+                                        const { clearChatSuggestedMenu } = useAppStore.getState()
+                                        clearChatSuggestedMenu('today', slot)
+                                        toast.success("Menu supprimé")
+                                    }}
+                                    style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                                >
+                                    Supprimer
+                                </button>
+                                {text.includes('---DATA---') && (
+                                    <button
+                                        onClick={() => {
+                                            const sep = '---DATA---'
+                                            const idx = text.indexOf(sep)
+                                            if (idx !== -1) {
+                                                const jsonPart = text.substring(idx + sep.length).trim()
+                                                try {
+                                                    const data = JSON.parse(jsonPart)
+                                                    const { setPendingScannerPrefill } = useAppStore.getState()
+                                                    setPendingScannerPrefill({ items: data.items, slot: slot })
+                                                    router.push('/scanner')
+                                                } catch (e) { toast.error("Erreur technique") }
+                                            }
+                                        }}
+                                        style={{ flex: 1, padding: '8px 12px', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--success))', color: '#fff', border: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                                    >
+                                        ✅ Choisir
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+        )
+    }
+
+    const renderSingleMenu = (text: string, kind: 'tomorrow' | 'week') => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>{renderMenuBlock(text)}</div>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '10px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
+                <button
+                    onClick={() => {
+                        const { clearChatSuggestedMenu } = useAppStore.getState()
+                        clearChatSuggestedMenu(kind)
+                        toast.success("Suggestion supprimée")
+                    }}
+                    style={{ flex: 1, padding: '12px', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
+                >
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    )
 
     useEffect(() => {
         if (!canAccessFutureMenus && (menuTab === 'tomorrow' || menuTab === 'week')) {
@@ -252,18 +353,16 @@ export default function MenusPage() {
             </div>
 
             <div style={{ background: 'var(--bg-secondary)', borderRadius: '24px', border: '0.5px solid var(--border-color)', padding: '20px', minHeight: '60vh' }}>
-                {activeMenuText ? (
-                    <div>{renderMenuBlock(activeMenuText)}</div>
-                ) : (
+                {menuTab === 'today' ? renderTodaySlots() : (activeMenuText ? renderSingleMenu(activeMenuText, menuTab) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '40vh', textAlign: 'center' }}>
                         <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
                             <UtensilsCrossed size={36} color="var(--accent)" />
                         </div>
                         <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
-                            Aucun menu prévu pour {menuTab === 'today' ? "aujourd'hui" : menuTab === 'tomorrow' ? "demain" : "cette semaine"}
+                            Aucun menu prévu pour {menuTab === 'tomorrow' ? "demain" : "cette semaine"}
                         </h3>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '32px', maxWidth: '80%' }}>
-                            Tu n'as pas encore d'idées de plats ? Demande à Coach Yao de te composer un menu adapté à tes objectifs !
+                            Demande à Coach Yao de te composer un menu adapté à tes objectifs !
                         </p>
 
                         <button
@@ -280,9 +379,8 @@ export default function MenusPage() {
                             Parler au Coach
                         </button>
                     </div>
-                )}
+                ))}
             </div>
-
         </div>
     )
 }

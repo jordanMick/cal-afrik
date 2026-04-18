@@ -513,7 +513,7 @@ export default function CoachChatPage() {
                 .eq('user_id', session.user.id)
                 .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
         })
-        router.push('/scanner')
+        router.push('/menus')
     }
 
     return (
