@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
         if (error) return NextResponse.json({ success: false, error: error.message })
         return NextResponse.json({ success: true, data })
 
-    } catch (err) {
+    } catch {
         return NextResponse.json({ success: false, error: 'Erreur serveur' })
     }
 }
