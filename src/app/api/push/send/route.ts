@@ -24,12 +24,28 @@ export async function GET(req: NextRequest) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        // Récupérer tous les abonnements AVEC les préférences
-        const { data: subs, error } = await supabase
+        // Récupérer tous les abonnements sans jointure directe (car relation potentiellement manquante dans Supabase)
+        const { data: rawSubs, error: subsError } = await supabase
             .from('push_subscriptions')
-            .select('*, profile:user_profiles(notify_meals, notify_reports, notify_subscription, subscription_tier, subscription_expires_at)')
+            .select('*')
 
-        if (error) throw error
+        if (subsError) throw subsError
+
+        // Récupérer les profils manuellement
+        const userIds = [...new Set(rawSubs.map((s: any) => s.user_id))]
+        const { data: profiles, error: profError } = await supabase
+            .from('user_profiles')
+            .select('user_id, notify_meals, notify_reports, notify_subscription, subscription_tier, subscription_expires_at')
+            .in('user_id', userIds)
+
+        if (profError) throw profError
+
+        // Associer les profils aux abonnements
+        const profileMap = Object.fromEntries(profiles.map((p: any) => [p.user_id, p]))
+        const subs = rawSubs.map((s: any) => ({
+            ...s,
+            profile: profileMap[s.user_id]
+        }))
 
         let successCount = 0
         const failures: any[] = []
