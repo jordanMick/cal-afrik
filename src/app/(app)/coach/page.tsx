@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier, SUBSCRIPTION_RULES } from '@/lib/subscription'
 import { supabase } from '@/lib/supabase'
 import ReactMarkdown from 'react-markdown'
+import { toast } from 'sonner'
 
 type Role = 'user' | 'coach'
 
@@ -316,7 +317,7 @@ export default function CoachChatPage() {
         if (!input.trim()) return
         if (!activeThread) return
         if ((activeThread.messagesUsed || 0) >= (activeThread.maxMessages || maxMessages)) {
-            alert("Limite de messages atteinte pour cette discussion.")
+            toast.error("Limite de messages atteinte pour cette discussion.")
             return
         }
 

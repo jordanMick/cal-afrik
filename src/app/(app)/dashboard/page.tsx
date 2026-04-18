@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 import { Settings, AlertTriangle, X, ShieldAlert } from 'lucide-react'
+import { toast } from 'sonner'
 import NotificationCenter from '@/components/NotificationCenter'
 import PushNotificationManager from '@/components/PushNotificationManager'
 
@@ -269,7 +270,7 @@ export default function DashboardPage() {
 
             window.location.href = data.url;
         } catch (error: any) {
-            alert(`Erreur: ${error.message}`);
+            toast.error(`Erreur: ${error.message}`);
         } finally {
             setIsRenewing(false);
         }
@@ -679,7 +680,7 @@ export default function DashboardPage() {
                                         })
                                         if (slotMeals.length > 0) {
                                             const details = slotMeals.map(m => `- ${m.custom_name || 'Repas'} (${Math.round(m.calories)} kcal)`).join('\n')
-                                            alert(`${slot.label} :\n${details}`)
+                                            toast.info(`${slot.label} :`, { description: details })
                                         }
                                     }}
                                     style={{

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, Pencil, Mail, Key, Check, X } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -63,7 +64,7 @@ export default function PersonalInfoPage() {
             setUserEmail(emailForm.newEmail)
             setIsEditingEmail(false)
             setEmailOtpMode(false)
-            alert("Email mis à jour avec succès !")
+            toast.success("Email mis à jour avec succès !")
         } catch (err: any) {
             setEmailError(err.message || "Code incorrect ou expiré.")
         } finally {

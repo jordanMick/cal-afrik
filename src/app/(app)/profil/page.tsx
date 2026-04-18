@@ -8,6 +8,7 @@ import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
 import { Settings, Bell, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -109,7 +110,7 @@ export default function ProfilPage() {
 
             window.location.href = data.url;
         } catch (error: any) {
-            alert(`Erreur: ${error.message}`);
+            toast.error(`Erreur: ${error.message}`);
         } finally {
             setIsRenewing(false);
         }

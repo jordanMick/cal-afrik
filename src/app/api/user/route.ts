@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { createClient } from '@supabase/supabase-js'
 
 async function getUser(req: NextRequest) {
@@ -30,11 +31,6 @@ export async function GET(req: NextRequest) {
         const user = await getUser(req)
         if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
-
         const { data: profile, error } = await supabaseAdmin
             .from('user_profiles')
             .select('*')
@@ -64,11 +60,6 @@ export async function POST(req: NextRequest) {
         if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
         const body = await req.json()
-
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
 
         const { data: profile, error } = await supabaseAdmin
             .from('user_profiles')
@@ -115,11 +106,6 @@ export async function DELETE(req: NextRequest) {
     try {
         const user = await getUser(req)
         if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
 
         // 1. Supprimer en PREMIER l'utilisateur de l'auth (opération critique)
         const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.id)

@@ -21,7 +21,7 @@ const CATEGORIES = [
 ]
 
 interface ManualFood {
-  name_fr: string
+  name_standard: string
   portion_g: number
   calories: number
   protein_g: number
@@ -74,8 +74,8 @@ export const ManualFoodForm = ({
                 <Input
                   label="Nom de l'aliment"
                   placeholder="ex: Rôti de porc"
-                  value={manualFood.name_fr}
-                  onChange={e => setManualFood(p => ({ ...p, name_fr: e.target.value }))}
+                  value={manualFood.name_standard}
+                  onChange={e => setManualFood(p => ({ ...p, name_standard: e.target.value }))}
                 />
                 <Input
                   as="select"
@@ -130,7 +130,7 @@ export const ManualFoodForm = ({
 
               <Button
                 fullWidth
-                disabled={isSaving || !manualFood.name_fr || manualFood.calories <= 0}
+                disabled={isSaving || !manualFood.name_standard || manualFood.calories <= 0}
                 onClick={onSave}
                 style={{ backgroundColor: slotColor }}
                 className="text-white hover:opacity-90"

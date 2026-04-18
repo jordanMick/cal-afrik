@@ -1,10 +1,9 @@
-'use client'
-
 import type { Metadata, Viewport } from 'next'
-import { useEffect } from 'react'
 import PWARegister from '@/components/PWARegister'
+import ThemeInitializer from '@/components/ThemeInitializer'
 import { DM_Sans, Syne } from 'next/font/google'
-import { initializeTheme } from '@/store/useTheme'
+import { metadata as siteMetadata, viewport as siteViewport } from './Metadata'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -17,24 +16,18 @@ const syne = Syne({
   variable: '--font-syne',
 })
 
-// ⚠️ NOTE: Metadata et Viewport ne peuvent pas être utilisés avec 'use client'
-// Solution: Créez un fichier metadata.ts séparé (voir ci-dessous)
+export const metadata: Metadata = siteMetadata
+export const viewport: Viewport = siteViewport
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // ✅ Initialiser le thème au chargement
-  useEffect(() => {
-    initializeTheme()
-  }, [])
-
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <head>
-        {/* ✅ IMPORTANT: Ce script précharge le thème AVANT React ne se charge */}
-        {/* Cela élimine le flash blanc au changement de thème */}
+        {/* ✅ IMPORTANT: Ce script précharge le thème AVANT que React ne se charge */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -52,6 +45,8 @@ export default function RootLayout({
         />
       </head>
       <body className={`${dmSans.variable} ${syne.variable} font-sans min-h-screen text-foreground antialiased`}>
+        <Toaster position="top-center" richColors expand={true} />
+        <ThemeInitializer />
         <PWARegister />
         {children}
       </body>

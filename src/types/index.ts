@@ -48,18 +48,21 @@ export interface WeightLog {
 
 export interface FoodItem {
     id: string
-    name_fr: string
-    name_local?: string
+    name_standard: string
+    display_name?: string
     category: FoodCategory
-    origin_country: string[]
+    origin_countries: string[]
     calories_per_100g: number
-    protein_per_100g: number
-    carbs_per_100g: number
-    fat_per_100g: number
+    proteins_100g: number
+    carbs_100g: number
+    lipids_100g: number
     fiber_per_100g?: number
+    density_g_ml?: number
     default_portion_g: number
     image_url?: string
     verified: boolean
+    user_id?: string
+    created_at?: string
 }
 
 export type FoodCategory =
@@ -109,7 +112,7 @@ export interface DailyLog {
 // ─── Planification Alimentaire (Planner) ────────────────────────
 export interface Recipe {
     id: string
-    name_fr: string
+    name_standard: string
     description?: string
     instructions?: string[]
     ingredients: { item: string, amount: string }[]
@@ -140,7 +143,6 @@ export interface MealPlan {
 // Ancien type gardé pour compatibilité si utilisé ailleurs
 export interface ScanResult {
     food_name: string
-    food_name_fr: string
     estimated_portion_g: number
     calories: number
     protein_g: number

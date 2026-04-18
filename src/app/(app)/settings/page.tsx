@@ -8,6 +8,7 @@ import ThemeSelector from '@/components/ThemeSelector'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 export default function SettingsPage() {
     const router = useRouter()
@@ -37,11 +38,11 @@ export default function SettingsPage() {
                 // On utilise location.href pour vider tout le store et l'état React proprement
                 window.location.href = '/'
             } else {
-                alert(`Erreur: ${json.error || 'Impossible de supprimer le compte'}`)
+                toast.error(`Erreur: ${json.error || 'Impossible de supprimer le compte'}`)
             }
         } catch (err) {
             console.error(err)
-            alert("Une erreur est survenue lors de la suppression.")
+            toast.error("Une erreur est survenue lors de la suppression.")
         } finally {
             setIsDeleting(false)
             setShowDeleteModal(false)

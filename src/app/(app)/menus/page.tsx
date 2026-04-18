@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ArrowLeft, UtensilsCrossed, MessageSquareText, Flame } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
 
@@ -491,7 +492,7 @@ export default function MenusPage() {
                 <button
                     onClick={() => {
                         if (!canAccessFutureMenus) {
-                            alert("Menu Demain réservé aux plans Pro et Premium.")
+                            toast.info("Menu Demain réservé aux plans Pro et Premium.")
                             return
                         }
                         setMenuTab('tomorrow')
@@ -503,7 +504,7 @@ export default function MenusPage() {
                 <button
                     onClick={() => {
                         if (effectiveTier !== 'premium') {
-                            alert("Menu Semaine réservé exclusivement au plan Premium.")
+                            toast.info("Menu Semaine réservé exclusivement au plan Premium.")
                             return
                         }
                         setMenuTab('week')

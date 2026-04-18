@@ -1,50 +1,64 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
-// Note: FedaPay envoie des requêtes POST pour les webhooks
 export async function POST(req: Request) {
     try {
         const payload = await req.json();
-        const event = payload.event;
-        const transaction = payload.entity;
-        const metadata = transaction?.custom_metadata || payload?.entity?.custom_metadata || {};
+        
+        // 1. Extraire l'ID de transaction
+        const transactionId = payload.data?.entity?.id || payload.entity?.id || payload.id;
+        
+        if (!transactionId) {
+            console.error('[FedaPay Webhook] Transaction ID manquant');
+            return NextResponse.json({ error: 'No transaction ID' }, { status: 400 });
+        }
 
-        console.log(`[FedaPay Webhook] Événement reçu: ${event}`);
+        // 🛡️ SÉCURITÉ : Vérification directe auprès de FedaPay pour éviter les faux payloads
+        const FEDAPAY_KEY = process.env.FEDAPAY_SECRET_KEY;
+        const verifyRes = await fetch(`https://api.fedapay.com/v1/transactions/${transactionId}`, {
+            headers: {
+                Authorization: `Bearer ${FEDAPAY_KEY}`,
+                "Content-Type": "application/json"
+            }
+        });
 
-        // On ne traite que les transactions approuvées
-        if (event === 'transaction.approved') {
-            const userId = metadata?.user_id;
-            const tier = metadata?.tier;
+        if (!verifyRes.ok) {
+            console.error(`[FedaPay Webhook] Échec vérification FedaPay (Status: ${verifyRes.status})`);
+            return NextResponse.json({ error: 'Verification failed' }, { status: 400 });
+        }
 
-            if (!userId || !tier) {
-                console.error('[FedaPay Webhook] Métadonnées manquantes (user_id ou tier)');
-                return NextResponse.json({ error: 'Métadonnées manquantes' }, { status: 400 });
+        const verifyData = await verifyRes.json();
+        const transaction = verifyData?.["v1/transaction"] || verifyData?.transaction || verifyData;
+
+        if (transaction.status === 'approved') {
+            const metadata = typeof transaction.metadata === 'string' 
+                ? JSON.parse(transaction.metadata) 
+                : (transaction.metadata || transaction.custom_metadata || {});
+
+            const userId = metadata.user_id || metadata.userId || transaction.external_id;
+            const tier = (metadata.tier || 'premium').toLowerCase();
+
+            if (!userId) {
+                console.error('[FedaPay Webhook] Impossible d\'identifier l\'utilisateur');
+                return NextResponse.json({ error: 'User not identified' }, { status: 400 });
             }
 
-            console.log(`[FedaPay Webhook] Validation paiement pour ${userId} - Plan: ${tier}`);
-
-            // 1. Récupération de l'ancienne date pour faire un CUMUL si nécessaire
-            const { data: currentProfile } = await supabase
+            // Calcul de l'expiration (+30 jours cumulés)
+            const { data: profile } = await supabaseAdmin
                 .from('user_profiles')
                 .select('subscription_expires_at')
                 .eq('user_id', userId)
                 .single();
 
             let baseDate = new Date();
-            
-            if (currentProfile?.subscription_expires_at) {
-                const currentExp = new Date(currentProfile.subscription_expires_at);
-                // Si l'ancienne expiration est encore dans le futur, on part de là.
-                if (currentExp > baseDate) {
-                    baseDate = currentExp;
-                }
+            if (profile?.subscription_expires_at) {
+                const currentExp = new Date(profile.subscription_expires_at);
+                if (currentExp > baseDate) baseDate = currentExp;
             }
-
-            // Calcul global de l'expiration (+30 jours)
             baseDate.setDate(baseDate.getDate() + 30);
 
-            // Mise à jour de l'abonnement dans Supabase
-            const { error: updateError } = await supabase
+            // Mise à jour via Admin (contourne RLS)
+            const { error: updateError } = await supabaseAdmin
                 .from('user_profiles')
                 .update({ 
                     subscription_tier: tier,
@@ -54,42 +68,17 @@ export async function POST(req: Request) {
                 .eq('user_id', userId);
 
             if (updateError) {
-                console.error('[FedaPay Webhook] Erreur mise à jour profil:', updateError);
-                return NextResponse.json({ error: 'Erreur DB' }, { status: 500 });
+                console.error('[FedaPay Webhook] Erreur mise à jour profil:', updateError.message);
+                return NextResponse.json({ error: 'Database error' }, { status: 500 });
             }
 
-            console.log(`[FedaPay Webhook] Profil mis à jour avec succès pour ${userId}`);
-        }
-        
-        // Si l'abonnement est signalé comme expiré/cancelled par le provider,
-        // on synchronise immédiatement le tier en base vers free.
-        if (event === 'subscription.expired' || event === 'transaction.expired' || event === 'transaction.canceled' || event === 'transaction.cancelled') {
-            const userId = metadata?.user_id;
-            if (!userId) {
-                console.error('[FedaPay Webhook] user_id manquant pour événement d’expiration');
-                return NextResponse.json({ error: 'Métadonnées manquantes' }, { status: 400 });
-            }
-
-            const { error: expireError } = await supabase
-                .from('user_profiles')
-                .update({
-                    subscription_tier: 'free',
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('user_id', userId);
-
-            if (expireError) {
-                console.error('[FedaPay Webhook] Erreur sync expiration:', expireError);
-                return NextResponse.json({ error: 'Erreur DB' }, { status: 500 });
-            }
-
-            console.log(`[FedaPay Webhook] Abonnement expiré => tier free pour ${userId}`);
+            console.log(`[FedaPay Webhook] ✅ Abonnement ${tier} activé pour ${userId}`);
         }
 
-        return NextResponse.json({ received: true });
+        return NextResponse.json({ success: true });
 
     } catch (error: any) {
-        console.error('[FedaPay Webhook] Erreur:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('[FedaPay Webhook] Erreur:', error.message);
+        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
 }

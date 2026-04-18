@@ -87,27 +87,18 @@ export async function POST(req: NextRequest) {
         const body = await req.json()
 
         const {
-            name_fr,
-            name_local,
+            name_standard,
+            display_name,
             category,
             calories_per_100g,
             proteins_100g,
-            proteins_per_100g, // support des deux noms
             carbs_100g,
-            carbs_per_100g,
             lipids_100g,
-            fat_per_100g,
             default_portion_g,
-            origin_country,
+            origin_countries,
         } = body
 
-        const originCountries = Array.isArray(origin_country)
-            ? origin_country
-            : origin_country != null && origin_country !== ''
-              ? [String(origin_country)]
-              : []
-
-        if (!name_fr || !category || calories_per_100g === undefined) {
+        if (!name_standard || !category || calories_per_100g === undefined) {
             return NextResponse.json({
                 success: false,
                 error: 'Champs obligatoires manquants'
@@ -117,17 +108,15 @@ export async function POST(req: NextRequest) {
         const { data, error } = await supabaseAdmin
             .from('food_items')
             .insert({
-                name_standard: name_fr,
-                display_name: name_local || null,
+                name_standard,
+                display_name: display_name || null,
                 category,
                 calories_per_100g: Number(calories_per_100g),
-                proteins_100g: Number(proteins_100g || proteins_per_100g || 0),
-                carbs_100g: Number(carbs_100g || carbs_per_100g || 0),
-                lipids_100g: Number(lipids_100g || fat_per_100g || 0),
+                proteins_100g: Number(proteins_100g || 0),
+                carbs_100g: Number(carbs_100g || 0),
+                lipids_100g: Number(lipids_100g || 0),
                 default_portion_g: Number(default_portion_g || 200),
-                origin_countries: originCountries,
-                
-                // 🛡️ SÉCURITÉ : Forcé à false pour les utilisateurs, lié au créateur
+                origin_countries: Array.isArray(origin_countries) ? origin_countries : [],
                 verified: false,
                 user_id: user.id
             })

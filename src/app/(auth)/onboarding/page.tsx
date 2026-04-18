@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
+import { toast } from 'sonner'
 import { calculateCalorieTarget } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import type { UserProfile } from '@/types'
@@ -305,7 +306,7 @@ export default function OnboardingPage() {
             router.push(redirectPath)
         } catch (err) {
             console.error(err)
-            alert('Erreur lors de la sauvegarde')
+            toast.error('Erreur lors de la sauvegarde')
         } finally {
             setIsSaving(false)
         }

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Info, ChevronDown } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -17,7 +18,7 @@ interface EnrichedSuggestion extends FoodSuggestion {
 }
 
 interface ManualFood {
-    name_fr: string; portion_g: number; calories: number
+    name_standard: string; portion_g: number; calories: number
     protein_g: number; carbs_g: number; fat_g: number; category: string
 }
 
@@ -66,7 +67,7 @@ export default function ScannerPage() {
     const [isLoadingCoach, setIsLoadingCoach] = useState(false)
     const [scanMode, setScanMode] = useState<'ai' | 'barcode'>('ai')
     const [isScanningBarcode, setIsScanningBarcode] = useState(false)
-    const [manualFood, setManualFood] = useState<ManualFood>({ name_fr: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
+    const [manualFood, setManualFood] = useState<ManualFood>({ name_standard: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
 
     // ─── Pont Coach → Scanner : traitement du pre-fill ───────────────
     useEffect(() => {
@@ -190,7 +191,7 @@ export default function ScannerPage() {
         // --- 2. Fallback via regex (Moins précis) if no data or parse failed ---
         if (!dataParsedSuccessfully) {
             const detectedInDB = (foods || []).filter(f => {
-                const fullName = (f.display_name || f.name_standard || f.name_fr || "").toLowerCase()
+                const fullName = (f.display_name || f.name_standard || "").toLowerCase()
                 // On extrait le nom court sans les parenthèses (ex: "Molou Zogbon (Bouillie de riz)" -> "molou zogbon")
                 const shortName = fullName.replace(/\s*\(.*?\)/g, "").trim()
                 
@@ -202,7 +203,7 @@ export default function ScannerPage() {
 
             if (detectedInDB.length > 0) {
                 detectedInDB.forEach(f => {
-                    const nameEscaped = (f.display_name || f.name_standard || f.name_fr || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                    const nameEscaped = (f.display_name || f.name_standard || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
                     const portionRegex = new RegExp(`${nameEscaped}.*?\\(?(\\d+)\\s*g\\)?`, 'i')
                     const portionMatch = fullText.match(portionRegex)
                     const portion = portionMatch ? parseInt(portionMatch[1]) : (f.default_portion_g || 200)
@@ -369,7 +370,7 @@ export default function ScannerPage() {
             const base64Image = await toBase64(compressedFile)
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) {
-                alert("Session expirée. Reconnecte-toi pour lancer l'analyse IA.")
+                toast.error("Session expirée. Reconnecte-toi pour lancer l'analyse IA.")
                 return
             }
             const res = await fetch('/api/analyze', {
@@ -383,29 +384,29 @@ export default function ScannerPage() {
             // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
             const effectiveTier = profile?.subscription_tier || 'free';
             if (effectiveTier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-                alert("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
+                toast.error("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
                 router.push('/upgrade')
                 return
             }
 
             if (json.error && json.code === 'LIMIT_REACHED') {
                 setIsAnalyzing(false)
-                alert("🚀 Limite de scan atteinte ! Passez au plan Pro pour scanner sans limite.")
+                toast.info("🚀 Limite de scan atteinte ! Passez au plan Pro pour scanner sans limite.")
                 router.push('/upgrade')
                 return
             }
 
             if (!json.success || !json.data) {
                 if (json?.code === 'GEMINI_QUOTA_EXCEEDED') {
-                    alert("Quota Gemini dépassé. Active la facturation Google AI Studio ou attends le reset du quota.")
+                    toast.error("Quota Gemini dépassé. Active la facturation Google AI Studio ou attends le reset du quota.")
                     return
                 }
                 if (json?.code === 'GEMINI_TEMP_UNAVAILABLE') {
-                    alert("Gemini est temporairement surchargé. Réessaie dans quelques secondes.")
+                    toast.warning("Gemini est temporairement surchargé. Réessaie dans quelques secondes.")
                     return
                 }
                 const errorMessage = json?.error || "Analyse Gemini échouée."
-                alert(`Erreur analyse: ${errorMessage}`)
+                toast.error(`Erreur analyse: ${errorMessage}`)
                 return
             }
             setMealName(json.meal_name || 'Repas détecté')
@@ -418,10 +419,10 @@ export default function ScannerPage() {
             })
             setSuggestions(enriched)
             setIsSuggestionsExpanded(true)
-            if (json.data[0]) { const first = json.data[0] as ScanResultItem; setManualFood({ name_fr: json.meal_name || first.detected, portion_g: first.portion_g, calories: first.calories_detected, protein_g: first.protein_detected, carbs_g: first.carbs_detected, fat_g: first.fat_detected, category: 'plats_composes' }) }
+            if (json.data[0]) { const first = json.data[0] as ScanResultItem; setManualFood({ name_standard: json.meal_name || first.detected, portion_g: first.portion_g, calories: first.calories_detected, protein_g: first.protein_detected, carbs_g: first.carbs_detected, fat_g: first.fat_detected, category: 'plats_composes' }) }
         } catch (err: any) {
             console.error(err)
-            alert(`Erreur analyse: ${err?.message || "Erreur inconnue"}`)
+            toast.error(`Erreur analyse: ${err?.message || "Erreur inconnue"}`)
         }
         finally { setIsAnalyzing(false) }
     }
@@ -475,7 +476,7 @@ export default function ScannerPage() {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-            alert("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
+            toast.error("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
             router.push('/upgrade')
             return
         }
@@ -490,7 +491,7 @@ export default function ScannerPage() {
                 const p = json.product;
                 const nuts = p.nutriments;
                 const detectedFood: ManualFood = {
-                    name_fr: p.product_name_fr || p.product_name || "Produit inconnu",
+                    name_standard: p.product_name_fr || p.product_name || "Produit inconnu",
                     portion_g: 100,
                     calories: Math.round(nuts['energy-kcal_100g'] || 0),
                     protein_g: nuts.proteins_100g || 0,
@@ -499,7 +500,7 @@ export default function ScannerPage() {
                     category: 'snacks'
                 };
                 setManualFood(detectedFood);
-                setMealName(detectedFood.name_fr);
+                setMealName(detectedFood.name_standard);
                 setShowManualForm(true);
                 if (p.image_front_url) setImage(p.image_front_url);
 
@@ -508,7 +509,7 @@ export default function ScannerPage() {
                     await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
                 }
             } else {
-                alert("Produit non trouvé.");
+                toast.error("Produit non trouvé.");
             }
         } catch (err) {
             console.error(err);
@@ -535,7 +536,7 @@ export default function ScannerPage() {
                 .lte('logged_at', `${today}T23:59:59.999Z`)
 
             if (count !== null && count >= 5) {
-                alert("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit). Passez au plan Pro pour scanner sans limite !")
+                toast.info("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit). Passez au plan Pro pour scanner sans limite !")
                 router.push('/upgrade')
                 return
             }
@@ -551,7 +552,7 @@ export default function ScannerPage() {
             await onScanSuccess(decodedText);
         } catch (err) {
             console.error(err);
-            alert("Aucun code-barres lisible n'a été trouvé sur cette image.");
+            toast.error("Aucun code-barres lisible n'a été trouvé sur cette image.");
         } finally {
             setIsAnalyzing(false);
         }
@@ -569,9 +570,9 @@ export default function ScannerPage() {
             name: item.name_standard,
             score: 50,
             calories: Math.round((item.calories_per_100g * (item.default_portion_g || 200)) / 100),
-            protein_g: Math.round((item.protein_per_100g * (item.default_portion_g || 200)) / 100 * 10) / 10,
-            carbs_g: Math.round((item.carbs_per_100g * (item.default_portion_g || 200)) / 100 * 10) / 10,
-            fat_g: Math.round((item.fat_per_100g * (item.default_portion_g || 200)) / 100 * 10) / 10,
+            protein_g: Math.round((item.proteins_100g * (item.default_portion_g || 200)) / 100 * 10) / 10,
+            carbs_g: Math.round((item.carbs_100g * (item.default_portion_g || 200)) / 100 * 10) / 10,
+            fat_g: Math.round((item.lipids_100g * (item.default_portion_g || 200)) / 100 * 10) / 10,
             portion_g: item.default_portion_g || 200,
             calories_detected: 0,
             protein_detected: 0,
@@ -612,7 +613,7 @@ export default function ScannerPage() {
     }
 
     const handleSaveManualFood = async () => {
-        if (!manualFood.name_fr || manualFood.calories <= 0) return
+        if (!manualFood.name_standard || manualFood.calories <= 0) return
         setIsSavingManual(true)
         try {
             const { data: { session } } = await supabase.auth.getSession()
@@ -624,15 +625,15 @@ export default function ScannerPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                 body: JSON.stringify({
-                    name_fr: manualFood.name_fr,
+                    name_standard: manualFood.name_standard,
                     category: manualFood.category,
                     calories_per_100g: Math.round(manualFood.calories * factor),
-                    protein_per_100g: Math.round(manualFood.protein_g * factor * 10) / 10,
-                    carbs_per_100g: Math.round(manualFood.carbs_g * factor * 10) / 10,
-                    fat_per_100g: Math.round(manualFood.fat_g * factor * 10) / 10,
+                    proteins_100g: Math.round(manualFood.protein_g * factor * 10) / 10,
+                    carbs_100g: Math.round(manualFood.carbs_g * factor * 10) / 10,
+                    lipids_100g: Math.round(manualFood.fat_g * factor * 10) / 10,
                     default_portion_g: manualFood.portion_g,
                     verified: false,
-                    origin_country: []
+                    origin_countries: []
                 })
             })
             const jsonFood = await resFood.json()
@@ -641,7 +642,7 @@ export default function ScannerPage() {
             // 2. Préparer le repas complet (Aliments déjà sélectionnés + ce nouvel aliment)
             const newFoodEntry: EnrichedSuggestion = {
                 id: jsonFood.data.id,
-                name: manualFood.name_fr,
+                name: manualFood.name_standard,
                 score: 100,
                 calories: manualFood.calories,
                 protein_g: manualFood.protein_g,
@@ -653,7 +654,7 @@ export default function ScannerPage() {
                 carbs_detected: manualFood.carbs_g,
                 fat_detected: manualFood.fat_g,
                 confidence: 100,
-                detected: manualFood.name_fr,
+                detected: manualFood.name_standard,
                 fromCoach: false
             }
 
@@ -690,7 +691,7 @@ export default function ScannerPage() {
                 addMeal(jsonMeal.data)
                 router.push('/journal')
             } else if (jsonMeal.code === 'LIMIT_REACHED') {
-                alert(jsonMeal.error)
+                toast.error(jsonMeal.error)
                 router.push('/upgrade')
             } else {
                 throw new Error("Erreur lors de l'enregistrement du repas")
@@ -698,7 +699,7 @@ export default function ScannerPage() {
 
         } catch (err) {
             console.error(err)
-            alert("Erreur lors de l'enregistrement.")
+            toast.error("Erreur lors de l'enregistrement.")
         } finally {
             setIsSavingManual(false)
         }
@@ -706,7 +707,7 @@ export default function ScannerPage() {
 
     const saveAIFoodToDB = async (food: EnrichedSuggestion, session: any) => {
         const factor = food.portion_g > 0 ? 100 / food.portion_g : 1
-        try { await fetch('/api/foods', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name_fr: food.name, category: 'plats_composes', calories_per_100g: Math.round(food.calories * factor), protein_per_100g: Math.round(food.protein_g * factor * 10) / 10, carbs_per_100g: Math.round(food.carbs_g * factor * 10) / 10, fat_per_100g: Math.round(food.fat_g * factor * 10) / 10, default_portion_g: food.portion_g, verified: false, origin_country: [] }) }) } catch (err) { console.error(err) }
+        try { await fetch('/api/foods', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name_standard: food.name, category: 'plats_composes', calories_per_100g: Math.round(food.calories * factor), proteins_100g: Math.round(food.protein_g * factor * 10) / 10, carbs_100g: Math.round(food.carbs_g * factor * 10) / 10, lipids_100g: Math.round(food.fat_g * factor * 10) / 10, default_portion_g: food.portion_g, verified: false, origin_countries: [] }) }) } catch (err) { console.error(err) }
     }
 
     const handleSaveMeal = async () => {
@@ -724,10 +725,10 @@ export default function ScannerPage() {
                 addMeal(json.data)
                 router.push('/journal')
             } else if (json.code === 'LIMIT_REACHED') {
-                alert(json.error)
+                toast.error(json.error)
                 router.push('/upgrade')
             } else {
-                alert(`Erreur enregistrement repas: ${json?.error || 'Insertion échouée'}`)
+                toast.error(`Erreur enregistrement repas: ${json?.error || 'Insertion échouée'}`)
             }
         } catch (err) { console.error(err) }
         finally { setIsSaving(false) }
@@ -1018,7 +1019,7 @@ export default function ScannerPage() {
                 <div style={{ marginBottom: '14px', padding: '18px', borderRadius: '14px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)' }}>
                     <p style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '15px', marginBottom: '2px' }}>✏️ Ajouter un aliment</p>
                     <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '14px' }}>Valeurs suggérées par Coach Yao</p>
-                    <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Nom *</label><input style={inputStyle} value={manualFood.name_fr} onChange={e => setManualFood(p => ({ ...p, name_fr: e.target.value }))} placeholder="ex: Rôti de porc" /></div>
+                    <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Nom *</label><input style={inputStyle} value={manualFood.name_standard} onChange={e => setManualFood(p => ({ ...p, name_standard: e.target.value }))} placeholder="ex: Rôti de porc" /></div>
                     <div style={{ marginBottom: '10px' }}><label style={labelStyle}>Catégorie *</label><select style={inputStyle} value={manualFood.category} onChange={e => setManualFood(p => ({ ...p, category: e.target.value }))}>{CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
                     <div style={{ marginBottom: '4px' }}><label style={labelStyle}>Portion (g) *</label><input style={inputStyle} type="number" value={manualFood.portion_g} onChange={e => setManualFood(p => ({ ...p, portion_g: Number(e.target.value) }))} /></div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '10px', opacity: 0.5 }}>Macros pour {manualFood.portion_g}g</p>
@@ -1028,7 +1029,7 @@ export default function ScannerPage() {
                             <div key={f.key}><label style={labelStyle}>{f.label}</label><input style={inputStyle} type="number" value={(manualFood as any)[f.key]} onChange={e => setManualFood(p => ({ ...p, [f.key]: Number(e.target.value) }))} placeholder="0" /></div>
                         ))}
                     </div>
-                    <button onClick={handleSaveManualFood} disabled={isSavingManual || !manualFood.name_fr || manualFood.calories <= 0} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: (!manualFood.name_fr || manualFood.calories <= 0) ? 'var(--bg-tertiary)' : `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: (!manualFood.name_fr || manualFood.calories <= 0) ? 'var(--text-muted)' : '#fff', border: 'none', fontWeight: '500', cursor: 'pointer', fontSize: '14px' }}>
+                    <button onClick={handleSaveManualFood} disabled={isSavingManual || !manualFood.name_standard || manualFood.calories <= 0} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: (!manualFood.name_standard || manualFood.calories <= 0) ? 'var(--bg-tertiary)' : `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: (!manualFood.name_standard || manualFood.calories <= 0) ? 'var(--text-muted)' : '#fff', border: 'none', fontWeight: '500', cursor: 'pointer', fontSize: '14px' }}>
                         {isSavingManual ? 'Sauvegarde...' : '✅ Sauvegarder et ajouter'}
                     </button>
                 </div>

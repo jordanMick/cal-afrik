@@ -17,31 +17,27 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const initAuth = async () => {
         try {
-            // 1. Première tentative immédiate
-            const { data, error } = await supabase.auth.getSession()
+            // 1. Première tentative immédiate (cas le plus fréquent)
+            const { data } = await supabase.auth.getSession()
             let session = data?.session
 
-            // 2. Si pas de session, on patiente un peu (important sur mobile/PWA)
-            // L'iPhone met parfois du temps à indexer le IndexedDB au démarrage de l'app
+            // 2. Si pas de session, on ne patiente QUE si on est sur mobile/PWA
+            // et seulement pour une fraction de seconde, pas 1.5s d'office.
             if (!session) {
-                await new Promise(resolve => setTimeout(resolve, 800))
-                const { data: retryData } = await supabase.auth.getSession()
-                session = retryData?.session
-            }
-
-            // 3. Si toujours rien, on fait une ultime tentative à 1.5s
-            if (!session) {
-                await new Promise(resolve => setTimeout(resolve, 700))
-                const { data: finalData } = await supabase.auth.getSession()
-                session = finalData?.session
+                const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone
+                if (isPWA) {
+                    await new Promise(resolve => setTimeout(resolve, 500))
+                    const { data: retryData } = await supabase.auth.getSession()
+                    session = retryData?.session
+                }
             }
 
             if (!session) {
-                // Cette fois on est sûr qu'il n'y a pas de session active
-                if (!pathname.startsWith('/login') && !pathname.startsWith('/onboarding') && !pathname.startsWith('/reset-password')) {
-                    console.log('--- Auth: No session found after retries, redirecting to login ---')
+                // Toujours pas de session ? On vérifie si on est sur une page protégée
+                const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/onboarding') || pathname.startsWith('/reset-password')
+                
+                if (!isAuthPage) {
                     router.push('/login')
-                    // Garder le loading pour éviter le flash
                     return 
                 }
                 setLoading(false)

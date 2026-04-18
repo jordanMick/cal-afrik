@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
+import { toast } from 'sonner'
 
 declare global {
     interface Window {
@@ -80,7 +81,7 @@ function PricingContent() {
 
         } catch (error: any) {
             console.error('Erreur de paiement:', error);
-            alert(`Erreur: ${error.message}`);
+            toast.error(`Erreur: ${error.message}`);
         } finally {
             setLoading(null);
         }
