@@ -29,7 +29,13 @@ export default function PushNotificationManager() {
             })
             const sub = await registration.pushManager.getSubscription()
             setSubscription(sub)
-            if (sub) setPermissionStatus('granted')
+            
+            if (sub) {
+                setPermissionStatus('granted')
+            } else if (Notification.permission === 'granted') {
+                // Si la notification est autorisée mais l'abonnement est perdu, on le regénère
+                subscribeToPush()
+            }
         } catch (err) {
             console.error('Service Worker registration failed:', err)
         }
