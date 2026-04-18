@@ -46,29 +46,46 @@ function renderMenuBlock(menuText: string): React.ReactNode[] {
     }
 
     lines.forEach((line, idx) => {
-        // Regex stricte pour les titres de jours
+        // 1. Détection des Jours (Badges Oranges)
         const dayRegex = /^[-*\s]*(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?[:\s]*$/i
         const jourXRegex = /^(Jour\s*\d+\s*[:\s]*)(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)/i
-        const isHeader = dayRegex.test(line) || jourXRegex.test(line)
+        const isDayHeader = dayRegex.test(line) || jourXRegex.test(line)
 
-        if (isHeader) {
+        // 2. Détection des Repas (Texte mis en avant)
+        const mealRegex = /^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b/i
+        const isMealHeader = mealRegex.test(line)
+
+        if (isDayHeader) {
             flushDayBlock()
             const dateTitle = line.replace(/^[-*\s]*/, '').trim()
             currentDayKey = `${idx}-${dateTitle}`
             currentDayBlock.push(
                 <div key={`header-tag-${idx}`} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    display: 'inline-flex', alignItems: 'center',
                     background: 'linear-gradient(135deg, var(--warning), #d97706)',
-                    padding: '4px 14px', borderRadius: '99px', marginBottom: '12px'
+                    padding: '6px 16px', borderRadius: '12px', marginBottom: '14px',
+                    boxShadow: '0 4px 12px rgba(217, 119, 6, 0.2)'
                 }}>
-                    <span style={{ color: '#fff', fontSize: '13px', fontWeight: '800', textTransform: 'uppercase' }}>{dateTitle}</span>
+                    <span style={{ color: '#fff', fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{dateTitle}</span>
                 </div>
             )
             return
         }
 
+        if (isMealHeader) {
+            const node = (
+                <p key={`meal-header-${idx}`} style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: '800', marginTop: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '4px', height: '14px', background: 'var(--accent)', borderRadius: '2px' }} />
+                    {line}
+                </p>
+            )
+            if (currentDayKey) currentDayBlock.push(node)
+            else rows.push(node)
+            return
+        }
+
         const node = (
-            <p key={`menu-line-${idx}`} style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.55', marginTop: '6px', wordBreak: 'break-word' }}>
+            <p key={`menu-line-${idx}`} style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.6', marginTop: '4px', opacity: 0.9, paddingLeft: currentDayKey ? '12px' : '0' }}>
                 {line}
             </p>
         )
