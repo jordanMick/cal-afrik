@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ 
             success: true, 
             sent: successCount, 
-            filtered: subs.length - activeSubs.length,
+            filtered: subs.length - pushesToSend.length,
             failed: failures.length,
             details: failures 
         })
