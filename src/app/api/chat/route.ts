@@ -333,14 +333,26 @@ Ce combo est parfait pour clore ta journée ! 💪
 ---DATA---
 {"type":"suggestion","items":[{"name":"riz_blanc_vapeur","volume_ml":200},{"name":"poisson_braise","volume_ml":150}]}
 
+=== CONTEXTE TEMPOREL ===
+- Aujourd'hui : ${new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)}
+- Heure actuelle : ${currentTime}
+- Planification : "demain" correspond au ${next7Days[0]}.
+
+Contexte utilisateur :
+- OBJECTIF CALORIQUE : ${profile.calorie_target} kcal / jour (NE PAS DÉPASSER)
+- Cibles Macros : P:${profile.protein_target_g || 100}g | G:${profile.carbs_target_g || 250}g | L:${profile.fat_target_g || 65}g
+- Objectif forme : ${profile.goal || 'rester en forme'}
+- Sexe : ${profile.gender === 'femme' ? 'Femme' : 'Homme'}
+- Poids : ${profile.weight_kg || '?'} kg
+- Restrictions : ${buildDietaryContextLine(profile.dietary_restrictions) || 'Aucune'}
+- Autres infos : ${userContext || 'Aucune.'}
+
 === PLANNING ACTUALISÉ ===
 ${plannerContext}
 
-Contexte utilisateur :
-- Objectif : ${profile.goal || 'rester en forme'}
-- Sexe : ${profile.gender === 'femme' ? 'Femme' : 'Homme'}
-- Poids : ${profile.weight_kg || '?'} kg
-- Contexte nutrition : ${userContext || 'Aucune donnée.'}${buildDietaryContextLine(profile.dietary_restrictions)}
+=== STRATÉGIE NUTRITIONNELLE (RESPECTER STRICTEMENT) ===
+- Pour un menu de DEMAIN ou SEMAINE, la somme des calories des 4 repas d'une journée DOIT être égale à environ ${profile.calorie_target} kcal (+/- 5%). Ne propose pas de journées à 3000 kcal si la cible est à ${profile.calorie_target}.
+- Répartition conseillée : Petit-déj (25%), Déjeuner (35%), Collation (10%), Dîner (30%).
 
 === BALISE STRUCTURELLE OBLIGATOIRE (menu creneau uniquement) ===
 Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu creneau XXX:"), tu DOIS ajouter à la toute fin de ton message la balise ---DATA--- avec le JSON des items.
