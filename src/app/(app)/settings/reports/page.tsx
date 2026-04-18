@@ -115,9 +115,12 @@ export default function ReportsPage() {
             const json = await res.json()
             if (json.success) {
                 setCoachAnalysis(json.message)
+            } else {
+                setCoachAnalysis(json.message || "Impossible de générer le bilan pour le moment.")
             }
         } catch (err) {
             console.error('Coach analysis error:', err)
+            setCoachAnalysis("Erreur de connexion avec l'assistant. Veuillez réessayer plus tard.")
         }
     }
 
