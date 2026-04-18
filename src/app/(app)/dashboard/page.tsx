@@ -198,28 +198,52 @@ export default function DashboardPage() {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         const status = params.get('status')
+        const transactionId = params.get('id') || params.get('transaction_id')
         
         if (status === 'approved' || params.get('payment') === 'success') {
             setShowPaymentSuccess(true)
             
-            // 1. On rafraîchit plusieurs fois pour laisser le temps au webhook
+            // On lance la vérification manuelle pour pallier aux pannes de Webhooks
+            const verifyPayment = async () => {
+                if (!transactionId) return;
+                try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (!session) return
+                    
+                    await fetch('/api/payments/verify', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ transactionId })
+                    })
+                    // Dès que la vérif est finie, on met à jour le profil localement
+                    await fetchProfile()
+                } catch (e) {
+                    console.error('Erreur vérification FedaPay fallback:', e)
+                }
+            }
+
+            verifyPayment()
+
+            // Rafraîchissements multiples au cas où (si le webhook finit par passer)
             let attempts = 0
             const interval = setInterval(async () => {
                 attempts++
                 await fetchProfile()
-                // Si le profil est déjà mis à jour (plus "free"), on arrête
-                if (profile?.subscription_tier && profile.subscription_tier !== 'free') {
+                if (useAppStore.getState().profile?.subscription_tier !== 'free') {
                     clearInterval(interval)
                 }
-                if (attempts >= 5) clearInterval(interval) // Stop après 15-20s
+                if (attempts >= 5) clearInterval(interval)
             }, 3000)
 
-            // 2. Faire disparaître le message après 8 secondes
+            // Faire disparaître le message après 8 secondes
             const hideTimer = setTimeout(() => {
                 setShowPaymentSuccess(false)
             }, 8000)
 
-            // 3. Nettoyer l'URL
+            // Nettoyer l'URL
             const newUrl = window.location.pathname
             window.history.replaceState({}, '', newUrl)
 
