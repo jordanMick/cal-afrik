@@ -31,9 +31,10 @@ export async function POST(req: Request) {
         const transaction = verifyData?.["v1/transaction"] || verifyData?.transaction || verifyData;
 
         if (transaction.status === 'approved') {
-            const metadata = typeof transaction.metadata === 'string' 
-                ? JSON.parse(transaction.metadata) 
-                : (transaction.metadata || transaction.custom_metadata || {});
+            let metadata = transaction.custom_metadata || transaction.metadata || {};
+            if (typeof metadata === 'string') {
+                try { metadata = JSON.parse(metadata); } catch(e) {}
+            }
 
             const userId = metadata.user_id || metadata.userId || transaction.external_id;
             const tier = (metadata.tier || 'premium').toLowerCase();

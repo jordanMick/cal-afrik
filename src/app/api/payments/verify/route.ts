@@ -48,9 +48,10 @@ export async function POST(req: Request) {
         }
 
         if (transaction.status === 'approved') {
-            const metadata = typeof transaction.metadata === 'string' 
-                ? JSON.parse(transaction.metadata) 
-                : (transaction.metadata || transaction.custom_metadata || {});
+            let metadata = transaction.custom_metadata || transaction.metadata || {};
+            if (typeof metadata === 'string') {
+                try { metadata = JSON.parse(metadata); } catch(e) {}
+            }
 
             // Sécurité : s'assurer que c'est le propre abonnement du user
             const userId = metadata.user_id || metadata.userId || transaction.external_id;

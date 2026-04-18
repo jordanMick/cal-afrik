@@ -55,7 +55,7 @@ export async function POST(req: Request) {
                 firstname: user.user_metadata?.full_name || 'Utilisateur',
                 email: user.email,
             },
-            metadata: {
+            custom_metadata: {
                 user_id: user.id,
                 tier: tier
             },
