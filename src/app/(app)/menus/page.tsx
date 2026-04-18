@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, UtensilsCrossed, MessageSquareText, Lock, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, UtensilsCrossed, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -16,18 +16,82 @@ function normalizeMenuText(raw: string): string {
         .replace(/###|##|# /g, '')
         .replace(/a definir/gi, 'Repas local équilibré')
         
-    // Forcer le retour à la ligne avant les mots-clés si collés
     const keywords = ['Petit-déjeuner', 'Petit-déj', 'Déjeuner', 'Collation', 'Dîner', 'Jour', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
     keywords.forEach(k => {
         const regex = new RegExp(`([^\\n])\\s*(---*\\s*)?(${k})`, 'gi')
         text = text.replace(regex, '$1\n$3')
     })
 
-    return text
-        .replace(/---*/g, '') // Supprimer les restes de tirets séparateurs
-        .replace(/\s{2,}/g, ' ')
-        .trim()
+    return text.replace(/---*/g, '').replace(/\s{2,}/g, ' ').trim()
 }
+
+/** Extrait le texte d'un jour précis dans un menu de la semaine */
+function extractDayFromWeek(weekText: string, targetDate: Date): string | null {
+    const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+    const targetDay = dayNames[targetDate.getDay()]
+    const formattedDate = `${String(targetDate.getDate()).padStart(2, '0')}/${String(targetDate.getMonth() + 1).padStart(2, '0')}`
+    
+    const lines = weekText.split('\n')
+    let startIdx = -1
+    
+    // On cherche une ligne qui ressemble à un TITRE de jour
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].toLowerCase()
+        const isHeader = (line.includes(targetDay) && (line.includes(formattedDate) || line.includes(':'))) 
+                      || (line.includes('jour') && line.includes(targetDay))
+        
+        // On évite les phrases d'intro "Du ... au ..."
+        if (isHeader && !line.includes(' du ') && !line.includes(' au ')) {
+            startIdx = i
+            break
+        }
+    }
+
+    if (startIdx === -1) return null
+
+    let extractedLines = [lines[startIdx]]
+    for (let i = startIdx + 1; i < lines.length; i++) {
+        const line = lines[i].toLowerCase()
+        // On s'arrête si on croise un AUTRE jour en début de ligne (titre suivant)
+        const isNextDay = dayNames.some(d => line.startsWith(d) || line.includes('jour'))
+        if (isNextDay) break
+        extractedLines.push(lines[i])
+    }
+
+    const result = extractedLines.join('\n').trim()
+    return result.length > 30 ? result : null // Sécurité : si trop court, c'est probablement pas un menu
+}
+
+/** Extrait un créneau précis d'un texte de journée */
+function extractSlotFromDay(dayText: string, slotKey: MealSlotKey): string | null {
+    const keywords: Record<string, string[]> = {
+        petit_dejeuner: ['petit', 'matin'],
+        dejeuner: ['dejeuner', 'midi'],
+        collation: ['collation', 'gouter', '4h'],
+        diner: ['diner', 'soir']
+    }
+    const currentKeywords = keywords[slotKey]
+    const lines = dayText.split('\n')
+    
+    const slotIdx = lines.findIndex(line => 
+        currentKeywords.some(k => line.toLowerCase().includes(k))
+    )
+
+    if (slotIdx === -1) return null
+
+    let extracted = lines[slotIdx]
+    const allSlotKeywords = Object.values(keywords).flat()
+
+    for (let i = slotIdx + 1; i < lines.length; i++) {
+        const lineLower = lines[i].toLowerCase()
+        if (allSlotKeywords.some(k => lineLower.includes(k)) && !currentKeywords.some(k => lineLower.includes(k))) {
+            break
+        }
+        extracted += '\n' + lines[i]
+    }
+    return extracted.trim()
+}
+
 function renderMenuBlock(menuText: string): React.ReactNode[] {
     const sep = '---DATA---'
     const dataIdx = menuText.indexOf(sep)
@@ -56,12 +120,10 @@ function renderMenuBlock(menuText: string): React.ReactNode[] {
     }
 
     lines.forEach((line, idx) => {
-        // 1. Détection des Jours (Badges Oranges)
         const dayRegex = /^[-*\s]*(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?[:\s]*$/i
         const jourXRegex = /^(Jour\s*\d+\s*[:\s]*)(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)/i
         const isDayHeader = dayRegex.test(line) || jourXRegex.test(line)
 
-        // 2. Détection des Repas (Texte mis en avant)
         const mealRegex = /^[\s*-]*(Petit-d[ée]jeuner|Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b/i
         const isMealHeader = mealRegex.test(line)
 
@@ -107,75 +169,6 @@ function renderMenuBlock(menuText: string): React.ReactNode[] {
     return rows
 }
 
-/** Extrait le texte d'un jour précis dans un menu de la semaine */
-function extractDayFromWeek(weekText: string, targetDate: Date): string | null {
-    const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
-    const targetDay = dayNames[targetDate.getDay()]
-    const formattedDate = `${String(targetDate.getDate()).padStart(2, '0')}/${String(targetDate.getMonth() + 1).padStart(2, '0')}`
-    
-    // On cherche "Lundi 19/04" ou "Lundi"
-    const searchKeys = [`${targetDay} ${formattedDate}`, targetDay]
-    const lowerWeek = weekText.toLowerCase()
-    
-    let bestIdx = -1
-    let usedKey = ''
-
-    for (const key of searchKeys) {
-        const idx = lowerWeek.indexOf(key.toLowerCase())
-        if (idx !== -1) {
-            bestIdx = idx
-            usedKey = key
-            break
-        }
-    }
-
-    if (bestIdx === -1) return null
-
-    // On cherche le début du jour suivant pour s'arrêter
-    let endIdx = weekText.length
-    for (const day of dayNames) {
-        if (day === usedKey.split(' ')[0].toLowerCase()) continue
-        const nextDayIdx = lowerWeek.indexOf(day, bestIdx + 5)
-        if (nextDayIdx !== -1 && nextDayIdx < endIdx) {
-            endIdx = nextDayIdx
-        }
-    }
-
-    return weekText.substring(bestIdx, endIdx).trim()
-}
-
-/** Extrait un créneau précis (ex: Déjeuner) d'un texte de journée */
-function extractSlotFromDay(dayText: string, slotKey: MealSlotKey): string | null {
-    const keywords: Record<string, string[]> = {
-        petit_dejeuner: ['petit', 'matin'],
-        dejeuner: ['dejeuner', 'midi'],
-        collation: ['collation', 'gouter', '4h'],
-        diner: ['diner', 'soir']
-    }
-    const currentKeywords = keywords[slotKey]
-    const lines = dayText.split('\n')
-    
-    const slotIdx = lines.findIndex(line => 
-        currentKeywords.some(k => line.toLowerCase().includes(k))
-    )
-
-    if (slotIdx === -1) return null
-
-    let extracted = lines[slotIdx]
-    const allSlotKeywords = Object.values(keywords).flat()
-
-    for (let i = slotIdx + 1; i < lines.length; i++) {
-        const lineLower = lines[i].toLowerCase()
-        // Si on tombe sur un autre créneau, on s'arrête
-        if (allSlotKeywords.some(k => lineLower.includes(k)) && !currentKeywords.some(k => lineLower.includes(k))) {
-            break
-        }
-        extracted += '\n' + lines[i]
-    }
-
-    return extracted.trim()
-}
-
 export default function MenusPage() {
     const router = useRouter()
     const { profile, chatSuggestedMenus, setPendingScannerPrefill, clearChatSuggestedMenu } = useAppStore()
@@ -193,8 +186,6 @@ export default function MenusPage() {
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayStr = yesterday.toISOString().split('T')[0]
 
-    // --- LOGIQUE DE CASCADE DES DONNÉES ---
-
     const resolvedMenus = useMemo(() => {
         const result: Record<string, any> = {
             today: { petit_dejeuner: null, dejeuner: null, collation: null, diner: null },
@@ -205,31 +196,24 @@ export default function MenusPage() {
         const isStoreFromToday = chatSuggestedMenus.date === todayStr
         const isStoreFromYesterday = chatSuggestedMenus.date === yesterdayStr
 
-        // 1. SEMAINE
         if (isStoreFromToday) result.week = chatSuggestedMenus.week
 
-        // 2. DEMAIN
         if (isStoreFromToday && chatSuggestedMenus.tomorrow) {
             result.tomorrow = chatSuggestedMenus.tomorrow
         } else if (isStoreFromToday && chatSuggestedMenus.week) {
-            // Cascade Semaine -> Demain
             const tom = new Date(now)
             tom.setDate(tom.getDate() + 1)
             result.tomorrow = extractDayFromWeek(chatSuggestedMenus.week, tom)
         }
 
-        // 3. AUJOURD'HUI
         const slots: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
         slots.forEach(slot => {
-            // Priorité 1 : Menu créneau explicite d'aujourd'hui
             if (isStoreFromToday && chatSuggestedMenus.today?.[slot]) {
                 result.today[slot] = chatSuggestedMenus.today[slot]
             }
-            // Priorité 2 : Menu "Demain" d'hier qui devient "Aujourd'hui"
             else if (isStoreFromYesterday && chatSuggestedMenus.tomorrow) {
                 result.today[slot] = extractSlotFromDay(chatSuggestedMenus.tomorrow, slot)
             }
-            // Priorité 3 : Menu "Semaine" (d'hier ou d'aujourd'hui)
             else if (chatSuggestedMenus.week && (isStoreFromToday || isStoreFromYesterday)) {
                 const dayText = extractDayFromWeek(chatSuggestedMenus.week, now)
                 if (dayText) {
@@ -237,11 +221,8 @@ export default function MenusPage() {
                 }
             }
         })
-
         return result
     }, [chatSuggestedMenus, todayStr, yesterdayStr])
-
-    // --- RENDU DES MENUS ---
 
     const renderTodaySlots = () => {
         const slots: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
@@ -254,7 +235,6 @@ export default function MenusPage() {
                         <UtensilsCrossed size={36} color="var(--accent)" />
                     </div>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>Aucun menu planifié</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>Demande un menu à Coach Yao !</p>
                     <button onClick={() => router.push('/coach')} style={{ background: 'linear-gradient(135deg, var(--accent), var(--success))', color: '#fff', border: 'none', padding: '14px 24px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer' }}>Parler au Coach</button>
                 </div>
             )
@@ -265,63 +245,23 @@ export default function MenusPage() {
                 {activeSlots.map(slot => {
                     const text = resolvedMenus.today[slot]!
                     const isLocked = slot !== currentSlotKey
-                    
                     return (
-                        <div key={slot} style={{ 
-                            padding: '16px', 
-                            background: 'var(--bg-secondary)', 
-                            borderRadius: '20px', 
-                            border: `1px solid ${slot === currentSlotKey ? 'var(--accent)' : 'var(--border-color)'}`,
-                            opacity: isLocked ? 0.7 : 1,
-                            transition: 'all 0.3s'
-                        }}>
+                        <div key={slot} style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '20px', border: `1px solid ${slot === currentSlotKey ? 'var(--accent)' : 'var(--border-color)'}`, opacity: isLocked ? 0.7 : 1 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                 <div style={{ padding: '4px 10px', background: slot === currentSlotKey ? 'var(--accent)' : 'var(--bg-tertiary)', borderRadius: '8px', color: '#fff', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>
-                                    {SLOT_LABELS[slot]} {slot === currentSlotKey ? ' (C\'est le moment !)' : ''}
+                                    {SLOT_LABELS[slot]} {slot === currentSlotKey ? ' (Actuel)' : ''}
                                 </div>
                                 {isLocked && <Lock size={14} color="var(--text-muted)" />}
                             </div>
-
-                            <div style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.6' }}>
-                                {renderMenuBlock(text)}
-                            </div>
-
+                            <div style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.6' }}>{renderMenuBlock(text)}</div>
                             <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                                <button
-                                    onClick={() => {
-                                        // On nettoie partout où il pourrait être (Today, ou via Cascade)
-                                        clearChatSuggestedMenu('today', slot)
-                                        toast.success("Menu retiré du planning")
-                                    }}
-                                    style={{ flex: 1, padding: '10px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-                                >
-                                    Supprimer
-                                </button>
-                                
+                                <button onClick={() => { clearChatSuggestedMenu('today', slot); toast.success("Supprimé"); }} style={{ flex: 1, padding: '10px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Supprimer</button>
                                 {text.includes('---DATA---') && (
-                                    <button
-                                        disabled={isLocked}
-                                        onClick={() => {
-                                            const sep = '---DATA---'; const idx = text.indexOf(sep)
-                                            if (idx !== -1) {
-                                                try {
-                                                    const data = JSON.parse(text.substring(idx + sep.length).trim())
-                                                    setPendingScannerPrefill({ items: data.items, slot: slot })
-                                                    // RÈGLE : Une fois choisi, il disparaît de l'affichage
-                                                    clearChatSuggestedMenu('today', slot)
-                                                    router.push('/scanner')
-                                                } catch (e) { toast.error("Erreur technique") }
-                                            }
-                                        }}
-                                        style={{ 
-                                            flex: 2, padding: '10px', borderRadius: '12px', 
-                                            background: isLocked ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--accent), var(--success))', 
-                                            color: isLocked ? 'var(--text-muted)' : '#fff', 
-                                            border: 'none', fontSize: '12px', fontWeight: '700', 
-                                            cursor: isLocked ? 'not-allowed' : 'pointer' 
-                                        }}
-                                    >
-                                        {isLocked ? 'Attendre l\'heure' : '✅ Choisir ce repas'}
+                                    <button disabled={isLocked} onClick={() => {
+                                        const sep = '---DATA---'; const idx = text.indexOf(sep)
+                                        if (idx !== -1) { try { const data = JSON.parse(text.substring(idx + sep.length).trim()); setPendingScannerPrefill({ items: data.items, slot: slot }); clearChatSuggestedMenu('today', slot); router.push('/scanner'); } catch (e) { toast.error("Erreur"); } }
+                                    }} style={{ flex: 2, padding: '10px', borderRadius: '12px', background: isLocked ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--accent), var(--success))', color: isLocked ? 'var(--text-muted)' : '#fff', border: 'none', fontSize: '12px', fontWeight: '700', cursor: isLocked ? 'not-allowed' : 'pointer' }}>
+                                        {isLocked ? 'Attendre l\'heure' : '✅ Choisir'}
                                     </button>
                                 )}
                             </div>
@@ -333,10 +273,10 @@ export default function MenusPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', gap: '16px' }}>
                 <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}><ArrowLeft size={20} /></button>
-                <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800' }}>Mon Planning Intelligent</h1>
+                <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800' }}>Planning</h1>
             </div>
 
             <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '14px', padding: '4px', marginBottom: '24px' }}>
@@ -346,41 +286,25 @@ export default function MenusPage() {
             </div>
 
             <AnimatePresence mode="wait">
-                <motion.div
-                    key={menuTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                >
-                    {menuTab === 'today' ? renderTodaySlots() : (
-                        <div style={{ background: 'var(--bg-secondary)', borderRadius: '24px', padding: '20px', border: '1px solid var(--border-color)' }}>
-                            {(() => {
-                        const content = menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week
-                        if (content) {
-                            return (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    {renderMenuBlock(content as string)}
-                                    <button 
-                                        onClick={() => {
-                                            clearChatSuggestedMenu(menuTab === 'tomorrow' ? 'tomorrow' : 'week')
-                                            toast.success("Menu supprimé")
-                                        }}
-                                        style={{ width: 'fit-content', padding: '10px 16px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
-                                    >
-                                        Supprimer ce planning
-                                    </button>
-                                </div>
-                            )
-                        }
-                        return (
-                            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Aucune donnée disponible pour cet onglet.</p>
+                <motion.div key={menuTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                    <div style={{ background: 'var(--bg-secondary)', borderRadius: '24px', padding: '20px', border: '1px solid var(--border-color)' }}>
+                        {menuTab === 'today' ? renderTodaySlots() : (
+                            <div>
+                                {(() => {
+                                    const content = menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week
+                                    if (content) {
+                                        return (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                {renderMenuBlock(content as string)}
+                                                <button onClick={() => { clearChatSuggestedMenu(menuTab === 'tomorrow' ? 'tomorrow' : 'week'); toast.success("Supprimé"); }} style={{ width: 'fit-content', padding: '10px 16px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>Supprimer ce planning</button>
+                                            </div>
+                                        )
+                                    }
+                                    return <div style={{ textAlign: 'center', padding: '40px 0' }}><p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Aucun menu disponible.</p></div>
+                                })()}
                             </div>
-                        )
-                    })()}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </motion.div>
             </AnimatePresence>
         </div>
