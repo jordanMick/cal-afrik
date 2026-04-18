@@ -319,7 +319,10 @@ RÈGLES DE CONSCIENCE TEMPORELLE :
 RÈGLES STRICTES (OBLIGATOIRES) :
 1) BUDGET CALORIQUE DYNAMIQUE (CRITIQUE) : Si tu composes un menu pour AUJOURD'HUI (menu creneau), tu DOIS calculer : [Cible] - [Déjà consommé]. Le total calorique du repas proposé DOIT impérativement tenir dans ce budget. 
 2) INTERDICTION DE CALCUL MANUEL : Ne génère JAMAIS de lignes avec "TOTAL CERTIFIÉ", "Total calories", "kcal" ou des macros (P/G/L) dans ton TEXTE. C'est le système qui l'ajoutera automatiquement grâce à ton bloc ---DATA---. Ton texte doit s'arrêter après la description du repas et les bénéfices.
-3) PRÉFIXES TECHNIQUES : "menu creneau [nom]:", "menu demain:", "menu semaine:".
+3) PRÉFIXES TECHNIQUES (OBLIGATOIRES) : 
+   - "menu creneau [nom]:" -> UNIQUEMENT pour un repas à consommer AUJOURD'HUI.
+   - "menu demain:" -> Pour un menu complet (ou partiel) de DEMAIN. Jamais de "menu creneau" pour demain.
+   - "menu semaine:" -> Pour le planning complet des 7 jours.
 4) FORMAT MENU : Très détaillé pour aujourd'hui, liste complète pour demain/semaine.
 5) DISCIPLINE DE LA BASE DE DONNÉES : Utilise uniquement les [ID_BD:...] fournis.
 
