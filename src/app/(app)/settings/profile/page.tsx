@@ -207,11 +207,11 @@ export default function PersonalInfoPage() {
                         { label: 'Sexe', value: profile?.gender === 'femme' ? 'Femme' : 'Homme', icon: '🚻' },
                         { label: 'Pays', value: profile?.country || '—', icon: '🌍' },
                         { label: 'Poids', value: profile?.weight_kg ? `${profile.weight_kg} kg` : '—', icon: '⚖️' },
-                        { label: 'Poids cible', value: profile?.goal_weight_kg ? `${profile.goal_weight_kg} kg` : '—', icon: '🎯' },
+                        { label: 'Poids cible', value: profile?.goal_weight_kg ? `${profile.goal_weight_kg} kg` : '—', icon: '🎯', hidden: profile?.goal === 'maintenir' },
                         { label: 'Taille', value: profile?.height_cm ? `${profile.height_cm} cm` : '—', icon: '📏' },
                         { label: 'Activité', value: profile?.activity_level ? ACTIVITY_LABELS[profile.activity_level] : '—', icon: '⚡' },
                         { label: 'Objectif', value: profile?.goal ? GOAL_LABELS[profile.goal] : '—', icon: '📈' },
-                    ].map((item, i, arr) => (
+                    ].filter(item => !item.hidden).map((item, i, arr) => (
                         <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: i < arr.length - 1 ? '0.5px solid var(--border-color)' : 'none' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <span style={{ fontSize: '16px' }}>{item.icon}</span>
