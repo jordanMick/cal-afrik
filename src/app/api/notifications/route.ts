@@ -1,30 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-async function getUser(req: NextRequest) {
+async function getAuthClient(req: NextRequest) {
     const auth = req.headers.get('authorization')
     const token = auth?.startsWith('Bearer ') ? auth.substring(7) : null
-    if (!token) return null
+    if (!token) return { user: null, supabase: null }
 
     const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
     const { data: { user }, error } = await supabase.auth.getUser(token)
-    if (error || !user) return null
-    return user
+    if (error || !user) return { user: null, supabase: null }
+    return { user, supabase }
 }
 
 // 🔔 GET : Récupérer les notifications de l'utilisateur
 export async function GET(req: NextRequest) {
     try {
-        const user = await getUser(req)
-        if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const { user, supabase } = await getAuthClient(req)
+        if (!user || !supabase) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
         const { data, error } = await supabase
             .from('notifications')
@@ -46,15 +42,10 @@ export async function GET(req: NextRequest) {
 // ✍️ POST : Créer une notification (depuis les Smart Alerts)
 export async function POST(req: NextRequest) {
     try {
-        const user = await getUser(req)
-        if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+        const { user, supabase } = await getAuthClient(req)
+        if (!user || !supabase) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
         const { type, title, message } = await req.json()
-
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
 
         // Eviter de créer un double pour le même jour
         const todayStr = new Date().toISOString().split('T')[0]
@@ -88,15 +79,10 @@ export async function POST(req: NextRequest) {
 // ✅ PATCH : Marquer comme lues
 export async function PATCH(req: NextRequest) {
     try {
-        const user = await getUser(req)
-        if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+        const { user, supabase } = await getAuthClient(req)
+        if (!user || !supabase) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
         const { ids } = await req.json() // Liste d'IDs à marquer comme lues
-
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
 
         const { error } = await supabase
             .from('notifications')
@@ -117,15 +103,10 @@ export async function PATCH(req: NextRequest) {
 // 🗑️ DELETE : Supprimer (optionnel)
 export async function DELETE(req: NextRequest) {
     try {
-        const user = await getUser(req)
-        if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+        const { user, supabase } = await getAuthClient(req)
+        if (!user || !supabase) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
         const { id } = await req.json()
-
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
 
         const { error } = await supabase
             .from('notifications')
