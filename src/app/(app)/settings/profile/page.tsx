@@ -49,7 +49,11 @@ export default function PersonalInfoPage() {
             if (error) throw error
             setEmailOtpMode(true)
         } catch (err: any) {
-            setEmailError(err.message || "Erreur lors de la modification de l'email.")
+            let msg = err.message
+            if (msg.includes('rate limit')) msg = "Trop de tentatives. Veuillez patienter avant de réessayer."
+            else if (msg.includes('already being used') || msg.includes('registered')) msg = "Cet email est déjà lié à un autre compte."
+            else if (msg.includes('invalid email')) msg = "L'adresse email est invalide."
+            setEmailError(msg || "Erreur lors de la modification de l'email.")
         } finally {
             setEmailLoading(false)
         }
@@ -66,7 +70,10 @@ export default function PersonalInfoPage() {
             setEmailOtpMode(false)
             toast.success("Email mis à jour avec succès !")
         } catch (err: any) {
-            setEmailError(err.message || "Code incorrect ou expiré.")
+            let msg = err.message
+            if (msg.includes('expired') || msg.includes('invalid')) msg = "Le code est incorrect ou a expiré."
+            else if (msg.includes('rate limit')) msg = "Trop de tentatives. Veuillez patienter."
+            setEmailError(msg || "Erreur lors de la vérification du code.")
         } finally {
             setEmailLoading(false)
         }
@@ -94,7 +101,11 @@ export default function PersonalInfoPage() {
                 setPasswordSuccess('')
             }, 2000)
         } catch (err: any) {
-            setPasswordError(err.message || "Erreur de mise à jour.")
+            let msg = err.message
+            if (msg.includes('Invalid login credentials')) msg = "L'ancien mot de passe est incorrect."
+            else if (msg.includes('rate limit')) msg = "Trop de tentatives. Veuillez patienter."
+            else if (msg.includes('should be at least')) msg = "Le mot de passe est trop court."
+            setPasswordError(msg || "Erreur lors de la mise à jour du mot de passe.")
         } finally {
             setPasswordLoading(false)
         }
