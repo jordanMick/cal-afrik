@@ -135,56 +135,70 @@ export default function MenusPage() {
     const effectiveTier = getEffectiveTier(profile)
     const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
 
-    const now = new Date()
-    const currentHour = now.getHours(), currentSlotKey = getMealSlot(currentHour), todayStr = now.toISOString().split('T')[0]
-    const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1); const yesterdayStr = yesterday.toISOString().split('T')[0]
+    // --- LOGIQUE DE BASCOULE À 21H ---
+    const targetDate = new Date(now)
+    if (now.getHours() >= 21) {
+        targetDate.setDate(targetDate.getDate() + 1)
+    }
+    const targetDateStr = targetDate.toISOString().split('T')[0]
+    const isTargetToday = targetDateStr === todayStr
 
     const resolvedMenus = useMemo(() => {
         const result: Record<string, any> = { today: { petit_dejeuner: null, dejeuner: null, collation: null, diner: null }, tomorrow: null, week: null }
         const isT = chatSuggestedMenus.date === todayStr, isY = chatSuggestedMenus.date === yesterdayStr
+        
         if (isT) result.week = chatSuggestedMenus.week
-        if (isT && chatSuggestedMenus.tomorrow) result.tomorrow = chatSuggestedMenus.tomorrow
-        else if (isT && chatSuggestedMenus.week) { const tom = new Date(now); tom.setDate(tom.getDate() + 1); result.tomorrow = extractDayFromWeek(chatSuggestedMenus.week, tom); }
 
+        // La cible du planning (Demain / Aujourd'hui)
+        if (isT && chatSuggestedMenus.tomorrow) {
+            result.tomorrow = chatSuggestedMenus.tomorrow
+        } else if (chatSuggestedMenus.week && (isT || isY)) {
+            result.tomorrow = extractDayFromWeek(chatSuggestedMenus.week, targetDate)
+        }
+
+        // AUJOURD'HUI : On extrait les slots de la cible
         const slots: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
         slots.forEach(slot => {
-            if (isT && chatSuggestedMenus.today?.[slot]) result.today[slot] = chatSuggestedMenus.today[slot]
-            else if (isY && chatSuggestedMenus.tomorrow) result.today[slot] = extractSlotFromDay(chatSuggestedMenus.tomorrow, slot)
-            else if (chatSuggestedMenus.week && (isT || isY)) {
-                const dT = extractDayFromWeek(chatSuggestedMenus.week, isT ? now : now)
-                if (dT) result.today[slot] = extractSlotFromDay(dT, slot)
+            if (result.tomorrow) {
+                result.today[slot] = extractSlotFromDay(result.tomorrow, slot)
             }
         })
         return result
-    }, [chatSuggestedMenus, todayStr, yesterdayStr])
+    }, [chatSuggestedMenus, todayStr, yesterdayStr, targetDateStr])
 
     const renderTodaySlots = () => {
-        const slots: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
-        const activeSlots = slots.filter(s => !!resolvedMenus.today[s])
-        if (activeSlots.length === 0) return <div style={{ textAlign: 'center', padding: '40px 0' }}><UtensilsCrossed size={36} color="var(--accent)" /><p style={{ color: 'var(--text-muted)' }}>Aucun menu planifié.</p></div>
+        // RÈGLE : Uniquement le créneau actuel
+        const text = resolvedMenus.today[currentSlotKey]
 
+        if (!text || !isTargetToday) {
+            return (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                    <UtensilsCrossed size={36} color="var(--accent)" style={{ marginBottom: '16px' }} />
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                        {now.getHours() >= 21 ? "Le menu d'aujourd'hui est terminé. Prépare demain !" : "Aucun repas de prévu pour ce créneau."}
+                    </p>
+                </div>
+            )
+        }
+
+        const isLocked = false // On n'affiche que le repas actuel, donc il est forcément débloqué
+        
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {activeSlots.map(slot => {
-                    const text = resolvedMenus.today[slot]!, isLocked = slot !== currentSlotKey
-                    return (
-                        <div key={slot} style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '20px', border: `1px solid ${slot === currentSlotKey ? 'var(--accent)' : 'var(--border-color)'}`, opacity: isLocked ? 0.7 : 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                <div style={{ padding: '4px 10px', background: slot === currentSlotKey ? 'var(--accent)' : 'var(--bg-tertiary)', borderRadius: '8px', color: '#fff', fontSize: '11px', fontWeight: '800' }}>{SLOT_LABELS[slot]}</div>
-                                {isLocked && <Lock size={14} color="var(--text-muted)" />}
-                            </div>
-                            <div style={{ color: 'var(--text-primary)', fontSize: '14px' }}>{renderMenuBlock(text)}</div>
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                                <button onClick={() => { clearChatSuggestedMenu('today', slot); toast.success("Supprimé"); }} style={{ flex: 1, padding: '10px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '12px', fontWeight: '700' }}>Supprimer</button>
-                                {text.includes('---DATA---') && (
-                                    <button disabled={isLocked} onClick={() => {
-                                        const idx = text.indexOf('---DATA---'); if (idx !== -1) { try { const data = JSON.parse(text.substring(idx + 10).trim()); setPendingScannerPrefill({ items: data.items, slot: slot }); clearChatSuggestedMenu('today', slot); router.push('/scanner'); } catch (e) { toast.error("Erreur"); } }
-                                    }} style={{ flex: 2, padding: '10px', borderRadius: '12px', background: isLocked ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--accent), var(--success))', color: '#fff', fontSize: '12px', fontWeight: '700' }}>{isLocked ? 'Attendre l\'heure' : '✅ Choisir'}</button>
-                                )}
-                            </div>
-                        </div>
-                    )
-                })}
+            <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--accent)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ padding: '4px 10px', background: 'var(--accent)', borderRadius: '8px', color: '#fff', fontSize: '11px', fontWeight: '800' }}>
+                        {SLOT_LABELS[currentSlotKey]} - ACTUEL
+                    </div>
+                </div>
+                <div style={{ color: 'var(--text-primary)', fontSize: '14px' }}>{renderMenuBlock(text)}</div>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                    <button onClick={() => { clearChatSuggestedMenu('today', currentSlotKey); toast.success("Retiré"); }} style={{ flex: 1, padding: '10px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '12px', fontWeight: '700' }}>Ignorer</button>
+                    {text.includes('---DATA---') && (
+                        <button onClick={() => {
+                            const idx = text.indexOf('---DATA---'); if (idx !== -1) { try { const data = JSON.parse(text.substring(idx + 10).trim()); setPendingScannerPrefill({ items: data.items, slot: currentSlotKey }); clearChatSuggestedMenu('today', currentSlotKey); router.push('/scanner'); } catch (e) { toast.error("Erreur"); } }
+                        }} style={{ flex: 2, padding: '10px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--accent), var(--success))', color: '#fff', fontSize: '12px', fontWeight: '700' }}>✅ Choisir ce repas</button>
+                    )}
+                </div>
             </div>
         )
     }
@@ -197,7 +211,17 @@ export default function MenusPage() {
                 {menuTab === 'today' ? renderTodaySlots() : (
                     <div>{(() => {
                         const content = menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week
-                        if (content) return (<div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>{renderMenuBlock(content as string)}<button onClick={() => { clearChatSuggestedMenu(menuTab === 'tomorrow' ? 'tomorrow' : 'week'); toast.success("Supprimé"); }} style={{ width: 'fit-content', padding: '10px 16px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '13px' }}>Supprimer</button></div>)
+                        if (content) return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ padding: '6px 12px', background: isTargetToday ? 'rgba(var(--accent-rgb), 0.1)' : 'rgba(217, 119, 6, 0.1)', borderRadius: '10px', width: 'fit-content' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: '800', color: isTargetToday ? 'var(--accent)' : '#d97706' }}>
+                                        {isTargetToday ? '✨ PRÉVU POUR AUJOURD\'HUI' : '📅 PRÉVU POUR DEMAIN'}
+                                    </span>
+                                </div>
+                                {renderMenuBlock(content as string)}
+                                <button onClick={() => { clearChatSuggestedMenu(menuTab === 'tomorrow' ? 'tomorrow' : 'week'); toast.success("Supprimé"); }} style={{ width: 'fit-content', padding: '10px 16px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>Supprimer</button>
+                            </div>
+                        )
                         return <div style={{ textAlign: 'center', padding: '40px 0' }}><p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Aucun menu.</p></div>
                     })()}</div>
                 )}
