@@ -107,9 +107,9 @@ function parseDataBlock(rawMessage: string): {
     const displayText = rawMessage.substring(0, idx).trim()
     const jsonPart = rawMessage.substring(idx + sep.length).trim()
 
-    // Détection du slot depuis le prefix technique
+    // Détection du slot depuis le prefix technique (uniquement si présent)
     const slotMatch = rawMessage.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
-    const slot = slotMatch ? slotMatch[1] : 'dejeuner'
+    const slot = slotMatch ? slotMatch[1] : undefined
 
     try {
         const parsed = JSON.parse(jsonPart)
@@ -128,13 +128,17 @@ function parseDataBlock(rawMessage: string): {
  * Retourne { kind, cleanText } ou null.
  */
 function parseMenuKind(text: string): { kind: 'tomorrow' | 'week'; cleanText: string } | null {
-    const tomorrowMatch = /^menu\s+demain\s*:\s*/i.exec(text)
+    const sep = '---DATA---'
+    const idx = text.indexOf(sep)
+    const baseText = idx !== -1 ? text.substring(0, idx).trim() : text
+
+    const tomorrowMatch = /^menu\s+demain\s*:\s*/i.exec(baseText)
     if (tomorrowMatch) {
-        return { kind: 'tomorrow', cleanText: text.substring(tomorrowMatch[0].length).trim() }
+        return { kind: 'tomorrow', cleanText: baseText.substring(tomorrowMatch[0].length).trim() }
     }
-    const weekMatch = /^menu\s+semaine\s*:\s*/i.exec(text)
+    const weekMatch = /^menu\s+semaine\s*:\s*/i.exec(baseText)
     if (weekMatch) {
-        return { kind: 'week', cleanText: text.substring(weekMatch[0].length).trim() }
+        return { kind: 'week', cleanText: baseText.substring(weekMatch[0].length).trim() }
     }
     return null
 }
@@ -614,7 +618,7 @@ export default function CoachChatPage() {
                 {messages.map((msg) => {
                     const isCoach = msg.role === 'coach'
                     const parsed = isCoach ? parseDataBlock(msg.content) : null
-                    const menuKind = isCoach && !parsed ? parseMenuKind(msg.content) : null
+                    const menuKind = isCoach ? parseMenuKind(msg.content) : null
                     const displayContent = parsed
                         ? parsed.displayText
                         : menuKind
@@ -678,7 +682,7 @@ export default function CoachChatPage() {
                                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                                 >
-                                    📲 Envoyer au Planning
+                                    📲 Envoyer au Planning (Aujourd'hui)
                                 </button>
                             )}
                             {/* Bouton "Ajouter au Scanner" — menu demain ou semaine */}
@@ -708,7 +712,7 @@ export default function CoachChatPage() {
                                     onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                                     onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                                 >
-                                    {menuKind.kind === 'tomorrow' ? '📅 Voir dans mon Planning (Demain)' : '📆 Voir dans mon Planning (Semaine)'}
+                                    {menuKind.kind === 'tomorrow' ? '📅' : '🗓️'} Envoyer au Planning ({menuKind.kind === 'tomorrow' ? 'Demain' : 'Semaine'})
                                 </button>
                             )}
                             <span style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '6px', margin: isCoach ? '0 0 0 4px' : '0 4px 0 0' }}>
