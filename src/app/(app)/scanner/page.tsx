@@ -1184,7 +1184,16 @@ export default function ScannerPage() {
                                                         <span style={{ marginLeft: 'auto', background: 'rgba(var(--warning-rgb), 0.15)', color: 'var(--warning)', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>
                                                     )}
                                                 </div>
-                                                <p style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.6' }}>{coachMessage}</p>
+                                                {coachMessage
+                                                    .replace(/\*\*/g, '')
+                                                    .replace(/###|##|# /g, '')
+                                                    .replace(/---*/g, '')
+                                                    .split('\n')
+                                                    .filter(l => l.trim())
+                                                    .map((line, i) => (
+                                                        <p key={i} style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '6px' }}>{line.trim()}</p>
+                                                    ))
+                                                }
                                             </div>
                                         ) : null}
                                     </div>
