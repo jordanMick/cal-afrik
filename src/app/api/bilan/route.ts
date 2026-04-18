@@ -7,7 +7,7 @@ import { buildDietaryContextLine } from '@/lib/dietaryContext'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(req: NextRequest) {
-    const MOCK_MODE = true
+    const MOCK_MODE = false
 
     try {
         const authHeader = req.headers.get('Authorization')
