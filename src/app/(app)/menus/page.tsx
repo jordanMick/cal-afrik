@@ -135,7 +135,13 @@ export default function MenusPage() {
     const effectiveTier = getEffectiveTier(profile)
     const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
 
-    // --- LOGIQUE DE BASCOULE À 21H ---
+    const now = new Date()
+    const currentHour = now.getHours(), currentSlotKey = getMealSlot(currentHour)
+    const todayStr = now.toISOString().split('T')[0]
+    const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+    // --- LOGIQUE DE BASCULE À 21H ---
     const targetDate = new Date(now)
     if (now.getHours() >= 21) {
         targetDate.setDate(targetDate.getDate() + 1)
