@@ -156,7 +156,8 @@ export default function MenusPage() {
 
     const renderTodaySlots = () => {
         const text = resolvedMenus.today[currentSlotKey]
-        if (!text || !isTargetToday) {
+        const hasExplicitMenu = !!(chatSuggestedMenus.today?.[currentSlotKey])
+        if (!text || (!isTargetToday && !hasExplicitMenu)) {
             return (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '40vh', textAlign: 'center' }}>
                     <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
