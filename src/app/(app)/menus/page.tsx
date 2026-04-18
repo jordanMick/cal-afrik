@@ -153,8 +153,14 @@ export default function MenusPage() {
                     <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
                         <UtensilsCrossed size={36} color="var(--accent)" />
                     </div>
-                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>Journée terminée</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Rendez-vous à 21h pour découvrir ton menu de demain !</p>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
+                        {now.getHours() >= 21 ? 'Journée terminée !' : 'Aucun menu planifié'}
+                    </h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                        {now.getHours() >= 21 
+                            ? 'Ton menu d\'aujourd\'hui est archivé. Découvre déjà celui de demain dans l\'onglet dédié !' 
+                            : 'Demande un menu à Coach Yao pour commencer ton planning.'}
+                    </p>
                 </div>
             )
         }
