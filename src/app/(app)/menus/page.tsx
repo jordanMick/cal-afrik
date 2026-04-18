@@ -18,6 +18,67 @@ function normalizeMenuText(raw: string): string {
         .replace(/a definir/gi, 'Repas local équilibré')
         .trim()
 }
+function renderMenuBlock(menuText: string): React.ReactNode[] {
+    const sep = '---DATA---'
+    const dataIdx = menuText.indexOf(sep)
+    const cleanMenuText = dataIdx !== -1 ? menuText.substring(0, dataIdx).trim() : menuText
+
+    const normalized = normalizeMenuText(cleanMenuText)
+    const lines = normalized.split('\n').map(l => l.trim()).filter(Boolean)
+
+    const rows: React.ReactNode[] = []
+    let currentDayBlock: React.ReactNode[] = []
+    let currentDayKey = ''
+
+    const flushDayBlock = () => {
+        if (!currentDayKey || currentDayBlock.length === 0) return
+        rows.push(
+            <div key={`day-${currentDayKey}`} style={{
+                marginTop: '12px', marginBottom: '16px', padding: '16px',
+                background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
+                borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+            }}>
+                {currentDayBlock}
+            </div>
+        )
+        currentDayBlock = []
+        currentDayKey = ''
+    }
+
+    lines.forEach((line, idx) => {
+        // Regex stricte pour les titres de jours
+        const dayRegex = /^[-*\s]*(\d+\.\s*)?(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?:\s+\d{1,2}\/\d{1,2})?[:\s]*$/i
+        const jourXRegex = /^(Jour\s*\d+\s*[:\s]*)(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)/i
+        const isHeader = dayRegex.test(line) || jourXRegex.test(line)
+
+        if (isHeader) {
+            flushDayBlock()
+            const dateTitle = line.replace(/^[-*\s]*/, '').trim()
+            currentDayKey = `${idx}-${dateTitle}`
+            currentDayBlock.push(
+                <div key={`header-tag-${idx}`} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    background: 'linear-gradient(135deg, var(--warning), #d97706)',
+                    padding: '4px 14px', borderRadius: '99px', marginBottom: '12px'
+                }}>
+                    <span style={{ color: '#fff', fontSize: '13px', fontWeight: '800', textTransform: 'uppercase' }}>{dateTitle}</span>
+                </div>
+            )
+            return
+        }
+
+        const node = (
+            <p key={`menu-line-${idx}`} style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.55', marginTop: '6px', wordBreak: 'break-word' }}>
+                {line}
+            </p>
+        )
+        if (currentDayKey) currentDayBlock.push(node)
+        else rows.push(node)
+    })
+
+    flushDayBlock()
+    return rows
+}
 
 /** Extrait le texte d'un jour précis dans un menu de la semaine */
 function extractDayFromWeek(weekText: string, targetDate: Date): string | null {
