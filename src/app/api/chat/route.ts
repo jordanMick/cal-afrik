@@ -548,6 +548,23 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                         })
 
                         if (trueCals > 0) {
+                            // On enrichit chaque item avec ses valeurs nutritionnelles calculées
+                            parsed.items = parsed.items.map((it: any) => {
+                                const f = allFoodsDB.find(db => db.name_standard === it.name)
+                                if (f) {
+                                    const q = it.volume_ml || f.default_portion_g || 150
+                                    return {
+                                        ...it,
+                                        display_name: f.display_name || f.name_standard.replace(/_/g, ' '),
+                                        calories: Math.round((f.calories_per_100g * q) / 100),
+                                        protein_g: Math.round(((f.proteins_100g || 0) * q) / 100 * 10) / 10,
+                                        carbs_g: Math.round(((f.carbs_100g || 0) * q) / 100 * 10) / 10,
+                                        fat_g: Math.round(((f.lipids_100g || 0) * q) / 100 * 10) / 10
+                                    }
+                                }
+                                return it
+                            })
+
                             const signature = `\n\n─────────────────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
                             aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
                         } else {

@@ -87,7 +87,17 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
  */
 function parseDataBlock(rawMessage: string): { 
     displayText: string; 
-    dataItems?: Array<{ name: string; volume_ml: number }>; 
+    dataItems?: Array<{ 
+        name: string; 
+        volume_ml: number;
+        display_name?: string;
+        calories?: number;
+        protein_g?: number;
+        carbs_g?: number;
+        fat_g?: number;
+        portion_g?: number;
+        id?: string;
+    }>; 
     slot?: string 
 } | null {
     const sep = '---DATA---'
@@ -449,7 +459,17 @@ export default function CoachChatPage() {
      * L'utilisateur pourra ensuite cliquer "Ajouter au journal" depuis là-bas.
      */
     const handleAddToPlanning = (
-        dataItems: Array<{ name: string; volume_ml: number }>,
+        dataItems: Array<{ 
+            name: string; 
+            volume_ml: number;
+            display_name?: string;
+            calories?: number;
+            protein_g?: number;
+            carbs_g?: number;
+            fat_g?: number;
+            portion_g?: number;
+            id?: string;
+        }>,
         slot: string,
         fullMessage: string
     ) => {

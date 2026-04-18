@@ -135,10 +135,33 @@ interface AppState {
 
     // ─── Pont Coach → Scanner ─────────────────────────────────
     pendingScannerPrefill: {
-        items: Array<{ name: string; volume_ml: number }>
+        items: Array<{ 
+            name: string; 
+            volume_ml: number;
+            display_name?: string;
+            calories?: number;
+            protein_g?: number;
+            carbs_g?: number;
+            fat_g?: number;
+            portion_g?: number;
+            id?: string;
+        }>
         slot: string
     } | null
-    setPendingScannerPrefill: (data: { items: Array<{ name: string; volume_ml: number }>; slot: string } | null) => void
+    setPendingScannerPrefill: (data: { 
+        items: Array<{ 
+            name: string; 
+            volume_ml: number;
+            display_name?: string;
+            calories?: number;
+            protein_g?: number;
+            carbs_g?: number;
+            fat_g?: number;
+            portion_g?: number;
+            id?: string;
+        }>; 
+        slot: string 
+    } | null) => void
 
     // ─── Distributions Macros (Premium) ────────────────────────
     macroDistributions: Record<string, Record<MealSlotKey, number>>

@@ -83,7 +83,30 @@ export default function ScannerPage() {
                 let totalCals = 0
 
                 for (const item of pendingScannerPrefill.items) {
-                    // ✅ Utilise /api/foods?search= au lieu de Supabase direct (évite le 400)
+                    // Si l'item a déjà ses infos (injectées par Coach Yao), on les utilise directement
+                    if (item.calories !== undefined) {
+                        enrichedItems.push({
+                            id: item.id || `coach-${Date.now()}-${item.name}`,
+                            name: item.display_name || item.name,
+                            score: 100,
+                            calories: item.calories,
+                            protein_g: item.protein_g || 0,
+                            carbs_g: item.carbs_g || 0,
+                            fat_g: item.fat_g || 0,
+                            portion_g: item.portion_g || item.volume_ml || 200,
+                            calories_detected: item.calories,
+                            protein_detected: item.protein_g || 0,
+                            carbs_detected: item.carbs_g || 0,
+                            fat_detected: item.fat_g || 0,
+                            confidence: 100,
+                            detected: item.display_name || item.name,
+                            fromCoach: true,
+                        })
+                        totalCals += item.calories
+                        continue
+                    }
+
+                    // Sinon, on fait le fetch classique
                     const res = await fetch(
                         `/api/foods?search=${encodeURIComponent(item.name)}&limit=1`,
                         { headers: authHeaders }
@@ -96,7 +119,6 @@ export default function ScannerPage() {
                         continue
                     }
 
-                    // Conversion volume → grammes via densité (défaut 1.0 g/ml)
                     const density = Number(food.density_g_ml) || 1.0
                     const portionG = Math.round(item.volume_ml * density)
 
