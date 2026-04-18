@@ -669,11 +669,15 @@ export default function ScannerPage() {
 
             // 3. Sauvegarder le repas (Meal) directement
             const isBarcode = scanMode === 'barcode' || !!(window as any).isLastScanFromBarcode;
+            const finalMealName = (mealName && mealName !== 'Repas détecté') 
+                ? mealName 
+                : (newFoodEntry.name || manualFood.name_standard);
+
             const resMeal = await fetch('/api/meals', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                 body: JSON.stringify({
-                    custom_name: mealName || allFoods.map(f => f.name).join(', '),
+                    custom_name: finalMealName,
                     meal_type: currentSlotKey,
                     portion_g: Math.round(finalTotals.portion_g),
                     calories: Math.round(finalTotals.calories),

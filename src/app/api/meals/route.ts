@@ -191,6 +191,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: mapped })
 }
 
+// 🔥 PATCH
+export async function PATCH(req: NextRequest) {
+    const supabase = createUserClient(req)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
+    }
+
+    const { id, custom_name } = await req.json()
+
+    if (!id) {
+        return NextResponse.json({ success: false, error: 'ID manquant' }, { status: 400 })
+    }
+
+    const { data, error } = await supabaseAdmin
+        .from('meals')
+        .update({ custom_name })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+    if (error) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, data })
+}
+
 // 🔥 DELETE
 export async function DELETE(req: NextRequest) {
     const supabase = createUserClient(req)

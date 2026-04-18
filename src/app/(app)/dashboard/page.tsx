@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
+import { type Meal } from '@/types'
 import { getProgressPercent } from '@/lib/nutrition'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
-import { Settings, AlertTriangle, X, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
+import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2 } from 'lucide-react'
 import NotificationCenter from '@/components/NotificationCenter'
 import PushNotificationManager from '@/components/PushNotificationManager'
 
@@ -176,18 +177,9 @@ export default function DashboardPage() {
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const { 
-        profile, 
-        todayMeals, 
-        setTodayMeals, 
-        removeMeal, 
-        dailyCalories, 
-        dailyProtein, 
-        dailyCarbs, 
-        dailyFat, 
-        dailyReview, 
-        setDailyReview,
-        smartAlert,
-        clearSmartAlert
+        profile, todayMeals, setTodayMeals, removeMeal, 
+        dailyCalories, dailyProtein, dailyCarbs, dailyFat, 
+        dailyReview, setDailyReview, smartAlert, clearSmartAlert, slots
     } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
@@ -252,6 +244,77 @@ export default function DashboardPage() {
     const [isRenewing, setIsRenewing] = useState(false)
     const [isDismissed, setIsDismissed] = useState(false)
 
+    // Modal Details Repas
+    const [selectedSlotMeals, setSelectedSlotMeals] = useState<Meal[]>([])
+    const [selectedSlotLabel, setSelectedSlotLabel] = useState('')
+    const [isSlotModalOpen, setIsSlotModalOpen] = useState(false)
+    const [editingMealId, setEditingMealId] = useState<string | null>(null)
+    const [tempMealName, setTempMealName] = useState('')
+    const [isSavingName, setIsSavingName] = useState(false)
+
+    const handleOpenSlotModal = (slot: { id: MealSlotKey, label: string }) => {
+        const slotMeals = todayMeals.filter(m => {
+            const hour = new Date(m.logged_at).getHours()
+            const s = getMealSlot(hour)
+            return s === slot.id
+        })
+        setSelectedSlotMeals(slotMeals)
+        setSelectedSlotLabel(slot.label)
+        setIsSlotModalOpen(true)
+    }
+
+    const handleUpdateMealName = async (mealId: string) => {
+        if (!tempMealName.trim()) return
+        setIsSavingName(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            const res = await fetch(`/api/meals`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({ id: mealId, custom_name: tempMealName })
+            })
+            const json = await res.json()
+            if (json.success) {
+                // Mettre à jour localement
+                useAppStore.setState(state => ({
+                    todayMeals: state.todayMeals.map(m => m.id === mealId ? { ...m, custom_name: tempMealName } : m)
+                }))
+                setSelectedSlotMeals(prev => prev.map(m => m.id === mealId ? { ...m, custom_name: tempMealName } : m))
+                setEditingMealId(null)
+                toast.success('Nom du repas mis à jour !')
+            } else {
+                toast.error('Erreur lors de la mise à jour')
+            }
+        } catch (err) {
+            console.error(err)
+            toast.error('Erreur serveur')
+        } finally {
+            setIsSavingName(false)
+        }
+    }
+
+    const handleDeleteMeal = async (mealId: string) => {
+        if (!confirm('Voulez-vous vraiment supprimer ce repas ?')) return
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            const res = await fetch(`/api/meals?id=${mealId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${session.access_token}` }
+            })
+            const json = await res.json()
+            if (json.success) {
+                removeMeal(mealId)
+                setSelectedSlotMeals(prev => prev.filter(m => m.id !== mealId))
+                if (selectedSlotMeals.length <= 1) setIsSlotModalOpen(false)
+                toast.success('Repas supprimé')
+            }
+        } catch (err) { console.error(err) }
+    }
+
     const handleRenew = async () => {
         if (effectiveTier === 'free') return;
         setIsRenewing(true);
@@ -269,8 +332,9 @@ export default function DashboardPage() {
             if (!res.ok || !data.success) throw new Error(data.error || 'Erreur de paiement');
 
             window.location.href = data.url;
-        } catch (error: any) {
-            toast.error(`Erreur: ${error.message}`);
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : 'Une erreur est survenue'
+            toast.error(`Erreur: ${msg}`);
         } finally {
             setIsRenewing(false);
         }
@@ -281,11 +345,6 @@ export default function DashboardPage() {
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
     const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null
     const isExpiringSoon = effectiveTier !== 'free' && daysLeft !== null && daysLeft <= 7 && daysLeft >= 0
-
-    const radius = 40
-    const circumference = 2 * Math.PI * radius
-    const percent = getProgressPercent(dailyCalories, calorieTarget)
-    const strokeDashoffset = circumference - (percent / 100) * circumference
 
     useEffect(() => {
         setCurrentHour(new Date().getHours())
@@ -368,26 +427,6 @@ export default function DashboardPage() {
         } catch (err) { console.error(err) }
         finally { setIsLoading(false) }
     }
-
-    const handleDeleteMeal = async (mealId: string) => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) return
-            const res = await fetch(`/api/meals?id=${mealId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${session.access_token}` } })
-            const json = await res.json()
-            // ✅ removeMeal au lieu de setTodayMeals pour déclencher markSlotNeedsRefresh
-            if (json.success) removeMeal(mealId)
-        } catch (err) { console.error(err) }
-    }
-
-    const formatTime = (iso: string) =>
-        new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-
-    const macros = [
-        { label: 'Protéines', val: dailyProtein, target: proteinTarget, color: 'var(--accent)', bg: 'rgba(var(--accent-rgb), 0.12)' },
-        { label: 'Glucides', val: dailyCarbs, target: carbsTarget, color: 'var(--warning)', bg: 'rgba(var(--warning-rgb), 0.12)' },
-        { label: 'Lipides', val: dailyFat, target: fatTarget, color: 'var(--success)', bg: 'rgba(var(--success-rgb), 0.12)' },
-    ]
 
     return (
         <div style={{
@@ -665,24 +704,13 @@ export default function DashboardPage() {
                             { id: 'collation' as MealSlotKey, label: 'Collation', icon: '🥜' },
                             { id: 'diner' as MealSlotKey, label: 'Dîner', icon: '🥗' },
                         ].map(slot => {
-                            const slotState = useAppStore.getState().slots[slot.id]
+                            const slotState = slots[slot.id]
                             const pct = Math.min(100, (slotState.consumed / slotState.target) * 100)
 
                             return (
                                 <div
                                     key={slot.id}
-                                    onClick={() => {
-                                        // Optionnel: Voir les repas détaillés du créneau
-                                        const slotMeals = todayMeals.filter(m => {
-                                            const hour = new Date(m.logged_at).getHours()
-                                            const s = getMealSlot(hour)
-                                            return s === slot.id
-                                        })
-                                        if (slotMeals.length > 0) {
-                                            const details = slotMeals.map(m => `- ${m.custom_name || 'Repas'} (${Math.round(m.calories)} kcal)`).join('\n')
-                                            toast.info(`${slot.label} :`, { description: details })
-                                        }
-                                    }}
+                                    onClick={() => handleOpenSlotModal(slot)}
                                     style={{
                                         background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '18px',
                                         padding: '16px', display: 'flex', alignItems: 'center', gap: '14px',
@@ -744,6 +772,113 @@ export default function DashboardPage() {
                     }}
                 />
             </>
+
+            {/* MODAL DÉTAILS CRÉNEAU */}
+            <AnimatePresence>
+                {isSlotModalOpen && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsSlotModalOpen(false)}
+                            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+                        />
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            style={{
+                                position: 'relative', width: '100%', maxWidth: '480px',
+                                background: 'var(--bg-primary)', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
+                                padding: '24px', paddingBottom: '40px', boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
+                                maxHeight: '85vh', overflowY: 'auto'
+                            }}
+                        >
+                            <div style={{ width: '40px', height: '4px', background: 'var(--border-color)', borderRadius: '2px', margin: '0 auto 20px', opacity: 0.5 }} />
+                            
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>{selectedSlotLabel}</h3>
+                                <button onClick={() => setIsSlotModalOpen(false)} style={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                {selectedSlotMeals.length > 0 ? selectedSlotMeals.map(meal => (
+                                    <div key={meal.id} style={{ background: 'var(--bg-secondary)', borderRadius: '20px', padding: '16px', border: '0.5px solid var(--border-color)' }}>
+                                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                            {meal.image_url ? (
+                                                <img src={meal.image_url} style={{ width: '56px', height: '56px', borderRadius: '14px', objectFit: 'cover' }} alt="" />
+                                            ) : (
+                                                <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🍲</div>
+                                            )}
+                                            
+                                            <div style={{ flex: 1 }}>
+                                                {editingMealId === meal.id ? (
+                                                    <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                                                        <input 
+                                                            autoFocus
+                                                            value={tempMealName} 
+                                                            onChange={e => setTempMealName(e.target.value)}
+                                                            onKeyDown={e => e.key === 'Enter' && handleUpdateMealName(meal.id)}
+                                                            style={{ 
+                                                                flex: 1, background: 'var(--bg-tertiary)', border: '1px solid var(--accent)', 
+                                                                borderRadius: '8px', color: 'var(--text-primary)', padding: '6px 10px', fontSize: '14px', outline: 'none' 
+                                                            }}
+                                                        />
+                                                        <button 
+                                                            onClick={() => handleUpdateMealName(meal.id)}
+                                                            disabled={isSavingName}
+                                                            style={{ background: 'var(--accent)', border: 'none', borderRadius: '8px', color: '#fff', padding: '0 8px', cursor: 'pointer' }}
+                                                        >
+                                                            {isSavingName ? '...' : <Check size={16} />}
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                                                        <p style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>{meal.custom_name || 'Repas'}</p>
+                                                        <button 
+                                                            onClick={() => { setEditingMealId(meal.id); setTempMealName(meal.custom_name || ''); }}
+                                                            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', opacity: 0.6 }}
+                                                        >
+                                                            <Edit2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '700' }}>{Math.round(meal.calories)} kcal</span>
+                                                    <span style={{ width: '3px', height: '3px', background: 'var(--text-muted)', borderRadius: '50%', opacity: 0.3 }} />
+                                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Clock size={10} /> {new Date(meal.logged_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <button 
+                                                onClick={() => handleDeleteMeal(meal.id)}
+                                                style={{ padding: '8px', color: 'var(--danger)', opacity: 0.5, cursor: 'pointer', background: 'transparent', border: 'none' }}
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', gap: '12px', marginTop: '14px', paddingLeft: '72px' }}>
+                                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}><span style={{ fontWeight: '700', color: 'var(--accent)' }}>P</span> {Math.round(meal.protein_g)}g</div>
+                                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}><span style={{ fontWeight: '700', color: 'var(--warning)' }}>G</span> {Math.round(meal.carbs_g)}g</div>
+                                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}><span style={{ fontWeight: '700', color: 'var(--success)' }}>L</span> {Math.round(meal.fat_g)}g</div>
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Aucun repas enregistré pour ce créneau.</p>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

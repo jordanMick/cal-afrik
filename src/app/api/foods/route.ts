@@ -22,6 +22,16 @@ async function getAuthUser(req: NextRequest) {
     return user
 }
 
+function slugify(text: string) {
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '_')
+        .replace(/^-+|-+$/g, '');
+}
+
 // ─── GET : récupérer les aliments filtrés par sécurité ────────────
 export async function GET(req: NextRequest) {
     try {
@@ -105,11 +115,14 @@ export async function POST(req: NextRequest) {
             }, { status: 400 })
         }
 
+        const rawName = name_standard.trim()
+        const technicalSlug = `${slugify(rawName)}_${user.id.substring(0, 5)}`
+
         const { data, error } = await supabaseAdmin
             .from('food_items')
             .insert({
-                name_standard,
-                display_name: display_name || null,
+                name_standard: technicalSlug,
+                display_name: display_name || rawName,
                 category,
                 calories_per_100g: Number(calories_per_100g),
                 proteins_100g: Number(proteins_100g || 0),

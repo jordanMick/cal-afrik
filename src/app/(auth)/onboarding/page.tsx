@@ -539,8 +539,8 @@ export default function OnboardingPage() {
                             const isSelected = (form.dietary_restrictions || []).includes(r.id);
                             return (
                                 <button key={r.id} onClick={() => {
-                                    const list = isSelected 
-                                        ? form.dietary_restrictions.filter((x: string) => x !== r.id) 
+                                    const list = isSelected
+                                        ? form.dietary_restrictions.filter((x: string) => x !== r.id)
                                         : [...(form.dietary_restrictions || []), r.id];
                                     update('dietary_restrictions', list);
                                 }} style={{
@@ -593,12 +593,12 @@ export default function OnboardingPage() {
                     <div style={{ width: '120px', height: '120px', position: 'relative', marginBottom: '40px' }}>
                         <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
                             <circle cx="60" cy="60" r="54" fill="none" stroke="#111" strokeWidth="8" />
-                            <circle 
-                                cx="60" cy="60" r="54" fill="none" stroke="#22c55e" strokeWidth="8" 
-                                strokeDasharray="339.292" 
-                                strokeDashoffset={339.292 - (339.292 * analysisProgress) / 100} 
-                                strokeLinecap="round" 
-                                style={{ transition: 'stroke-dashoffset 0.1s linear' }} 
+                            <circle
+                                cx="60" cy="60" r="54" fill="none" stroke="#22c55e" strokeWidth="8"
+                                strokeDasharray="339.292"
+                                strokeDashoffset={339.292 - (339.292 * analysisProgress) / 100}
+                                strokeLinecap="round"
+                                style={{ transition: 'stroke-dashoffset 0.1s linear' }}
                             />
                         </svg>
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '24px', fontWeight: '900' }}>{analysisProgress}%</div>
