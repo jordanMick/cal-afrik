@@ -195,7 +195,7 @@ export default function MenusPage() {
                             </div>
 
                             <div style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.6' }}>
-                                {text.split('---DATA---')[0].trim()}
+                                {renderMenuBlock(text)}
                             </div>
 
                             <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
@@ -267,9 +267,12 @@ export default function MenusPage() {
                 >
                     {menuTab === 'today' ? renderTodaySlots() : (
                         <div style={{ background: 'var(--bg-secondary)', borderRadius: '24px', padding: '20px', border: '1px solid var(--border-color)' }}>
-                            {(menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week) ? (
+                            {(() => {
+                        const content = menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week
+                        if (content) {
+                            return (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    {renderMenuBlock(menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week)}
+                                    {renderMenuBlock(content as string)}
                                     <button 
                                         onClick={() => {
                                             clearChatSuggestedMenu(menuTab === 'tomorrow' ? 'tomorrow' : 'week')
@@ -280,11 +283,14 @@ export default function MenusPage() {
                                         Supprimer ce planning
                                     </button>
                                 </div>
-                            ) : (
-                                <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Aucune donnée disponible pour cet onglet.</p>
-                                </div>
-                            )}
+                            )
+                        }
+                        return (
+                            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Aucune donnée disponible pour cet onglet.</p>
+                            </div>
+                        )
+                    })()}
                         </div>
                     )}
                 </motion.div>
