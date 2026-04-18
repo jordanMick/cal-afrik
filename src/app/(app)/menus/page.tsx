@@ -141,7 +141,16 @@ export default function MenusPage() {
         else if (chatSuggestedMenus.week && (isT || isY)) { result.tomorrow = extractDayFromWeek(chatSuggestedMenus.week, targetDate); }
 
         const slots: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
-        slots.forEach(slot => { if (result.tomorrow) { result.today[slot] = extractSlotFromDay(result.tomorrow, slot) } })
+        slots.forEach(slot => {
+            // Priorité 1 : Menu demandé explicitement au Coach pour aujourd'hui
+            if (isT && chatSuggestedMenus.today?.[slot]) {
+                result.today[slot] = chatSuggestedMenus.today[slot]
+            }
+            // Priorité 2 : Cascade depuis la cible (demain / semaine)
+            else if (result.tomorrow && isTargetToday) {
+                result.today[slot] = extractSlotFromDay(result.tomorrow, slot)
+            }
+        })
         return result
     }, [chatSuggestedMenus, todayStr, yesterdayStr, targetDateStr])
 
