@@ -15,7 +15,6 @@ function normalizeMenuText(raw: string): string {
         .replace(/\*\*/g, '')
         .replace(/###|##|# /g, '')
         .replace(/a definir/gi, 'Repas local équilibré')
-        
     const keywords = ['Petit-déjeuner', 'Petit-déj', 'Déjeuner', 'Collation', 'Dîner', 'Jour', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
     keywords.forEach(k => {
         const regex = new RegExp(`([^\\n])\\s*(---*\\s*)?(${k})`, 'gi')
@@ -46,26 +45,23 @@ function extractDayFromWeek(weekText: string, targetDate: Date): string | null {
     return result.length > 30 ? result : null
 }
 
-/** Extrait un créneau précis (ex: Déjeuner) d'un texte de journée (très strict) */
 function extractSlotFromDay(dayText: string, slotKey: MealSlotKey): string | null {
-    const slotKeywords: Record<string, string> = {
-        petit_dejeuner: 'petit',
-        dejeuner: 'déjeuner',
-        collation: 'collation',
-        diner: 'dîner'
+    const slotKeywords: Record<string, string[]> = {
+        petit_dejeuner: ['petit', 'matin'],
+        dejeuner: ['déjeuner', 'midi'],
+        collation: ['collation', 'goûter'],
+        diner: ['dîner', 'soir']
     }
-    const target = slotKeywords[slotKey]
+    const targets = slotKeywords[slotKey]
     const lines = dayText.split('\n').map(l => l.trim())
     
-    // On cherche une ligne qui COMMENCE par le mot-clé (Titre de section)
     let startIdx = -1
     for (let i = 0; i < lines.length; i++) {
         const l = lines[i].toLowerCase()
-        // On cherche "Déjeuner :" ou "1. Déjeuner" ou "Déjeuner (25%)"
-        if (l.includes(target) && (l.startsWith(target) || /^\d+\.\s*/.test(l) || /^[*-]\s*/.test(l))) {
-            // Vérification supplémentaire : ce n'est pas un autre slot sur la même ligne (ex: "Petit-déj / Déjeuner")
-            // Si on cherche "déjeuner" mais que la ligne commence par "petit", on laisse à petit.
-            if (slotKey !== 'petit_dejeuner' && l.includes('petit')) continue
+        // Un titre de section contient le mot-clé ET commence par lui ou un symbole
+        if (targets.some(t => l.includes(t)) && (targets.some(t => l.startsWith(t)) || /^\d+\.\s*/.test(l) || /^[*-]\s*/.test(l))) {
+            // Anti-mélange : "Petit-déjeuner" ne doit pas être pris comme "Déjeuner"
+            if (slotKey === 'dejeuner' && l.includes('petit')) continue
             startIdx = i
             break
         }
@@ -73,17 +69,19 @@ function extractSlotFromDay(dayText: string, slotKey: MealSlotKey): string | nul
 
     if (startIdx === -1) return null
 
-    const allSlots = Object.values(slotKeywords)
-    let extractedLines = [lines[startIdx]]
+    const otherSlots = Object.entries(slotKeywords)
+        .filter(([key]) => key !== slotKey)
+        .map(([_, keywords]) => keywords)
+        .flat()
 
+    let extractedLines = [lines[startIdx]]
     for (let i = startIdx + 1; i < lines.length; i++) {
         const l = lines[i].toLowerCase()
-        // On s'arrête dès qu'on voit un AUTRE titre de repas
-        const isAnotherSlot = allSlots.some(s => s !== target && (l.startsWith(s) || /^\d+\.\s*/.test(l) || /^[*-]\s*/.test(l)))
-        if (isAnotherSlot) break
+        // On s'arrête UNIQUEMENT si on voit un AUTRE titre de repas
+        const isNextSlotHeader = otherSlots.some(s => l.startsWith(s))
+        if (isNextSlotHeader) break
         extractedLines.push(lines[i])
     }
-
     return extractedLines.join('\n').trim()
 }
 
@@ -153,7 +151,7 @@ export default function MenusPage() {
             if (isT && chatSuggestedMenus.today?.[slot]) result.today[slot] = chatSuggestedMenus.today[slot]
             else if (isY && chatSuggestedMenus.tomorrow) result.today[slot] = extractSlotFromDay(chatSuggestedMenus.tomorrow, slot)
             else if (chatSuggestedMenus.week && (isT || isY)) {
-                const dT = extractDayFromWeek(chatSuggestedMenus.week, isT ? now : now); // simplification logic
+                const dT = extractDayFromWeek(chatSuggestedMenus.week, isT ? now : now)
                 if (dT) result.today[slot] = extractSlotFromDay(dT, slot)
             }
         })
