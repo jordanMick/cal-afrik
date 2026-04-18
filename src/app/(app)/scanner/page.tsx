@@ -154,6 +154,7 @@ export default function ScannerPage() {
                     setIsSuggestionsExpanded(true)
                     setTotalCaloriesCoach(totalCals)
                     setShowRecap(true)
+                    setShowCoach(false) // Pas besoin de l'avis Coach, le menu vient du planning
                 } else {
                     // Aucun aliment trouvé en BD — on affiche quand même un recap générique
                     console.warn('⚠️ Aucun aliment du prefill trouvé en BD. Vérifier les name_standard.')
