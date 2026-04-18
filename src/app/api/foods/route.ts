@@ -101,6 +101,12 @@ export async function POST(req: NextRequest) {
             origin_country,
         } = body
 
+        const originCountries = Array.isArray(origin_country)
+            ? origin_country
+            : origin_country != null && origin_country !== ''
+              ? [String(origin_country)]
+              : []
+
         if (!name_fr || !category || calories_per_100g === undefined) {
             return NextResponse.json({
                 success: false,
@@ -119,6 +125,7 @@ export async function POST(req: NextRequest) {
                 carbs_100g: Number(carbs_100g || carbs_per_100g || 0),
                 lipids_100g: Number(lipids_100g || fat_per_100g || 0),
                 default_portion_g: Number(default_portion_g || 200),
+                origin_countries: originCountries,
                 
                 // 🛡️ SÉCURITÉ : Forcé à false pour les utilisateurs, lié au créateur
                 verified: false,
@@ -137,4 +144,4 @@ export async function POST(req: NextRequest) {
         console.error('POST /api/foods error:', err)
         return NextResponse.json({ success: false, error: 'Erreur serveur' })
     }
-}
+}
