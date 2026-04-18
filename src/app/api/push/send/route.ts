@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         // Récupérer tous les abonnements AVEC les préférences
         const { data: subs, error } = await supabase
             .from('push_subscriptions')
-            .select('*, profile:user_profiles(notify_meals, notify_reports)')
+            .select('*, profile:user_profiles(notify_meals, notify_reports, notify_subscription, subscription_tier, subscription_expires_at)')
 
         if (error) throw error
 
@@ -66,23 +66,62 @@ export async function GET(req: NextRequest) {
             url: notifUrl
         })
 
-        // Filtrer les utilisateurs selon la préférence concernée
-        const activeSubs = subs.filter((s: any) => {
-            if (isBilan) return s.profile?.notify_reports !== false
-            return s.profile?.notify_meals !== false
+        // Construction des envois
+        const pushesToSend: { subscription: any, payload: string, user_id: string, id: string }[] = []
+
+        subs.forEach((s: any) => {
+            // 1. Notification de routine (Repas ou Bilan)
+            const wantsRoutine = isBilan ? (s.profile?.notify_reports !== false) : (s.profile?.notify_meals !== false)
+            if (wantsRoutine) {
+                pushesToSend.push({ subscription: s.subscription, payload, user_id: s.user_id, id: s.id })
+            }
+
+            // 2. Notification d'abonnement (le matin uniquement, pour éviter le spam)
+            if (hour >= 5 && hour < 11 && s.profile?.notify_subscription !== false) {
+                const expiresAt = s.profile?.subscription_expires_at ? new Date(s.profile.subscription_expires_at) : null
+                if (expiresAt && s.profile?.subscription_tier !== 'free') {
+                    const diffTime = expiresAt.getTime() - now.getTime()
+                    const daysLeft = Math.ceil(diffTime / (1000 * 3600 * 24))
+                    
+                    if (daysLeft === 3) {
+                        pushesToSend.push({
+                            subscription: s.subscription,
+                            user_id: s.user_id,
+                            id: s.id,
+                            payload: JSON.stringify({
+                                title: 'Attention 🔔',
+                                body: 'Ton abonnement Premium expire dans 3 jours !',
+                                url: '/settings/subscription'
+                            })
+                        })
+                    } else if (daysLeft <= 0 && daysLeft >= -1) {
+                        // On alerte si c'est aujourd'hui ou hier max pour ne pas spammer tous les jours
+                        pushesToSend.push({
+                            subscription: s.subscription,
+                            user_id: s.user_id,
+                            id: s.id,
+                            payload: JSON.stringify({
+                                title: 'Abonnement expiré 😕',
+                                body: 'Renouvelle vite pour ne pas perdre l\'accès illimité à Coach Yao !',
+                                url: '/settings/subscription'
+                            })
+                        })
+                    }
+                }
+            }
         })
 
         // Envoi parallèle
-        await Promise.all(activeSubs.map(async (s: any) => {
+        await Promise.all(pushesToSend.map(async (push) => {
             try {
-                await webpush.sendNotification(s.subscription, payload)
+                await webpush.sendNotification(push.subscription, push.payload)
                 successCount++
             } catch (err: any) {
-                console.error('Push error for user:', s.user_id, err)
+                console.error('Push error for user:', push.user_id, err)
                 if (err.statusCode === 410 || err.statusCode === 404) {
-                    await supabase.from('push_subscriptions').delete().eq('id', s.id)
+                    await supabase.from('push_subscriptions').delete().eq('id', push.id)
                 }
-                failures.push({ user: s.user_id, error: err.message })
+                failures.push({ user: push.user_id, error: err.message })
             }
         }))
 

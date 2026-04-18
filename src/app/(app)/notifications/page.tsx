@@ -112,19 +112,6 @@ export default function NotificationsPage() {
                         <ToggleSwitch active={reminders.repas} />
                     </div>
 
-                    <div onClick={() => toggle('hydratation')} style={{ width: '100%', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Droplets size={16} color="#3b82f6" />
-                            </div>
-                            <div>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600', marginBottom: '2px' }}>Hydratation</p>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Penser à boire de l'eau</p>
-                            </div>
-                        </div>
-                        <ToggleSwitch active={reminders.hydratation} />
-                    </div>
-
                 </div>
 
                 {/* Section Coach Yao */}
