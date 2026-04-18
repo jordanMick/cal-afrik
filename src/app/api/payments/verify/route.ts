@@ -28,22 +28,24 @@ export async function POST(req: Request) {
              return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
         }
 
-        // Vérification directe auprès de FedaPay
-        const FEDAPAY_KEY = process.env.FEDAPAY_SECRET_KEY;
-        const verifyRes = await fetch(`https://api.fedapay.com/v1/transactions/${transactionId}`, {
-            headers: {
-                Authorization: `Bearer ${FEDAPAY_KEY}`,
-                "Content-Type": "application/json"
-            }
-        });
+        // Configuration de l'environnement FedaPay avec le SDK gérant automatiquement live/sandbox
+        const { FedaPay, Transaction } = require('fedapay');
+        const secretKey = process.env.FEDAPAY_SECRET_KEY || '';
+        FedaPay.setApiKey(secretKey);
+        FedaPay.setEnvironment(process.env.FEDAPAY_ENVIRONMENT || 'live');
 
-        if (!verifyRes.ok) {
-            console.error(`[FedaPay Verify] Échec (Status: ${verifyRes.status})`);
+        // Récupération sécurisée via le SDK FedaPay
+        let transaction;
+        try {
+            transaction = await Transaction.retrieve(transactionId);
+        } catch (fedaErr: any) {
+            console.error(`[FedaPay Verify] SDK Error: ${fedaErr.message}`);
             return NextResponse.json({ success: false, error: 'FedaPay verification failed' });
         }
 
-        const verifyData = await verifyRes.json();
-        const transaction = verifyData?.["v1/transaction"] || verifyData?.transaction || verifyData;
+        if (!transaction) {
+            return NextResponse.json({ success: false, error: 'Transaction not found' });
+        }
 
         if (transaction.status === 'approved') {
             const metadata = typeof transaction.metadata === 'string' 
