@@ -11,11 +11,21 @@ import { getEffectiveTier } from '@/lib/subscription'
 // --- HELPERS D'EXTRACTION ---
 
 function normalizeMenuText(raw: string): string {
-    return raw
+    let text = raw
         .replace(/\*\*/g, '')
         .replace(/###|##|# /g, '')
-        .replace(/\s{2,}/g, ' ')
         .replace(/a definir/gi, 'Repas local équilibré')
+        
+    // Forcer le retour à la ligne avant les mots-clés si collés
+    const keywords = ['Petit-déjeuner', 'Petit-déj', 'Déjeuner', 'Collation', 'Dîner', 'Jour', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    keywords.forEach(k => {
+        const regex = new RegExp(`([^\\n])\\s*(---*\\s*)?(${k})`, 'gi')
+        text = text.replace(regex, '$1\n$3')
+    })
+
+    return text
+        .replace(/---*/g, '') // Supprimer les restes de tirets séparateurs
+        .replace(/\s{2,}/g, ' ')
         .trim()
 }
 function renderMenuBlock(menuText: string): React.ReactNode[] {
