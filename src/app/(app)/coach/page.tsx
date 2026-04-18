@@ -85,10 +85,10 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
  * Extrait le bloc ---DATA--- du message de Coach Yao.
  * Retourne { displayText, dataItems, slot } ou null si absent.
  */
-function parseDataBlock(rawMessage: string): {
-    displayText: string
-    dataItems: Array<{ name: string; volume_ml: number }>
-    slot: string
+function parseDataBlock(rawMessage: string): { 
+    displayText: string; 
+    dataItems?: Array<{ name: string; volume_ml: number }>; 
+    slot?: string 
 } | null {
     const sep = '---DATA---'
     const idx = rawMessage.indexOf(sep)
@@ -107,9 +107,11 @@ function parseDataBlock(rawMessage: string): {
             return { displayText, dataItems: parsed.items, slot }
         }
     } catch {
-        // JSON malformé : on affiche juste le texte sans le bouton
+        // En cas d'erreur JSON (tronqué), on retourne au moins le texte propre
+        // pour que la balise DATA ne s'affiche pas à l'écran.
+        return { displayText }
     }
-    return null
+    return { displayText }
 }
 /**
  * Détecte si un message est un menu "demain" ou "semaine".
@@ -634,9 +636,9 @@ export default function CoachChatPage() {
                                 )}
                             </div>
                             {/* Bouton "Ajouter au Scanner" — menu créneau (DATA block) */}
-                            {parsed && (
+                            {parsed && parsed.dataItems && parsed.slot && (
                                 <button
-                                    onClick={() => handleAddToPlanning(parsed.dataItems, parsed.slot, msg.content)}
+                                    onClick={() => handleAddToPlanning(parsed.dataItems!, parsed.slot!, msg.content)}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',

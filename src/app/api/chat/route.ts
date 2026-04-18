@@ -399,7 +399,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                 try {
                     const response = await anthropic.messages.create({
                         model: 'claude-haiku-4-5-20251001',
-                        max_tokens: wantsWeek ? 4096 : 800,
+                        max_tokens: wantsWeek ? 4096 : 1200, // Augmenté pour éviter les JSON tronqués
                         system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux. Ne sois pas trop concis." : "") + (isFreeLimited ? "\n[PLAN GRATUIT]: Refuse poliment le menu demain/semaine et invite à s'abonner." : ""),
                         messages: formattedMessages as any
                     })
@@ -477,8 +477,11 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
         // L'IA peut inventer des name_standard. On corrige ici avant d'envoyer au frontend.
         if (aiMessage.includes('---DATA---') && allFoodsDB.length > 0) {
             try {
-                const dataIdx = aiMessage.lastIndexOf('---DATA---')
-                const jsonStr = aiMessage.substring(dataIdx + 10).trim()
+                // On récupère le texte pur sans aucune balise DATA générée par l'IA
+                // pour reconstruire proprement la signature et le JSON final.
+                const segments = aiMessage.split('---DATA---')
+                const baseText = segments[0].trim()
+                const jsonStr = segments[segments.length - 1].trim()
                 const parsed = JSON.parse(jsonStr)
 
                 if (parsed.items && Array.isArray(parsed.items)) {
@@ -529,8 +532,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
 
                     if (changed || parsed.items.length > 0) {
                         // --- NETTOYAGE DES MENTIONS DE CALORIES HALLUCINÉES PAR L'IA ---
-                        // On enlève des trucs comme "~750 kcal", "400 calories", "Total: 120g" qui feraient doublon
-                        aiMessage = aiMessage.replace(/~?\d+\s*k?cal(ories)?/gi, '').replace(/\s*\(\s*~\d+\s*k?cal\s*\)/gi, '')
+                        aiMessage = baseText.replace(/~?\d+\s*k?cal(ories)?/gi, '').replace(/\s*\(\s*~\d+\s*k?cal\s*\)/gi, '')
 
                         // --- CALCUL DU TOTAL CERTIFIÉ (Injecté en signature) ---
                         let trueCals = 0, trueP = 0, trueG = 0, trueL = 0
@@ -547,9 +549,9 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
 
                         if (trueCals > 0) {
                             const signature = `\n\n─────────────────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
-                            aiMessage = aiMessage.substring(0, dataIdx).trim() + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
-                        } else if (changed) {
-                            aiMessage = aiMessage.substring(0, dataIdx) + '---DATA---\n' + JSON.stringify(parsed)
+                            aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
+                        } else {
+                            aiMessage = aiMessage + '\n\n---DATA---\n' + JSON.stringify(parsed)
                         }
                     }
                 }
