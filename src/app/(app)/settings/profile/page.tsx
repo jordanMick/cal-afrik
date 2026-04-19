@@ -17,7 +17,7 @@ export default function PersonalInfoPage() {
 
     const [userEmail, setUserEmail] = useState<string>('')
     const [isEditingEmail, setIsEditingEmail] = useState(false)
-    const [emailForm, setEmailForm] = useState({ oldEmail: '', newEmail: '', confirmNew: '' })
+    const [emailForm, setEmailForm] = useState({ oldEmail: '', newEmail: '' })
     const [emailOtpMode, setEmailOtpMode] = useState(false)
     const [emailOtp, setEmailOtp] = useState('')
     const [emailError, setEmailError] = useState('')
@@ -40,7 +40,6 @@ export default function PersonalInfoPage() {
     const handleUpdateEmail = async () => {
         setEmailError('')
         if (emailForm.oldEmail !== userEmail) return setEmailError("L'ancien email ne correspond pas à votre compte.")
-        if (emailForm.newEmail !== emailForm.confirmNew) return setEmailError("Les emails ne correspondent pas.")
         if (!emailForm.newEmail.includes('@')) return setEmailError("Nouvel email invalide.")
 
         setEmailLoading(true)
@@ -158,7 +157,6 @@ export default function PersonalInfoPage() {
                                     <>
                                         <input type="email" placeholder="Ancien email" value={emailForm.oldEmail} onChange={e => setEmailForm({...emailForm, oldEmail: e.target.value})} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} />
                                         <input type="email" placeholder="Nouvel email" value={emailForm.newEmail} onChange={e => setEmailForm({...emailForm, newEmail: e.target.value})} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} />
-                                        <input type="email" placeholder="Confirmer le nouvel email" value={emailForm.confirmNew} onChange={e => setEmailForm({...emailForm, confirmNew: e.target.value})} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} />
                                         {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px' }}>{emailError}</p>}
                                         <button onClick={handleUpdateEmail} disabled={emailLoading} style={{ width: '100%', padding: '12px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
                                             {emailLoading ? 'Chargement...' : 'Continuer'}
