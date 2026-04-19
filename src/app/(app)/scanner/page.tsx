@@ -1054,38 +1054,115 @@ export default function ScannerPage() {
                 </div>
             )}
 
-            {/* ASTUCE PRÉCISION (Repositionnée en bas) */}
-            {!image && !isAnalyzing && (
-                <div style={{ 
-                    background: 'rgba(var(--accent-rgb), 0.05)', 
-                    border: '1px solid rgba(var(--accent-rgb), 0.15)', 
-                    borderRadius: '20px', 
-                    padding: '16px', 
-                    display: 'flex', 
-                    gap: '12px', 
-                    marginTop: '20px',
-                    marginBottom: '20px' 
-                }}>
-                    <div style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '10px', 
-                        background: 'rgba(var(--accent-rgb), 0.1)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        flexShrink: 0 
+            {/* BANNER LIMITE SCANS / ASTUCE */}
+            {!image && !isAnalyzing && (() => {
+                const effectiveTier = profile?.subscription_tier || 'free'
+                const today = new Date().toISOString().split('T')[0]
+                const scansUsed = (profile as any)?.last_usage_reset_date === today
+                    ? ((profile as any)?.scan_feedbacks_today || 0)
+                    : 0
+                const isLimitReached = effectiveTier === 'free' && scansUsed >= 2
+
+                if (isLimitReached) {
+                    return (
+                        <div style={{
+                            background: 'rgba(239,68,68,0.08)',
+                            border: '1px solid rgba(239,68,68,0.3)',
+                            borderRadius: '20px',
+                            padding: '16px',
+                            display: 'flex',
+                            gap: '12px',
+                            marginTop: '20px',
+                            marginBottom: '20px'
+                        }}>
+                            <div style={{
+                                width: '36px', height: '36px', borderRadius: '10px',
+                                background: 'rgba(239,68,68,0.12)', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                            }}>
+                                <span style={{ fontSize: '18px' }}>🚫</span>
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <p style={{ fontSize: '14px', fontWeight: '700', color: '#ef4444', marginBottom: '4px' }}>
+                                    Limite quotidienne atteinte
+                                </p>
+                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '10px' }}>
+                                    Tu as utilisé tes 2 scans gratuits d'aujourd'hui. Reviens demain ou passe au plan Pro pour scanner sans limite !
+                                </p>
+                                <button
+                                    onClick={() => router.push('/upgrade')}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #ef4444, #f59e0b)',
+                                        color: '#fff', border: 'none', padding: '8px 16px',
+                                        borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer'
+                                    }}
+                                >
+                                    🚀 Passer au Pro → Scans illimités
+                                </button>
+                            </div>
+                        </div>
+                    )
+                }
+
+                if (effectiveTier === 'free') {
+                    return (
+                        <div style={{
+                            background: 'rgba(var(--accent-rgb), 0.05)',
+                            border: '1px solid rgba(var(--accent-rgb), 0.15)',
+                            borderRadius: '20px',
+                            padding: '16px',
+                            display: 'flex',
+                            gap: '12px',
+                            marginTop: '20px',
+                            marginBottom: '20px'
+                        }}>
+                            <div style={{
+                                width: '32px', height: '32px', borderRadius: '10px',
+                                background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                            }}>
+                                <Info size={18} color="var(--accent)" />
+                            </div>
+                            <div>
+                                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>
+                                    Scans disponibles · <span style={{ color: 'var(--accent)' }}>{2 - scansUsed} restant{2 - scansUsed !== 1 ? 's' : ''}</span>
+                                </p>
+                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                    Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
+                                </p>
+                            </div>
+                        </div>
+                    )
+                }
+
+                // Pro / Premium — astuce normale sans compteur
+                return (
+                    <div style={{
+                        background: 'rgba(var(--accent-rgb), 0.05)',
+                        border: '1px solid rgba(var(--accent-rgb), 0.15)',
+                        borderRadius: '20px',
+                        padding: '16px',
+                        display: 'flex',
+                        gap: '12px',
+                        marginTop: '20px',
+                        marginBottom: '20px'
                     }}>
-                        <Info size={18} color="var(--accent)" />
+                        <div style={{
+                            width: '32px', height: '32px', borderRadius: '10px',
+                            background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                        }}>
+                            <Info size={18} color="var(--accent)" />
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>Astuce Précision</p>
+                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>Astuce Précision</p>
-                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                            Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
-                        </p>
-                    </div>
-                </div>
-            )}
+                )
+            })()}
 
             {/* BOUTON RÉCAP */}
             {selectedFoods.length > 0 && (
