@@ -66,7 +66,11 @@ export default function NotificationCenter() {
     return (
         <>
             <div 
-                onClick={() => { setIsOpen(true); if (unreadCount > 0) markAsRead(notifications.filter(n => !n.read_at).map(n => n.id)) }} 
+                onClick={() => { 
+                    fetchNotifications();
+                    setIsOpen(true); 
+                    if (unreadCount > 0) markAsRead(notifications.filter(n => !n.read_at).map(n => n.id)) 
+                }} 
                 style={{ 
                     width: '36px', height: '36px', borderRadius: '10px', 
                     background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', 
