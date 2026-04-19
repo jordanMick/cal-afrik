@@ -51,29 +51,37 @@ export async function GET(req: NextRequest) {
         const failures: any[] = []
 
         const now = new Date()
-        const hour = (now.getUTCHours() + 1) % 24 // UTC+1 pour l'Afrique de l'Ouest (Ajustable selon besoin)
+        const hour = now.getUTCHours() // UTC+0 pour Abidjan
         
-        let slotTitle = 'Cal-Afrik 🥥'
-        let slotBody = 'N\'oublie pas de scanner ton repas pour rester sur la bonne voie !'
+        let slotTitle = ''
+        let slotBody = ''
+        let isRoutine = true
 
-        if (hour >= 5 && hour < 11) {
+        if (hour === 8) {
             slotTitle = 'Petit-déjeuner ☕'
             slotBody = 'C\'est l\'heure du petit-déjeuner ! Un bon début pour tes objectifs.'
-        } else if (hour >= 12 && hour < 15) {
+        } else if (hour === 12) {
             slotTitle = 'Déjeuner 🍛'
-            slotBody = 'Bon appétit ! Qu\'est-ce qu\'on mange pour le déjeuner ?'
-        } else if (hour >= 16 && hour < 18) {
-            slotTitle = 'Goûter 🍎'
-            slotBody = 'Un petit creux ? Pense à scanner ton goûter.'
-        } else if (hour >= 19 && hour < 22) {
+            slotBody = 'Bon appétit ! C\'est l\'heure du déjeuner. Qu\'est-ce qu\'on mange ?'
+        } else if (hour === 16) {
+            slotTitle = 'Collation 🍎'
+            slotBody = 'L\'heure du goûter ! Pense à enregistrer ton petit plaisir.'
+        } else if (hour === 19) {
             slotTitle = 'Dîner 🍲'
-            slotBody = 'C\'est l\'heure du dîner ! Une dernière étape pour aujourd\'hui.'
-        } else if (hour >= 22) {
+            slotBody = 'C\'est l\'heure du dîner ! On termine la journée en beauté.'
+        } else if (hour === 22) {
             slotTitle = 'Bilan de Soirée 🏆'
-            slotBody = 'Coach Yao a analysé ta journée. Viens découvrir ton score !'
+            slotBody = 'Ton bilan est prêt ! Coach Yao a analysé ta journée.'
+        } else {
+            // Hors créneaux, on n'envoie rien (sauf si on ajoutait des notifications d'abonnement, mais le client veut des heures exactes)
+            isRoutine = false
         }
 
-        const isBilan = hour >= 22;
+        if (!isRoutine) {
+            return NextResponse.json({ success: true, message: `Rien à envoyer à ${hour}h` })
+        }
+
+        const isBilan = hour === 22;
         const notifUrl = isBilan ? '/dashboard' : '/scanner';
 
         const payload = JSON.stringify({
