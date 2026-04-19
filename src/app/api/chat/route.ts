@@ -330,7 +330,7 @@ RÈGLES DE CONSCIENCE TEMPORELLE :
 
 RÈGLES STRICTES (OBLIGATOIRES) :
 1) BUDGET CALORIQUE DYNAMIQUE (CRITIQUE) : Si tu composes un menu pour AUJOURD'HUI (menu creneau), tu DOIS calculer : [Cible] - [Déjà consommé]. Le total calorique du repas proposé DOIT impérativement tenir dans ce budget. 
-2) INTERDICTION DE CALCUL MANUEL : Ne génère JAMAIS de lignes avec "TOTAL CERTIFIÉ", "Total calories", "kcal" ou des macros (P/G/L) dans ton TEXTE. C'est le système qui l'ajoutera automatiquement grâce à ton bloc ---DATA---. Ton texte doit s'arrêter après la description du repas et les bénéfices.
+2) PAS DE CALCUL DU REPAS : Ne calcule JAMAIS le TOTAL du repas que tu proposes (Calories/Macros) dans ton texte. Le système l'ajoutera automatiquement à la fin. Cependant, tu PEUX (et dois) mentionner ton budget restant et ta consommation du jour fournis ci-dessous en utilisant l'unité kcal.
 3) PRÉFIXES TECHNIQUES (OBLIGATOIRES) : 
    - "menu creneau [nom]:" -> UNIQUEMENT pour un repas à consommer AUJOURD'HUI.
    - "menu demain:" -> Pour un menu complet (ou partiel) de DEMAIN. Jamais de "menu creneau" pour demain.
@@ -561,8 +561,9 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                     }).filter(Boolean)
 
                     if (changed || parsed.items.length > 0) {
-                        // --- NETTOYAGE DES MENTIONS DE CALORIES HALLUCINÉES PAR L'IA ---
-                        aiMessage = baseText.replace(/~?\d+\s*k?cal(ories)?/gi, '').replace(/\s*\(\s*~\d+\s*k?cal\s*\)/gi, '')
+                        // --- NETTOYAGE SÉCURITÉ ---
+                        // On ne nettoie plus agressivement car le coach peut mentionner le budget restant
+                        aiMessage = baseText
 
                         // --- CALCUL DU TOTAL CERTIFIÉ (Injecté en signature) ---
                         let trueCals = 0, trueP = 0, trueG = 0, trueL = 0
