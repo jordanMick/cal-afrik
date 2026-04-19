@@ -404,17 +404,9 @@ export default function ScannerPage() {
             const json = await res.json()
             console.log("💡 Réponse Coach Yao (/api/analyze):", json)
 
-            // ✅ LOGIQUE COMBO 2 : Scans + Suggestions Coach Yao
-            const effectiveTier = profile?.subscription_tier || 'free';
-            if (effectiveTier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-                toast.error("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
-                router.push('/upgrade')
-                return
-            }
-
             if (json.error && json.code === 'LIMIT_REACHED') {
                 setIsAnalyzing(false)
-                toast.info("🚀 Limite de scan atteinte ! Passez au plan Pro pour scanner sans limite.")
+                toast.info(`🚀 ${json.error} Passez au plan Pro pour scanner sans limite.`)
                 router.push('/upgrade')
                 return
             }
