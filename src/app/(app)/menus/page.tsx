@@ -134,25 +134,44 @@ export default function MenusPage() {
     const isTargetToday = targetDateStr === todayStr
 
     const resolvedMenus = useMemo(() => {
-        const result: Record<string, any> = { today: { petit_dejeuner: null, dejeuner: null, collation: null, diner: null }, tomorrow: null, week: null }
-        const isT = chatSuggestedMenus.date === todayStr, isY = chatSuggestedMenus.date === yesterdayStr
-        if (isT) result.week = chatSuggestedMenus.week
-        if (isT && chatSuggestedMenus.tomorrow) result.tomorrow = chatSuggestedMenus.tomorrow
-        else if (chatSuggestedMenus.week && (isT || isY)) { result.tomorrow = extractDayFromWeek(chatSuggestedMenus.week, targetDate); }
+        const result: Record<string, any> = { 
+            today: { petit_dejeuner: null, dejeuner: null, collation: null, diner: null }, 
+            tomorrow: null, 
+            week: null 
+        }
+        
+        const isT = chatSuggestedMenus.date === todayStr
+        const isY = chatSuggestedMenus.date === yesterdayStr
 
+        // 1. SEMAINE (Passage complet)
+        if (isT) result.week = chatSuggestedMenus.week
+
+        // 2. DEMAIN (Calcul strict de la date de demain)
+        const tomorrowDate = new Date(now)
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+        
+        if (isT && chatSuggestedMenus.tomorrow) {
+            result.tomorrow = chatSuggestedMenus.tomorrow
+        } else if (result.week && (isT || isY)) {
+            result.tomorrow = extractDayFromWeek(result.week, tomorrowDate)
+        }
+
+        // 3. AUJOURD'HUI (Strictement aujourd'hui)
         const slots: MealSlotKey[] = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
         slots.forEach(slot => {
-            // Priorité 1 : Menu demandé explicitement au Coach pour aujourd'hui
+            // Priorité 1 : Menu spécifique aujourd'hui
             if (isT && chatSuggestedMenus.today?.[slot]) {
                 result.today[slot] = chatSuggestedMenus.today[slot]
             }
-            // Priorité 2 : Cascade depuis la cible (demain / semaine)
-            else if (result.tomorrow && isTargetToday) {
-                result.today[slot] = extractSlotFromDay(result.tomorrow, slot)
+            // Priorité 2 : Extraction depuis Semaine pour AUJOURD'HUI
+            else if (result.week && (isT || isY)) {
+                const dayMenu = extractDayFromWeek(result.week, now)
+                if (dayMenu) result.today[slot] = extractSlotFromDay(dayMenu, slot)
             }
         })
+
         return result
-    }, [chatSuggestedMenus, todayStr, yesterdayStr, targetDateStr])
+    }, [chatSuggestedMenus, todayStr, yesterdayStr])
 
     const renderTodaySlots = () => {
         const text = resolvedMenus.today[currentSlotKey]
@@ -223,11 +242,11 @@ export default function MenusPage() {
                                 const content = menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week
                                 if (content) return (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                        <div style={{ padding: '8px 16px', background: isTargetToday ? 'rgba(var(--accent-rgb), 0.1)' : 'rgba(217, 119, 6, 0.1)', borderRadius: '12px', width: 'fit-content' }}>
-                                            <span style={{ fontSize: '12px', fontWeight: '900', color: isTargetToday ? 'var(--accent)' : '#d97706' }}>
-                                                {isTargetToday ? '✨ PRÉVU POUR AUJOURD\'HUI' : '📅 PRÉVU POUR DEMAIN'}
-                                            </span>
-                                        </div>
+                                    <div style={{ padding: '8px 16px', background: menuTab === 'tomorrow' ? 'rgba(var(--accent-rgb), 0.1)' : 'rgba(var(--warning-rgb), 0.1)', borderRadius: '12px', width: 'fit-content' }}>
+                                        <span style={{ fontSize: '12px', fontWeight: '900', color: menuTab === 'tomorrow' ? 'var(--accent)' : 'var(--warning)' }}>
+                                            {menuTab === 'tomorrow' ? '📅 PRÉVU POUR DEMAIN' : '🗓️ PLANNING SEMAINE'}
+                                        </span>
+                                    </div>
                                         <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '20px', padding: '4px' }}>
                                             {renderMenuBlock(content as string)}
                                         </div>
