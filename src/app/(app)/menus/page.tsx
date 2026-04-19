@@ -183,7 +183,7 @@ export default function MenusPage() {
                         <UtensilsCrossed size={36} color="var(--accent)" />
                     </div>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
-                        {now.getHours() >= 21 ? 'Journée terminée !' : 'Aucun menu planifié'}
+                        {now.getHours() >= 21 ? 'Journée terminée !' : 'Aucun menu pour cette heure planifié'}
                     </h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
                         {now.getHours() >= 21 
