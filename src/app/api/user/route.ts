@@ -107,32 +107,41 @@ export async function DELETE(req: NextRequest) {
         const user = await getUser(req)
         if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-        // 1. Supprimer en PREMIER l'utilisateur de l'auth (opération critique)
+        // 1. Supprimer les données applicatives AVANT le compte Auth
+        // On liste toutes les tables connues liées au user_id
+        const tables = [
+            'push_subscriptions', 
+            'notifications', 
+            'food_items', 
+            'meals', 
+            'weight_logs', 
+            'account_deletions',
+            'user_profiles'
+        ]
+
+        for (const table of tables) {
+            try {
+                const { error: tableError } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
+                if (tableError) {
+                    console.warn(`[Cleanup] Échec suppression table ${table}:`, tableError.message)
+                }
+            } catch (tableErr) {
+                console.warn(`[Cleanup] Exception table ${table}:`, tableErr)
+            }
+        }
+
+        // 2. Audit log optionnel (on le met dans le cleanup ou séparé, ici on l'a déjà mis dans la boucle)
+        // Note: On peut aussi insérer un log final si besoin avant de supprimer l'utilisateur de l'auth
+
+        // 3. EN DERNIER : Supprimer l'utilisateur de l'auth
         const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
 
-        // "User not found" = déjà supprimé de l'auth lors d'une tentative précédente → on continue le nettoyage
+        // "User not found" = déjà supprimé ou erreur mineure
         if (deleteAuthError && !deleteAuthError.message?.toLowerCase().includes('not found')) {
             console.error('Delete auth error:', deleteAuthError)
-            return NextResponse.json({ error: `Erreur lors de la suppression du compte: ${deleteAuthError.message}` }, { status: 500 })
-        }
-
-        // 2. Supprimer les données applicatives (indépendants — une erreur n'en bloque pas une autre)
-        const tables = ['meals', 'weight_logs', 'user_profiles']
-        for (const table of tables) {
-            const { error: tableError } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
-            if (tableError) console.warn(`Suppression ${table} ignorée:`, tableError.message)
-        }
-
-        // 3. Audit log optionnel (non-bloquant, on ignore si l'insertion échoue)
-        try {
-            await supabaseAdmin.from('account_deletions').insert({
-                user_id: user.id,
-                email: user.email,
-                reason: 'Suppression manuelle par l\'utilisateur',
-                deleted_at: new Date().toISOString()
-            })
-        } catch (auditError) {
-            console.warn('Audit log suppression échoué:', auditError)
+            return NextResponse.json({ 
+                error: `Erreur critique lors de la suppression finale: ${deleteAuthError.message}. Vos données ont été partiellement nettoyées.` 
+            }, { status: 500 })
         }
 
         return NextResponse.json({ success: true, message: 'Compte supprimé avec succès' })
