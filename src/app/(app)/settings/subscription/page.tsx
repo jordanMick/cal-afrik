@@ -65,7 +65,7 @@ export default function SubscriptionPage() {
 
     const rules = SUBSCRIPTION_RULES[effectiveTier]
     const today = new Date().toISOString().split('T')[0]
-    const usedScans = (profile as any)?.last_usage_reset_date === today ? ((profile as any)?.scans_today || 0) : 0
+    const usedScans = (profile as any)?.last_usage_reset_date === today ? ((profile as any)?.scan_feedbacks_today || 0) : 0
 
     const handleRenew = async () => {
         setRenewing(true)

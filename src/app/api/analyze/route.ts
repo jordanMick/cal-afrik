@@ -285,9 +285,10 @@ export async function POST(req: Request) {
         ]
 
 
-        if (tier === 'free') {
-            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
-        }
+        await supabase
+            .from('user_profiles')
+            .update({ scan_feedbacks_today: scansFeedbacksToday + 1 })
+            .eq('user_id', user.id)
 
         return NextResponse.json({
             success: true,
