@@ -105,9 +105,9 @@ function renderMenuBlock(menuText: string): React.ReactNode[] {
         }
 
         const node = isMealHeader ? (
-            <p key={`meal-${idx}`} style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: '800', marginTop: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ width: '4px', height: '14px', background: 'var(--accent)', borderRadius: '2px' }} />{line}</p>
+            <p key={`meal-${idx}`} style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: '800', marginTop: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', wordBreak: 'break-word' }}><span style={{ width: '4px', height: '14px', background: 'var(--accent)', borderRadius: '2px', flexShrink: 0 }} />{line}</p>
         ) : (
-            <p key={`line-${idx}`} style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.6', marginTop: '4px', opacity: 0.9, paddingLeft: currentDayKey ? '12px' : '0' }}>{line}</p>
+            <p key={`line-${idx}`} style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.6', marginTop: '4px', opacity: 0.9, paddingLeft: currentDayKey ? '12px' : '0', wordBreak: 'break-word' }}>{line}</p>
         )
         if (currentDayKey) currentDayBlock.push(node)
         else rows.push(node)

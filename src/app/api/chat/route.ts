@@ -609,8 +609,12 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                                 return it
                             })
 
-                            const signature = `\n\n─────────────────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
-                            aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
+                             // --- NETTOYAGE DES DOUBLONS ---
+                             // On s'assure qu'il n'y a pas déjà une signature ou un bloc DATA (cas de retry ou hallucination)
+                             aiMessage = aiMessage.split('───')[0].split('---DATA---')[0].trim()
+
+                             const signature = `\n\n────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
+                             aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
                         } else {
                             aiMessage = aiMessage + '\n\n---DATA---\n' + JSON.stringify(parsed)
                         }
