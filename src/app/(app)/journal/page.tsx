@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
@@ -246,8 +246,39 @@ function WeightModal({ currentWeight, onClose, onSave }: { currentWeight: number
     )
 }
 
-function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () => void; onDelete: (id: string) => Promise<void> }) {
+function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Meal; onClose: () => void; onDelete: (id: string) => Promise<void>; onImageUpdate?: (id: string, url: string) => void }) {
     const [showCoach, setShowCoach] = useState(false)
+    const [imageUploading, setImageUploading] = useState(false)
+    const [localImageUrl, setLocalImageUrl] = useState(meal.image_url)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const handlePhotoChange = async (file: File) => {
+        if (!file) return
+        setImageUploading(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+            const ext = file.name.split('.').pop() || 'jpg'
+            const fileName = `${session.user.id}/${Date.now()}.${ext}`
+            const { error: upErr } = await supabase.storage.from('meal-images').upload(fileName, file, { upsert: true })
+            if (upErr) throw upErr
+            const { data: { publicUrl } } = supabase.storage.from('meal-images').getPublicUrl(fileName)
+            const res = await fetch('/api/meals', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({ id: meal.id, image_url: publicUrl })
+            })
+            const json = await res.json()
+            if (json.success) {
+                setLocalImageUrl(publicUrl)
+                onImageUpdate?.(meal.id, publicUrl)
+            }
+        } catch (err) {
+            console.error('Photo upload error:', err)
+        } finally {
+            setImageUploading(false)
+        }
+    }
     const totalKcal = (meal.protein_g * 4) + (meal.carbs_g * 4) + (meal.fat_g * 9)
     const macros = totalKcal === 0 ? { protein: 0, carbs: 0, fat: 0 } : { protein: Math.round((meal.protein_g * 4 / totalKcal) * 100), carbs: Math.round((meal.carbs_g * 4 / totalKcal) * 100), fat: Math.round((meal.fat_g * 9 / totalKcal) * 100) }
     return (
@@ -256,7 +287,20 @@ function MealDetailPanel({ meal, onClose, onDelete }: { meal: Meal; onClose: () 
             <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', maxWidth: '480px', background: 'var(--bg-secondary)', borderRadius: '24px 24px 0 0', border: '0.5px solid var(--border-color)', zIndex: 1010, maxHeight: '90vh', overflowY: 'auto', paddingBottom: '100px', boxShadow: '0 -10px 40px rgba(var(--bg-primary-rgb), 0.2)' }}>
                 <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success), var(--warning))' }} />
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}><div style={{ width: '36px', height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px' }} /></div>
-                {meal.image_url && <div style={{ width: '100%', height: '160px', overflow: 'hidden' }}><img src={meal.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
+                <div style={{ width: '100%', height: '160px', overflow: 'hidden', position: 'relative', background: 'var(--bg-tertiary)', display: localImageUrl ? 'block' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {localImageUrl
+                        ? <img src={localImageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span style={{ fontSize: '48px' }}>🍽️</span>
+                    }
+                    <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoChange(f) }} />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={imageUploading}
+                        style={{ position: 'absolute', bottom: '10px', right: '10px', padding: '7px 14px', borderRadius: '12px', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', fontSize: '12px', fontWeight: '700', cursor: 'pointer', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                        {imageUploading ? '⏳' : '📷'} {imageUploading ? 'Envoi...' : 'Changer'}
+                    </button>
+                </div>
                 <div style={{ padding: '18px 20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                         <h2 style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: '600', flex: 1, marginRight: '12px' }}>{meal.custom_name || 'Repas'}</h2>
@@ -664,7 +708,7 @@ export default function RapportPage() {
             </div>
 
             {showWeightModal && <WeightModal currentWeight={currentWeight} onClose={() => setShowWeightModal(false)} onSave={handleSaveWeight} />}
-            {selectedMeal && <MealDetailPanel meal={selectedMeal} onClose={() => setSelectedMeal(null)} onDelete={handleDeleteMeal} />}
+            {selectedMeal && <MealDetailPanel meal={selectedMeal} onClose={() => setSelectedMeal(null)} onDelete={handleDeleteMeal} onImageUpdate={(id, url) => setMeals7days(prev => prev.map(m => m.id === id ? { ...m, image_url: url } : m))} />}
 
             {/* Notification de mise à jour des objectifs */}
             {targetUpdate && (

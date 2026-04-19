@@ -200,15 +200,24 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 })
     }
 
-    const { id, custom_name } = await req.json()
+    const body = await req.json()
+    const { id, custom_name, image_url } = body
 
     if (!id) {
         return NextResponse.json({ success: false, error: 'ID manquant' }, { status: 400 })
     }
 
+    const updatePayload: Record<string, any> = {}
+    if (custom_name !== undefined) updatePayload.custom_name = custom_name
+    if (image_url !== undefined) updatePayload.image_url = image_url
+
+    if (Object.keys(updatePayload).length === 0) {
+        return NextResponse.json({ success: false, error: 'Aucun champ à mettre à jour' }, { status: 400 })
+    }
+
     const { data, error } = await supabaseAdmin
         .from('meals')
-        .update({ custom_name })
+        .update(updatePayload)
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
