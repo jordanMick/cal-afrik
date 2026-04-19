@@ -28,16 +28,37 @@ export default function PushNotificationManager() {
                 updateViaCache: 'none'
             })
             const sub = await registration.pushManager.getSubscription()
-            setSubscription(sub)
             
             if (sub) {
+                console.log('Push subscription found, syncing with server...')
+                setSubscription(sub)
                 setPermissionStatus('granted')
+                // Synchroniser systématiquement avec le serveur au chargement
+                syncSubscriptionWithServer(sub)
             } else if (Notification.permission === 'granted') {
-                // Si la notification est autorisée mais l'abonnement est perdu, on le regénère
+                console.log('Permission granted but no subscription, subscribing...')
                 subscribeToPush()
             }
         } catch (err) {
             console.error('Service Worker registration failed:', err)
+        }
+    }
+
+    async function syncSubscriptionWithServer(sub: PushSubscription) {
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ subscription: sub })
+            })
+        } catch (err) {
+            console.error('Failed to sync push subscription:', err)
         }
     }
 

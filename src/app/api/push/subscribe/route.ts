@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
         // Upsert : On écrase l'ancien abonnement si l'utilisateur change d'appareil (ou on en ajoute un nouveau)
