@@ -277,10 +277,49 @@ export async function POST(req: NextRequest) {
             .lte('logged_at', `${todayStr}T23:59:59.999Z`)
 
         const dailyConsumed = (todayMealsDB || []).reduce((acc, m) => acc + (Number(m.calories) || 0), 0)
+        let dailyProt = 0, dailyCarbs = 0, dailyFat = 0
+        const slotTotals: Record<string, number> = { petit_dejeuner: 0, dejeuner: 0, collation: 0, diner: 0 }
+        
+        ;(todayMealsDB || []).forEach(m => {
+            const hour = new Date(m.logged_at).getUTCHours()
+            const s = (hour < 12) ? 'petit_dejeuner' : (hour < 16) ? 'dejeuner' : (hour < 19) ? 'collation' : 'diner'
+            slotTotals[s] += (Number(m.calories) || 0)
+            dailyProt += (Number(m.protein_g) || 0)
+            dailyCarbs += (Number(m.carbs_g) || 0)
+            dailyFat += (Number(m.fat_g) || 0)
+        })
+
         const dailyRemaining = Math.max(0, profile.calorie_target - dailyConsumed)
         const budgetPercentRemaining = Math.round((dailyRemaining / profile.calorie_target) * 100)
 
-        console.log(`📊 [CHAT DEBUG] User: ${user.id} | Consumed: ${dailyConsumed} | Remaining: ${dailyRemaining} | Target: ${profile.calorie_target}`)
+        // --- CALCUL OBJECTIF CRÉNEAU ACTUEL (Redistribution dynamique) ---
+        const SLOT_ORDER = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
+        const DEFAULT_DIST: Record<string, number> = { petit_dejeuner: 0.25, dejeuner: 0.35, collation: 0.10, diner: 0.30 }
+        
+        const currentHour = now.getUTCHours()
+        const currentSlot = (currentHour < 12) ? 'petit_dejeuner' : (currentHour < 16) ? 'dejeuner' : (currentHour < 19) ? 'collation' : 'diner'
+        const currentIdx = SLOT_ORDER.indexOf(currentSlot)
+        
+        let pastCons = 0
+        for(let i=0; i<currentIdx; i++) pastCons += slotTotals[SLOT_ORDER[i]]
+        
+        const remainingSlots = SLOT_ORDER.slice(currentIdx)
+        const totalPctRem = remainingSlots.reduce((sum, s) => sum + DEFAULT_DIST[s], 0)
+        const shareOfCurrent = DEFAULT_DIST[currentSlot] / (totalPctRem || 1)
+        const currentSlotTarget = Math.round(Math.max(0, profile.calorie_target - pastCons) * shareOfCurrent)
+        const currentSlotConsumed = slotTotals[currentSlot]
+        const currentSlotRemaining = Math.max(0, currentSlotTarget - currentSlotConsumed)
+
+        // --- DÉTECTION ALERTES ---
+        let smartAlert = ""
+        const protTarget = profile.protein_target_g || 100
+        const carbsTarget = profile.carbs_target_g || 250
+        const fatTarget = profile.fat_target_g || 65
+        if (dailyConsumed > profile.calorie_target) smartAlert = "[ALERTE] Budget calories DÉPASSÉ pour aujourd'hui."
+        else if (dailyCarbs > carbsTarget * 0.9) smartAlert = "[ALERTE] Quota GLUCIDES presque atteint."
+        else if (dailyFat > fatTarget * 0.9) smartAlert = "[ALERTE] Quota LIPIDES presque atteint."
+
+        console.log(`📊 [CHAT DEBUG] Slot: ${currentSlot} | SlotTarget: ${currentSlotTarget} | DailyRem: ${dailyRemaining}`)
 
         // --- DATES DE PLANIFICATION (Séquence exacte pour le Coach) ---
         const next7Days = buildWeekDatesFromTomorrow()
@@ -311,8 +350,12 @@ export async function POST(req: NextRequest) {
 - HEURE RÉELLE (STRICTE) : ${currentTime}
 - CONSOMMATION RÉELLE AUJOURD'HUI : ${Math.round(dailyConsumed)} kcal
 - BUDGET RESTANT AUJOURD'HUI : ${Math.round(dailyRemaining)} kcal
-- % BUDGET DISPONIBLE : ${budgetPercentRemaining}%
-- Objectif Journalier : ${profile.calorie_target} kcal
+- % BUDGET TOTAL DISPONIBLE : ${budgetPercentRemaining}%
+- OBJECTIF DU CRÉNEAU ACTUEL (${currentSlot}) : ${currentSlotTarget} kcal
+- DÉJÀ MANGÉ DANS CE CRÉNEAU : ${currentSlotConsumed} kcal
+- RESTE À MANGER DANS CE CRÉNEAU : ${currentSlotRemaining} kcal (Prioritaire pour ta suggestion)
+- Objectif Journalier Global : ${profile.calorie_target} kcal
+${smartAlert ? `\n${smartAlert}\n` : ''}
 
 RÈGLE D'OR : N'utilise JAMAIS d'étoiles (****) pour masquer les chiffres. FIE-TOI UNIQUEMENT à l'heure réelle indiquée ci-dessus (${currentTime}) pour tes conseils. Ne l'invente pas. Si le budget est de 0, dis-le clairement.
 
