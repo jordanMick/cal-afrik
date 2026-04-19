@@ -217,7 +217,7 @@ export async function POST(req: Request) {
     // ─── VÉRIFICATION ABONNEMENT ──────────────────────────────
     const { data: profile } = await supabase
         .from('user_profiles')
-        .select('subscription_tier, subscription_expires_at, scans_today, last_usage_reset_date, country')
+        .select('subscription_tier, subscription_expires_at, scan_feedbacks_today, last_usage_reset_date, country')
         .eq('user_id', user.id)
         .single()
 
@@ -238,19 +238,19 @@ export async function POST(req: Request) {
     // ─── GESTION COMPTEUR SCANS (reset quotidien) ─────────────
     const todayStr = new Date().toISOString().split('T')[0]
     const lastReset = profile?.last_usage_reset_date || ''
-    let scansToday = profile?.scans_today || 0
+    let scansFeedbacksToday = profile?.scan_feedbacks_today || 0
 
     if (lastReset !== todayStr) {
         // Nouveau jour → reset du compteur
-        scansToday = 0
+        scansFeedbacksToday = 0
         await supabase
             .from('user_profiles')
-            .update({ scans_today: 0, last_usage_reset_date: todayStr })
+            .update({ scan_feedbacks_today: 0, last_usage_reset_date: todayStr })
             .eq('user_id', user.id)
     }
 
     // ─── LIMITE PLAN FREE : 2 scans/jour ─────────────────────
-    if (tier === 'free' && scansToday >= 2) {
+    if (tier === 'free' && scansFeedbacksToday >= 2) {
         return new Response(JSON.stringify({
             success: false,
             error: "Tu as atteint ta limite de 2 scans aujourd'hui. Reviens demain ou passe au Plan Pro.",
@@ -760,10 +760,10 @@ export async function POST(req: Request) {
             mealName: finalMealName,
         })
 
-        // ✅ Incrémenter scans_today pour tous les plans
+        // ✅ Incrémenter scan_feedbacks_today pour tous les plans
         await supabase
             .from('user_profiles')
-            .update({ scans_today: scansToday + 1 })
+            .update({ scan_feedbacks_today: scansFeedbacksToday + 1 })
             .eq('user_id', user.id)
 
         console.log("✅ Analysis successful")
