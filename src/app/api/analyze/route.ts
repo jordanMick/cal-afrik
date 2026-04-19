@@ -217,7 +217,7 @@ export async function POST(req: Request) {
     // ─── VÉRIFICATION ABONNEMENT ──────────────────────────────
     const { data: profile } = await supabase
         .from('user_profiles')
-        .select('subscription_tier, subscription_expires_at, scan_feedbacks_today, country')
+        .select('subscription_tier, subscription_expires_at, scans_today, last_usage_reset_date, country')
         .eq('user_id', user.id)
         .single()
 
@@ -235,16 +235,27 @@ export async function POST(req: Request) {
         }
     }
 
-    if (tier === 'free') {
-        const actionsUsed = (profile?.scan_feedbacks_today || 0)
+    // ─── GESTION COMPTEUR SCANS (reset quotidien) ─────────────
+    const todayStr = new Date().toISOString().split('T')[0]
+    const lastReset = profile?.last_usage_reset_date || ''
+    let scansToday = profile?.scans_today || 0
 
-        if (actionsUsed >= 2) {
-            return new Response(JSON.stringify({
-                success: false,
-                error: "Tu as atteint ta limite de 2 analyses. Reviens demain ou passe au Plan Pro.",
-                code: "LIMIT_REACHED"
-            }), { status: 403 })
-        }
+    if (lastReset !== todayStr) {
+        // Nouveau jour → reset du compteur
+        scansToday = 0
+        await supabase
+            .from('user_profiles')
+            .update({ scans_today: 0, last_usage_reset_date: todayStr })
+            .eq('user_id', user.id)
+    }
+
+    // ─── LIMITE PLAN FREE : 2 scans/jour ─────────────────────
+    if (tier === 'free' && scansToday >= 2) {
+        return new Response(JSON.stringify({
+            success: false,
+            error: "Tu as atteint ta limite de 2 scans aujourd'hui. Reviens demain ou passe au Plan Pro.",
+            code: "LIMIT_REACHED"
+        }), { status: 403 })
     }
 
     const MOCK_MODE = false
@@ -749,10 +760,11 @@ export async function POST(req: Request) {
             mealName: finalMealName,
         })
 
-        // ✅ Décompte du jeton pour les gratuits
-        if (tier === 'free') {
-            await supabase.rpc('increment_scan_feedback', { user_id_input: user.id })
-        }
+        // ✅ Incrémenter scans_today pour tous les plans
+        await supabase
+            .from('user_profiles')
+            .update({ scans_today: scansToday + 1 })
+            .eq('user_id', user.id)
 
         console.log("✅ Analysis successful")
         return NextResponse.json({
