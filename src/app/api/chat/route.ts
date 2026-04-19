@@ -277,6 +277,8 @@ export async function POST(req: NextRequest) {
         const dailyRemaining = Math.max(0, profile.calorie_target - dailyConsumed)
         const budgetPercentRemaining = Math.round((dailyRemaining / profile.calorie_target) * 100)
 
+        console.log(`📊 [CHAT DEBUG] User: ${user.id} | Consumed: ${dailyConsumed} | Remaining: ${dailyRemaining} | Target: ${profile.calorie_target}`)
+
         // --- DATES DE PLANIFICATION (Séquence exacte pour le Coach) ---
         const next7Days = buildWeekDatesFromTomorrow()
         const planningSequence = next7Days.map((d, i) => `Jour ${i + 1} : ${d}`).join('\n')
@@ -300,7 +302,16 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const systemPrompt = `Tu es Coach Yao, coach nutrition africain expert (humain). Ne mentionne JAMAIS que tu es une intelligence artificielle ou une IA. Présente-toi uniquement comme Coach Yao, un humain expert. N'utilise JAMAIS d'icône de robot 🤖.
+        const systemPrompt = `Tu es Coach Yao, coach nutrition africain expert (humain). Ne mentionne JAMAIS que tu es une intelligence artificielle ou une IA.
+        
+=== DONNÉES TEMPORELLES & BUDGET (EXTREMENT IMPORTANT) ===
+- Heure actuelle : ${currentTime}
+- CONSOMMATION RÉELLE AUJOURD'HUI : ${Math.round(dailyConsumed)} kcal
+- BUDGET RESTANT AUJOURD'HUI : ${Math.round(dailyRemaining)} kcal
+- % BUDGET DISPONIBLE : ${budgetPercentRemaining}%
+- Objectif Journalier : ${profile.calorie_target} kcal
+
+RÈGLE D'OR : N'utilise JAMAIS d'étoiles (****) pour masquer les chiffres. Utilise TOUJOURS les chiffres réels fournis ci-dessus pour informer l'utilisateur de son budget. Si le budget est de 0, dis-le clairement.
 
 === CADRE D'INTERACTION STRICT ===
 - TON RÔLE : Tu es UNIQUEMENT un coach en nutrition et bien-être.
@@ -394,12 +405,11 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             const wantsSlotCollation = /\bcollation\b/.test(normalizedUserMessage)
             const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
 
-            // Formatage des messages pour Anthropic
             // Formatage des messages pour Anthropic (Claude exige de commencer par 'user' et d'alterner les rôles)
             let formattedMessages: any[] = messages
                 .map((m: any) => ({
                     role: (m.role === 'coach' ? 'assistant' : 'user') as 'assistant' | 'user',
-                    content: String(m.content || '')
+                    content: String(m.content || '').replace(/\*\*\*\*/g, '??') // On remplace les anciennes étoiles par des points d'interrogation pour briser le pattern
                 }))
             
             // On commence impérativement par un message 'user'
