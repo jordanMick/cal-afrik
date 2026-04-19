@@ -1220,8 +1220,8 @@ export default function ScannerPage() {
                             ))}
                         </div>
 
-                        {/* On n'affiche le conseil du coach QUE si ce n'est pas un menu déjà suggéré par Yao */}
-                        {!selectedFoods.some(f => f.id.startsWith('suggested-')) && (
+                        {/* On n'affiche le conseil du coach QUE si ce n'est pas un menu déjà suggéré par Yao ou venant du planning */}
+                        {!selectedFoods.some(f => f.id.startsWith('suggested-') || f.id.startsWith('coach-') || f.fromCoach) && (
                             <>
                                 <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(var(--warning-rgb), 0.08)' : 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
                                     {showCoach ? 'Conseil personnalisé de votre coach' : 'Demander l\'avis du coach →'}

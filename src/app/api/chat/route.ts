@@ -264,6 +264,18 @@ export async function POST(req: NextRequest) {
         const tomDate = new Date()
         tomDate.setDate(now.getDate() + 1)
         const tomorrowStr = tomDate.toISOString().split('T')[0]
+        
+        // --- CALCUL CONSOMMATION RÉELLE AUJOURD'HUI ---
+        const { data: todayMealsDB } = await supabase
+            .from('meals')
+            .select('calories')
+            .eq('user_id', user.id)
+            .gte('logged_at', `${todayStr}T00:00:00.000Z`)
+            .lte('logged_at', `${todayStr}T23:59:59.999Z`)
+
+        const dailyConsumed = (todayMealsDB || []).reduce((acc, m) => acc + (Number(m.calories) || 0), 0)
+        const dailyRemaining = Math.max(0, profile.calorie_target - dailyConsumed)
+        const budgetPercentRemaining = Math.round((dailyRemaining / profile.calorie_target) * 100)
 
         // --- DATES DE PLANIFICATION (Séquence exacte pour le Coach) ---
         const next7Days = buildWeekDatesFromTomorrow()
@@ -340,6 +352,9 @@ Ce combo est parfait pour clore ta journée ! 💪
 - Aujourd'hui : ${new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)}
 - Heure actuelle : ${currentTime}
 - Planification : "demain" correspond au ${next7Days[0]}.
+- CONSOMMATION DU JOUR : ${Math.round(dailyConsumed)} kcal (déjà mangé)
+- BUDGET RESTANT : ${Math.round(dailyRemaining)} kcal
+- % BUDGET DISPONIBLE : ${budgetPercentRemaining}%
 
 Contexte utilisateur :
 - OBJECTIF CALORIQUE : ${profile.calorie_target} kcal / jour (NE PAS DÉPASSER)
@@ -414,7 +429,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                 try {
                     const response = await anthropic.messages.create({
                         model: 'claude-haiku-4-5-20251001',
-                        max_tokens: wantsWeek ? 4096 : 1200, // Augmenté pour éviter les JSON tronqués
+                        max_tokens: wantsWeek ? 4500 : 1500, // Augmenté pour éviter les textes et JSON tronqués
                         system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux. Ne sois pas trop concis." : "") + (isFreeLimited ? "\n[PLAN GRATUIT]: Refuse poliment le menu demain/semaine et invite à s'abonner." : ""),
                         messages: formattedMessages as any
                     })
