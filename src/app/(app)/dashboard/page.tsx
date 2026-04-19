@@ -190,7 +190,7 @@ export default function DashboardPage() {
     const proteinTarget = profile?.protein_target_g || 100
     const carbsTarget = profile?.carbs_target_g || 250
     const fatTarget = profile?.fat_target_g || 65
-    const remaining = Math.max(0, calorieTarget - dailyCalories)
+    const remaining = Math.round(Math.max(0, calorieTarget - dailyCalories))
     const exceeded = dailyCalories > calorieTarget
 
     const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
@@ -602,7 +602,7 @@ export default function DashboardPage() {
                         />
                     </svg>
                     <div style={{ position: 'absolute', bottom: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)' }}>{remaining}</div>
+                        <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)' }}>{Math.round(remaining)}</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>kcal rest.</div>
                     </div>
                     <div style={{ position: 'absolute', left: '0', bottom: '0', textAlign: 'center' }}>
@@ -748,7 +748,7 @@ export default function DashboardPage() {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                             <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{slot.label}</p>
                                             <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                                <span style={{ color: 'var(--text-primary)' }}>{Math.round(slotState.consumed)}</span>/{slotState.target} kcal
+                                                <span style={{ color: 'var(--text-primary)' }}>{Math.round(slotState.consumed)}</span>/{Math.round(slotState.target)} kcal
                                             </p>
                                         </div>
                                         <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px' }}>
@@ -757,13 +757,13 @@ export default function DashboardPage() {
                                         {effectiveTier === 'premium' && (
                                             <div style={{ display: 'flex', gap: '12px' }}>
                                                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                                    <span style={{ fontWeight: '700', color: 'var(--accent)' }}>P</span> {Math.round(slotState.protein_consumed)}/{slotState.protein_target}g
+                                                    <span style={{ fontWeight: '700', color: 'var(--accent)' }}>P</span> {Math.round(slotState.protein_consumed)}/{Math.round(slotState.protein_target)}g
                                                 </span>
                                                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                                    <span style={{ fontWeight: '700', color: 'var(--warning)' }}>G</span> {Math.round(slotState.carbs_consumed)}/{slotState.carbs_target}g
+                                                    <span style={{ fontWeight: '700', color: 'var(--warning)' }}>G</span> {Math.round(slotState.carbs_consumed)}/{Math.round(slotState.carbs_target)}g
                                                 </span>
                                                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                                                    <span style={{ fontWeight: '700', color: 'var(--success)' }}>L</span> {Math.round(slotState.fat_consumed)}/{slotState.fat_target}g
+                                                    <span style={{ fontWeight: '700', color: 'var(--success)' }}>L</span> {Math.round(slotState.fat_consumed)}/{Math.round(slotState.fat_target)}g
                                                 </span>
                                             </div>
                                         )}
