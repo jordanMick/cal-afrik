@@ -44,6 +44,7 @@ export default function RootLayout({
             `,
           }}
         />
+      </head>
       <body className={`${dmSans.variable} ${syne.variable} font-sans min-h-screen text-foreground antialiased`}>
         <Script id="microsoft-clarity" strategy="afterInteractive">
           {`
