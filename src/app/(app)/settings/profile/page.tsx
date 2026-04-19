@@ -16,12 +16,6 @@ export default function PersonalInfoPage() {
     const { profile } = useAppStore()
 
     const [userEmail, setUserEmail] = useState<string>('')
-    const [isEditingEmail, setIsEditingEmail] = useState(false)
-    const [emailForm, setEmailForm] = useState({ oldEmail: '', newEmail: '' })
-    const [emailOtpMode, setEmailOtpMode] = useState(false)
-    const [emailOtp, setEmailOtp] = useState('')
-    const [emailError, setEmailError] = useState('')
-    const [emailLoading, setEmailLoading] = useState(false)
 
     const [isEditingPassword, setIsEditingPassword] = useState(false)
     const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmNew: '' })
@@ -37,46 +31,6 @@ export default function PersonalInfoPage() {
         fetchUser()
     }, [])
 
-    const handleUpdateEmail = async () => {
-        setEmailError('')
-        if (emailForm.oldEmail !== userEmail) return setEmailError("L'ancien email ne correspond pas à votre compte.")
-        if (!emailForm.newEmail.includes('@')) return setEmailError("Nouvel email invalide.")
-
-        setEmailLoading(true)
-        try {
-            const { error } = await supabase.auth.updateUser({ email: emailForm.newEmail })
-            if (error) throw error
-            setEmailOtpMode(true)
-        } catch (err: any) {
-            let msg = err.message
-            if (msg.includes('rate limit')) msg = "Trop de tentatives. Veuillez patienter avant de réessayer."
-            else if (msg.includes('already being used') || msg.includes('registered')) msg = "Cet email est déjà lié à un autre compte."
-            else if (msg.includes('invalid email')) msg = "L'adresse email est invalide."
-            setEmailError(msg || "Erreur lors de la modification de l'email.")
-        } finally {
-            setEmailLoading(false)
-        }
-    }
-
-    const handleVerifyOtp = async () => {
-        setEmailError('')
-        setEmailLoading(true)
-        try {
-            const { error } = await supabase.auth.verifyOtp({ email: emailForm.newEmail, token: emailOtp, type: 'email_change' })
-            if (error) throw error
-            setUserEmail(emailForm.newEmail)
-            setIsEditingEmail(false)
-            setEmailOtpMode(false)
-            toast.success("Email mis à jour avec succès !")
-        } catch (err: any) {
-            let msg = err.message
-            if (msg.includes('expired') || msg.includes('invalid')) msg = "Le code est incorrect ou a expiré."
-            else if (msg.includes('rate limit')) msg = "Trop de tentatives. Veuillez patienter."
-            setEmailError(msg || "Erreur lors de la vérification du code.")
-        } finally {
-            setEmailLoading(false)
-        }
-    }
 
     const handleUpdatePassword = async () => {
         setPasswordError('')
@@ -136,76 +90,16 @@ export default function PersonalInfoPage() {
                 <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '16px', marginBottom: '24px', overflow: 'hidden' }}>
                     {/* EMAIL */}
                     <div style={{ padding: '16px', borderBottom: '0.5px solid var(--border-color)' }}>
-                        {!isEditingEmail ? (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="#6366f1" /></div>
-                                    <div>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Adresse email</p>
-                                        <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>{maskEmail(userEmail)}</p>
-                                    </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="#6366f1" /></div>
+                                <div>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Adresse email</p>
+                                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>{maskEmail(userEmail)}</p>
                                 </div>
-                                <button onClick={() => setIsEditingEmail(true)} style={{ background: 'transparent', border: 'none', color: '#6366f1', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>Modifier</button>
                             </div>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>Modifier l'email</span>
-                                    <button onClick={() => { setIsEditingEmail(false); setEmailOtpMode(false); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={18} color="var(--text-muted)" /></button>
-                                </div>
-                                {!emailOtpMode ? (
-                                    <>
-                                        <input type="email" placeholder="Ancien email" value={emailForm.oldEmail} onChange={e => setEmailForm({...emailForm, oldEmail: e.target.value})} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} />
-                                        <input type="email" placeholder="Nouvel email" value={emailForm.newEmail} onChange={e => setEmailForm({...emailForm, newEmail: e.target.value})} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} />
-                                        {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px' }}>{emailError}</p>}
-                                        <button onClick={handleUpdateEmail} disabled={emailLoading} style={{ width: '100%', padding: '12px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
-                                            {emailLoading ? 'Chargement...' : 'Continuer'}
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                                                <Mail size={24} color="#6366f1" />
-                                            </div>
-                                            <p style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '8px' }}>Vérifiez vos emails</p>
-                                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                                                Un lien de confirmation a été envoyé à <b>{emailForm.newEmail}</b>.<br/>
-                                                Veuillez cliquer sur ce lien pour valider le changement.
-                                            </p>
-                                        </div>
-                                        {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px', textAlign: 'center' }}>{emailError}</p>}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                                            <button 
-                                                onClick={async () => {
-                                                    setEmailLoading(true)
-                                                    const { data: { user } } = await supabase.auth.getUser()
-                                                    if (user?.email === emailForm.newEmail) {
-                                                        setUserEmail(user.email)
-                                                        setIsEditingEmail(false)
-                                                        setEmailOtpMode(false)
-                                                        toast.success("Email mis à jour !")
-                                                    } else {
-                                                        setEmailError("La modification n'est pas encore validée. Cliquez sur le lien dans votre email.")
-                                                    }
-                                                    setEmailLoading(false)
-                                                }} 
-                                                disabled={emailLoading} 
-                                                style={{ width: '100%', padding: '12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}
-                                            >
-                                                {emailLoading ? 'Vérification...' : "C'est fait, j'ai cliqué !"}
-                                            </button>
-                                            <button 
-                                                onClick={() => setEmailOtpMode(false)}
-                                                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer' }}
-                                            >
-                                                Utiliser une autre adresse
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Non modifiable</span>
+                        </div>
                     </div>
 
                     {/* PASSWORD */}
