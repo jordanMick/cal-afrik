@@ -229,9 +229,38 @@ export default function MenusPage() {
 
             {/* Navigation par Onglets */}
             <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '18px', padding: '6px', marginBottom: '32px', border: '1px solid var(--border-color)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
-                <button onClick={() => setMenuTab('today')} style={{ flex: 1, padding: '14px', borderRadius: '14px', border: 'none', background: menuTab === 'today' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'today' ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s' }}>Aujourd'hui</button>
-                <button onClick={() => { if (!canAccessFutureMenus) return; setMenuTab('tomorrow'); }} style={{ flex: 1, padding: '14px', borderRadius: '14px', border: 'none', background: menuTab === 'tomorrow' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'tomorrow' ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s' }}>Demain</button>
-                <button onClick={() => { if (effectiveTier !== 'premium') return; setMenuTab('week'); }} style={{ flex: 1, padding: '14px', borderRadius: '14px', border: 'none', background: menuTab === 'week' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'week' ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s' }}>Semaine</button>
+                <button 
+                    onClick={() => setMenuTab('today')} 
+                    style={{ flex: 1, padding: '14px', borderRadius: '14px', border: 'none', background: menuTab === 'today' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'today' ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s', cursor: 'pointer' }}
+                >
+                    Aujourd'hui
+                </button>
+                
+                <button 
+                    onClick={() => { 
+                        if (!canAccessFutureMenus) {
+                            toast.warning("Le menu de demain est réservé aux membres PRO et PREMIUM.", { icon: '🔐' })
+                            return
+                        }
+                        setMenuTab('tomorrow') 
+                    }} 
+                    style={{ flex: 1, padding: '14px', borderRadius: '14px', border: 'none', background: menuTab === 'tomorrow' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'tomorrow' ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                    Demain {!canAccessFutureMenus && <Lock size={12} opacity={0.5} />}
+                </button>
+                
+                <button 
+                    onClick={() => { 
+                        if (effectiveTier !== 'premium') {
+                            toast.warning("Le planning de la semaine est une exclusivité PREMIUM.", { icon: '👑' })
+                            return
+                        }
+                        setMenuTab('week') 
+                    }} 
+                    style={{ flex: 1, padding: '14px', borderRadius: '14px', border: 'none', background: menuTab === 'week' ? 'var(--bg-tertiary)' : 'transparent', color: menuTab === 'week' ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '13px', fontWeight: '800', transition: 'all 0.2s', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                    Semaine {effectiveTier !== 'premium' && <Lock size={12} opacity={0.5} />}
+                </button>
             </div>
 
             <AnimatePresence mode="wait">

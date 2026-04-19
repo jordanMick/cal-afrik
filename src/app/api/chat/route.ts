@@ -402,7 +402,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             try {
                 // Si l'utilisateur est gratuit et demande un menu restreint, on ajoute une consigne à l'IA
                 const tierInstruction = isFreeLimited
-                    ? "\n\n[ALERTE PLAN]: L'utilisateur est en version GRATUITE. Il demande un menu (semaine ou demain) réservé aux membres PRO. NE GÉNÈRE PAS le menu demandé. Explique-lui chaleureusement que c'est une fonctionnalité PRO/PREMIUM et invite-le à s'abonner, mais propose-lui tout de même un menu pour AUJOURD'HUI pour qu'il ne reparte pas les mains vides."
+                    ? "\n\n[ALERTE PLAN]: L'utilisateur est en version GRATUITE. Il demande un menu (semaine ou demain) réservé aux membres PRO et PREMIUM. NE GÉNÈRE PAS le menu demandé. Explique-lui chaleureusement que c'est une fonctionnalité PRO/PREMIUM et invite-le à s'abonner, mais propose-lui obligatoirement un menu pour AUJOURD'HUI à la place pour l'aider immédiatement."
                     : ""
 
             // --- RETRY LOGIC (Backoff pour erreurs 529) ---
