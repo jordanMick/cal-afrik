@@ -271,7 +271,7 @@ export async function POST(req: NextRequest) {
         // --- CALCUL CONSOMMATION RÉELLE AUJOURD'HUI ---
         const { data: todayMealsDB } = await supabase
             .from('meals')
-            .select('calories')
+            .select('calories, protein_g, carbs_g, fat_g, logged_at')
             .eq('user_id', user.id)
             .gte('logged_at', `${todayStr}T00:00:00.000Z`)
             .lte('logged_at', `${todayStr}T23:59:59.999Z`)
