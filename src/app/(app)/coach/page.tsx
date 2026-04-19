@@ -568,13 +568,7 @@ export default function CoachChatPage() {
                     )
                 })}
             </div>
-            {activeThread && (
-                <div style={{ padding: '8px 20px 0' }}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600' }}>
-                        Messages discussion: {activeThread.messagesUsed} / {activeThread.maxMessages}
-                    </p>
-                </div>
-            )}
+
 
             {/* MESSAGES AREA */}
             <div 
