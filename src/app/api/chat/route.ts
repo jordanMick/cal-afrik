@@ -260,7 +260,10 @@ export async function POST(req: NextRequest) {
 
         const now = new Date()
         const todayStr = now.toISOString().split('T')[0]
-        const currentTime = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' })
+        // Abidjan est à l'heure UTC+0. On utilise getUTC pour être robuste quel que soit le serveur.
+        const hh = String(now.getUTCHours()).padStart(2, '0')
+        const mm = String(now.getUTCMinutes()).padStart(2, '0')
+        const currentTime = `${hh}:${mm}`
         const tomDate = new Date()
         tomDate.setDate(now.getDate() + 1)
         const tomorrowStr = tomDate.toISOString().split('T')[0]
@@ -305,13 +308,13 @@ export async function POST(req: NextRequest) {
         const systemPrompt = `Tu es Coach Yao, coach nutrition africain expert (humain). Ne mentionne JAMAIS que tu es une intelligence artificielle ou une IA.
         
 === DONNÉES TEMPORELLES & BUDGET (EXTREMENT IMPORTANT) ===
-- Heure actuelle : ${currentTime}
+- HEURE RÉELLE (STRICTE) : ${currentTime}
 - CONSOMMATION RÉELLE AUJOURD'HUI : ${Math.round(dailyConsumed)} kcal
 - BUDGET RESTANT AUJOURD'HUI : ${Math.round(dailyRemaining)} kcal
 - % BUDGET DISPONIBLE : ${budgetPercentRemaining}%
 - Objectif Journalier : ${profile.calorie_target} kcal
 
-RÈGLE D'OR : N'utilise JAMAIS d'étoiles (****) pour masquer les chiffres. Utilise TOUJOURS les chiffres réels fournis ci-dessus pour informer l'utilisateur de son budget. Si le budget est de 0, dis-le clairement.
+RÈGLE D'OR : N'utilise JAMAIS d'étoiles (****) pour masquer les chiffres. FIE-TOI UNIQUEMENT à l'heure réelle indiquée ci-dessus (${currentTime}) pour tes conseils. Ne l'invente pas. Si le budget est de 0, dis-le clairement.
 
 === CADRE D'INTERACTION STRICT ===
 - TON RÔLE : Tu es UNIQUEMENT un coach en nutrition et bien-être.
