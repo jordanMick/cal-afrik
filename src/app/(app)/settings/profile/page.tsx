@@ -166,12 +166,44 @@ export default function PersonalInfoPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Veuillez entrer le code à 6 chiffres envoyé au nouvel email.</p>
-                                        <input type="text" placeholder="Code OTP" value={emailOtp} onChange={e => setEmailOtp(e.target.value)} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px', letterSpacing: '2px', textAlign: 'center' }} />
-                                        {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px' }}>{emailError}</p>}
-                                        <button onClick={handleVerifyOtp} disabled={emailLoading} style={{ width: '100%', padding: '12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
-                                            {emailLoading ? 'Vérification...' : 'Confirmer le code'}
-                                        </button>
+                                        <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                                                <Mail size={24} color="#6366f1" />
+                                            </div>
+                                            <p style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '8px' }}>Vérifiez vos emails</p>
+                                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                                Un lien de confirmation a été envoyé à <b>{emailForm.newEmail}</b>.<br/>
+                                                Veuillez cliquer sur ce lien pour valider le changement.
+                                            </p>
+                                        </div>
+                                        {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px', textAlign: 'center' }}>{emailError}</p>}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                                            <button 
+                                                onClick={async () => {
+                                                    setEmailLoading(true)
+                                                    const { data: { user } } = await supabase.auth.getUser()
+                                                    if (user?.email === emailForm.newEmail) {
+                                                        setUserEmail(user.email)
+                                                        setIsEditingEmail(false)
+                                                        setEmailOtpMode(false)
+                                                        toast.success("Email mis à jour !")
+                                                    } else {
+                                                        setEmailError("La modification n'est pas encore validée. Cliquez sur le lien dans votre email.")
+                                                    }
+                                                    setEmailLoading(false)
+                                                }} 
+                                                disabled={emailLoading} 
+                                                style={{ width: '100%', padding: '12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}
+                                            >
+                                                {emailLoading ? 'Vérification...' : "C'est fait, j'ai cliqué !"}
+                                            </button>
+                                            <button 
+                                                onClick={() => setEmailOtpMode(false)}
+                                                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer' }}
+                                            >
+                                                Utiliser une autre adresse
+                                            </button>
+                                        </div>
                                     </>
                                 )}
                             </div>
