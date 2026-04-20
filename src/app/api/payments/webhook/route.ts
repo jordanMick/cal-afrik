@@ -44,36 +44,50 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: 'User not identified' }, { status: 400 });
             }
 
-            // Calcul de l'expiration (+30 jours cumulés)
-            const { data: profile } = await supabaseAdmin
-                .from('user_profiles')
-                .select('subscription_expires_at')
-                .eq('user_id', userId)
-                .single();
+            if (tier === 'scan') {
+                // Pour un scan à l'unité, on incrémente simplement le compteur
+                const { error: updateError } = await supabaseAdmin.rpc('increment_paid_scans', { user_id_input: userId });
 
-            let baseDate = new Date();
-            if (profile?.subscription_expires_at) {
-                const currentExp = new Date(profile.subscription_expires_at);
-                if (currentExp > baseDate) baseDate = currentExp;
+                if (updateError) {
+                    // Fallback si la fonction RPC n'existe pas encore
+                    const { data: p } = await supabaseAdmin.from('user_profiles').select('paid_scans_remaining').eq('user_id', userId).single();
+                    await supabaseAdmin.from('user_profiles').update({ 
+                        paid_scans_remaining: (p?.paid_scans_remaining || 0) + 1,
+                        updated_at: new Date().toISOString()
+                    }).eq('user_id', userId);
+                }
+                console.log(`[FedaPay Webhook] ✅ 1 Scan ajouté pour ${userId}`);
+            } else {
+                // Calcul de l'expiration (+30 jours cumulés)
+                const { data: profile } = await supabaseAdmin
+                    .from('user_profiles')
+                    .select('subscription_expires_at')
+                    .eq('user_id', userId)
+                    .single();
+
+                let baseDate = new Date();
+                if (profile?.subscription_expires_at) {
+                    const currentExp = new Date(profile.subscription_expires_at);
+                    if (currentExp > baseDate) baseDate = currentExp;
+                }
+                baseDate.setDate(baseDate.getDate() + 30);
+
+                // Mise à jour via Admin (contourne RLS)
+                const { error: updateError } = await supabaseAdmin
+                    .from('user_profiles')
+                    .update({ 
+                        subscription_tier: tier,
+                        subscription_expires_at: baseDate.toISOString(),
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('user_id', userId);
+
+                if (updateError) {
+                    console.error('[FedaPay Webhook] Erreur mise à jour profil:', updateError.message);
+                    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+                }
+                console.log(`[FedaPay Webhook] ✅ Abonnement ${tier} activé pour ${userId}`);
             }
-            baseDate.setDate(baseDate.getDate() + 30);
-
-            // Mise à jour via Admin (contourne RLS)
-            const { error: updateError } = await supabaseAdmin
-                .from('user_profiles')
-                .update({ 
-                    subscription_tier: tier,
-                    subscription_expires_at: baseDate.toISOString(),
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('user_id', userId);
-
-            if (updateError) {
-                console.error('[FedaPay Webhook] Erreur mise à jour profil:', updateError.message);
-                return NextResponse.json({ error: 'Database error' }, { status: 500 });
-            }
-
-            console.log(`[FedaPay Webhook] ✅ Abonnement ${tier} activé pour ${userId}`);
         }
 
         return NextResponse.json({ success: true });

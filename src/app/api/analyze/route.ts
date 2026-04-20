@@ -217,7 +217,7 @@ export async function POST(req: Request) {
     // ─── VÉRIFICATION ABONNEMENT ──────────────────────────────
     const { data: profile } = await supabase
         .from('user_profiles')
-        .select('subscription_tier, subscription_expires_at, scan_feedbacks_today, last_usage_reset_date, country')
+        .select('subscription_tier, subscription_expires_at, scan_feedbacks_today, last_usage_reset_date, country, paid_scans_remaining')
         .eq('user_id', user.id)
         .single()
 
@@ -250,12 +250,26 @@ export async function POST(req: Request) {
     }
 
     // ─── LIMITE PLAN FREE : 2 scans/jour ─────────────────────
+    const paidScans = profile?.paid_scans_remaining || 0
+
     if (tier === 'free' && scansFeedbacksToday >= 2) {
-        return new Response(JSON.stringify({
-            success: false,
-            error: "Tu as atteint ta limite de 2 scans aujourd'hui. Reviens demain ou passe au Plan Pro.",
-            code: "LIMIT_REACHED"
-        }), { status: 403 })
+        if (paidScans <= 0) {
+            return new Response(JSON.stringify({
+                success: false,
+                error: "Tu as atteint ta limite de 2 scans aujourd'hui. Reviens demain, passe au Plan Pro ou achète un scan à l'unité (100 FCFA).",
+                code: "LIMIT_REACHED"
+            }), { status: 403 })
+        }
+        
+        // On a des scans payés disponibles
+        console.log(`[ANALYZE] Using 1 paid scan for user ${user.id}. Remaining before: ${paidScans}`)
+        await supabaseAdmin
+            .from('user_profiles')
+            .update({ 
+                paid_scans_remaining: paidScans - 1,
+                updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id)
     }
 
     const MOCK_MODE = false

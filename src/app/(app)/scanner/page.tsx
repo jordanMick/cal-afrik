@@ -380,6 +380,34 @@ export default function ScannerPage() {
         })
     }
 
+    const handlePayForScan = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push('/login');
+                return;
+            }
+
+            const res = await fetch('/api/payments/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ tier: 'scan' })
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Erreur inconnue');
+            }
+
+            window.location.href = data.url;
+        } catch (error: any) {
+            toast.error(`Erreur: ${error.message}`);
+        }
+    }
+
     const processImage = async (file: File) => {
         setIsAnalyzing(true)
         setSelectedFoods([]); setSuggestions([]); setMealName('')
@@ -406,8 +434,14 @@ export default function ScannerPage() {
 
             if (json.error && json.code === 'LIMIT_REACHED') {
                 setIsAnalyzing(false)
-                toast.info(`🚀 ${json.error} Passez au plan Pro pour scanner sans limite.`)
-                router.push('/upgrade')
+                toast.info(json.error, {
+                    description: "Passe au plan Pro ou achète un scan à l'unité.",
+                    action: {
+                        label: "Payer 100 FCFA",
+                        onClick: () => handlePayForScan()
+                    },
+                    duration: 10000
+                })
                 return
             }
 
@@ -490,9 +524,15 @@ export default function ScannerPage() {
 
         const { data: { session } } = await supabase.auth.getSession();
 
-        if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2) {
-            toast.error("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.")
-            router.push('/upgrade')
+        if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2 && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
+            toast.error("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.", {
+                description: "Achète un scan à l'unité (100 FCFA) ou passe au plan Pro.",
+                action: {
+                    label: "Payer 100 FCFA",
+                    onClick: () => handlePayForScan()
+                },
+                duration: 10000
+            })
             return
         }
 
@@ -540,7 +580,7 @@ export default function ScannerPage() {
     const handleFileScan = async (file: File) => {
         // --- VÉRIFICATION LIMITE SCAN PRODUIT ---
         const { data: { session: checkSession } } = await supabase.auth.getSession()
-        if (checkSession && profile?.subscription_tier === 'free') {
+        if (checkSession && profile?.subscription_tier === 'free' && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
             const today = new Date().toISOString().split('T')[0]
             const { count } = await supabase
                 .from('meals')
@@ -551,8 +591,14 @@ export default function ScannerPage() {
                 .lte('logged_at', `${today}T23:59:59.999Z`)
 
             if (count !== null && count >= 5) {
-                toast.info("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit). Passez au plan Pro pour scanner sans limite !")
-                router.push('/upgrade')
+                toast.info("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit).", {
+                    description: "Passe au plan Pro ou achète un scan à l'unité (100 FCFA).",
+                    action: {
+                        label: "Payer 100 FCFA",
+                        onClick: () => handlePayForScan()
+                    },
+                    duration: 10000
+                })
                 return
             }
         }

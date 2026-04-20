@@ -4,7 +4,8 @@ import { FedaPay, Transaction } from 'fedapay';
 
 const PRICES = {
     pro: 100,
-    premium: 100
+    premium: 100,
+    scan: 100
 };
 
 export async function POST(req: Request) {
@@ -37,17 +38,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Session invalide ou expirée. Reconnectez-vous.' }, { status: 401 });
         }
 
-        if (!['pro', 'premium'].includes(tier)) {
+        if (!['pro', 'premium', 'scan'].includes(tier)) {
             return NextResponse.json({ error: 'Plan invalide' }, { status: 400 });
         }
 
         const amount = PRICES[tier as keyof typeof PRICES];
+        const description = tier === 'scan' 
+            ? `Paiement d'un Scan IA Cal-Afrik - ID: ${user.id}`
+            : `Abonnement Cal-Afrik ${tier.toUpperCase()} - ID: ${user.id}`;
 
         // 3. Création de la transaction FedaPay
         console.log(`[FedaPay] Création transaction pour ${user.email} - Montant: ${amount}`);
 
         const transaction = await Transaction.create({
-            description: `Abonnement Cal-Afrik ${tier.toUpperCase()} - ID: ${user.id}`,
+            description: description,
             amount: amount,
             currency: { iso: 'XOF' },
             callback_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard`,
