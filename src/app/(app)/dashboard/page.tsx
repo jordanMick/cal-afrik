@@ -183,6 +183,7 @@ export default function DashboardPage() {
     } = useAppStore()
 
     const [isLoading, setIsLoading] = useState(true)
+    const [streak, setStreak] = useState(0)
     // Mis à jour à chaque arrivée sur la page pour refléter l'heure réelle
     const [currentHour, setCurrentHour] = useState(new Date().getHours())
 
@@ -437,7 +438,42 @@ export default function DashboardPage() {
         return getCoachMessage()
     })()
 
-    useEffect(() => { fetchMeals() }, [])
+    useEffect(() => { 
+        fetchMeals() 
+        const fetchStreak = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) return
+
+                const today = new Date()
+                const sevenDaysAgo = new Date(today)
+                sevenDaysAgo.setDate(today.getDate() - 6)
+
+                const dateFrom = toLocalDateString(sevenDaysAgo)
+                const dateTo = toLocalDateString(today)
+                const tzOffset = new Date().getTimezoneOffset()
+
+                const res = await fetch(`/api/meals?date_from=${dateFrom}&date_to=${dateTo}&tz_offset_min=${tzOffset}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+                const json = await res.json()
+                if (json.success) {
+                    const meals = json.data as { logged_at: string }[]
+                    const mealsByDay: Record<string, boolean> = {}
+                    meals.forEach(m => mealsByDay[m.logged_at.split('T')[0]] = true)
+                    
+                    let s = 0
+                    const last7 = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return toLocalDateString(d) })
+                    let startIndex = 0
+                    if (!mealsByDay[last7[0]]) startIndex = 1
+                    for (let i = startIndex; i < 7; i++) {
+                        if (mealsByDay[last7[i]]) s++
+                        else break
+                    }
+                    setStreak(s)
+                }
+            } catch (e) {}
+        }
+        fetchStreak()
+    }, [])
 
     const fetchMeals = async () => {
         try {
@@ -512,6 +548,22 @@ export default function DashboardPage() {
                     <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
+                    {streak > 0 && (
+                        <div onClick={() => router.push('/journal')} style={{ 
+                            height: '36px', 
+                            borderRadius: '10px', 
+                            background: 'rgba(var(--warning-rgb), 0.1)', 
+                            border: '0.5px solid rgba(var(--warning-rgb), 0.3)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            padding: '0 10px',
+                            gap: '4px',
+                            cursor: 'pointer'
+                        }}>
+                            <span style={{ fontSize: '18px' }}>{streak >= 3 ? '🔥' : '🌱'}</span>
+                            <span style={{ color: 'var(--warning)', fontSize: '14px', fontWeight: '800' }}>{streak}</span>
+                        </div>
+                    )}
                     <div onClick={() => router.push('/settings')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <Settings color="var(--text-secondary)" size={20} strokeWidth={1.5} />
                     </div>
