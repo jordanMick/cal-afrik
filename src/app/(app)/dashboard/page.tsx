@@ -420,8 +420,8 @@ export default function DashboardPage() {
                 }
             }
             
-            // À partir de 23h, on affiche explicitement que c'est le bilan de la journée
-            if (hour >= 23) {
+            // À partir de 21h (heure du bilan), on affiche explicitement que c'est le bilan de la journée
+            if (hour >= 21) {
                 return { ...currentMsg, text: `Bilan de la journée : ${currentMsg.text}` }
             }
             
