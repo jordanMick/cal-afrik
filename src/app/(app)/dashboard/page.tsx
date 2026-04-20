@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
 import { type Meal } from '@/types'
-import { getProgressPercent } from '@/lib/nutrition'
+import { getProgressPercent, getStreakIcon } from '@/lib/nutrition'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -560,7 +560,7 @@ export default function DashboardPage() {
                             gap: '4px',
                             cursor: 'pointer'
                         }}>
-                            <span style={{ fontSize: '18px' }}>{streak >= 3 ? '🔥' : '🌱'}</span>
+                            <span style={{ fontSize: '18px' }}>{getStreakIcon(streak)}</span>
                             <span style={{ color: 'var(--warning)', fontSize: '14px', fontWeight: '800' }}>{streak}</span>
                         </div>
                     )}

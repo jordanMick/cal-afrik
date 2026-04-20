@@ -100,3 +100,11 @@ export function calculateStreak(loggedDates: string[]): number {
 
     return streak
 }
+
+export function getStreakIcon(streak: number): string {
+    if (streak < 3) return '🌱'
+    if (streak < 7) return '🔥'
+    if (streak < 14) return '🚀'
+    if (streak < 30) return '👑'
+    return '💎'
+}

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore, getMealSlot, type MealSlotKey } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
-import { calculateCalorieTarget } from '@/lib/nutrition'
+import { calculateCalorieTarget, getStreakIcon } from '@/lib/nutrition'
 import { checkPermission } from '@/lib/subscription'
 import type { Meal } from '@/types'
 
@@ -470,6 +470,18 @@ export default function RapportPage() {
 
     const todayMeals = mealsByDay[todayStr] || []
     const todayCalories = todayMeals.reduce((acc, m) => acc + m.calories, 0)
+    
+    const calculatedStreak = (() => { 
+        let streak = 0; 
+        let startIndex = last7.length - 1;
+        if ((mealsByDay[last7[startIndex]] || []).length === 0) startIndex--;
+        for (let i = startIndex; i >= 0; i--) { 
+            if ((mealsByDay[last7[i]] || []).length > 0) streak++; 
+            else break; 
+        } 
+        return Math.max(0, streak); 
+    })()
+
     const currentWeight = profile?.weight_kg ?? 0
     const weightMin = weightEntries.length > 0 ? Math.min(...weightEntries.map(e => e.weight)) : currentWeight
     const weightMax = weightEntries.length > 0 ? Math.max(...weightEntries.map(e => e.weight)) : currentWeight
@@ -551,21 +563,9 @@ export default function RapportPage() {
                         <div>
                             <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '4px' }}>Jours consécutifs</p>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '14px' }}>🔥</span>
+                                <span style={{ fontSize: '14px' }}>{getStreakIcon(calculatedStreak)}</span>
                                 <span style={{ color: 'var(--text-primary)', fontSize: '22px', fontWeight: '700' }}>
-                                    {(() => { 
-                                        let streak = 0; 
-                                        let startIndex = last7.length - 1;
-                                        // Si rien mangé aujourd'hui, on regarde à partir d'hier pour ne pas casser la série le matin
-                                        if ((mealsByDay[last7[startIndex]] || []).length === 0) {
-                                            startIndex--;
-                                        }
-                                        for (let i = startIndex; i >= 0; i--) { 
-                                            if ((mealsByDay[last7[i]] || []).length > 0) streak++; 
-                                            else break; 
-                                        } 
-                                        return streak; 
-                                    })()}
+                                    {calculatedStreak}
                                 </span>
                             </div>
                         </div>
