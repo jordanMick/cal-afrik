@@ -263,7 +263,7 @@ export async function POST(req: Request) {
         
         // On a des scans payés disponibles
         console.log(`[ANALYZE] Using 1 paid scan for user ${user.id}. Remaining before: ${paidScans}`)
-        await supabaseAdmin
+        await supabase
             .from('user_profiles')
             .update({ 
                 paid_scans_remaining: paidScans - 1,
