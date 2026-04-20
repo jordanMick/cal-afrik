@@ -640,6 +640,11 @@ export default function RapportPage() {
                                         <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '600', marginTop: '2px' }}>
                                             {isDone ? '🎉 Objectif atteint !' : profile.goal === 'perdre' ? `Encore ${remaining} kg à perdre` : `Encore ${remaining} kg à prendre`}
                                         </p>
+                                        {isDone && (
+                                            <p style={{ color: 'var(--success)', fontSize: '11px', marginTop: '6px', lineHeight: '1.4', fontWeight: '500' }}>
+                                                Félicitations ! 🥳 Va dans tes paramètres de profil pour changer ton objectif en "Maintenir le poids".
+                                            </p>
+                                        )}
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <p style={{ color: barColor, fontSize: '24px', fontWeight: '900', letterSpacing: '-1px' }}>{pct}<span style={{ fontSize: '12px' }}>%</span></p>
