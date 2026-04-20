@@ -553,7 +553,19 @@ export default function RapportPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontSize: '14px' }}>🔥</span>
                                 <span style={{ color: 'var(--text-primary)', fontSize: '22px', fontWeight: '700' }}>
-                                    {(() => { let streak = 0; for (let i = last7.length - 1; i >= 0; i--) { if ((mealsByDay[last7[i]] || []).length > 0) streak++; else break }; return streak })()}
+                                    {(() => { 
+                                        let streak = 0; 
+                                        let startIndex = last7.length - 1;
+                                        // Si rien mangé aujourd'hui, on regarde à partir d'hier pour ne pas casser la série le matin
+                                        if ((mealsByDay[last7[startIndex]] || []).length === 0) {
+                                            startIndex--;
+                                        }
+                                        for (let i = startIndex; i >= 0; i--) { 
+                                            if ((mealsByDay[last7[i]] || []).length > 0) streak++; 
+                                            else break; 
+                                        } 
+                                        return streak; 
+                                    })()}
                                 </span>
                             </div>
                         </div>
