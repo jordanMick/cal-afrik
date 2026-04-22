@@ -1,32 +1,26 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { FedaPay, Transaction } from 'fedapay';
 
-const PRICES = {
-    pro: 100,
-    premium: 100,
-    scan: 100
+const PRODUCT_IDS = {
+    pro: process.env.MAKETOU_PRODUCT_ID_PRO,
+    premium: process.env.MAKETOU_PRODUCT_ID_PREMIUM,
+    scan: process.env.MAKETOU_PRODUCT_ID_SCAN,
+    suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION
 };
 
 export async function POST(req: Request) {
     try {
         const { tier } = await req.json();
+        const apiKey = process.env.MAKETOU_API_KEY;
 
-        // 1. Initialisation SDK
-        const secretKey = process.env.FEDAPAY_SECRET_KEY || '';
-        FedaPay.setApiKey(secretKey);
-        FedaPay.setEnvironment(process.env.FEDAPAY_ENVIRONMENT || 'live');
+        if (!apiKey) {
+            console.error('[Maketou] MAKETOU_API_KEY manquante');
+            return NextResponse.json({ error: 'Configuration serveur incomplète' }, { status: 500 });
+        }
 
-        console.log('[FedaPay] Diagnostic Clé:', {
-            length: secretKey.length,
-            prefix: secretKey.substring(0, 8) + '...', // sk_live_...
-            env: process.env.FEDAPAY_ENVIRONMENT
-        });
-
-        // 2. Authentification Supabase
+        // 1. Authentification Supabase
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) {
-            console.error('[FedaPay] Header Authorization manquant');
             return NextResponse.json({ error: 'Auth header missing' }, { status: 401 });
         }
 
@@ -34,53 +28,53 @@ export async function POST(req: Request) {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
         if (authError || !user) {
-            console.error('[FedaPay] Erreur auth Supabase:', authError?.message);
-            return NextResponse.json({ error: 'Session invalide ou expirée. Reconnectez-vous.' }, { status: 401 });
+            return NextResponse.json({ error: 'Session invalide' }, { status: 401 });
         }
 
-        if (!['pro', 'premium', 'scan'].includes(tier)) {
-            return NextResponse.json({ error: 'Plan invalide' }, { status: 400 });
+        // 2. Vérification du produit
+        const productDocumentId = PRODUCT_IDS[tier as keyof typeof PRODUCT_IDS];
+        if (!productDocumentId) {
+            return NextResponse.json({ error: 'Plan ou ID de produit invalide' }, { status: 400 });
         }
 
-        const amount = PRICES[tier as keyof typeof PRICES];
-        const description = tier === 'scan' 
-            ? `Paiement d'un Scan IA Cal-Afrik - ID: ${user.id}`
-            : `Abonnement Cal-Afrik ${tier.toUpperCase()} - ID: ${user.id}`;
+        console.log(`[Maketou] Création panier pour ${user.email} - Produit: ${tier}`);
 
-        // 3. Création de la transaction FedaPay
-        console.log(`[FedaPay] Création transaction pour ${user.email} - Montant: ${amount}`);
-
-        const transaction = await Transaction.create({
-            description: description,
-            amount: amount,
-            currency: { iso: 'XOF' },
-            callback_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard`,
-            customer: {
-                firstname: user.user_metadata?.full_name || 'Utilisateur',
-                email: user.email,
+        // 3. Appel API Maketou
+        const response = await fetch('https://api.maketou.net/api/v1/stores/cart/checkout', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
             },
-            custom_metadata: {
-                user_id: user.id,
-                tier: tier
-            }
+            body: JSON.stringify({
+                productDocumentId: productDocumentId,
+                email: user.email,
+                firstName: user.user_metadata?.full_name?.split(' ')[0] || 'Utilisateur',
+                lastName: user.user_metadata?.full_name?.split(' ')[1] || 'CalAfrik',
+                redirectURL: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/success?session_id={cartId}`,
+                meta: {
+                    user_id: user.id,
+                    tier: tier
+                }
+            })
         });
 
-        // 4. Génération du token
-        const tokenData = await transaction.generateToken();
+        const data = await response.json();
 
+        if (!response.ok) {
+            console.error('[Maketou] Erreur API:', data);
+            return NextResponse.json({ error: data.message || 'Erreur Maketou' }, { status: response.status });
+        }
+
+        // 4. Retourner l'URL de redirection
         return NextResponse.json({
             success: true,
-            token: tokenData.token,
-            url: tokenData.url
+            url: data.redirectUrl,
+            cartId: data.cart?.id
         });
 
     } catch (error: any) {
-        console.error('[FedaPay] Erreur Checkout Detail:', {
-            message: error.message,
-            response: error.response?.data, // Très important pour FedaPay
-            status: error.response?.status
-        });
-        const msg = error.response?.data?.message || error.message || 'Erreur de communication avec FedaPay';
-        return NextResponse.json({ error: msg }, { status: 500 });
+        console.error('[Maketou] Erreur Checkout:', error.message);
+        return NextResponse.json({ error: 'Erreur de communication avec le service de paiement' }, { status: 500 });
     }
 }

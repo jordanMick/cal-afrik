@@ -27,18 +27,9 @@ function PricingContent() {
     const currentTier = effectiveTier
     const hideFree = searchParams.get('hideFree') === 'true'
 
-    // Chargement du script FedaPay Checkout
+    // Plus besoin de charger le script FedaPay ici car Maketou utilise une redirection simple
     useEffect(() => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.fedapay.com/checkout.js?v=1.1.7';
-        script.async = true;
-        document.body.appendChild(script);
-
-        return () => {
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
-        };
+        // Nettoyage si nécessaire
     }, []);
 
     const handleSubscribe = async (tier: 'pro' | 'premium') => {
@@ -67,17 +58,12 @@ function PricingContent() {
                 throw new Error(errorMsg);
             }
 
-            if (window.FedaPay) {
-                window.FedaPay.init({
-                    public_key: process.env.NEXT_PUBLIC_FEDAPAY_PUBLIC_KEY,
-                    transaction: {
-                        token: data.token,
-                    },
-                    container: '#fedapay-container',
-                });
+            // Redirection directe vers la page de paiement Maketou
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error('URL de paiement non reçue');
             }
-
-            window.location.href = data.url;
 
         } catch (error: any) {
             console.error('Erreur de paiement:', error);

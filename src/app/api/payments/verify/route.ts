@@ -2,16 +2,16 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@supabase/supabase-js';
 
-// Verify route for client-side synchronous verification
 export async function POST(req: Request) {
     try {
-        const { transactionId } = await req.json();
+        const { transactionId } = await req.json(); // Ici transactionId = cartId de Maketou
+        const apiKey = process.env.MAKETOU_API_KEY;
         
         if (!transactionId) {
             return NextResponse.json({ success: false, error: 'No transaction ID' }, { status: 400 });
         }
 
-        // Authentifier le user appelant (sécurité supplémentaire)
+        // 1. Authentifier le user
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) {
             return NextResponse.json({ success: false, error: 'Auth missing' }, { status: 401 });
@@ -28,81 +28,70 @@ export async function POST(req: Request) {
              return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
         }
 
-        // Configuration de l'environnement FedaPay avec le SDK gérant automatiquement live/sandbox
-        const { FedaPay, Transaction } = require('fedapay');
-        const secretKey = process.env.FEDAPAY_SECRET_KEY || '';
-        FedaPay.setApiKey(secretKey);
-        FedaPay.setEnvironment(process.env.FEDAPAY_ENVIRONMENT || 'live');
+        // 2. Vérification auprès de Maketou
+        console.log(`[Maketou Verify] Vérification du panier: ${transactionId}`);
+        const response = await fetch(`https://api.maketou.net/api/v1/stores/cart/${transactionId}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
 
-        // Récupération sécurisée via le SDK FedaPay
-        let transaction;
-        try {
-            transaction = await Transaction.retrieve(transactionId);
-        } catch (fedaErr: any) {
-            console.error(`[FedaPay Verify] SDK Error: ${fedaErr.message}`);
-            return NextResponse.json({ success: false, error: 'FedaPay verification failed' });
+        if (!response.ok) {
+            const errData = await response.json();
+            console.error('[Maketou Verify] Erreur API:', errData);
+            return NextResponse.json({ success: false, error: 'Erreur de vérification Maketou' });
         }
 
-        if (!transaction) {
-            return NextResponse.json({ success: false, error: 'Transaction not found' });
-        }
+        const cart = await response.json();
 
-        if (transaction.status === 'approved') {
-            let metadata = transaction.custom_metadata || transaction.metadata || {};
-            if (typeof metadata === 'string') {
-                try { metadata = JSON.parse(metadata); } catch(e) {}
-            }
-
-            // Sécurité : s'assurer que c'est le propre abonnement du user
-            const userId = metadata.user_id || metadata.userId || transaction.external_id;
+        // 3. Si le paiement est réussi (status: 'completed')
+        if (cart.status === 'completed') {
+            const metadata = cart.meta || {};
+            const userId = metadata.user_id || metadata.userId;
             const tier = (metadata.tier || 'premium').toLowerCase();
 
+            // Sécurité : s'assurer que c'est le bon utilisateur
             if (userId !== user.id) {
                  return NextResponse.json({ success: false, error: 'Transaction belongs to another user' }, { status: 403 });
             }
 
-            // Calcul de l'expiration (+30 jours cumulés)
-            const { data: profile } = await supabaseAdmin
-                .from('user_profiles')
-                .select('subscription_expires_at, subscription_tier')
-                .eq('user_id', userId)
-                .single();
+            // --- LOGIQUE DE MISE À JOUR DB (Copie de la logique existante) ---
+            
+            if (tier === 'scan') {
+                await supabaseAdmin.rpc('increment_paid_scan_pack', { user_id_input: userId });
+                console.log(`[Maketou Verify] ✅ Pack Scan ajouté pour ${userId}`);
+            } else if (tier === 'suggestion') {
+                await supabaseAdmin.rpc('increment_paid_suggestion_messages', { user_id_input: userId });
+                console.log(`[Maketou Verify] ✅ 10 Messages ajoutés pour ${userId}`);
+            } else {
+                // Abonnement
+                const { data: profile } = await supabaseAdmin.from('user_profiles').select('subscription_expires_at, subscription_tier').eq('user_id', userId).single();
+                
+                if (profile?.subscription_tier === tier) {
+                    return NextResponse.json({ success: true, already_updated: true });
+                }
 
-            // S'il est DÉJÀ mis à jour par le Webhook, on arrête
-            if (profile?.subscription_tier === tier) {
-                 return NextResponse.json({ success: true, already_updated: true });
-            }
+                let baseDate = new Date();
+                if (profile?.subscription_expires_at) {
+                    const currentExp = new Date(profile.subscription_expires_at);
+                    if (currentExp > baseDate) baseDate = currentExp;
+                }
+                baseDate.setDate(baseDate.getDate() + 30);
 
-            let baseDate = new Date();
-            if (profile?.subscription_expires_at) {
-                const currentExp = new Date(profile.subscription_expires_at);
-                if (currentExp > baseDate) baseDate = currentExp;
-            }
-            baseDate.setDate(baseDate.getDate() + 30);
-
-            // Mise à jour via Admin
-            const { error: updateError } = await supabaseAdmin
-                .from('user_profiles')
-                .update({ 
+                await supabaseAdmin.from('user_profiles').update({ 
                     subscription_tier: tier,
                     subscription_expires_at: baseDate.toISOString(),
                     updated_at: new Date().toISOString(),
-                })
-                .eq('user_id', userId);
+                }).eq('user_id', userId);
 
-            if (updateError) {
-                console.error('[FedaPay Verify] Erreur DB:', updateError.message);
-                return NextResponse.json({ success: false, error: 'Database error' }, { status: 500 });
+                console.log(`[Maketou Verify] ✅ Abonnement ${tier} activé pour ${userId}`);
             }
 
-            console.log(`[FedaPay Verify] ✅ Abonnement ${tier} activé côté client pour ${userId}`);
             return NextResponse.json({ success: true, updated: true });
         } else {
-            return NextResponse.json({ success: false, error: `Transaction status is ${transaction.status}` });
+            return NextResponse.json({ success: false, status: cart.status, message: 'Paiement non complété' });
         }
 
     } catch (error: any) {
-        console.error('[FedaPay Verify] Erreur:', error.message);
+        console.error('[Maketou Verify] Erreur:', error.message);
         return NextResponse.json({ success: false, error: 'Internal error' }, { status: 500 });
     }
 }

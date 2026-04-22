@@ -74,7 +74,7 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
     const hasMealContent = /(petit[- ]?dej|dejeuner|collation|diner)/.test(normalized)
     if (normalized.includes('menu semaine:') && hasMealContent) return { kind: 'week' }
     if (normalized.includes('menu demain:') && hasMealContent) return { kind: 'tomorrow' }
-    
+
     // Détection ultra-souple (petit-déjeuner, petit dej, déjeuner, dîner...)
     const slotMatch = normalized.match(/menu creneau (petit[-_ ]?dej(?:euner)?|dej(?:euner)?|collation|din(?:er|in)):/i)
     if (slotMatch && hasMealContent) {
@@ -85,7 +85,7 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
         else if (raw.includes('din')) slot = 'diner'
         return { kind: 'today', slot }
     }
-    
+
     return null
 }
 
@@ -93,10 +93,10 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
  * Extrait le bloc ---DATA--- du message de Coach Yao.
  * Retourne { displayText, dataItems, slot } ou null si absent.
  */
-function parseDataBlock(rawMessage: string): { 
-    displayText: string; 
-    dataItems?: Array<{ 
-        name: string; 
+function parseDataBlock(rawMessage: string): {
+    displayText: string;
+    dataItems?: Array<{
+        name: string;
         volume_ml: number;
         display_name?: string;
         calories?: number;
@@ -105,8 +105,8 @@ function parseDataBlock(rawMessage: string): {
         fat_g?: number;
         portion_g?: number;
         id?: string;
-    }>; 
-    slot?: string 
+    }>;
+    slot?: string
 } | null {
     const sep = '---DATA---'
     const idx = rawMessage.indexOf(sep)
@@ -131,22 +131,9 @@ function parseDataBlock(rawMessage: string): {
         const parsed = JSON.parse(jsonPart)
         const items = Array.isArray(parsed.items) ? parsed.items : []
         const jsonSlot = parsed.slot
-        
-        // Si le slot n'est pas dans le JSON, on le cherche dans tout le message (pas seulement le début)
-        let finalSlot = jsonSlot || slot
-        if (!finalSlot) {
-            const globalMatch = rawMessage.match(/(petit[-_ ]?dej(?:euner)?|dej(?:euner)?|collation|din(?:er|in))/i)
-            if (globalMatch) {
-                let raw = globalMatch[1].toLowerCase()
-                finalSlot = 'dejeuner'
-                if (raw.includes('petit')) finalSlot = 'petit_dejeuner'
-                else if (raw.includes('coll')) finalSlot = 'collation'
-                else if (raw.includes('din')) finalSlot = 'diner'
-            }
-        }
-        
+
         if (items.length > 0) {
-            return { displayText, dataItems: items, slot: finalSlot }
+            return { displayText, dataItems: items, slot: jsonSlot || slot }
         }
     } catch {
         return { displayText }
@@ -174,10 +161,10 @@ function parseMenuKind(text: string): { kind: 'tomorrow' | 'week'; cleanText: st
 }
 
 const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgrade: () => void }) => (
-    <div style={{ 
-        margin: '20px 0', 
-        padding: '24px', 
-        borderRadius: '24px', 
+    <div style={{
+        margin: '20px 0',
+        padding: '24px',
+        borderRadius: '24px',
         background: 'linear-gradient(135deg, rgba(var(--bg-secondary-rgb), 0.9), rgba(var(--bg-tertiary-rgb), 0.9))',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(var(--warning-rgb), 0.3)',
@@ -188,12 +175,12 @@ const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgra
         <div style={{ fontSize: '40px', marginBottom: '16px' }}>🛑</div>
         <h3 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Limite de messages atteinte !</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px', lineHeight: '1.5' }}>
-            Yao a beaucoup travaillé aujourd'hui. <br/> 
+            Yao a beaucoup travaillé aujourd'hui. <br />
             Débloque-le pour finaliser ton menu !
         </p>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button 
+            <button
                 onClick={onPayUnit}
                 style={{
                     padding: '14px',
@@ -212,8 +199,8 @@ const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgra
             >
                 ⚡️ Débloquer 10 messages (100 FCFA)
             </button>
-            
-            <button 
+
+            <button
                 onClick={onUpgrade}
                 style={{
                     padding: '12px',
@@ -283,14 +270,14 @@ export default function CoachChatPage() {
     useEffect(() => {
         if (!profile?.user_id && !profile?.id) return
         const uid = profile.user_id || profile.id
-        
+
         const channel = supabase
             .channel('profile_realtime')
-            .on('postgres_changes', { 
-                event: 'UPDATE', 
-                schema: 'public', 
-                table: 'user_profiles', 
-                filter: `user_id=eq.${uid}` 
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'user_profiles',
+                filter: `user_id=eq.${uid}`
             }, (payload) => {
                 console.log('⚡️ Profile Realtime Update:', payload.new)
                 setProfile(payload.new as any)
@@ -447,7 +434,7 @@ export default function CoachChatPage() {
         if (!activeThread) return
         const paidChatMessages = profile?.paid_chat_messages_remaining || 0
         const isLimitReached = messagesUsedToday >= maxMessages && paidChatMessages <= 0
-        
+
         if (isLimitReached) {
             toast.error("Limite de messages atteinte. Débloquez Yao pour continuer !")
             return
@@ -467,7 +454,7 @@ export default function CoachChatPage() {
             const { macroDistributions, smartAlert, dailyProtein, dailyCarbs, dailyFat } = useAppStore.getState()
             const todayKey = toLocalDateKey()
             const dailyConsumed = Object.values(slots).reduce((acc, s) => acc + s.consumed, 0)
-            
+
             // Calcul des ratios en temps réel (même si l'alerte est supprimée de la UI)
             const calTarget = profile?.calorie_target || 2000
             const protTarget = profile?.protein_target_g || 100
@@ -485,7 +472,7 @@ export default function CoachChatPage() {
             }
 
             const stratInfo = `\n[STRATÉGIE PAR REPAS] : 
-            Calories: P.Dej:${macroDistributions.calories.petit_dejeuner*100}%, Dej:${macroDistributions.calories.dejeuner*100}%, Col:${macroDistributions.calories.collation*100}%, Din:${macroDistributions.calories.diner*100}%
+            Calories: P.Dej:${macroDistributions.calories.petit_dejeuner * 100}%, Dej:${macroDistributions.calories.dejeuner * 100}%, Col:${macroDistributions.calories.collation * 100}%, Din:${macroDistributions.calories.diner * 100}%
             (Applique ces % à la cible de ${calTarget}kcal)`
 
             const statsInfo = `\n[ÉTAT DE CONSOMMATION DU JOUR] : 
@@ -499,8 +486,8 @@ export default function CoachChatPage() {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                body: JSON.stringify({ 
-                    messages: newMessagesContext, 
+                body: JSON.stringify({
+                    messages: newMessagesContext,
                     userContext: contextStr,
                     currentSuggestions: chatSuggestedMenus
                 })
@@ -508,25 +495,25 @@ export default function CoachChatPage() {
 
             const data = await res.json()
 
-             if (data.code === 'LIMIT_REACHED') {
-                 // On ne rajoute plus de bulle, on laisse la carte s'afficher
-                 setMessagesUsedToday(maxMessages)
-                 setIsTyping(false)
-                 toast.error(data.error || "Limite atteinte")
+            if (data.code === 'LIMIT_REACHED') {
+                // On ne rajoute plus de bulle, on laisse la carte s'afficher
+                setMessagesUsedToday(maxMessages)
+                setIsTyping(false)
+                toast.error(data.error || "Limite atteinte")
 
-                 // 🔥 Forcer le rafraîchissement pour que la carte apparaisse
-                 const { data: { session } } = await supabase.auth.getSession()
-                 if (session) {
+                // 🔥 Forcer le rafraîchissement pour que la carte apparaisse
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session) {
                     const { data: p } = await supabase.from('user_profiles').select('*').eq('user_id', session.user.id).single()
                     if (p) setProfile(p)
-                 }
-                 return
-             }
-             if (data.code === 'MENU_TIER_REQUIRED') {
-                 setIsTyping(false)
-                 toast.info("Abonnement requis pour les menus avancés")
-                 return
-             }
+                }
+                return
+            }
+            if (data.code === 'MENU_TIER_REQUIRED') {
+                setIsTyping(false)
+                toast.info("Abonnement requis pour les menus avancés")
+                return
+            }
 
             if (data.success) {
                 console.log('📨 Réponse brute Yao:', data.message)
@@ -551,11 +538,11 @@ export default function CoachChatPage() {
                 if (p) setProfile(p)
             } else {
                 setMessages(prev => {
-                    const next = [...prev, { 
-                        id: `err-${Date.now()}`, 
-                        role: 'coach' as const, 
-                        content: `Erreur serveur : ${data.error || 'Problème de connexion'}`, 
-                        timestamp: new Date() 
+                    const next = [...prev, {
+                        id: `err-${Date.now()}`,
+                        role: 'coach' as const,
+                        content: `Erreur serveur : ${data.error || 'Problème de connexion'}`,
+                        timestamp: new Date()
                     }]
                     persistMessagesForThread(activeThreadDate, next)
                     return next
@@ -576,12 +563,12 @@ export default function CoachChatPage() {
     const paidChatMessages = profile?.paid_chat_messages_remaining || 0
     const limitReached = messagesUsedToday >= maxMessages && paidChatMessages <= 0
     const activeThread = threads.find(t => t.date === activeThreadDate)
-    
+
     // La limite est atteinte si : 
     // 1. On est sur le thread d'aujourd'hui ET (quota global atteint ET pas de messages payés)
     // 2. OU si c'est un ancien thread (on ne peut pas réécrire dans le passé par défaut)
     const activeThreadLimitReached = !!activeThread && (
-        activeThread.date !== todayDate || 
+        activeThread.date !== todayDate ||
         (messagesUsedToday >= maxMessages && paidChatMessages <= 0)
     )
 
@@ -591,8 +578,8 @@ export default function CoachChatPage() {
      * L'utilisateur pourra ensuite cliquer "Ajouter au journal" depuis là-bas.
      */
     const handleAddToPlanning = (
-        dataItems: Array<{ 
-            name: string; 
+        dataItems: Array<{
+            name: string;
             volume_ml: number;
             display_name?: string;
             calories?: number;
@@ -623,9 +610,9 @@ export default function CoachChatPage() {
                 .from('user_profiles')
                 .update({ suggested_menus_json: updatedMenus })
                 .eq('user_id', session.user.id)
-                .then(async ({ error }) => { 
+                .then(async ({ error }) => {
                     if (error) console.error('⚠️ suggested_menus save error:', error)
-                    
+
                     // 🔥 Clôture de la session payante s'il y a lieu
                     if (profile?.paid_chat_messages_remaining && profile.paid_chat_messages_remaining > 0) {
                         try {
@@ -658,9 +645,9 @@ export default function CoachChatPage() {
                 .from('user_profiles')
                 .update({ suggested_menus_json: updatedMenus })
                 .eq('user_id', session.user.id)
-                .then(async ({ error }) => { 
+                .then(async ({ error }) => {
                     if (error) console.error('⚠️ suggested_menus save error:', error)
-                    
+
                     // 🔥 Clôture de la session payante s'il y a lieu
                     if (profile?.paid_chat_messages_remaining && profile.paid_chat_messages_remaining > 0) {
                         try {
@@ -689,7 +676,7 @@ export default function CoachChatPage() {
 
             const res = await fetch('/api/payments/checkout', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
@@ -760,7 +747,7 @@ export default function CoachChatPage() {
 
 
             {/* MESSAGES AREA */}
-            <div 
+            <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '30px', position: 'relative' }}
@@ -789,7 +776,7 @@ export default function CoachChatPage() {
                             animation: 'fadeInUp 0.3s ease-out'
                         }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M7 13l5 5 5-5M7 6l5 5 5-5" /></svg>
                         <style>{`
                             @keyframes fadeInUp {
                                 from { opacity: 0; transform: translate(-50%, 10px); }
@@ -922,7 +909,7 @@ export default function CoachChatPage() {
                 )}
 
                 {activeThreadLimitReached && (
-                    <LimitPaywall 
+                    <LimitPaywall
                         onPayUnit={handlePayForSuggestion}
                         onUpgrade={() => router.push('/settings/subscription')}
                     />

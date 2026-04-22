@@ -54,7 +54,7 @@ function buildEmergencyLocalMenu(foods: any[], userMsg: string): string {
     if (normalized.includes('petit')) slot = 'petit_dejeuner'
     if (normalized.includes('collation') || normalized.includes('grignoter')) slot = 'collation'
     if (normalized.includes('diner') || normalized.includes('soir')) slot = 'diner'
-    
+
     const selected: any[] = []
     if (foods && foods.length > 0) {
         const shuffled = [...foods].sort(() => 0.5 - Math.random())
@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
         }
 
         const isRequestingMenu = normalizedUserMessage.includes('menu') || normalizedUserMessage.includes('composer') || normalizedUserMessage.includes('manger quoi') || normalizedUserMessage.includes('collation') || normalizedUserMessage.includes('grignoter') || normalizedUserMessage.includes('petit dejeuner') || normalizedUserMessage.includes('dejeuner') || normalizedUserMessage.includes('diner')
-        
+
         // --- BLOCAGE SUGGESTIONS SI QUOTA 4 ATTEINT ---
         const maxScansAllowed = SUBSCRIPTION_RULES[effectiveTier].maxScansPerDay
         if (isRequestingMenu && scanFeedbacksToday >= maxScansAllowed) {
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
             }, { status: 200 })
         }
         const wantsMenuAny = isRequestingMenu || normalizedUserMessage.includes('ingredient') || normalizedUserMessage.includes('j\'ai')
-        
+
         const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)
         const wantsWeek = (/\bsemaine\b/.test(normalizedUserMessage) || /\b7 jours\b/.test(normalizedUserMessage)) && /\bmenu\b/.test(normalizedUserMessage)
         const isFreeLimited = (wantsTomorrow || wantsWeek) && effectiveTier === 'free'
@@ -251,7 +251,7 @@ export async function POST(req: NextRequest) {
 
         let foodsContext = ""
         let hasIngredientConstraint = false
-        let allFoodsDB: any[] = [] 
+        let allFoodsDB: any[] = []
 
         // 🔍 Coach Yao interroge TOUJOURS la BD pour avoir le contexte (Filtre Sécurité)
         const { data: allFoods, error: foodsError } = await supabase
@@ -260,7 +260,7 @@ export async function POST(req: NextRequest) {
             .or(`verified.eq.true,user_id.eq.${user.id}`)
 
         if (foodsError) console.error("❌ Erreur Supabase food_items:", foodsError)
-        if (allFoods) allFoodsDB = allFoods 
+        if (allFoods) allFoodsDB = allFoods
         console.log(`✅ ${allFoods?.length || 0} aliments sécurisés trouvés dans la BD.`)
 
         if (allFoods && allFoods.length > 0) {
@@ -292,7 +292,7 @@ export async function POST(req: NextRequest) {
         const tomDate = new Date()
         tomDate.setDate(now.getDate() + 1)
         const tomorrowStr = tomDate.toISOString().split('T')[0]
-        
+
         // --- CALCUL CONSOMMATION RÉELLE AUJOURD'HUI ---
         const { data: todayMealsDB } = await supabase
             .from('meals')
@@ -304,15 +304,15 @@ export async function POST(req: NextRequest) {
         const dailyConsumed = (todayMealsDB || []).reduce((acc, m) => acc + (Number(m.calories) || 0), 0)
         let dailyProt = 0, dailyCarbs = 0, dailyFat = 0
         const slotTotals: Record<string, number> = { petit_dejeuner: 0, dejeuner: 0, collation: 0, diner: 0 }
-        
-        ;(todayMealsDB || []).forEach(m => {
-            const hour = new Date(m.logged_at).getUTCHours()
-            const s = (hour < 12) ? 'petit_dejeuner' : (hour < 16) ? 'dejeuner' : (hour < 19) ? 'collation' : 'diner'
-            slotTotals[s] += (Number(m.calories) || 0)
-            dailyProt += (Number(m.protein_g) || 0)
-            dailyCarbs += (Number(m.carbs_g) || 0)
-            dailyFat += (Number(m.fat_g) || 0)
-        })
+
+            ; (todayMealsDB || []).forEach(m => {
+                const hour = new Date(m.logged_at).getUTCHours()
+                const s = (hour < 12) ? 'petit_dejeuner' : (hour < 16) ? 'dejeuner' : (hour < 19) ? 'collation' : 'diner'
+                slotTotals[s] += (Number(m.calories) || 0)
+                dailyProt += (Number(m.protein_g) || 0)
+                dailyCarbs += (Number(m.carbs_g) || 0)
+                dailyFat += (Number(m.fat_g) || 0)
+            })
 
         const dailyRemaining = Math.max(0, profile.calorie_target - dailyConsumed)
         const budgetPercentRemaining = Math.round((dailyRemaining / profile.calorie_target) * 100)
@@ -320,14 +320,14 @@ export async function POST(req: NextRequest) {
         // --- CALCUL OBJECTIF CRÉNEAU ACTUEL (Redistribution dynamique) ---
         const SLOT_ORDER = ['petit_dejeuner', 'dejeuner', 'collation', 'diner']
         const DEFAULT_DIST: Record<string, number> = { petit_dejeuner: 0.25, dejeuner: 0.35, collation: 0.10, diner: 0.30 }
-        
+
         const currentHour = now.getUTCHours()
         const currentSlot = (currentHour < 12) ? 'petit_dejeuner' : (currentHour < 16) ? 'dejeuner' : (currentHour < 19) ? 'collation' : 'diner'
         const currentIdx = SLOT_ORDER.indexOf(currentSlot)
-        
+
         let pastCons = 0
-        for(let i=0; i<currentIdx; i++) pastCons += slotTotals[SLOT_ORDER[i]]
-        
+        for (let i = 0; i < currentIdx; i++) pastCons += slotTotals[SLOT_ORDER[i]]
+
         const remainingSlots = SLOT_ORDER.slice(currentIdx)
         const totalPctRem = remainingSlots.reduce((sum, s) => sum + DEFAULT_DIST[s], 0)
         const shareOfCurrent = DEFAULT_DIST[currentSlot] / (totalPctRem || 1)
@@ -392,10 +392,10 @@ ${foodsContext || "[ALERTE : Base de données vide. Demande à l'utilisateur d'u
 
 - RÉCAPITULATIF PAR CRÉNEAU (Vu sur le Dashboard) :
 ${SLOT_ORDER.map(s => {
-    const t = Math.round(profile.calorie_target * DEFAULT_DIST[s]);
-    const c = slotTotals[s];
-    return `  * ${s.replace('_', ' ').toUpperCase()} : Objectif initial ${t} kcal | Consommé ${c} kcal`;
-}).join('\n')}
+            const t = Math.round(profile.calorie_target * DEFAULT_DIST[s]);
+            const c = slotTotals[s];
+            return `  * ${s.replace('_', ' ').toUpperCase()} : Objectif initial ${t} kcal | Consommé ${c} kcal`;
+        }).join('\n')}
 
 === STRATÉGIE & ALERTES (OMNISCIENCE) ===
 - Si le contexte contient [ALERTE COACH], tu DOIS en tenir compte IMMEDIATEMENT dans ta prochaine suggestion (ex: proposer un repas pauvre en Glucides si l'alerte concerne les glucides).
@@ -471,10 +471,10 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
 
         let aiMessage = ""
         // Utilisation des variables déjà définies en début de POST (wantsTomorrow, wantsWeek, wantsMenuAny)
-        const wantsSlotPetitDej = /\b(petit[\s-]?dej(?:euner)?|matin|dej du matin)\b/i.test(normalizedUserMessage)
-        const wantsSlotDejeuner = /\b(dejeuner|midi|dej du midi)\b/i.test(normalizedUserMessage)
-        const wantsSlotCollation = /\b(collation|gouter|snack|16h|encas)\b/i.test(normalizedUserMessage)
-        const wantsSlotDiner = /\b(diner|soir|repas du soir)\b/i.test(normalizedUserMessage)
+        const wantsSlotPetitDej = /\bpetit[\s-]?dej(?:euner)?\b/.test(normalizedUserMessage)
+        const wantsSlotDejeuner = /\bdejeuner\b/.test(normalizedUserMessage)
+        const wantsSlotCollation = /\bcollation\b/.test(normalizedUserMessage)
+        const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
 
         if (MOCK_MODE) {
             await new Promise(r => setTimeout(r, 800)) // Simule un délai réaliste
@@ -486,7 +486,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                     role: (m.role === 'coach' ? 'assistant' : 'user') as 'assistant' | 'user',
                     content: String(m.content || '').replace(/\*\*\*\*/g, '??') // On remplace les anciennes étoiles par des points d'interrogation pour briser le pattern
                 }))
-            
+
             // On commence impérativement par un message 'user'
             const firstUserIdx = formattedMessages.findIndex(m => m.role === 'user')
             if (firstUserIdx !== -1) {
@@ -497,7 +497,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             }
 
             // On filtre pour éviter les doublons de rôle consécutifs (Claude râle sinon)
-            formattedMessages = formattedMessages.filter((m, i, arr) => i === 0 || m.role !== arr[i-1].role)
+            formattedMessages = formattedMessages.filter((m, i, arr) => i === 0 || m.role !== arr[i - 1].role)
 
             try {
                 // Si l'utilisateur est gratuit et demande un menu restreint, on ajoute une consigne à l'IA
@@ -505,46 +505,46 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                     ? "\n\n[ALERTE PLAN]: L'utilisateur est en version GRATUITE. Il demande un menu (semaine ou demain) réservé aux membres PRO et PREMIUM. NE GÉNÈRE PAS le menu demandé. Explique-lui chaleureusement que c'est une fonctionnalité PRO/PREMIUM et invite-le à s'abonner, mais propose-lui obligatoirement un menu pour AUJOURD'HUI à la place pour l'aider immédiatement."
                     : ""
 
-            // --- RETRY LOGIC (Backoff pour erreurs 529) ---
-            let attempts = 0
-            const maxAttempts = 3
-            let lastErr: any = null
+                // --- RETRY LOGIC (Backoff pour erreurs 529) ---
+                let attempts = 0
+                const maxAttempts = 3
+                let lastErr: any = null
 
-            while (attempts < maxAttempts) {
-                try {
-                    const response = await anthropic.messages.create({
-                        model: 'claude-haiku-4-5-20251001',
-                        max_tokens: wantsWeek ? 4500 : 1500, // Augmenté pour éviter les textes et JSON tronqués
-                        system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux. Ne sois pas trop concis." : "") + (isFreeLimited ? "\n[PLAN GRATUIT]: Refuse poliment le menu demain/semaine et invite à s'abonner." : ""),
-                        messages: formattedMessages as any
-                    })
+                while (attempts < maxAttempts) {
+                    try {
+                        const response = await anthropic.messages.create({
+                            model: 'claude-haiku-4-5-20251001',
+                            max_tokens: wantsWeek ? 4500 : 1500, // Augmenté pour éviter les textes et JSON tronqués
+                            system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux. Ne sois pas trop concis." : "") + (isFreeLimited ? "\n[PLAN GRATUIT]: Refuse poliment le menu demain/semaine et invite à s'abonner." : ""),
+                            messages: formattedMessages as any
+                        })
 
-                    const rawText = response.content[0].type === 'text' ? response.content[0].text : 'Je suis là pour t\'aider ! 💪'
-                    aiMessage = rawText.trim()
-                    lastErr = null
-                    break // Succès !
-                } catch (err: any) {
-                    lastErr = err
-                    if (err?.status === 529 || err?.status === 429) {
-                        attempts++
-                        console.warn(`⚠️ Anthropic Overloaded (Attempt ${attempts}/${maxAttempts})...`)
-                        await new Promise(r => setTimeout(r, 1000 * attempts)) // Attente progressive
-                    } else {
-                        throw err // Autre erreur : on stop
+                        const rawText = response.content[0].type === 'text' ? response.content[0].text : 'Je suis là pour t\'aider ! 💪'
+                        aiMessage = rawText.trim()
+                        lastErr = null
+                        break // Succès !
+                    } catch (err: any) {
+                        lastErr = err
+                        if (err?.status === 529 || err?.status === 429) {
+                            attempts++
+                            console.warn(`⚠️ Anthropic Overloaded (Attempt ${attempts}/${maxAttempts})...`)
+                            await new Promise(r => setTimeout(r, 1000 * attempts)) // Attente progressive
+                        } else {
+                            throw err // Autre erreur : on stop
+                        }
                     }
                 }
-            }
 
-            if (lastErr) {
-                console.error('❌ Anthropic failed after retries:', lastErr)
-                // --- FALLBACK INTELLIGENT (Sans IA) ---
-                if (wantsMenuAny) {
-                    aiMessage = buildEmergencyLocalMenu(allFoodsDB, normalizedUserMessage)
-                } else {
-                    aiMessage = "Désolé, mes systèmes sont un peu fatigués en ce moment. Peux-tu réessayer dans quelques secondes ? 💪"
+                if (lastErr) {
+                    console.error('❌ Anthropic failed after retries:', lastErr)
+                    // --- FALLBACK INTELLIGENT (Sans IA) ---
+                    if (wantsMenuAny) {
+                        aiMessage = buildEmergencyLocalMenu(allFoodsDB, normalizedUserMessage)
+                    } else {
+                        aiMessage = "Désolé, mes systèmes sont un peu fatigués en ce moment. Peux-tu réessayer dans quelques secondes ? 💪"
+                    }
                 }
-            }
-            
+
             } catch (anthropicErr) {
                 console.error('⚠️ Anthropic primary error:', anthropicErr)
                 if (wantsWeek) {
@@ -557,10 +557,10 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             // Garde-fou: si l'utilisateur demande un menu mais que le modèle n'a pas mis
             // le préfixe attendu, on le rajoute automatiquement. Mais si le modèle a mis le préfixe
             // alors que c'est manifestement une question ou une phrase conversationnelle courte, on l'enlève.
-            
+
             // Regex identique au frontend pour la détection du préfixe
             const prefixRegex = /^menu\s+(creneau\s+(petit[-_ ]?dej(?:euner)?|dej(?:euner)?|collation|din(?:er|in))|demain|semaine)\s*:\s*/i
-            
+
             const hasMenuPrefix = prefixRegex.test(aiMessage)
             const hasDataBlock = aiMessage.includes('---DATA---')
             const hasExplicitTarget = wantsWeek || wantsTomorrow || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
@@ -579,11 +579,11 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                 else if (wantsSlotDejeuner) prefix = 'menu creneau dejeuner:'
                 else if (wantsSlotCollation) prefix = 'menu creneau collation:'
                 else if (wantsSlotDiner) prefix = 'menu creneau diner:'
-                
+
                 // Si l'IA avait déjà un préfixe partiel ou mal formé, on nettoie d'abord
                 const loosePrefix = /^menu\s+[^:]+:\s*/i
                 if (loosePrefix.test(aiMessage)) {
-                   aiMessage = aiMessage.replace(loosePrefix, '')
+                    aiMessage = aiMessage.replace(loosePrefix, '')
                 }
 
                 aiMessage = `${prefix} ${aiMessage}`.trim()
@@ -696,19 +696,19 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                                 return it
                             })
 
-                             // --- NETTOYAGE DES DOUBLONS ---
-                             // On s'assure qu'il n'y a pas déjà une signature ou un bloc DATA (cas de retry ou hallucination)
-                             aiMessage = aiMessage.split('───')[0].split('---DATA---')[0].trim()
+                            // --- NETTOYAGE DES DOUBLONS ---
+                            // On s'assure qu'il n'y a pas déjà une signature ou un bloc DATA (cas de retry ou hallucination)
+                            aiMessage = aiMessage.split('───')[0].split('---DATA---')[0].trim()
 
-                              const signature = trueCals > 0 
+                            const signature = trueCals > 0
                                 ? `\n\n────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
                                 : ""
 
-                              aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
-                         } else {
-                             // Même si trueCals == 0, si on a des items, on garde le bloc DATA
-                             aiMessage = aiMessage + '\n\n---DATA---\n' + JSON.stringify(parsed)
-                         }
+                            aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
+                        } else {
+                            // Même si trueCals == 0, si on a des items, on garde le bloc DATA
+                            aiMessage = aiMessage + '\n\n---DATA---\n' + JSON.stringify(parsed)
+                        }
                     }
                 }
             } catch (fixErr) {
@@ -726,7 +726,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             updatePayload.chat_messages_today = messagesUsedToday + 1
             updatePayload.last_usage_reset_date = todayStr
             if (resetUpdates) Object.assign(updatePayload, resetUpdates)
-            
+
         }
 
 
@@ -744,8 +744,8 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
 
     } catch (err: any) {
         console.error('❌ Chat API error:', err)
-        return NextResponse.json({ 
-            success: false, 
+        return NextResponse.json({
+            success: false,
             error: err.message || 'Erreur interne inconnue',
             details: err.stack
         }, { status: 500 })
