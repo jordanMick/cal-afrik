@@ -7,11 +7,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
 import { toast } from 'sonner'
 
-declare global {
-    interface Window {
-        FedaPay: any;
-    }
-}
+// Plus besoin de déclarer FedaPay car nous utilisons une redirection directe vers Maketou
 
 const plans = {
     pro: { price: '100', period: 'FCFA/mois', value: 'pro' },
@@ -311,7 +307,7 @@ function PricingContent() {
                     </div>
                 )}
 
-                <div id="fedapay-container"></div>
+                {/* Plus besoin du conteneur FedaPay */}
 
                 {/* FOOTER */}
                 <p style={{ textAlign: 'center', color: '#333', fontSize: '12px', marginTop: '48px' }}>
