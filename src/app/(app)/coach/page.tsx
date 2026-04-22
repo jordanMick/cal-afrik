@@ -392,8 +392,11 @@ export default function CoachChatPage() {
         const activeThread = threads.find(t => t.date === activeThreadDate)
         if (!input.trim()) return
         if (!activeThread) return
-        if ((activeThread.messagesUsed || 0) >= (activeThread.maxMessages || maxMessages)) {
-            toast.error("Limite de messages atteinte pour cette discussion.")
+        const paidChatMessages = profile?.paid_chat_messages_remaining || 0
+        const isLimitReached = messagesUsedToday >= maxMessages && paidChatMessages <= 0
+        
+        if (isLimitReached) {
+            toast.error("Limite de messages atteinte. Débloquez Yao pour continuer !")
             return
         }
 
@@ -529,11 +532,11 @@ export default function CoachChatPage() {
     const activeThread = threads.find(t => t.date === activeThreadDate)
     
     // La limite est atteinte si : 
-    // 1. On est sur le thread d'aujourd'hui ET (quota normal atteint ET pas de messages payés)
+    // 1. On est sur le thread d'aujourd'hui ET (quota global atteint ET pas de messages payés)
     // 2. OU si c'est un ancien thread (on ne peut pas réécrire dans le passé par défaut)
     const activeThreadLimitReached = !!activeThread && (
         activeThread.date !== todayDate || 
-        (activeThread.messagesUsed >= activeThread.maxMessages && paidChatMessages <= 0)
+        (messagesUsedToday >= maxMessages && paidChatMessages <= 0)
     )
 
     /**
