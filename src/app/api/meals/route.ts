@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
 
     const paidChatMessages = profile?.paid_chat_messages_remaining || 0
     const paidScans = profile?.paid_scans_remaining || 0
-    
+
     // On considère que c'est une suggestion si Yao a généré le contenu (flag is_suggestion ou présence de coach_message)
     const isSuggestion = body.is_suggestion === true || !!body.coach_message
     let shouldConsumePaidAction = false
@@ -140,14 +140,14 @@ export async function POST(req: NextRequest) {
             if (paidScans > 0) {
                 shouldConsumePaidAction = true
             } else if (paidChatMessages > 0) {
-                 // On utilise les messages payés restants comme "droit de passage"
+                // On utilise les messages payés restants comme "droit de passage"
             } else {
-                return NextResponse.json({ 
-                    success: false, 
-                    code: 'LIMIT_REACHED', 
-                    error: tier === 'free' 
-                        ? 'Tu as atteint ta limite de 5 actions IA gratuites à vie. Passe au plan Pro ou achète un pack (100 FCFA) !' 
-                        : 'Tu as atteint ta limite de 4 actions IA aujourd\'hui. Reviens demain ou achète un pack (100 FCFA) !' 
+                return NextResponse.json({
+                    success: false,
+                    code: 'LIMIT_REACHED',
+                    error: tier === 'free'
+                        ? 'Tu as atteint ta limite de 5 actions IA gratuites à vie. Passe au plan Pro ou achète un pack (100 FCFA) !'
+                        : 'Tu as atteint ta limite de 4 actions IA aujourd\'hui. Reviens demain ou achète un pack (100 FCFA) !'
                 }, { status: 403 })
             }
         }
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
         now.setMinutes(now.getMinutes() - tzOffsetMin)
         const dayStr = now.toISOString().split('T')[0]
         const { start, end } = getUtcRangeForLocalDay(dayStr, tzOffsetMin)
-        
+
         const { count } = await supabaseAdmin
             .from('meals')
             .select('id', { count: 'exact', head: true })
@@ -169,11 +169,11 @@ export async function POST(req: NextRequest) {
             .lte('logged_at', end)
 
         if ((count || 0) >= 2 && !isSuggestion) {
-             return NextResponse.json({ 
-                 success: false, 
-                 code: 'LIMIT_REACHED', 
-                 error: 'Tu as atteint ta limite de 2 repas manuels par jour (mode Gratuit). Passe au plan Pro !' 
-             }, { status: 403 })
+            return NextResponse.json({
+                success: false,
+                code: 'LIMIT_REACHED',
+                error: 'Tu as atteint ta limite de 2 repas manuels par jour (mode Gratuit). Passe au plan Pro !'
+            }, { status: 403 })
         }
     }
     // ────────────────────────────────────────────────────────长
@@ -212,13 +212,13 @@ export async function POST(req: NextRequest) {
         const effectiveTier = getEffectiveTier(profile)
         const maxStandardMessages = SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay
         const messagesUsed = profile?.chat_messages_today || 0
-        
+
         if (shouldConsumePaidAction) {
             updatePayload.paid_scans_remaining = Math.max(0, paidScans - 1)
         } else {
             updatePayload.scan_feedbacks_today = scansFeedbacksToday + 1
             updatePayload.last_usage_reset_date = todayStr
-            
+
             // On ne reset les messages payés QUE si l'utilisateur avait épuisé son quota normal
             // (C'est le signal que la "séance payante" est terminée)
             if (messagesUsed >= maxStandardMessages) {

@@ -143,6 +143,65 @@ function parseMenuKind(text: string): { kind: 'tomorrow' | 'week'; cleanText: st
     return null
 }
 
+const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgrade: () => void }) => (
+    <div style={{ 
+        margin: '20px 0', 
+        padding: '24px', 
+        borderRadius: '24px', 
+        background: 'linear-gradient(135deg, rgba(var(--bg-secondary-rgb), 0.9), rgba(var(--bg-tertiary-rgb), 0.9))',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(var(--warning-rgb), 0.3)',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+        textAlign: 'center',
+        animation: 'fadeInUp 0.5s ease-out'
+    }}>
+        <div style={{ fontSize: '40px', marginBottom: '16px' }}>🛑</div>
+        <h3 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Limite de messages atteinte !</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px', lineHeight: '1.5' }}>
+            Yao a beaucoup travaillé aujourd'hui. <br/> 
+            Débloque-le pour finaliser ton menu !
+        </p>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button 
+                onClick={onPayUnit}
+                style={{
+                    padding: '14px',
+                    borderRadius: '14px',
+                    background: 'var(--warning)',
+                    color: '#000',
+                    border: 'none',
+                    fontWeight: '800',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 20px rgba(var(--warning-rgb), 0.3)',
+                    transition: 'transform 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+                ⚡️ Débloquer 10 messages (100 FCFA)
+            </button>
+            
+            <button 
+                onClick={onUpgrade}
+                style={{
+                    padding: '12px',
+                    borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-secondary)',
+                    border: '0.5px solid var(--border-color)',
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                }}
+            >
+                💎 Passer au Plan Supérieur
+            </button>
+        </div>
+    </div>
+)
+
 
 export default function CoachChatPage() {
     const router = useRouter()
@@ -165,6 +224,7 @@ export default function CoachChatPage() {
     const [showScrollButton, setShowScrollButton] = useState(false)
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const [isPaying, setIsPaying] = useState(false)
 
     // ── Sauvegarde asynchrone d'un thread vers Supabase ──────────────
     const saveThreadToSupabase = async (thread: ChatThread, userId: string) => {
@@ -393,6 +453,17 @@ export default function CoachChatPage() {
             const data = await res.json()
 
             if (data.code === 'LIMIT_REACHED') {
+                const limitMsg: Message = {
+                    id: `limit-${Date.now()}`,
+                    role: 'coach',
+                    content: data.error || "Tu as atteint ta limite de messages. Reviens demain ou achète un pack de suggestions !",
+                    timestamp: new Date()
+                }
+                setMessages(prev => {
+                    const next = [...prev, limitMsg]
+                    persistMessagesForThread(activeThreadDate, next)
+                    return next
+                })
                 setMessagesUsedToday(maxMessages)
                 setIsTyping(false)
                 return
@@ -518,6 +589,37 @@ export default function CoachChatPage() {
                 .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
         })
         router.push('/menus')
+    }
+
+    const handlePayForSuggestion = async () => {
+        setIsPaying(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                toast.error("Veuillez vous reconnecter")
+                return
+            }
+
+            const res = await fetch('/api/payments/checkout', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ tier: 'suggestion' })
+            })
+            const data = await res.json()
+            if (data.url) {
+                window.location.href = data.url
+            } else {
+                toast.error("Erreur lors de la création du paiement")
+            }
+        } catch (err) {
+            console.error(err)
+            toast.error("Erreur de connexion")
+        } finally {
+            setIsPaying(false)
+        }
     }
 
     return (
@@ -731,6 +833,13 @@ export default function CoachChatPage() {
                         </div>
                     </div>
                 )}
+
+                {activeThreadLimitReached && (
+                    <LimitPaywall 
+                        onPayUnit={handlePayForSuggestion}
+                        onUpgrade={() => router.push('/settings/subscription')}
+                    />
+                )}
                 <div ref={endOfMessagesRef} />
             </div>
 
@@ -782,37 +891,22 @@ export default function CoachChatPage() {
                 </div>
 
                 {activeThreadLimitReached ? (
-                    effectiveTier === 'premium' ? (
-                        <div
-                            style={{
-                                width: '100%',
-                                padding: '14px',
-                                borderRadius: '12px',
-                                background: 'var(--bg-secondary)',
-                                border: '0.5px solid var(--border-color)',
-                                textAlign: 'center'
-                            }}
-                        >
-                            <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '600' }}>
-                                Limite atteinte, reviens demain.
-                            </p>
-                        </div>
-                    ) : (
-                        <div
-                            onClick={() => router.push('/upgrade')}
-                            style={{
-                                width: '100%', padding: '16px', borderRadius: '16px',
-                                background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--warning-rgb), 0.1))',
-                                border: '1px solid rgba(var(--warning-rgb), 0.3)',
-                                textAlign: 'center', cursor: 'pointer'
-                            }}>
-                            <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>Limite atteinte 🔒</p>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '12px' }}>Passez au plan supérieur pour continuer à discuter avec Yao.</p>
-                            <button style={{ padding: '8px 20px', background: 'var(--warning)', color: '#000', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
-                                Voir les plans →
-                            </button>
-                        </div>
-                    )
+                    <div
+                        style={{
+                            width: '100%',
+                            padding: '14px',
+                            borderRadius: '16px',
+                            background: 'rgba(var(--warning-rgb), 0.05)',
+                            border: '0.5px solid rgba(var(--warning-rgb), 0.2)',
+                            textAlign: 'center',
+                            color: 'var(--text-muted)',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            letterSpacing: '0.5px'
+                        }}
+                    >
+                        🔒 Chat verrouillé • Quota quotidien atteint
+                    </div>
                 ) : (
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
                         <textarea
