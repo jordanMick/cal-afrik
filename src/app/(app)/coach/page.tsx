@@ -485,6 +485,10 @@ export default function CoachChatPage() {
                     persistMessagesForThread(activeThreadDate, next, true)
                     return next
                 })
+
+                // 🔥 Rafraîchir le profil pour synchroniser les crédits payants restants
+                const { data: p } = await supabase.from('user_profiles').select('*').eq('user_id', profile.user_id || profile.id).single()
+                if (p) setProfile(p)
             } else {
                 setMessages(prev => {
                     const next = [...prev, { 
