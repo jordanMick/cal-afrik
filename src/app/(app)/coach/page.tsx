@@ -132,8 +132,21 @@ function parseDataBlock(rawMessage: string): {
         const items = Array.isArray(parsed.items) ? parsed.items : []
         const jsonSlot = parsed.slot
         
+        // Si le slot n'est pas dans le JSON, on le cherche dans tout le message (pas seulement le début)
+        let finalSlot = jsonSlot || slot
+        if (!finalSlot) {
+            const globalMatch = rawMessage.match(/(petit[-_ ]?dej(?:euner)?|dej(?:euner)?|collation|din(?:er|in))/i)
+            if (globalMatch) {
+                let raw = globalMatch[1].toLowerCase()
+                finalSlot = 'dejeuner'
+                if (raw.includes('petit')) finalSlot = 'petit_dejeuner'
+                else if (raw.includes('coll')) finalSlot = 'collation'
+                else if (raw.includes('din')) finalSlot = 'diner'
+            }
+        }
+        
         if (items.length > 0) {
-            return { displayText, dataItems: items, slot: jsonSlot || slot }
+            return { displayText, dataItems: items, slot: finalSlot }
         }
     } catch {
         return { displayText }

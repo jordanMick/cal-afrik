@@ -471,10 +471,10 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
 
         let aiMessage = ""
         // Utilisation des variables déjà définies en début de POST (wantsTomorrow, wantsWeek, wantsMenuAny)
-        const wantsSlotPetitDej = /\bpetit[\s-]?dej(?:euner)?\b/.test(normalizedUserMessage)
-        const wantsSlotDejeuner = /\bdejeuner\b/.test(normalizedUserMessage)
-        const wantsSlotCollation = /\bcollation\b/.test(normalizedUserMessage)
-        const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
+        const wantsSlotPetitDej = /\b(petit[\s-]?dej(?:euner)?|matin|dej du matin)\b/i.test(normalizedUserMessage)
+        const wantsSlotDejeuner = /\b(dejeuner|midi|dej du midi)\b/i.test(normalizedUserMessage)
+        const wantsSlotCollation = /\b(collation|gouter|snack|16h|encas)\b/i.test(normalizedUserMessage)
+        const wantsSlotDiner = /\b(diner|soir|repas du soir)\b/i.test(normalizedUserMessage)
 
         if (MOCK_MODE) {
             await new Promise(r => setTimeout(r, 800)) // Simule un délai réaliste
