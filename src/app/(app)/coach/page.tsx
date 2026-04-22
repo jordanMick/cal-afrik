@@ -244,10 +244,33 @@ export default function CoachChatPage() {
         }
     }
 
-    // Synchroniser si le profil change en arrière-plan
+    // Synchroniser si le profil change
     useEffect(() => {
         setMessagesUsedToday(profile?.last_usage_reset_date === todayDate ? (profile?.chat_messages_today || 0) : 0)
     }, [profile, todayDate])
+
+    // 🔥 REALTIME : Écouter les changements du profil en direct (clôture session, paiements, etc.)
+    useEffect(() => {
+        if (!profile?.user_id && !profile?.id) return
+        const uid = profile.user_id || profile.id
+        
+        const channel = supabase
+            .channel('profile_realtime')
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'user_profiles', 
+                filter: `user_id=eq.${uid}` 
+            }, (payload) => {
+                console.log('⚡️ Profile Realtime Update:', payload.new)
+                setProfile(payload.new as any)
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [profile?.user_id, profile?.id, setProfile])
 
     // Auto-resize textarea
     useEffect(() => {
