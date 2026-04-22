@@ -525,25 +525,27 @@ export default function ScannerPage() {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session) {
-            let limitReached = false;
-            let errorMessage = "";
-            let errorDesc = "";
+            const scansUsed = (profile as any)?.scan_feedbacks_today || 0
+            const paidScans = profile?.paid_scans_remaining || 0
+            let limitReached = false
+            let errorMessage = ""
+            let errorDesc = ""
 
-            if (profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 5 && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
-                limitReached = true;
-                errorMessage = "Tu as atteint ta limite de 5 scans gratuits à vie.";
-                errorDesc = "Achète un scan à l'unité (100 FCFA) ou passe au plan Pro.";
-            } else if (profile?.subscription_tier === 'pro' && (profile?.scan_feedbacks_today || 0) >= 4 && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
-                limitReached = true;
-                errorMessage = "Tu as atteint ta limite de 4 scans aujourd'hui.";
-                errorDesc = "Reviens demain ou achète un scan à l'unité (100 FCFA).";
+            if (profile?.subscription_tier === 'free' && scansUsed >= 5 && paidScans <= 0) {
+                limitReached = true
+                errorMessage = "Limite de 5 scans à vie atteinte."
+                errorDesc = "Débloquez Coach Yao pour continuer !"
+            } else if (profile?.subscription_tier === 'pro' && scansUsed >= 4 && paidScans <= 0) {
+                limitReached = true
+                errorMessage = "Quota quotidien atteint."
+                errorDesc = "Vous avez utilisé vos 4 scans du jour."
             }
 
             if (limitReached) {
                 toast.error(errorMessage, {
                     description: errorDesc,
                     action: {
-                        label: "Payer 100 FCFA",
+                        label: "Débloquer (100 FCFA)",
                         onClick: () => handlePayForScan()
                     },
                     duration: 10000
@@ -1093,51 +1095,69 @@ export default function ScannerPage() {
 
             {/* BANNER LIMITE SCANS / ASTUCE */}
             {!image && !isAnalyzing && (() => {
-                const effectiveTier = profile?.subscription_tier || 'free'
                 const today = new Date().toISOString().split('T')[0]
-                const scansUsed = (profile as any)?.last_usage_reset_date === today
+                const scansUsedToday = (profile as any)?.last_usage_reset_date === today
                     ? ((profile as any)?.scan_feedbacks_today || 0)
                     : 0
-                const isLimitReached = effectiveTier === 'free' && scansUsed >= 2
+                
+                const paidScans = profile?.paid_scans_remaining || 0
+                const isProLimit = effectiveTier === 'pro' && scansUsedToday >= 4
+                const isFreeLimit = effectiveTier === 'free' && scansUsedToday >= 5
+                const isBlocked = (isProLimit || isFreeLimit) && paidScans <= 0
 
-                if (isLimitReached) {
+                if (isBlocked) {
                     return (
-                        <div style={{
-                            background: 'rgba(239,68,68,0.08)',
-                            border: '1px solid rgba(239,68,68,0.3)',
-                            borderRadius: '20px',
-                            padding: '16px',
-                            display: 'flex',
-                            gap: '12px',
-                            marginTop: '20px',
-                            marginBottom: '20px'
-                        }}>
-                            <div style={{
-                                width: '36px', height: '36px', borderRadius: '10px',
-                                background: 'rgba(239,68,68,0.12)', display: 'flex',
-                                alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                            }}>
-                                <span style={{ fontSize: '18px' }}>🚫</span>
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            style={{
+                                background: 'linear-gradient(135deg, rgba(20,20,20,0.8), rgba(40,40,40,0.8))',
+                                backdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(var(--accent-rgb), 0.3)',
+                                borderRadius: '24px',
+                                padding: '24px',
+                                textAlign: 'center',
+                                marginTop: '20px',
+                                marginBottom: '20px',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+                            }}
+                        >
+                            <div style={{ width: '60px', height: '60px', borderRadius: '20px', background: 'rgba(var(--accent-rgb), 0.1)', border: '1px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '28px' }}>
+                                🔒
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <p style={{ fontSize: '14px', fontWeight: '700', color: '#ef4444', marginBottom: '4px' }}>
-                                    Limite quotidienne atteinte
-                                </p>
-                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '10px' }}>
-                                    Tu as utilisé tes 2 scans gratuits d'aujourd'hui. Reviens demain ou passe au plan Pro pour scanner sans limite !
-                                </p>
+                            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>
+                                Limite atteinte
+                            </h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6', marginBottom: '24px' }}>
+                                {isProLimit 
+                                    ? "Vous avez utilisé vos 4 scans quotidiens. Continuez votre suivi pour seulement 100 FCFA."
+                                    : "Vous avez atteint vos 5 scans gratuits à vie. Débloquez la puissance de Yao pour continuer."}
+                            </p>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <button
-                                    onClick={() => router.push('/upgrade')}
+                                    onClick={handlePayForScan}
                                     style={{
-                                        background: 'linear-gradient(135deg, #ef4444, #f59e0b)',
-                                        color: '#fff', border: 'none', padding: '8px 16px',
-                                        borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer'
+                                        background: 'linear-gradient(135deg, var(--accent), #10b981)',
+                                        color: '#fff', border: 'none', padding: '14px',
+                                        borderRadius: '16px', fontSize: '14px', fontWeight: '800', cursor: 'pointer',
+                                        boxShadow: '0 8px 16px rgba(var(--accent-rgb), 0.3)'
                                     }}
                                 >
-                                    🚀 Passer au Pro → Scans illimités
+                                    ⚡️ Débloquer 1 scan + avis Coach (100F)
+                                </button>
+                                <button
+                                    onClick={() => router.push('/settings/subscription')}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '12px',
+                                        borderRadius: '16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+                                    }}
+                                >
+                                    💎 Voir les abonnements
                                 </button>
                             </div>
-                        </div>
+                        </motion.div>
                     )
                 }
 
@@ -1162,7 +1182,7 @@ export default function ScannerPage() {
                             </div>
                             <div>
                                 <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>
-                                    Scans disponibles · <span style={{ color: 'var(--accent)' }}>{2 - scansUsed} restant{2 - scansUsed !== 1 ? 's' : ''}</span>
+                                    Scans disponibles · <span style={{ color: 'var(--accent)' }}>{Math.max(0, 5 - scansUsedToday)} restant{5 - scansUsedToday !== 1 ? 's' : ''}</span>
                                 </p>
                                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                                     Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
