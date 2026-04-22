@@ -7,6 +7,7 @@ import { ArrowLeft, UtensilsCrossed, Lock, Calendar, ClipboardList } from 'lucid
 import { toast } from 'sonner'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
+import { supabase } from '@/lib/supabase'
 
 // --- HELPERS D'EXTRACTION ---
 
@@ -140,6 +141,30 @@ export default function MenusPage() {
     const targetDateStr = targetDate.toISOString().split('T')[0]
     const isTargetToday = targetDateStr === todayStr
 
+    const handleClearMenu = async (kind: 'today' | 'tomorrow' | 'week', slot?: string) => {
+        clearChatSuggestedMenu(kind, slot)
+        toast.success(kind === 'today' ? "Retiré" : "Planning supprimé")
+
+        const uid = profile?.user_id || profile?.id
+        if (uid) {
+            const nextMenus = { ...chatSuggestedMenus }
+            if (kind === 'today' && slot) {
+                const nextToday = { ...nextMenus.today }
+                delete nextToday[slot]
+                nextMenus.today = nextToday
+            } else if (kind === 'tomorrow') {
+                nextMenus.tomorrow = null
+            } else if (kind === 'week') {
+                nextMenus.week = null
+            }
+            try {
+                await supabase.from('user_profiles').update({ suggested_menus_json: nextMenus }).eq('user_id', uid)
+            } catch (err) {
+                console.error(err)
+            }
+        }
+    }
+
     const resolvedMenus = useMemo(() => {
         const result: Record<string, any> = { 
             today: { petit_dejeuner: null, dejeuner: null, collation: null, diner: null }, 
@@ -210,7 +235,7 @@ export default function MenusPage() {
                 </div>
                 <div style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.7' }}>{renderMenuBlock(text)}</div>
                 <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                    <button onClick={() => { clearChatSuggestedMenu('today', currentSlotKey); toast.success("Retiré"); }} style={{ flex: 1, padding: '14px', borderRadius: '16px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Ignorer</button>
+                    <button onClick={() => handleClearMenu('today', currentSlotKey)} style={{ flex: 1, padding: '14px', borderRadius: '16px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Ignorer</button>
                     {text.includes('---DATA---') && (
                         <button 
                             disabled={isLimitReached}
@@ -312,7 +337,7 @@ export default function MenusPage() {
                                         <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '20px', padding: '4px' }}>
                                             {renderMenuBlock(content as string)}
                                         </div>
-                                        <button onClick={() => { clearChatSuggestedMenu(menuTab === 'tomorrow' ? 'tomorrow' : 'week'); toast.success("Planning supprimé"); }} style={{ width: 'fit-content', padding: '12px 20px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '16px', fontWeight: '800', fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }}>Retirer ce planning</button>
+                                        <button onClick={() => handleClearMenu(menuTab === 'tomorrow' ? 'tomorrow' : 'week')} style={{ width: 'fit-content', padding: '12px 20px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '16px', fontWeight: '800', fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }}>Retirer ce planning</button>
                                     </div>
                                 )
                                 return <div style={{ textAlign: 'center', padding: '60px 0' }}><Calendar size={48} color="var(--text-muted)" style={{ opacity: 0.3, marginBottom: '16px' }} /><p style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '600' }}>Aucun menu planifié ici.</p></div>
