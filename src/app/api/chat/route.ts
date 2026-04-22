@@ -197,23 +197,6 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Vérification de la limite
-        let isUsingPaidMessages = false
-        const paidChatMessages = profile.paid_chat_messages_remaining || 0
-
-        if (messagesUsedToday >= maxMessages) {
-            if (paidChatMessages > 0) {
-                isUsingPaidMessages = true
-                console.log(`[CHAT] User ${user.id} uses a paid message token.`)
-            } else {
-                return NextResponse.json({
-                    success: false,
-                    error: 'Limite de messages atteinte',
-                    code: 'LIMIT_REACHED'
-                }, { status: 200 })
-            }
-        }
-
         // 3. Traiter la requête de l'utilisateur
         const { messages, userContext, currentSuggestions } = await req.json()
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -221,6 +204,38 @@ export async function POST(req: NextRequest) {
         }
         const messageContent = String(messages[messages.length - 1]?.content || '')
         const normalizedUserMessage = messageContent.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+        // --- VÉRIFICATION DES LIMITES (MESSAGES ET SUGGESTIONS) ---
+        const scanFeedbacksToday = profile.scan_feedbacks_today || 0
+        const maxScansAllowed = SUBSCRIPTION_RULES[effectiveTier].maxScansPerDay
+        const messageLower = normalizedUserMessage
+        const isRequestingMenu = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit dejeuner') || messageLower.includes('dejeuner') || messageLower.includes('diner')
+        
+        let isUsingPaidMessages = false
+        const paidChatMessages = profile.paid_chat_messages_remaining || 0
+
+        // Si l'utilisateur a fini ses 10 messages, on bloque tout
+        if (messagesUsedToday >= maxMessages && paidChatMessages <= 0) {
+            return NextResponse.json({
+                success: false,
+                error: 'Limite de messages atteinte (10/jour). Achète un pack (100 FCFA) pour continuer !',
+                code: 'LIMIT_REACHED'
+            }, { status: 200 })
+        }
+
+        // Si l'utilisateur demande un MENU mais a fini ses 4 suggestions, on bloque la suggestion spécifiquement
+        if (isRequestingMenu && scanFeedbacksToday >= maxScansAllowed && paidChatMessages <= 0) {
+            return NextResponse.json({
+                success: false,
+                error: 'Limite de suggestions atteinte pour aujourd\'hui (4/jour). Passe au Scan photo ou reviens demain !',
+                code: 'LIMIT_REACHED'
+            }, { status: 200 })
+        }
+
+        // Si on a dépassé le quota de messages mais qu'on a payé, on marque l'utilisation payante
+        if (messagesUsedToday >= maxMessages && paidChatMessages > 0) {
+            isUsingPaidMessages = true
+        }
 
         const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)
         const wantsWeek = (/\bsemaine\b/.test(normalizedUserMessage) || /\b7 jours\b/.test(normalizedUserMessage)) && /\bmenu\b/.test(normalizedUserMessage)
@@ -234,8 +249,6 @@ export async function POST(req: NextRequest) {
             suggestionsContext = `Un menu pour DEMAIN est déjà actif : ${currentSuggestions.tomorrow.substring(0, 100)}...`
         }
 
-        const messageLower = normalizedUserMessage
-        const wantsMenuAny = messageLower.includes('menu') || messageLower.includes('composer') || messageLower.includes('manger quoi') || messageLower.includes('collation') || messageLower.includes('grignoter') || messageLower.includes('petit dejeuner') || messageLower.includes('dejeuner') || messageLower.includes('diner') || messageLower.includes('ingredient') || messageLower.includes('j\'ai') || messageLower.includes('j\'ai seulement')
         let foodsContext = ""
         let hasIngredientConstraint = false
         let allFoodsDB: any[] = [] 
@@ -688,25 +701,28 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
         }
 
         // 4. Mettre à jour l'utilisation dans la base de données
+        const isSuggestion = aiMessage.includes('---DATA---')
+        const updatePayload: any = { updated_at: new Date().toISOString() }
+
         if (isUsingPaidMessages) {
-            // Décompte d'un message payé
-            await supabase
-                .from('user_profiles')
-                .update({
-                    paid_chat_messages_remaining: Math.max(0, paidChatMessages - 1),
-                    updated_at: new Date().toISOString()
-                })
-                .eq('user_id', user.id)
+            updatePayload.paid_chat_messages_remaining = Math.max(0, paidChatMessages - 1)
         } else {
-            await supabase
-                .from('user_profiles')
-                .update({
-                    chat_messages_today: messagesUsedToday + 1,
-                    last_usage_reset_date: todayStr,
-                    ...resetUpdates
-                })
-                .eq('user_id', user.id)
+            updatePayload.chat_messages_today = messagesUsedToday + 1
+            updatePayload.last_usage_reset_date = todayStr
+            if (resetUpdates) Object.assign(updatePayload, resetUpdates)
+            
+            // 🔥 Si c'est une suggestion de menu, on consomme un crédit du compteur global (4/jour)
+            if (isSuggestion) {
+                const { data: latest } = await supabase.from('user_profiles').select('scan_feedbacks_today').eq('user_id', user.id).single()
+                const currentActual = latest?.scan_feedbacks_today ?? profile.scan_feedbacks_today ?? 0
+                updatePayload.scan_feedbacks_today = currentActual + 1
+            }
         }
+
+        await supabase
+            .from('user_profiles')
+            .update(updatePayload)
+            .eq('user_id', user.id)
 
         // 5. Retourner la réponse
         return NextResponse.json({

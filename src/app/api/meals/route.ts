@@ -223,43 +223,9 @@ export async function POST(req: NextRequest) {
         coach_message: (data as any).coach_message || null,
     }
 
-    // 🔥 MISE À JOUR DES QUOTAS
-    if (isSuggestion) {
-        const updatePayload: any = { updated_at: new Date().toISOString() }
-        
-        if (shouldConsumePaidAction) {
-            // On a déjà marqué qu'on utilisait un crédit payant au début
-            if (body.force_use_chat_credit) {
-                // On consomme un crédit de pack suggestion (messages restants)
-                const { data: p } = await supabaseAdmin.from('user_profiles').select('paid_chat_messages_remaining').eq('user_id', user.id).single()
-                updatePayload.paid_chat_messages_remaining = Math.max(0, (p?.paid_chat_messages_remaining || 0) - 1)
-            } else {
-                // On consomme un crédit de scan payé seul
-                updatePayload.paid_scans_remaining = Math.max(0, paidScans - 1)
-            }
-        } else {
-            // 🔥 Récupération de la toute dernière valeur pour éviter les désynchronisations
-            const { data: latest } = await supabaseAdmin
-                .from('user_profiles')
-                .select('scan_feedbacks_today')
-                .eq('user_id', user.id)
-                .single()
-            
-            const currentActual = latest?.scan_feedbacks_today ?? scansFeedbacksToday
-            
-            // On incrémente simplement le quota quotidien standard
-            updatePayload.scan_feedbacks_today = currentActual + 1
-            updatePayload.last_usage_reset_date = todayStr
-        }
-
-        await supabaseAdmin
-            .from('user_profiles')
-            .update(updatePayload)
-            .eq('user_id', user.id)
-    }
-
     return NextResponse.json({ success: true, data: mapped })
 }
+
 
 // 🔥 PATCH
 export async function PATCH(req: NextRequest) {
