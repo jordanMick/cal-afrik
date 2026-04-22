@@ -224,6 +224,17 @@ export async function POST(req: NextRequest) {
         }
 
         const isRequestingMenu = normalizedUserMessage.includes('menu') || normalizedUserMessage.includes('composer') || normalizedUserMessage.includes('manger quoi') || normalizedUserMessage.includes('collation') || normalizedUserMessage.includes('grignoter') || normalizedUserMessage.includes('petit dejeuner') || normalizedUserMessage.includes('dejeuner') || normalizedUserMessage.includes('diner')
+        
+        // --- BLOCAGE SUGGESTIONS SI QUOTA 4 ATTEINT ---
+        const scanFeedbacksToday = profile.scan_feedbacks_today || 0
+        const maxScansAllowed = SUBSCRIPTION_RULES[effectiveTier].maxScansPerDay
+        if (isRequestingMenu && scanFeedbacksToday >= maxScansAllowed && paidChatMessages <= 0) {
+            return NextResponse.json({
+                success: false,
+                error: 'Ta limite quotidienne de 4 repas est atteinte. Reviens demain ou utilise un pack !',
+                code: 'LIMIT_REACHED'
+            }, { status: 200 })
+        }
         const wantsMenuAny = isRequestingMenu || normalizedUserMessage.includes('ingredient') || normalizedUserMessage.includes('j\'ai')
         
         const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)

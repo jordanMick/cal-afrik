@@ -121,9 +121,24 @@ export async function POST(req: NextRequest) {
     const paidChatMessages = profile?.paid_chat_messages_remaining || 0
     const paidScans = profile?.paid_scans_remaining || 0
 
+    // ─── LIMITE PLAN ABSOLUE (4/JOUR POUR PRO) ───
+    if (tier === 'pro' && scansFeedbacksToday >= 4 && paidScans <= 0 && paidChatMessages <= 0) {
+        return NextResponse.json({
+            success: false,
+            code: 'LIMIT_REACHED',
+            error: 'Ta limite quotidienne de 4 repas est atteinte. Reviens demain ou utilise un pack !'
+        }, { status: 403 })
+    }
+
+    if (tier === 'free' && scansFeedbacksToday >= 5 && paidScans <= 0 && paidChatMessages <= 0) {
+        return NextResponse.json({
+            success: false,
+            code: 'LIMIT_REACHED',
+            error: 'Ta limite de 5 repas gratuits est atteinte. Passe au Plan Pro !'
+        }, { status: 403 })
+    }
+
     // On considère que c'est une suggestion si :
-    // - Yao a généré le contenu (flag is_suggestion ou présence de coach_message)
-    // - Ou si l'ID d'un aliment contient "suggested-" ou "coach-"
     const isSuggestion = body.is_suggestion === true || !!body.coach_message || body.is_from_coach === true
     let shouldConsumePaidAction = false
 
@@ -132,6 +147,7 @@ export async function POST(req: NextRequest) {
         let limitReached = false
         if (tier === 'free' && scansFeedbacksToday >= 5) limitReached = true
         else if (tier === 'pro' && scansFeedbacksToday >= 4) limitReached = true
+
         else if (tier === 'premium' && scansFeedbacksToday >= 50) limitReached = true
 
         if (limitReached) {
