@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
     if (isSuggestion) {
         let limitReached = false
         if (tier === 'free' && scansFeedbacksToday >= 5) limitReached = true
-        else if (tier === 'pro' && scansFeedbacksToday >= 15) limitReached = true
+        else if (tier === 'pro' && scansFeedbacksToday >= 4) limitReached = true
         else if (tier === 'premium' && scansFeedbacksToday >= 50) limitReached = true
 
         if (limitReached) {
@@ -151,31 +151,6 @@ export async function POST(req: NextRequest) {
             }
         }
     }
-
-    // ─── VÉRIFICATION LIMITE AJOUT TOTAL (MANUEL) ───
-    if (tier === 'free') {
-        const tzOffsetMin = Number(req.headers.get('x-tz-offset-min') || '0')
-        const now = new Date()
-        now.setMinutes(now.getMinutes() - tzOffsetMin)
-        const dayStr = now.toISOString().split('T')[0]
-        const { start, end } = getUtcRangeForLocalDay(dayStr, tzOffsetMin)
-
-        const { count } = await supabaseAdmin
-            .from('meals')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .gte('logged_at', start)
-            .lte('logged_at', end)
-
-        if ((count || 0) >= 2 && !isSuggestion) {
-            return NextResponse.json({
-                success: false,
-                code: 'LIMIT_REACHED',
-                error: 'Tu as atteint ta limite de 2 repas manuels par jour (mode Gratuit). Passe au plan Pro !'
-            }, { status: 403 })
-        }
-    }
-    // ────────────────────────────────────────────────────────长
 
     const mealData = {
         user_id: user.id,
