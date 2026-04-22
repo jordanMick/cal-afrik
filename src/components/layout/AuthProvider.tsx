@@ -64,6 +64,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
             setProfile(profile)
 
+            // ✅ Mettre en place l'abonnement direct à la base de données (Temps réel)
+            if (!(window as any)._profileSubscribed && session.user.id) {
+                ;(window as any)._profileSubscribed = true
+                supabase.channel('global_profile_updates')
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_profiles', filter: `user_id=eq.${session.user.id}` }, (payload) => {
+                        console.log('[Realtime] Modif profil détectée:', payload.new)
+                        useAppStore.getState().setProfile(payload.new as any)
+                    })
+                    .subscribe()
+            }
+
             // ✅ Charger les repas (une seule fois pour éviter les flashs)
             if (!mealsLoaded.current) {
                 mealsLoaded.current = true
