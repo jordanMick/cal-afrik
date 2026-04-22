@@ -42,8 +42,9 @@ export async function POST(req: Request) {
 
         const cart = await response.json();
 
-        // 3. Si le paiement est réussi (status: 'completed')
-        if (cart.status === 'completed') {
+        // 3. Si le paiement est réussi
+        // On accepte 'completed' OU la présence d'un 'paymentId' (qui prouve que l'argent est arrivé chez Maketou)
+        if (cart.status === 'completed' || cart.paymentId) {
             const metadata = cart.meta || {};
             const userId = metadata.user_id || metadata.userId;
             const tier = (metadata.tier || 'premium').toLowerCase();
