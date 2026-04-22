@@ -168,28 +168,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: error.message })
     }
 
-    // Mise à jour de l'utilisation APRES succès de l'insertion
-    if (isSuggestion) {
-        const updatePayload: any = { updated_at: new Date().toISOString() }
-        const effectiveTier = getEffectiveTier(profile)
-        const maxStandardMessages = SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay
-        const messagesUsed = profile?.chat_messages_today || 0
-
-        if (shouldConsumePaidAction) {
-            updatePayload.paid_scans_remaining = Math.max(0, paidScans - 1)
-        } else {
-            updatePayload.scan_feedbacks_today = scansFeedbacksToday + 1
-            updatePayload.last_usage_reset_date = todayStr
-
-            // On ne reset plus les messages payés ici, on laisse l'utilisateur 
-            // consommer ses 10 messages jusqu'au bout dans le chat.
-        }
-
-        await supabaseAdmin
-            .from('user_profiles')
-            .update(updatePayload)
-            .eq('user_id', user.id)
-    }
+    // (Mise à jour des quotas supprimée ici : gérée en amont par Analyze et Chat)
 
     const mapped = {
         id: (data as any).id,
