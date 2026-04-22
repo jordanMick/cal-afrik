@@ -460,6 +460,13 @@ export default function CoachChatPage() {
                  setMessagesUsedToday(maxMessages)
                  setIsTyping(false)
                  toast.error(data.error || "Limite atteinte")
+
+                 // 🔥 Forcer le rafraîchissement pour que la carte apparaisse
+                 const { data: { session } } = await supabase.auth.getSession()
+                 if (session) {
+                    const { data: p } = await supabase.from('user_profiles').select('*').eq('user_id', session.user.id).single()
+                    if (p) setProfile(p)
+                 }
                  return
              }
              if (data.code === 'MENU_TIER_REQUIRED') {
