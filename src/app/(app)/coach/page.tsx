@@ -487,7 +487,7 @@ export default function CoachChatPage() {
                 })
 
                 // 🔥 Rafraîchir le profil pour synchroniser les crédits payants restants
-                const { data: p } = await supabase.from('user_profiles').select('*').eq('user_id', profile.user_id || profile.id).single()
+                const { data: p } = await supabase.from('user_profiles').select('*').eq('user_id', session.user.id).single()
                 if (p) setProfile(p)
             } else {
                 setMessages(prev => {
