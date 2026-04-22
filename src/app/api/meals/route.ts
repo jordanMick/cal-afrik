@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     const paidScans = profile?.paid_scans_remaining || 0
 
     // ─── LIMITE PLAN ABSOLUE (4/JOUR POUR PRO) ───
-    if (tier === 'pro' && scansFeedbacksToday >= 4 && paidScans <= 0 && paidChatMessages <= 0) {
+    if (tier === 'pro' && scansFeedbacksToday >= 4 && paidScans <= 0) {
         return NextResponse.json({
             success: false,
             code: 'LIMIT_REACHED',
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
         }, { status: 403 })
     }
 
-    if (tier === 'free' && scansFeedbacksToday >= 5 && paidScans <= 0 && paidChatMessages <= 0) {
+    if (tier === 'free' && scansFeedbacksToday >= 5 && paidScans <= 0) {
         return NextResponse.json({
             success: false,
             code: 'LIMIT_REACHED',
@@ -138,38 +138,14 @@ export async function POST(req: NextRequest) {
         }, { status: 403 })
     }
 
+
     // On considère que c'est une suggestion si :
     const isSuggestion = body.is_suggestion === true || !!body.coach_message || body.is_from_coach === true
     let shouldConsumePaidAction = false
 
-    // ─── VÉRIFICATION QUOTA PARTAGÉ (SCANS + SUGGESTIONS) ───
-    if (isSuggestion) {
-        let limitReached = false
-        if (tier === 'free' && scansFeedbacksToday >= 5) limitReached = true
-        else if (tier === 'pro' && scansFeedbacksToday >= 4) limitReached = true
-
-        else if (tier === 'premium' && scansFeedbacksToday >= 50) limitReached = true
-
-        if (limitReached) {
-            // Si limite atteinte, on regarde s'il reste des points payés (scan ou pack suggestion)
-            if (paidScans > 0) {
-                shouldConsumePaidAction = true
-            } else if (paidChatMessages > 0) {
-                // On utilise les messages payés restants comme "droit de passage"
-                // et on marque qu'on doit quand même décompter un message ou marquer l'action
-                shouldConsumePaidAction = true 
-                body.force_use_chat_credit = true 
-            } else {
-                return NextResponse.json({
-                    success: false,
-                    code: 'LIMIT_REACHED',
-                    error: tier === 'free'
-                        ? 'Tu as atteint ta limite de 5 actions IA gratuites à vie. Passe au plan Pro ou achète un pack (100 FCFA) !'
-                        : 'Tu as atteint ta limite de 4 actions IA aujourd\'hui. Reviens demain ou achète un pack (100 FCFA) !'
-                }, { status: 403 })
-            }
-        }
+        // (La gestion des quotas se fait désormais uniquement lors de la génération IA via api/chat ou api/analyze)
     }
+
 
     const mealData = {
         user_id: user.id,

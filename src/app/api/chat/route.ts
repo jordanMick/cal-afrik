@@ -227,7 +227,8 @@ export async function POST(req: NextRequest) {
         
         // --- BLOCAGE SUGGESTIONS SI QUOTA 4 ATTEINT ---
         const maxScansAllowed = SUBSCRIPTION_RULES[effectiveTier].maxScansPerDay
-        if (isRequestingMenu && scanFeedbacksToday >= maxScansAllowed && paidChatMessages <= 0) {
+        if (isRequestingMenu && scanFeedbacksToday >= maxScansAllowed) {
+
             return NextResponse.json({
                 success: false,
                 error: 'Ta limite quotidienne de 4 repas est atteinte. Reviens demain ou utilise un pack !',
