@@ -223,6 +223,9 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        const isRequestingMenu = normalizedUserMessage.includes('menu') || normalizedUserMessage.includes('composer') || normalizedUserMessage.includes('manger quoi') || normalizedUserMessage.includes('collation') || normalizedUserMessage.includes('grignoter') || normalizedUserMessage.includes('petit dejeuner') || normalizedUserMessage.includes('dejeuner') || normalizedUserMessage.includes('diner')
+        const wantsMenuAny = isRequestingMenu || normalizedUserMessage.includes('ingredient') || normalizedUserMessage.includes('j\'ai')
+        
         const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage) && /\bmenu\b/.test(normalizedUserMessage)
         const wantsWeek = (/\bsemaine\b/.test(normalizedUserMessage) || /\b7 jours\b/.test(normalizedUserMessage)) && /\bmenu\b/.test(normalizedUserMessage)
         const isFreeLimited = (wantsTomorrow || wantsWeek) && effectiveTier === 'free'
