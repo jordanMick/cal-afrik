@@ -288,7 +288,21 @@ export async function POST(req: Request) {
                 updated_at: new Date().toISOString()
             })
             .eq('user_id', user.id)
+    } else {
+        // 🔥 On incrémente IMMÉDIATEMENT pour éviter les "Race Conditions" (double requête en même temps)
+        const { data: latestProfile } = await supabase.from('user_profiles').select('scan_feedbacks_today').eq('user_id', user.id).single()
+        const currentCount = latestProfile?.scan_feedbacks_today ?? scansFeedbacksToday
+        
+        await supabase
+            .from('user_profiles')
+            .update({ 
+                scan_feedbacks_today: currentCount + 1,
+                last_usage_reset_date: todayStr,
+                updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id)
     }
+
 
     const MOCK_MODE = false
     if (MOCK_MODE) {
@@ -793,20 +807,8 @@ export async function POST(req: Request) {
             mealName: finalMealName,
         })
 
-        // ✅ Incrémenter scan_feedbacks_today et mettre à jour la date de reset
-        const { data: latestProfile } = await supabase.from('user_profiles').select('scan_feedbacks_today').eq('user_id', user.id).single()
-        const currentCount = latestProfile?.scan_feedbacks_today ?? scansFeedbacksToday
-        
-        await supabase
-            .from('user_profiles')
-            .update({ 
-                scan_feedbacks_today: currentCount + 1,
-                last_usage_reset_date: todayStr,
-                updated_at: new Date().toISOString()
-            })
-            .eq('user_id', user.id)
-
         console.log("✅ Analysis successful")
+
         return NextResponse.json({
             success: true,
             meal_name: finalMealName,
@@ -817,7 +819,20 @@ export async function POST(req: Request) {
 
     } catch (err: any) {
         console.error("❌ ERROR:", err)
-        console.log("=== [ANALYZE] END WITH ERROR ===")
+        console.log("=== [ANALYZE] END WITH ERROR - REFUNDING QUOTA ===")
+
+        // 🔄 REFUND du quota puisqu'on l'a pré-levé, mais l'analyse a échoué
+        if (limitReached) {
+            // Rembourser le scan payé
+            await supabase.from('user_profiles').update({ paid_scans_remaining: paidScans }).eq('user_id', user.id)
+        } else {
+            // Rembourser le quota quotidien
+            const { data: currentP } = await supabase.from('user_profiles').select('scan_feedbacks_today').eq('user_id', user.id).single()
+            if (currentP && currentP.scan_feedbacks_today > 0) {
+                await supabase.from('user_profiles').update({ scan_feedbacks_today: currentP.scan_feedbacks_today - 1 }).eq('user_id', user.id)
+            }
+        }
+
         return NextResponse.json({
             success: false,
             meal_name: "",
@@ -828,4 +843,4 @@ export async function POST(req: Request) {
     } finally {
         console.log("=== [ANALYZE] END ===")
     }
-}
+}
