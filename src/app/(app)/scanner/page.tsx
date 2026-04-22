@@ -256,15 +256,15 @@ export default function ScannerPage() {
             fat_detected: totalFat,
             confidence: 100,
             detected: displayLabel,
-            fromCoach: false
+            fromCoach: true
         }
 
+        setCoachMessage(`Menu suggéré par Yao : ${displayLabel}`)
         setMealName(displayLabel)
         setSelectedFoods([virtualFood])
         setTotalCaloriesCoach(Math.round(totalCals))
         setShowRecap(true)
         setShowCoach(false)
-        setCoachMessage('')
     }
 
     const currentHour = new Date().getHours()
