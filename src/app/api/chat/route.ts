@@ -548,10 +548,6 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                 }
             }
             
-            // Nettoyage sécurité : Si l'IA pose une question mais a mis un préfixe technique de CRÉNEAU UNIQUE, on nettoie pour l'affichage suggestion.
-            if (aiMessage.toLowerCase().includes('menu creneau')) {
-                // ... reste du nettoyage existant ...
-            }
             } catch (anthropicErr) {
                 console.error('⚠️ Anthropic primary error:', anthropicErr)
                 if (wantsWeek) {
@@ -564,17 +560,21 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             // Garde-fou: si l'utilisateur demande un menu mais que le modèle n'a pas mis
             // le préfixe attendu, on le rajoute automatiquement. Mais si le modèle a mis le préfixe
             // alors que c'est manifestement une question ou une phrase conversationnelle courte, on l'enlève.
-            const prefixRegex = /^menu\s+(creneau\s+(petit_dejeuner|dejeuner|collation|diner)|demain|semaine)\s*:\s*/i
+            
+            // Regex identique au frontend pour la détection du préfixe
+            const prefixRegex = /^menu\s+(creneau\s+(petit[-_ ]?dej(?:euner)?|dej(?:euner)?|collation|din(?:er|in))|demain|semaine)\s*:\s*/i
+            
             const hasMenuPrefix = prefixRegex.test(aiMessage)
+            const hasDataBlock = aiMessage.includes('---DATA---')
             const hasExplicitTarget = wantsWeek || wantsTomorrow || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
             const isConfirmationPrompt = aiMessage.includes('?') && aiMessage.length < 250
-            const lacksMealFormat = !/(Petit-d[ée]j|D[ée]jeuner|Collation|D[îi]ner)\b/i.test(aiMessage) && !wantsWeek
+            const lacksMealFormat = !hasDataBlock && !wantsWeek
 
             if (hasMenuPrefix && (isConfirmationPrompt || lacksMealFormat)) {
-                // L'IA a mis le préfixe à tort sur une phrase conversationnelle
+                // L'IA a mis le préfixe à tort sur une phrase conversationnelle (pas de bloc DATA)
                 aiMessage = aiMessage.replace(prefixRegex, '')
-            } else if (wantsMenu && hasExplicitTarget && !hasMenuPrefix && !isConfirmationPrompt && !lacksMealFormat) {
-                // L'IA a oublié le préfixe pour un vrai menu
+            } else if ((wantsMenu || hasDataBlock) && hasExplicitTarget && !hasMenuPrefix && !isConfirmationPrompt) {
+                // L'IA a oublié le préfixe pour un vrai menu (ou on a un bloc DATA)
                 let prefix = 'menu demain:'
                 if (wantsWeek) prefix = 'menu semaine:'
                 else if (wantsTomorrow) prefix = 'menu demain:'
@@ -582,6 +582,13 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                 else if (wantsSlotDejeuner) prefix = 'menu creneau dejeuner:'
                 else if (wantsSlotCollation) prefix = 'menu creneau collation:'
                 else if (wantsSlotDiner) prefix = 'menu creneau diner:'
+                
+                // Si l'IA avait déjà un préfixe partiel ou mal formé, on nettoie d'abord
+                const loosePrefix = /^menu\s+[^:]+:\s*/i
+                if (loosePrefix.test(aiMessage)) {
+                   aiMessage = aiMessage.replace(loosePrefix, '')
+                }
+
                 aiMessage = `${prefix} ${aiMessage}`.trim()
             }
 

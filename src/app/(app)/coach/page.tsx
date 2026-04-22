@@ -129,12 +129,12 @@ function parseDataBlock(rawMessage: string): {
 
     try {
         const parsed = JSON.parse(jsonPart)
-        if (parsed?.type === 'suggestion' && Array.isArray(parsed.items)) {
-            return { displayText, dataItems: parsed.items, slot }
+        const items = Array.isArray(parsed.items) ? parsed.items : []
+        
+        if (items.length > 0) {
+            return { displayText, dataItems: items, slot }
         }
     } catch {
-        // En cas d'erreur JSON (tronqué), on retourne au moins le texte propre
-        // pour que la balise DATA ne s'affiche pas à l'écran.
         return { displayText }
     }
     return { displayText }
