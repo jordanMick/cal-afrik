@@ -205,7 +205,7 @@ const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgra
 
 export default function CoachChatPage() {
     const router = useRouter()
-    const { profile, slots, setLastCoachMessage, setChatSuggestedMenu, chatSuggestedMenus } = useAppStore()
+    const { profile, setProfile, slots, setLastCoachMessage, setChatSuggestedMenu, chatSuggestedMenus } = useAppStore()
     const effectiveTier = getEffectiveTier(profile)
 
     const maxMessages = Number(SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay || 2)
