@@ -794,10 +794,13 @@ export async function POST(req: Request) {
         })
 
         // ✅ Incrémenter scan_feedbacks_today et mettre à jour la date de reset
+        const { data: latestProfile } = await supabase.from('user_profiles').select('scan_feedbacks_today').eq('user_id', user.id).single()
+        const currentCount = latestProfile?.scan_feedbacks_today ?? scansFeedbacksToday
+        
         await supabase
             .from('user_profiles')
             .update({ 
-                scan_feedbacks_today: scansFeedbacksToday + 1,
+                scan_feedbacks_today: currentCount + 1,
                 last_usage_reset_date: todayStr,
                 updated_at: new Date().toISOString()
             })
