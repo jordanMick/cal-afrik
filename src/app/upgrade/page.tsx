@@ -56,6 +56,10 @@ function PricingContent() {
 
             // Redirection directe vers la page de paiement Maketou
             if (data.url) {
+                // Sauvegarder l'ID du panier pour la page de succès
+                if (data.cartId) {
+                    localStorage.setItem('pending_maketou_cart_id', data.cartId);
+                }
                 window.location.href = data.url;
             } else {
                 throw new Error('URL de paiement non reçue');

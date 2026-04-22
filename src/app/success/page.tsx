@@ -15,9 +15,12 @@ function SuccessContent() {
 
   useEffect(() => {
     async function verifyPayment() {
-      if (!sessionId) {
+      // On cherche l'ID dans l'URL OU dans le localStorage (secours)
+      const currentSessionId = sessionId || localStorage.getItem('pending_maketou_cart_id');
+
+      if (!currentSessionId) {
         setStatus('error')
-        setMessage('ID de session manquant')
+        setMessage('Impossible de retrouver votre paiement. Si vous avez été débité, contactez le support.')
         return
       }
 
@@ -34,7 +37,7 @@ function SuccessContent() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`
           },
-          body: JSON.stringify({ transactionId: sessionId })
+          body: JSON.stringify({ transactionId: currentSessionId })
         })
 
         const data = await res.json()
@@ -42,6 +45,7 @@ function SuccessContent() {
           setStatus('success')
           setMessage('Paiement confirmé ! Votre compte a été mis à jour.')
           toast.success('Paiement réussi !')
+          localStorage.removeItem('pending_maketou_cart_id'); // Nettoyage
           setTimeout(() => router.push('/scanner'), 3000)
         } else {
           setStatus('error')

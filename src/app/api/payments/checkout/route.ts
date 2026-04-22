@@ -40,6 +40,11 @@ export async function POST(req: Request) {
         console.log(`[Maketou] Création panier pour ${user.email} - Produit: ${tier}`);
 
         // 3. Appel API Maketou
+        const fullName = user.user_metadata?.full_name || 'Utilisateur CalAfrik';
+        const nameParts = fullName.split(' ');
+        const firstName = nameParts[0] || 'Utilisateur';
+        const lastName = nameParts.slice(1).join(' ') || 'CalAfrik';
+
         const response = await fetch('https://api.maketou.net/api/v1/stores/cart/checkout', {
             method: 'POST',
             headers: {
@@ -49,9 +54,9 @@ export async function POST(req: Request) {
             body: JSON.stringify({
                 productDocumentId: productDocumentId,
                 email: user.email,
-                firstName: user.user_metadata?.full_name?.split(' ')[0] || 'Utilisateur',
-                lastName: user.user_metadata?.full_name?.split(' ')[1] || 'CalAfrik',
-                redirectURL: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/success?session_id={cartId}`,
+                firstName: firstName,
+                lastName: lastName,
+                redirectURL: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/success`,
                 meta: {
                     user_id: user.id,
                     tier: tier
