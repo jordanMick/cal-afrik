@@ -124,6 +124,13 @@ export default function MenusPage() {
     const effectiveTier = getEffectiveTier(profile)
     const canAccessFutureMenus = effectiveTier === 'pro' || effectiveTier === 'premium'
 
+    // Limites de scans (IA globales)
+    const scansUsedToday = profile?.scan_feedbacks_today || 0
+    const paidScans = profile?.paid_scans_remaining || 0
+    const isProLimit = effectiveTier === 'pro' && scansUsedToday >= 4
+    const isFreeLimit = effectiveTier === 'free' && scansUsedToday >= 5
+    const isLimitReached = (isProLimit || isFreeLimit) && paidScans <= 0
+
     const now = new Date()
     const currentHour = now.getHours(), currentSlotKey = getMealSlot(currentHour), todayStr = now.toISOString().split('T')[0]
     const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1); const yesterdayStr = yesterday.toISOString().split('T')[0]
