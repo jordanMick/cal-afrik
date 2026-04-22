@@ -825,6 +825,12 @@ export default function ScannerPage() {
     const displayedRemaining = Math.max(0, isLastSlot ? dailyRemainingNow : (currentSlot?.remaining ?? 0))
     const displayedRemainingLabel = isLastSlot ? "Restant journée" : "Restant créneau"
 
+    const scansUsedToday = profile?.scan_feedbacks_today || 0
+    const paidScans = profile?.paid_scans_remaining || 0
+    const isProLimit = effectiveTier === 'pro' && scansUsedToday >= 4
+    const isFreeLimit = effectiveTier === 'free' && scansUsedToday >= 5
+    const globalIsBlocked = (isProLimit || isFreeLimit) && paidScans <= 0
+
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', maxWidth: '480px', margin: '0 auto', padding: '24px', paddingBottom: '140px', position: 'relative', overflow: 'hidden' }}>
 
@@ -850,64 +856,65 @@ export default function ScannerPage() {
                 </div>
             </div>
 
-
-
-
-            {/* SWITCH MODE SCAN */}
-            <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>
-                <button onClick={() => { setScanMode('ai'); (window as any).isLastScanFromBarcode = false; }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? 'var(--bg-tertiary)' : 'transparent', color: scanMode === 'ai' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
-                    📸 Photo
-                </button>
-                <button onClick={() => setScanMode('barcode')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'barcode' ? 'var(--bg-tertiary)' : 'transparent', color: scanMode === 'barcode' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
-                    🏷️ Code-barres
-                </button>
-            </div>
-
-            {/* AI SCAN VIEW */}
-            {scanMode === 'ai' && !image && (
+            {/* SWITCH MODE SCAN - HIDDEN IF BLOCKED */}
+            {!globalIsBlocked && (
                 <>
-                    <div onClick={() => fileInputRef.current?.click()} style={{ height: '200px', borderRadius: '24px', background: 'var(--bg-secondary)', border: `1px dashed ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                        <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'rgba(var(--accent-rgb), 0.12)', border: `0.5px solid ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 8px 16px rgba(var(--accent-rgb), 0.15)` }}>📷</div>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '600' }}>Scanner un plat</p>
-                    </div>
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (file) await processImage(file) }} style={{ display: 'none' }} />
-                </>
-            )}
-
-            {/* BARCODE SCAN VIEW */}
-            {scanMode === 'barcode' && !image && (
-                <div style={{ marginBottom: '20px' }}>
-                    <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: 'var(--bg-secondary)', minHeight: '250px' }}></div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres dans le carré</p>
-
-                    <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '10px', textTransform: 'uppercase', fontWeight: '700', opacity: 0.5 }}>Ou</p>
-                        <button
-                            onClick={() => {
-                                const input = document.createElement('input');
-                                input.type = 'file';
-                                input.accept = 'image/*';
-                                input.onchange = (e: any) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleFileScan(file);
-                                };
-                                input.click();
-                            }}
-                            style={{
-                                background: 'transparent',
-                                border: `1px solid ${slotColor}30`,
-                                color: slotColor,
-                                padding: '10px 20px',
-                                borderRadius: '12px',
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            🖼️ Choisir une image
+                    <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '14px', padding: '4px', marginBottom: '16px' }}>
+                        <button onClick={() => { setScanMode('ai'); (window as any).isLastScanFromBarcode = false; }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'ai' ? 'var(--bg-tertiary)' : 'transparent', color: scanMode === 'ai' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
+                            📸 Photo
+                        </button>
+                        <button onClick={() => setScanMode('barcode')} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: scanMode === 'barcode' ? 'var(--bg-tertiary)' : 'transparent', color: scanMode === 'barcode' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.2s' }}>
+                            🏷️ Code-barres
                         </button>
                     </div>
-                </div>
+
+                    {/* AI SCAN VIEW */}
+                    {scanMode === 'ai' && !image && (
+                        <>
+                            <div onClick={() => fileInputRef.current?.click()} style={{ height: '200px', borderRadius: '24px', background: 'var(--bg-secondary)', border: `1px dashed ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                                <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'rgba(var(--accent-rgb), 0.12)', border: `0.5px solid ${slotColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', boxShadow: `0 8px 16px rgba(var(--accent-rgb), 0.15)` }}>📷</div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '600' }}>Scanner un plat</p>
+                            </div>
+                            <input ref={fileInputRef} type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (file) await processImage(file) }} style={{ display: 'none' }} />
+                        </>
+                    )}
+
+                    {/* BARCODE SCAN VIEW */}
+                    {scanMode === 'barcode' && !image && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <div id="reader" style={{ borderRadius: '24px', overflow: 'hidden', border: `1px solid ${slotColor}30`, background: 'var(--bg-secondary)', minHeight: '250px' }}></div>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Place le code-barres dans le carré</p>
+
+                            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginBottom: '10px', textTransform: 'uppercase', fontWeight: '700', opacity: 0.5 }}>Ou</p>
+                                <button
+                                    onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.accept = 'image/*';
+                                        input.onchange = (e: any) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleFileScan(file);
+                                        };
+                                        input.click();
+                                    }}
+                                    style={{
+                                        background: 'transparent',
+                                        border: `1px solid ${slotColor}30`,
+                                        color: slotColor,
+                                        padding: '10px 20px',
+                                        borderRadius: '12px',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    🖼️ Choisir une image
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* PREVIEW IMAGE / SCAN ANIMATION */}
