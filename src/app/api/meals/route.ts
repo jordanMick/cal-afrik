@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id)
         .single()
 
-    let tier = profile?.subscription_tier || 'free'
+    let tier = (profile?.subscription_tier || 'free').toLowerCase()
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
     // On ne rétrograde que si la date est explicitement dépassée
     if (expiresAt && expiresAt.getTime() < Date.now()) {
