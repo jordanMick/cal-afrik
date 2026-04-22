@@ -470,14 +470,11 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
         const MOCK_MODE = false
 
         let aiMessage = ""
-        const wantsMenu = /\bmenu\b/.test(normalizedUserMessage)
-        const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage)
-        const wantsWeek = /\bsemaine\b/.test(normalizedUserMessage)
+        // Utilisation des variables déjà définies en début de POST (wantsTomorrow, wantsWeek, wantsMenuAny)
         const wantsSlotPetitDej = /\bpetit[\s-]?dej(?:euner)?\b/.test(normalizedUserMessage)
         const wantsSlotDejeuner = /\bdejeuner\b/.test(normalizedUserMessage)
         const wantsSlotCollation = /\bcollation\b/.test(normalizedUserMessage)
         const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
-        const wantsMenuAny = wantsMenu || wantsTomorrow || wantsWeek || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
 
         if (MOCK_MODE) {
             await new Promise(r => setTimeout(r, 800)) // Simule un délai réaliste
@@ -573,7 +570,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             if (hasMenuPrefix && (isConfirmationPrompt || lacksMealFormat)) {
                 // L'IA a mis le préfixe à tort sur une phrase conversationnelle (pas de bloc DATA)
                 aiMessage = aiMessage.replace(prefixRegex, '')
-            } else if ((wantsMenu || hasDataBlock) && hasExplicitTarget && !hasMenuPrefix && !isConfirmationPrompt) {
+            } else if ((wantsMenuAny || hasDataBlock) && hasExplicitTarget && !hasMenuPrefix && !isConfirmationPrompt) {
                 // L'IA a oublié le préfixe pour un vrai menu (ou on a un bloc DATA)
                 let prefix = 'menu demain:'
                 if (wantsWeek) prefix = 'menu semaine:'
