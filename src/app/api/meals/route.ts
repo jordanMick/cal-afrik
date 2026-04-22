@@ -109,12 +109,7 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id)
         .single()
 
-    let tier = (profile?.subscription_tier || 'free').toLowerCase()
-    const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
-    // On ne rétrograde que si la date est explicitement dépassée
-    if (expiresAt && expiresAt.getTime() < Date.now()) {
-        tier = 'free'
-    }
+    const tier = getEffectiveTier(profile)
 
     const todayStr = new Date().toISOString().split('T')[0]
     const isToday = profile?.last_usage_reset_date === todayStr
@@ -136,7 +131,8 @@ export async function POST(req: NextRequest) {
     if (isSuggestion) {
         let limitReached = false
         if (tier === 'free' && scansFeedbacksToday >= 5) limitReached = true
-        else if (tier === 'pro' && scansFeedbacksToday >= 4) limitReached = true
+        else if (tier === 'pro' && scansFeedbacksToday >= 15) limitReached = true
+        else if (tier === 'premium' && scansFeedbacksToday >= 50) limitReached = true
 
         if (limitReached) {
             // Si limite atteinte, on regarde s'il reste des points payés (scan ou pack suggestion)
