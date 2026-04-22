@@ -219,11 +219,8 @@ export async function POST(req: NextRequest) {
             updatePayload.scan_feedbacks_today = scansFeedbacksToday + 1
             updatePayload.last_usage_reset_date = todayStr
 
-            // On ne reset les messages payés QUE si l'utilisateur avait épuisé son quota normal
-            // (C'est le signal que la "séance payante" est terminée)
-            if (messagesUsed >= maxStandardMessages) {
-                updatePayload.paid_chat_messages_remaining = 0
-            }
+            // On ne reset plus les messages payés ici, on laisse l'utilisateur 
+            // consommer ses 10 messages jusqu'au bout dans le chat.
         }
 
         await supabaseAdmin

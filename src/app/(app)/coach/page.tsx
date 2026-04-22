@@ -577,7 +577,22 @@ export default function CoachChatPage() {
                 .from('user_profiles')
                 .update({ suggested_menus_json: updatedMenus })
                 .eq('user_id', session.user.id)
-                .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
+                .then(async ({ error }) => { 
+                    if (error) console.error('⚠️ suggested_menus save error:', error)
+                    
+                    // 🔥 Clôture de la session payante s'il y a lieu
+                    if (profile?.paid_chat_messages_remaining && profile.paid_chat_messages_remaining > 0) {
+                        try {
+                            await fetch('/api/payments/consume-session', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
+                            })
+                            // Refresh profile localement pour verrouiller l'UI
+                            const { data: p } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single()
+                            if (p) setProfile(p)
+                        } catch (err) { console.error('Error consuming session:', err) }
+                    }
+                })
         })
 
         router.push('/menus')
@@ -597,7 +612,22 @@ export default function CoachChatPage() {
                 .from('user_profiles')
                 .update({ suggested_menus_json: updatedMenus })
                 .eq('user_id', session.user.id)
-                .then(({ error }) => { if (error) console.error('⚠️ suggested_menus save error:', error) })
+                .then(async ({ error }) => { 
+                    if (error) console.error('⚠️ suggested_menus save error:', error)
+                    
+                    // 🔥 Clôture de la session payante s'il y a lieu
+                    if (profile?.paid_chat_messages_remaining && profile.paid_chat_messages_remaining > 0) {
+                        try {
+                            await fetch('/api/payments/consume-session', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
+                            })
+                            // Refresh profile localement pour verrouiller l'UI
+                            const { data: p } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single()
+                            if (p) setProfile(p)
+                        } catch (err) { console.error('Error consuming session:', err) }
+                    }
+                })
         })
         router.push('/menus')
     }
