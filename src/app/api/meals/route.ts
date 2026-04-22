@@ -138,14 +138,7 @@ export async function POST(req: NextRequest) {
         }, { status: 403 })
     }
 
-
-    // On considère que c'est une suggestion si :
-    const isSuggestion = body.is_suggestion === true || !!body.coach_message || body.is_from_coach === true
-    let shouldConsumePaidAction = false
-
-        // (La gestion des quotas se fait désormais uniquement lors de la génération IA via api/chat ou api/analyze)
-    }
-
+    // (La gestion des quotas se fait désormais uniquement lors de la génération IA via api/chat ou api/analyze)
 
     const mealData = {
         user_id: user.id,
