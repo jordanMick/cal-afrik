@@ -235,28 +235,46 @@ export async function POST(req: Request) {
         }
     }
 
-    // ─── GESTION COMPTEUR SCANS (reset quotidien) ─────────────
+    // ─── GESTION COMPTEUR SCANS (reset quotidien sauf free) ────────
     const todayStr = new Date().toISOString().split('T')[0]
     const lastReset = profile?.last_usage_reset_date || ''
     let scansFeedbacksToday = profile?.scan_feedbacks_today || 0
 
     if (lastReset !== todayStr) {
-        // Nouveau jour → reset du compteur
-        scansFeedbacksToday = 0
-        await supabase
-            .from('user_profiles')
-            .update({ scan_feedbacks_today: 0, last_usage_reset_date: todayStr })
-            .eq('user_id', user.id)
+        // Nouveau jour → reset du compteur si pas free
+        if (tier !== 'free') {
+            scansFeedbacksToday = 0
+            await supabase
+                .from('user_profiles')
+                .update({ scan_feedbacks_today: 0, last_usage_reset_date: todayStr })
+                .eq('user_id', user.id)
+        } else {
+            await supabase
+                .from('user_profiles')
+                .update({ last_usage_reset_date: todayStr })
+                .eq('user_id', user.id)
+        }
     }
 
-    // ─── LIMITE PLAN FREE : 2 scans/jour ─────────────────────
+    // ─── LIMITE PLAN ─────────────────────
     const paidScans = profile?.paid_scans_remaining || 0
 
-    if (tier === 'free' && scansFeedbacksToday >= 2) {
+    let limitReached = false
+    let errorMessage = ""
+
+    if (tier === 'free' && scansFeedbacksToday >= 5) {
+        limitReached = true
+        errorMessage = "Tu as atteint ta limite de 5 scans gratuits à vie. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA)."
+    } else if (tier === 'pro' && scansFeedbacksToday >= 4) {
+        limitReached = true
+        errorMessage = "Tu as atteint ta limite de 4 scans aujourd'hui. Reviens demain ou achète un scan à l'unité (100 FCFA)."
+    }
+
+    if (limitReached) {
         if (paidScans <= 0) {
             return new Response(JSON.stringify({
                 success: false,
-                error: "Tu as atteint ta limite de 2 scans aujourd'hui. Reviens demain, passe au Plan Pro ou achète un scan à l'unité (100 FCFA).",
+                error: errorMessage,
                 code: "LIMIT_REACHED"
             }), { status: 403 })
         }

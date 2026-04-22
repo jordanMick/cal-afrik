@@ -524,16 +524,32 @@ export default function ScannerPage() {
 
         const { data: { session } } = await supabase.auth.getSession();
 
-        if (session && profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 2 && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
-            toast.error("Tu as atteint ta limite de 2 scans gratuits pour aujourd'hui.", {
-                description: "Achète un scan à l'unité (100 FCFA) ou passe au plan Pro.",
-                action: {
-                    label: "Payer 100 FCFA",
-                    onClick: () => handlePayForScan()
-                },
-                duration: 10000
-            })
-            return
+        if (session) {
+            let limitReached = false;
+            let errorMessage = "";
+            let errorDesc = "";
+
+            if (profile?.subscription_tier === 'free' && (profile?.scan_feedbacks_today || 0) >= 5 && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
+                limitReached = true;
+                errorMessage = "Tu as atteint ta limite de 5 scans gratuits à vie.";
+                errorDesc = "Achète un scan à l'unité (100 FCFA) ou passe au plan Pro.";
+            } else if (profile?.subscription_tier === 'pro' && (profile?.scan_feedbacks_today || 0) >= 4 && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
+                limitReached = true;
+                errorMessage = "Tu as atteint ta limite de 4 scans aujourd'hui.";
+                errorDesc = "Reviens demain ou achète un scan à l'unité (100 FCFA).";
+            }
+
+            if (limitReached) {
+                toast.error(errorMessage, {
+                    description: errorDesc,
+                    action: {
+                        label: "Payer 100 FCFA",
+                        onClick: () => handlePayForScan()
+                    },
+                    duration: 10000
+                })
+                return
+            }
         }
 
         (window as any).isLastScanFromBarcode = true;
@@ -578,31 +594,6 @@ export default function ScannerPage() {
     }
 
     const handleFileScan = async (file: File) => {
-        // --- VÉRIFICATION LIMITE SCAN PRODUIT ---
-        const { data: { session: checkSession } } = await supabase.auth.getSession()
-        if (checkSession && profile?.subscription_tier === 'free' && (!profile?.paid_scans_remaining || profile.paid_scans_remaining <= 0)) {
-            const today = new Date().toISOString().split('T')[0]
-            const { count } = await supabase
-                .from('meals')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', checkSession.user.id)
-                .eq('ai_confidence', -1)
-                .gte('logged_at', `${today}T00:00:00.000Z`)
-                .lte('logged_at', `${today}T23:59:59.999Z`)
-
-            if (count !== null && count >= 5) {
-                toast.info("🚀 Limite de scan de produits atteinte (5/jour en mode gratuit).", {
-                    description: "Passe au plan Pro ou achète un scan à l'unité (100 FCFA).",
-                    action: {
-                        label: "Payer 100 FCFA",
-                        onClick: () => handlePayForScan()
-                    },
-                    duration: 10000
-                })
-                return
-            }
-        }
-
         (window as any).isLastScanFromBarcode = true;
         setIsAnalyzing(true);
         try {

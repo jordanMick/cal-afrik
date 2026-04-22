@@ -4,17 +4,17 @@ export type SubscriptionTier = 'free' | 'pro' | 'premium'
 
 export const SUBSCRIPTION_RULES = {
     free: {
-        maxScansPerDay: 2,
-        maxCoachFeedbackPerDay: 0, // géré par has_used_free_lifetime_feedback
-        maxChatMessagesPerDay: 10,
+        maxScansPerDay: 5, // 5 scans à vie
+        maxCoachFeedbackPerDay: 5, // 5 analyses détaillées à vie
+        maxChatMessagesPerDay: 10, // 10 messages à vie
         hasGraph: false,
         hasAutomaticRecalculation: false,
         hasCoachYao: false,
     },
     pro: {
-        maxScansPerDay: 1000, // Illimité en pratique
-        maxCoachFeedbackPerDay: 1,
-        maxChatMessagesPerDay: 30,
+        maxScansPerDay: 4, // 4 par jour
+        maxCoachFeedbackPerDay: 2, // 2 analyses par jour
+        maxChatMessagesPerDay: 10, // 10 par jour
         hasGraph: true,
         hasAutomaticRecalculation: true,
         hasCoachYao: true,
@@ -22,7 +22,7 @@ export const SUBSCRIPTION_RULES = {
     premium: {
         maxScansPerDay: 1000,
         maxCoachFeedbackPerDay: Infinity,
-        maxChatMessagesPerDay: 50,
+        maxChatMessagesPerDay: 30, // 30 par jour
         hasGraph: true,
         hasAutomaticRecalculation: true,
         hasCoachYao: true,

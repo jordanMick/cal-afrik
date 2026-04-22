@@ -189,17 +189,29 @@ export async function POST(req: NextRequest) {
         const today = new Date().toISOString().split('T')[0]
 
         let messagesUsedToday = profile.chat_messages_today || 0
+        let resetUpdates: any = {}
         if (profile.last_usage_reset_date !== today) {
-            messagesUsedToday = 0
+            if (effectiveTier !== 'free') {
+                messagesUsedToday = 0
+                resetUpdates = { scan_feedbacks_today: 0 } // Reset other daily counters too
+            }
         }
 
         // Vérification de la limite
+        let isUsingPaidMessages = false
+        const paidChatMessages = profile.paid_chat_messages_remaining || 0
+
         if (messagesUsedToday >= maxMessages) {
-            return NextResponse.json({
-                success: false,
-                error: 'Limite journalière atteinte. Reviens demain !',
-                code: 'LIMIT_REACHED'
-            }, { status: 200 })
+            if (paidChatMessages > 0) {
+                isUsingPaidMessages = true
+                console.log(`[CHAT] User ${user.id} uses a paid message token.`)
+            } else {
+                return NextResponse.json({
+                    success: false,
+                    error: effectiveTier === 'free' ? 'Limite à vie de 10 messages atteinte. Abonnez-vous pour continuer ou achetez un pack de suggestion (100 FCFA pour 10 messages) !' : 'Limite journalière atteinte. Reviens demain ou achète un pack de suggestion (100 FCFA pour 10 messages) !',
+                    code: 'LIMIT_REACHED'
+                }, { status: 200 })
+            }
         }
 
         // 3. Traiter la requête de l'utilisateur
@@ -396,10 +408,18 @@ RÈGLES STRICTES (OBLIGATOIRES) :
 1) BUDGET CALORIQUE DYNAMIQUE (CRITIQUE) : Si tu composes un menu pour AUJOURD'HUI (menu creneau), tu DOIS calculer : [Cible] - [Déjà consommé]. Le total calorique du repas proposé DOIT impérativement tenir dans ce budget. 
 2) PAS DE CALCUL DU REPAS : Ne calcule JAMAIS le TOTAL du repas que tu proposes (Calories/Macros) dans ton texte. Le système l'ajoutera automatiquement à la fin. Cependant, tu PEUX (et dois) mentionner ton budget restant et ta consommation du jour fournis ci-dessous en utilisant l'unité kcal.
 3) PRÉFIXES TECHNIQUES (OBLIGATOIRES) : 
-   - "menu creneau [nom]:" -> UNIQUEMENT pour un repas à consommer AUJOURD'HUI.
-   - "menu demain:" -> Pour un menu complet (ou partiel) de DEMAIN. Jamais de "menu creneau" pour demain.
+   - "menu creneau [nom]:" -> UNIQUEMENT pour un repas à consommer AUJOURD'HUI. INTERDICTION de proposer plus d'un repas à la fois pour aujourd'hui.
+   - "menu demain:" -> Pour un menu complet de DEMAIN (ou un repas spécifique demain).
    - "menu semaine:" -> Pour le planning complet des 7 jours.
-4) FORMAT MENU : Très détaillé pour aujourd'hui, liste complète pour demain/semaine.
+
+4) RÈGLES DE SUGGESTION (AUJOURD'HUI) :
+   - Pour aujourd'hui, ne suggère JAMAIS un menu complet de la journée. 
+   - Par défaut, propose UNIQUEMENT le repas du créneau actuel (${currentSlot}).
+   - Si l'utilisateur précise un créneau (ex: "un dîner"), propose celui-là spécifiquement sans tenir compte de l'heure actuelle.
+   - Toujours un seul repas à la fois pour aujourd'hui.
+   - Dès qu'un utilisateur valide une suggestion pour aujourd'hui via "Envoyer au planning", elle s'ajoute à son journal.
+
+5) FORMAT MENU : Très détaillé pour aujourd'hui, liste complète pour demain/semaine.
 5) DISCIPLINE DE LA BASE DE DONNÉES : Utilise uniquement les [ID_BD:...] fournis.
 
 EXEMPLE RÉPONSE CORRECTE (Finir SANS total) :
@@ -668,13 +688,25 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
         }
 
         // 4. Mettre à jour l'utilisation dans la base de données
-        await supabase
-            .from('user_profiles')
-            .update({
-                chat_messages_today: messagesUsedToday + 1,
-                last_usage_reset_date: today
-            })
-            .eq('user_id', user.id)
+        if (isUsingPaidMessages) {
+            // Décompte d'un message payé
+            await supabase
+                .from('user_profiles')
+                .update({
+                    paid_chat_messages_remaining: Math.max(0, paidChatMessages - 1),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', user.id)
+        } else {
+            await supabase
+                .from('user_profiles')
+                .update({
+                    chat_messages_today: messagesUsedToday + 1,
+                    last_usage_reset_date: todayStr,
+                    ...resetUpdates
+                })
+                .eq('user_id', user.id)
+        }
 
         // 5. Retourner la réponse
         return NextResponse.json({

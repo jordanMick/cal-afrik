@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { SUBSCRIPTION_RULES, getEffectiveTier } from '@/lib/subscription'
 
 // 🔐 client avec token user
 const createUserClient = (req: NextRequest) => {
@@ -102,10 +103,9 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
 
-    // ─── VÉRIFICATION LIMITE AJOUT REPAS (FREE TIER: 2/jour) ───
     const { data: profile } = await supabaseAdmin
         .from('user_profiles')
-        .select('subscription_tier, subscription_expires_at')
+        .select('subscription_tier, subscription_expires_at, paid_chat_messages_remaining, scan_feedbacks_today, paid_scans_remaining, last_usage_reset_date, chat_messages_today')
         .eq('user_id', user.id)
         .single()
 
@@ -115,29 +115,64 @@ export async function POST(req: NextRequest) {
         tier = 'free'
     }
 
+    const todayStr = new Date().toISOString().split('T')[0]
+    const isToday = profile?.last_usage_reset_date === todayStr
+    let scansFeedbacksToday = profile?.scan_feedbacks_today || 0
+    if (!isToday && tier !== 'free') {
+        scansFeedbacksToday = 0 // Reset quotidien pour le pool partagé
+    }
+
+    const paidChatMessages = profile?.paid_chat_messages_remaining || 0
+    const paidScans = profile?.paid_scans_remaining || 0
+    
+    // On considère que c'est une suggestion si Yao a généré le contenu (flag is_suggestion ou présence de coach_message)
+    const isSuggestion = body.is_suggestion === true || !!body.coach_message
+    let shouldConsumePaidAction = false
+
+    // ─── VÉRIFICATION QUOTA PARTAGÉ (SCANS + SUGGESTIONS) ───
+    if (isSuggestion) {
+        let limitReached = false
+        if (tier === 'free' && scansFeedbacksToday >= 5) limitReached = true
+        else if (tier === 'pro' && scansFeedbacksToday >= 4) limitReached = true
+
+        if (limitReached) {
+            // Si limite atteinte, on regarde s'il reste des points payés (scan ou pack suggestion)
+            if (paidScans > 0) {
+                shouldConsumePaidAction = true
+            } else if (paidChatMessages > 0) {
+                 // On utilise les messages payés restants comme "droit de passage"
+            } else {
+                return NextResponse.json({ 
+                    success: false, 
+                    code: 'LIMIT_REACHED', 
+                    error: tier === 'free' 
+                        ? 'Tu as atteint ta limite de 5 actions IA gratuites à vie. Passe au plan Pro ou achète un pack (100 FCFA) !' 
+                        : 'Tu as atteint ta limite de 4 actions IA aujourd\'hui. Reviens demain ou achète un pack (100 FCFA) !' 
+                }, { status: 403 })
+            }
+        }
+    }
+
+    // ─── VÉRIFICATION LIMITE AJOUT TOTAL (MANUEL) ───
     if (tier === 'free') {
         const tzOffsetMin = Number(req.headers.get('x-tz-offset-min') || '0')
-        // Récupérer la date locale du client ou l'heure serveur formattée
         const now = new Date()
         now.setMinutes(now.getMinutes() - tzOffsetMin)
-        const todayStr = now.toISOString().split('T')[0]
-
-        const { start, end } = getUtcRangeForLocalDay(todayStr, tzOffsetMin)
+        const dayStr = now.toISOString().split('T')[0]
+        const { start, end } = getUtcRangeForLocalDay(dayStr, tzOffsetMin)
         
-        const { count, error: countError } = await supabaseAdmin
+        const { count } = await supabaseAdmin
             .from('meals')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', user.id)
             .gte('logged_at', start)
             .lte('logged_at', end)
 
-        if (countError) {
-             console.error("❌ Count error:", countError)
-        } else if ((count || 0) >= 2) {
+        if ((count || 0) >= 2 && !isSuggestion) {
              return NextResponse.json({ 
                  success: false, 
                  code: 'LIMIT_REACHED', 
-                 error: 'Tu as atteint ta limite de 2 repas ajoutés par jour (mode Gratuit). Passe au plan Pro pour un suivi illimité !' 
+                 error: 'Tu as atteint ta limite de 2 repas manuels par jour (mode Gratuit). Passe au plan Pro !' 
              }, { status: 403 })
         }
     }
@@ -169,6 +204,32 @@ export async function POST(req: NextRequest) {
 
     if (error) {
         return NextResponse.json({ success: false, error: error.message })
+    }
+
+    // Mise à jour de l'utilisation APRES succès de l'insertion
+    if (isSuggestion) {
+        const updatePayload: any = { updated_at: new Date().toISOString() }
+        const effectiveTier = getEffectiveTier(profile)
+        const maxStandardMessages = SUBSCRIPTION_RULES[effectiveTier].maxChatMessagesPerDay
+        const messagesUsed = profile?.chat_messages_today || 0
+        
+        if (shouldConsumePaidAction) {
+            updatePayload.paid_scans_remaining = Math.max(0, paidScans - 1)
+        } else {
+            updatePayload.scan_feedbacks_today = scansFeedbacksToday + 1
+            updatePayload.last_usage_reset_date = todayStr
+            
+            // On ne reset les messages payés QUE si l'utilisateur avait épuisé son quota normal
+            // (C'est le signal que la "séance payante" est terminée)
+            if (messagesUsed >= maxStandardMessages) {
+                updatePayload.paid_chat_messages_remaining = 0
+            }
+        }
+
+        await supabaseAdmin
+            .from('user_profiles')
+            .update(updatePayload)
+            .eq('user_id', user.id)
     }
 
     const mapped = {

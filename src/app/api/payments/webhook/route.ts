@@ -45,18 +45,30 @@ export async function POST(req: Request) {
             }
 
             if (tier === 'scan') {
-                // Pour un scan à l'unité, on incrémente simplement le compteur
-                const { error: updateError } = await supabaseAdmin.rpc('increment_paid_scans', { user_id_input: userId });
+                // Pour un scan à l'unité (100 FCFA), on incrémente le pack (1 Scan + 1 Avis Coach)
+                const { error: updateError } = await supabaseAdmin.rpc('increment_paid_scan_pack', { user_id_input: userId });
 
                 if (updateError) {
-                    // Fallback si la fonction RPC n'existe pas encore
-                    const { data: p } = await supabaseAdmin.from('user_profiles').select('paid_scans_remaining').eq('user_id', userId).single();
+                    console.warn('[FedaPay Webhook] RPC increment_paid_scan_pack failed, using fallback', updateError.message);
+                    const { data: p } = await supabaseAdmin.from('user_profiles').select('paid_scans_remaining, paid_coach_feedbacks_remaining').eq('user_id', userId).single();
                     await supabaseAdmin.from('user_profiles').update({ 
                         paid_scans_remaining: (p?.paid_scans_remaining || 0) + 1,
+                        paid_coach_feedbacks_remaining: (p?.paid_coach_feedbacks_remaining || 0) + 1,
                         updated_at: new Date().toISOString()
                     }).eq('user_id', userId);
                 }
-                console.log(`[FedaPay Webhook] ✅ 1 Scan ajouté pour ${userId}`);
+                console.log(`[FedaPay Webhook] ✅ Pack Scan+Avis ajouté pour ${userId}`);
+            } else if (tier === 'suggestion') {
+                // Pour une suggestion à l'unité (100 FCFA), on donne 10 messages de discussion
+                const { error: updateError } = await supabaseAdmin.rpc('increment_paid_suggestion_messages', { user_id_input: userId });
+                if (updateError) {
+                    const { data: p } = await supabaseAdmin.from('user_profiles').select('paid_chat_messages_remaining').eq('user_id', userId).single();
+                    await supabaseAdmin.from('user_profiles').update({ 
+                        paid_chat_messages_remaining: (p?.paid_chat_messages_remaining || 0) + 10,
+                        updated_at: new Date().toISOString()
+                    }).eq('user_id', userId);
+                }
+                console.log(`[FedaPay Webhook] ✅ 10 Messages de suggestion ajoutés pour ${userId}`);
             } else {
                 // Calcul de l'expiration (+30 jours cumulés)
                 const { data: profile } = await supabaseAdmin

@@ -45,23 +45,33 @@ export async function POST(req: NextRequest) {
         const isToday = profile.last_usage_reset_date === today
 
         // 2. Calcul des quotas de feedback scanner par tier
+        const scanFeedbacksUsed = profile.scan_feedbacks_today || 0
+        const paidFeedbacks = profile.paid_coach_feedbacks_remaining || 0
+
+        let mustUsePaid = false
         if (effectiveTier === 'free') {
-            if (profile.has_used_free_lifetime_feedback) {
-                return NextResponse.json({
-                    success: false,
-                    code: 'FREE_LIFETIME_USED',
-                    error: 'Vous avez déjà utilisé votre essai gratuit. Passez au Plan Pro pour des feedbacks quotidiens.',
-                }, { status: 403 })
+            const limit = Number(SUBSCRIPTION_RULES.free.maxCoachFeedbackPerDay || 5)
+            if (scanFeedbacksUsed >= limit) {
+                if (paidFeedbacks <= 0) {
+                    return NextResponse.json({
+                        success: false,
+                        code: 'FREE_LIFETIME_USED',
+                        error: `Tu as déjà utilisé tes ${limit} analyses gratuites à vie. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA) !`,
+                    }, { status: 403 })
+                }
+                mustUsePaid = true
             }
         } else if (effectiveTier === 'pro') {
-            const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
-            const limit = Number(SUBSCRIPTION_RULES.pro.maxCoachFeedbackPerDay || 1)
-            if (scanFeedbacksToday >= limit) {
-                return NextResponse.json({
-                    success: false,
-                    code: 'PRO_DAILY_LIMIT',
-                    error: 'Vous avez déjà demandé votre conseil journalier. Revenez demain ou passez au Premium !',
-                }, { status: 403 })
+            const limit = Number(SUBSCRIPTION_RULES.pro.maxCoachFeedbackPerDay || 2)
+            if (scanFeedbacksUsed >= limit) {
+                if (paidFeedbacks <= 0) {
+                    return NextResponse.json({
+                        success: false,
+                        code: 'PRO_DAILY_LIMIT',
+                        error: `Tu as déjà demandé tes ${limit} conseils du jour. Reviens demain ou achète un scan à l'unité (100 FCFA) !`,
+                    }, { status: 403 })
+                }
+                mustUsePaid = true
             }
         }
 
@@ -146,19 +156,19 @@ Ton ton doit rester celui d'un grand frère bienveillant, expert et encourageant
             : 'Bon repas ! Continue comme ça 💪'
 
         // 5. Mettre à jour les quotas en base de données
-        if (effectiveTier === 'free') {
+        if (mustUsePaid) {
+            console.log(`[COACH] Using 1 paid coach feedback for user ${user.id}. Remaining before: ${paidFeedbacks}`)
             await supabase
                 .from('user_profiles')
-                .update({ has_used_free_lifetime_feedback: true })
-                .eq('user_id', user.id)
-        } else if (effectiveTier === 'pro') {
-            const scanFeedbacksToday = isToday ? (profile.scan_feedbacks_today || 0) : 0
-            await supabase
-                .from('user_profiles')
-                .update({
-                    scan_feedbacks_today: scanFeedbacksToday + 1,
-                    last_usage_reset_date: today
+                .update({ 
+                    paid_coach_feedbacks_remaining: Math.max(0, paidFeedbacks - 1),
+                    updated_at: new Date().toISOString()
                 })
+                .eq('user_id', user.id)
+        } else if (profile.last_usage_reset_date !== today) {
+            await supabase
+                .from('user_profiles')
+                .update({ last_usage_reset_date: today })
                 .eq('user_id', user.id)
         }
 

@@ -39,12 +39,12 @@ const TIER_CONFIG = {
 
 const PLAN_FEATURES: Record<string, { label: string; free: string; pro: string; premium: string }[]> = {
     features: [
-        { label: 'Scans / jour', free: '2', pro: 'Illimité', premium: 'Illimité' },
+        { label: 'Scans', free: '5 à vie', pro: '4 / jour', premium: 'Illimité' },
         { label: 'Planification Menus', free: 'Du jour', pro: 'Sur 2 jours', premium: 'Semaine entière' },
         { label: 'Bilans Nutritionnels', free: 'Basique', pro: 'Détaillé', premium: 'Bilan Hebdo Avancé' },
         { label: 'Smart Alerts Coach Yao', free: '✗', pro: '✓', premium: '✓' },
         { label: 'Notifications intelligentes', free: '✗', pro: '✓', premium: '✓' },
-        { label: 'Conseil scanner', free: '1x à vie', pro: '1 / jour', premium: 'Illimité' },
+        { label: 'Conseil scanner', free: '5 à vie', pro: '2 / jour', premium: 'Illimité' },
         { label: 'Graphique de poids', free: '8 sem', pro: '6 mois', premium: '1 an' },
         { label: 'Recalcul auto calories', free: '✗', pro: '✓', premium: '✓' },
         { label: 'Macros par repas (P/G/L)', free: '✗', pro: '✗', premium: '✓' },
@@ -65,7 +65,7 @@ export default function SubscriptionPage() {
 
     const rules = SUBSCRIPTION_RULES[effectiveTier]
     const today = new Date().toISOString().split('T')[0]
-    const usedScans = (profile as any)?.last_usage_reset_date === today ? ((profile as any)?.scan_feedbacks_today || 0) : 0
+    const usedScans = effectiveTier === 'free' ? ((profile as any)?.scan_feedbacks_today || 0) : ((profile as any)?.last_usage_reset_date === today ? ((profile as any)?.scan_feedbacks_today || 0) : 0)
 
     const handleRenew = async () => {
         setRenewing(true)
@@ -149,7 +149,7 @@ export default function SubscriptionPage() {
                                 <ScanLine size={18} color="var(--accent)" />
                             </div>
                             <div>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '600' }}>Scans aujourd'hui</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '600' }}>{effectiveTier === 'free' ? 'Scans utilisés (à vie)' : 'Scans aujourd\'hui'}</p>
                                 <p style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', marginTop: '2px' }}>
                                     {usedScans}
                                     <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '400' }}>
