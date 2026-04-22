@@ -143,11 +143,11 @@ export default function MenusPage() {
 
     const handleClearMenu = async (kind: 'today' | 'tomorrow' | 'week', slot?: string) => {
         // Vider le state local
-        if (kind === 'today') {
+        if (kind === 'today' && slot) {
             clearChatSuggestedMenu('today', slot)
-        } else {
-            // Si on retire Demain ou Semaine, on purge les deux pour éviter que Semaine ne reremplisse Demain
-            clearChatSuggestedMenu('tomorrow')
+        } else if (kind === 'tomorrow') {
+            useAppStore.getState().setChatSuggestedMenu('tomorrow', 'DELETED')
+        } else if (kind === 'week') {
             clearChatSuggestedMenu('week')
         }
         
@@ -160,8 +160,9 @@ export default function MenusPage() {
                 const nextToday = { ...nextMenus.today }
                 delete nextToday[slot]
                 nextMenus.today = nextToday
-            } else {
-                nextMenus.tomorrow = null
+            } else if (kind === 'tomorrow') {
+                nextMenus.tomorrow = 'DELETED'
+            } else if (kind === 'week') {
                 nextMenus.week = null
             }
             try {
@@ -189,7 +190,9 @@ export default function MenusPage() {
         const tomorrowDate = new Date(now)
         tomorrowDate.setDate(tomorrowDate.getDate() + 1)
         
-        if (isT && chatSuggestedMenus.tomorrow) {
+        if (isT && chatSuggestedMenus.tomorrow === 'DELETED') {
+            result.tomorrow = null
+        } else if (isT && chatSuggestedMenus.tomorrow) {
             result.tomorrow = chatSuggestedMenus.tomorrow
         } else if (result.week && (isT || isY)) {
             result.tomorrow = extractDayFromWeek(result.week, tomorrowDate)
@@ -334,7 +337,7 @@ export default function MenusPage() {
                         <div style={{ background: 'var(--bg-secondary)', borderRadius: '32px', padding: '24px', border: '1px solid var(--border-color)', boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }}>
                             {(() => {
                                 const content = menuTab === 'tomorrow' ? resolvedMenus.tomorrow : resolvedMenus.week
-                                if (content) return (
+                                if (content && content !== 'DELETED') return (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                     <div style={{ padding: '8px 16px', background: menuTab === 'tomorrow' ? 'rgba(var(--accent-rgb), 0.1)' : 'rgba(var(--warning-rgb), 0.1)', borderRadius: '12px', width: 'fit-content' }}>
                                         <span style={{ fontSize: '12px', fontWeight: '900', color: menuTab === 'tomorrow' ? 'var(--accent)' : 'var(--warning)' }}>
