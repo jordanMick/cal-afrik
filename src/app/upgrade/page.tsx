@@ -302,7 +302,7 @@ function PricingContent() {
                 {/* MOYENS DE PAIEMENT */}
                 {currentTier !== 'premium' && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', marginTop: '60px' }}>
-                        <p style={{ color: '#444', fontSize: '13px', fontWeight: '500' }}>Paiement sécurisé via FedaPay</p>
+                        <p style={{ color: '#444', fontSize: '13px', fontWeight: '500' }}>Paiement sécurisé via Maketou</p>
                         <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px' }}>
                             {['MTN', 'Orange', 'Moov', 'Wave', 'Visa', 'Mastercard'].map((p) => (
                                 <div key={p} style={{ padding: '8px 20px', background: '#111', border: '0.5px solid #222', borderRadius: '14px', color: '#666', fontSize: '12px', fontWeight: '600' }}>{p}</div>
