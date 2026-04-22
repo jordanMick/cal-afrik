@@ -482,6 +482,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             const wantsSlotDejeuner = /\bdejeuner\b/.test(normalizedUserMessage)
             const wantsSlotCollation = /\bcollation\b/.test(normalizedUserMessage)
             const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
+            const wantsMenuAny = wantsMenu || wantsTomorrow || wantsWeek || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
 
             // Formatage des messages pour Anthropic (Claude exige de commencer par 'user' et d'alterner les rôles)
             let formattedMessages: any[] = messages
@@ -516,7 +517,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             while (attempts < maxAttempts) {
                 try {
                     const response = await anthropic.messages.create({
-                        model: 'claude-haiku-4-5-20251001',
+                        model: 'claude-3-5-haiku-20241022',
                         max_tokens: wantsWeek ? 4500 : 1500, // Augmenté pour éviter les textes et JSON tronqués
                         system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux. Ne sois pas trop concis." : "") + (isFreeLimited ? "\n[PLAN GRATUIT]: Refuse poliment le menu demain/semaine et invite à s'abonner." : ""),
                         messages: formattedMessages as any
@@ -542,7 +543,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                 console.error('❌ Anthropic failed after retries:', lastErr)
                 // --- FALLBACK INTELLIGENT (Sans IA) ---
                 if (wantsMenuAny) {
-                    aiMessage = buildEmergencyLocalMenu(allFoodsDB, messageContent)
+                    aiMessage = buildEmergencyLocalMenu(allFoodsDB, normalizedUserMessage)
                 } else {
                     aiMessage = "Désolé, mes systèmes sont un peu fatigués en ce moment. Peux-tu réessayer dans quelques secondes ? 💪"
                 }
