@@ -470,20 +470,19 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
         const MOCK_MODE = false
 
         let aiMessage = ""
+        const wantsMenu = /\bmenu\b/.test(normalizedUserMessage)
+        const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage)
+        const wantsWeek = /\bsemaine\b/.test(normalizedUserMessage)
+        const wantsSlotPetitDej = /\bpetit[\s-]?dej(?:euner)?\b/.test(normalizedUserMessage)
+        const wantsSlotDejeuner = /\bdejeuner\b/.test(normalizedUserMessage)
+        const wantsSlotCollation = /\bcollation\b/.test(normalizedUserMessage)
+        const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
+        const wantsMenuAny = wantsMenu || wantsTomorrow || wantsWeek || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
 
         if (MOCK_MODE) {
             await new Promise(r => setTimeout(r, 800)) // Simule un délai réaliste
             aiMessage = `[Mode TEST 🔧] Salut ${profile.name || 'ami'} ! Super question. Rappelle-toi : l'équilibre c'est la clé ! Mange des légumes africains variés, bois 2L d'eau et écoute ton corps. Tu es sur la bonne voie ! 🌿`
         } else {
-            const wantsMenu = /\bmenu\b/.test(normalizedUserMessage)
-            const wantsTomorrow = /\bdemain\b/.test(normalizedUserMessage)
-            const wantsWeek = /\bsemaine\b/.test(normalizedUserMessage)
-            const wantsSlotPetitDej = /\bpetit[\s-]?dej(?:euner)?\b/.test(normalizedUserMessage)
-            const wantsSlotDejeuner = /\bdejeuner\b/.test(normalizedUserMessage)
-            const wantsSlotCollation = /\bcollation\b/.test(normalizedUserMessage)
-            const wantsSlotDiner = /\bdiner\b/.test(normalizedUserMessage)
-            const wantsMenuAny = wantsMenu || wantsTomorrow || wantsWeek || wantsSlotPetitDej || wantsSlotDejeuner || wantsSlotCollation || wantsSlotDiner
-
             // Formatage des messages pour Anthropic (Claude exige de commencer par 'user' et d'alterner les rôles)
             let formattedMessages: any[] = messages
                 .map((m: any) => ({
