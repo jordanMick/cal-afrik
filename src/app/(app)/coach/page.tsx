@@ -75,8 +75,13 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
     if (normalized.includes('menu semaine:') && hasMealContent) return { kind: 'week' }
     if (normalized.includes('menu demain:') && hasMealContent) return { kind: 'tomorrow' }
     
-    const slotMatch = normalized.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
-    if (slotMatch && hasMealContent) return { kind: 'today', slot: slotMatch[1] }
+    // Détection plus souple du créneau (accepte petit-déjeuner, déjeuner, etc.)
+    const slotMatch = normalized.match(/menu creneau (petit[-_ ]?dejeuner|dejeuner|collation|diner):/i)
+    if (slotMatch && hasMealContent) {
+        let slot = slotMatch[1].replace(/[- ]/g, '_')
+        if (slot === 'petit_dejeuner') slot = 'petit_dejeuner'
+        return { kind: 'today', slot }
+    }
     
     return null
 }
@@ -107,9 +112,10 @@ function parseDataBlock(rawMessage: string): {
     const displayText = rawMessage.substring(0, idx).trim()
     const jsonPart = rawMessage.substring(idx + sep.length).trim()
 
-    // Détection du slot depuis le prefix technique (uniquement si présent)
-    const slotMatch = rawMessage.match(/menu creneau (petit_dejeuner|dejeuner|collation|diner):/i)
-    const slot = slotMatch ? slotMatch[1] : undefined
+    // Détection plus souple (petit-déjeuner, déjeuner, etc.)
+    const slotMatch = rawMessage.match(/menu creneau (petit[-_ ]?dejeuner|dejeuner|collation|diner):/i)
+    let slot = slotMatch ? slotMatch[1].replace(/[- ]/g, '_') : undefined
+
 
     try {
         const parsed = JSON.parse(jsonPart)
