@@ -130,9 +130,10 @@ function parseDataBlock(rawMessage: string): {
     try {
         const parsed = JSON.parse(jsonPart)
         const items = Array.isArray(parsed.items) ? parsed.items : []
+        const jsonSlot = parsed.slot
         
         if (items.length > 0) {
-            return { displayText, dataItems: items, slot }
+            return { displayText, dataItems: items, slot: jsonSlot || slot }
         }
     } catch {
         return { displayText }

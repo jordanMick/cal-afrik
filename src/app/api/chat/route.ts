@@ -443,7 +443,7 @@ menu creneau diner:
 [Ton texte de coach ici...]
 
 ---DATA---
-{"type":"suggestion","items":[{"name":"riz_blanc_vapeur","volume_ml":200},{"name":"poisson_braise","volume_ml":150}]}
+{"type":"suggestion","slot":"diner","items":[{"name":"riz_blanc_vapeur","volume_ml":200},{"name":"poisson_braise","volume_ml":150}]}
 
 Contexte utilisateur :
 - OBJECTIF CALORIQUE : ${profile.calorie_target} kcal / jour (NE PAS DÉPASSER)
@@ -610,6 +610,14 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                 const jsonStr = segments[segments.length - 1].trim()
                 const parsed = JSON.parse(jsonStr)
 
+                // Injection du slot détecté pour plus de robustesse côté frontend
+                let detectedSlot: string | undefined = undefined
+                if (wantsSlotPetitDej) detectedSlot = 'petit_dejeuner'
+                else if (wantsSlotDejeuner) detectedSlot = 'dejeuner'
+                else if (wantsSlotCollation) detectedSlot = 'collation'
+                else if (wantsSlotDiner) detectedSlot = 'diner'
+                if (detectedSlot) parsed.slot = detectedSlot
+
                 if (parsed.items && Array.isArray(parsed.items)) {
                     let changed = false
                     parsed.items = parsed.items.map((item: any) => {
@@ -696,11 +704,15 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                              // On s'assure qu'il n'y a pas déjà une signature ou un bloc DATA (cas de retry ou hallucination)
                              aiMessage = aiMessage.split('───')[0].split('---DATA---')[0].trim()
 
-                             const signature = `\n\n────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
-                             aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
-                        } else {
-                            aiMessage = aiMessage + '\n\n---DATA---\n' + JSON.stringify(parsed)
-                        }
+                              const signature = trueCals > 0 
+                                ? `\n\n────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
+                                : ""
+
+                              aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)
+                         } else {
+                             // Même si trueCals == 0, si on a des items, on garde le bloc DATA
+                             aiMessage = aiMessage + '\n\n---DATA---\n' + JSON.stringify(parsed)
+                         }
                     }
                 }
             } catch (fixErr) {
