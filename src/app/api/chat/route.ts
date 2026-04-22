@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
             } else {
                 return NextResponse.json({
                     success: false,
-                    error: effectiveTier === 'free' ? 'Limite à vie de 10 messages atteinte. Abonnez-vous pour continuer ou achetez un pack de suggestion (100 FCFA pour 10 messages) !' : 'Limite journalière atteinte. Reviens demain ou achète un pack de suggestion (100 FCFA pour 10 messages) !',
+                    error: 'Limite de messages atteinte',
                     code: 'LIMIT_REACHED'
                 }, { status: 200 })
             }

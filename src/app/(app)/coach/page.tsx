@@ -455,36 +455,18 @@ export default function CoachChatPage() {
 
             const data = await res.json()
 
-            if (data.code === 'LIMIT_REACHED') {
-                const limitMsg: Message = {
-                    id: `limit-${Date.now()}`,
-                    role: 'coach',
-                    content: data.error || "Tu as atteint ta limite de messages. Reviens demain ou achète un pack de suggestions !",
-                    timestamp: new Date()
-                }
-                setMessages(prev => {
-                    const next = [...prev, limitMsg]
-                    persistMessagesForThread(activeThreadDate, next)
-                    return next
-                })
-                setMessagesUsedToday(maxMessages)
-                setIsTyping(false)
-                return
-            }
-            if (data.code === 'MENU_TIER_REQUIRED') {
-                setMessages(prev => {
-                    const next = [...prev, {
-                        id: `menu-tier-${Date.now()}`,
-                        role: 'coach' as const,
-                        content: data.message || 'Passez au plan PRO ou PREMIUM pour avoir accès aux menus de demain et de la semaine !',
-                        timestamp: new Date()
-                    }]
-                    persistMessagesForThread(activeThreadDate, next)
-                    return next
-                })
-                setIsTyping(false)
-                return
-            }
+             if (data.code === 'LIMIT_REACHED') {
+                 // On ne rajoute plus de bulle, on laisse la carte s'afficher
+                 setMessagesUsedToday(maxMessages)
+                 setIsTyping(false)
+                 toast.error(data.error || "Limite atteinte")
+                 return
+             }
+             if (data.code === 'MENU_TIER_REQUIRED') {
+                 setIsTyping(false)
+                 toast.info("Abonnement requis pour les menus avancés")
+                 return
+             }
 
             if (data.success) {
                 console.log('📨 Réponse brute Yao:', data.message)
