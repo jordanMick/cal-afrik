@@ -524,9 +524,17 @@ export default function CoachChatPage() {
         }
     }
 
-    const limitReached = messagesUsedToday >= maxMessages
+    const paidChatMessages = profile?.paid_chat_messages_remaining || 0
+    const limitReached = messagesUsedToday >= maxMessages && paidChatMessages <= 0
     const activeThread = threads.find(t => t.date === activeThreadDate)
-    const activeThreadLimitReached = !!activeThread && (activeThread.messagesUsed >= activeThread.maxMessages)
+    
+    // La limite est atteinte si : 
+    // 1. On est sur le thread d'aujourd'hui ET (quota normal atteint ET pas de messages payés)
+    // 2. OU si c'est un ancien thread (on ne peut pas réécrire dans le passé par défaut)
+    const activeThreadLimitReached = !!activeThread && (
+        activeThread.date !== todayDate || 
+        (activeThread.messagesUsed >= activeThread.maxMessages && paidChatMessages <= 0)
+    )
 
     /**
      * Ajoute le menu suggéré dans la vue de planning "Aujourd'hui" (slot concerné)
