@@ -142,7 +142,15 @@ export default function MenusPage() {
     const isTargetToday = targetDateStr === todayStr
 
     const handleClearMenu = async (kind: 'today' | 'tomorrow' | 'week', slot?: string) => {
-        clearChatSuggestedMenu(kind, slot)
+        // Vider le state local
+        if (kind === 'today') {
+            clearChatSuggestedMenu('today', slot)
+        } else {
+            // Si on retire Demain ou Semaine, on purge les deux pour éviter que Semaine ne reremplisse Demain
+            clearChatSuggestedMenu('tomorrow')
+            clearChatSuggestedMenu('week')
+        }
+        
         toast.success(kind === 'today' ? "Retiré" : "Planning supprimé")
 
         const uid = profile?.user_id || profile?.id
@@ -152,9 +160,8 @@ export default function MenusPage() {
                 const nextToday = { ...nextMenus.today }
                 delete nextToday[slot]
                 nextMenus.today = nextToday
-            } else if (kind === 'tomorrow') {
+            } else {
                 nextMenus.tomorrow = null
-            } else if (kind === 'week') {
                 nextMenus.week = null
             }
             try {
