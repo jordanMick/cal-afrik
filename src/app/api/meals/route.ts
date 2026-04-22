@@ -238,8 +238,17 @@ export async function POST(req: NextRequest) {
                 updatePayload.paid_scans_remaining = Math.max(0, paidScans - 1)
             }
         } else {
+            // 🔥 Récupération de la toute dernière valeur pour éviter les désynchronisations
+            const { data: latest } = await supabaseAdmin
+                .from('user_profiles')
+                .select('scan_feedbacks_today')
+                .eq('user_id', user.id)
+                .single()
+            
+            const currentActual = latest?.scan_feedbacks_today ?? scansFeedbacksToday
+            
             // On incrémente simplement le quota quotidien standard
-            updatePayload.scan_feedbacks_today = scansFeedbacksToday + 1
+            updatePayload.scan_feedbacks_today = currentActual + 1
             updatePayload.last_usage_reset_date = todayStr
         }
 

@@ -793,10 +793,14 @@ export async function POST(req: Request) {
             mealName: finalMealName,
         })
 
-        // ✅ Incrémenter scan_feedbacks_today pour tous les plans
+        // ✅ Incrémenter scan_feedbacks_today et mettre à jour la date de reset
         await supabase
             .from('user_profiles')
-            .update({ scan_feedbacks_today: scansFeedbacksToday + 1 })
+            .update({ 
+                scan_feedbacks_today: scansFeedbacksToday + 1,
+                last_usage_reset_date: todayStr,
+                updated_at: new Date().toISOString()
+            })
             .eq('user_id', user.id)
 
         console.log("✅ Analysis successful")
