@@ -75,11 +75,14 @@ function detectMenuKind(message: string): { kind: 'today' | 'tomorrow' | 'week',
     if (normalized.includes('menu semaine:') && hasMealContent) return { kind: 'week' }
     if (normalized.includes('menu demain:') && hasMealContent) return { kind: 'tomorrow' }
     
-    // Détection plus souple du créneau (accepte petit-déjeuner, déjeuner, etc.)
-    const slotMatch = normalized.match(/menu creneau (petit[-_ ]?dejeuner|dejeuner|collation|diner):/i)
+    // Détection ultra-souple (petit-déjeuner, petit dej, déjeuner, dîner...)
+    const slotMatch = normalized.match(/menu creneau (petit[-_ ]?dej(?:euner)?|dej(?:euner)?|collation|din(?:er|in)):/i)
     if (slotMatch && hasMealContent) {
-        let slot = slotMatch[1].replace(/[- ]/g, '_')
-        if (slot === 'petit_dejeuner') slot = 'petit_dejeuner'
+        let raw = slotMatch[1].toLowerCase()
+        let slot = 'dejeuner'
+        if (raw.includes('petit')) slot = 'petit_dejeuner'
+        else if (raw.includes('coll')) slot = 'collation'
+        else if (raw.includes('din')) slot = 'diner'
         return { kind: 'today', slot }
     }
     
@@ -112,9 +115,16 @@ function parseDataBlock(rawMessage: string): {
     const displayText = rawMessage.substring(0, idx).trim()
     const jsonPart = rawMessage.substring(idx + sep.length).trim()
 
-    // Détection plus souple (petit-déjeuner, déjeuner, etc.)
-    const slotMatch = rawMessage.match(/menu creneau (petit[-_ ]?dejeuner|dejeuner|collation|diner):/i)
-    let slot = slotMatch ? slotMatch[1].replace(/[- ]/g, '_') : undefined
+    // Détection plus souple (petit-déjeuner, petit dej, déjeuner, dîner...)
+    const slotMatch = rawMessage.match(/menu creneau (petit[-_ ]?dej(?:euner)?|dej(?:euner)?|collation|din(?:er|in)):/i)
+    let slot = undefined
+    if (slotMatch) {
+        let raw = slotMatch[1].toLowerCase()
+        slot = 'dejeuner'
+        if (raw.includes('petit')) slot = 'petit_dejeuner'
+        else if (raw.includes('coll')) slot = 'collation'
+        else if (raw.includes('din')) slot = 'diner'
+    }
 
 
     try {
