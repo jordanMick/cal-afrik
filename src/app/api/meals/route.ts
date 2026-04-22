@@ -111,7 +111,8 @@ export async function POST(req: NextRequest) {
 
     let tier = profile?.subscription_tier || 'free'
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
-    if (expiresAt && expiresAt < new Date()) {
+    // On ne rétrograde que si la date est explicitement dépassée
+    if (expiresAt && expiresAt.getTime() < Date.now()) {
         tier = 'free'
     }
 
@@ -125,8 +126,10 @@ export async function POST(req: NextRequest) {
     const paidChatMessages = profile?.paid_chat_messages_remaining || 0
     const paidScans = profile?.paid_scans_remaining || 0
 
-    // On considère que c'est une suggestion si Yao a généré le contenu (flag is_suggestion ou présence de coach_message)
-    const isSuggestion = body.is_suggestion === true || !!body.coach_message
+    // On considère que c'est une suggestion si :
+    // - Yao a généré le contenu (flag is_suggestion ou présence de coach_message)
+    // - Ou si l'ID d'un aliment contient "suggested-" ou "coach-"
+    const isSuggestion = body.is_suggestion === true || !!body.coach_message || body.is_from_coach === true
     let shouldConsumePaidAction = false
 
     // ─── VÉRIFICATION QUOTA PARTAGÉ (SCANS + SUGGESTIONS) ───
