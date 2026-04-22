@@ -226,7 +226,6 @@ export async function POST(req: NextRequest) {
         const isRequestingMenu = normalizedUserMessage.includes('menu') || normalizedUserMessage.includes('composer') || normalizedUserMessage.includes('manger quoi') || normalizedUserMessage.includes('collation') || normalizedUserMessage.includes('grignoter') || normalizedUserMessage.includes('petit dejeuner') || normalizedUserMessage.includes('dejeuner') || normalizedUserMessage.includes('diner')
         
         // --- BLOCAGE SUGGESTIONS SI QUOTA 4 ATTEINT ---
-        const scanFeedbacksToday = profile.scan_feedbacks_today || 0
         const maxScansAllowed = SUBSCRIPTION_RULES[effectiveTier].maxScansPerDay
         if (isRequestingMenu && scanFeedbacksToday >= maxScansAllowed && paidChatMessages <= 0) {
             return NextResponse.json({
