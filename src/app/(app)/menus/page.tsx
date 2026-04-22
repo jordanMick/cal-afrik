@@ -205,9 +205,35 @@ export default function MenusPage() {
                 <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                     <button onClick={() => { clearChatSuggestedMenu('today', currentSlotKey); toast.success("Retiré"); }} style={{ flex: 1, padding: '14px', borderRadius: '16px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Ignorer</button>
                     {text.includes('---DATA---') && (
-                        <button onClick={() => {
-                            const idx = text.indexOf('---DATA---'); if (idx !== -1) { try { const data = JSON.parse(text.substring(idx + 10).trim()); setPendingScannerPrefill({ items: data.items, slot: currentSlotKey }); clearChatSuggestedMenu('today', currentSlotKey); router.push('/scanner'); } catch (e) { toast.error("Erreur"); } }
-                        }} style={{ flex: 2, padding: '14px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--accent), var(--success))', color: '#fff', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)' }}>✅ Choisir ce repas</button>
+                        <button 
+                            disabled={isLimitReached}
+                            onClick={() => {
+                                if (isLimitReached) return;
+                                const idx = text.indexOf('---DATA---'); 
+                                if (idx !== -1) { 
+                                    try { 
+                                        const data = JSON.parse(text.substring(idx + 10).trim()); 
+                                        setPendingScannerPrefill({ items: data.items, slot: currentSlotKey }); 
+                                        clearChatSuggestedMenu('today', currentSlotKey); 
+                                        router.push('/scanner'); 
+                                    } catch (e) { toast.error("Erreur"); } 
+                                }
+                            }} 
+                            style={{ 
+                                flex: 2, 
+                                padding: '14px', 
+                                borderRadius: '16px', 
+                                background: isLimitReached ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, var(--accent), var(--success))', 
+                                color: isLimitReached ? 'var(--text-muted)' : '#fff', 
+                                border: 'none', 
+                                fontSize: '13px', 
+                                fontWeight: '700', 
+                                cursor: isLimitReached ? 'not-allowed' : 'pointer', 
+                                boxShadow: isLimitReached ? 'none' : '0 4px 15px rgba(var(--accent-rgb), 0.3)' 
+                            }}
+                        >
+                            {isLimitReached ? '🚫 Limite de repas atteinte' : '✅ Choisir ce repas'}
+                        </button>
                     )}
                 </div>
             </div>
