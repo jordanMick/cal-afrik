@@ -517,7 +517,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
             while (attempts < maxAttempts) {
                 try {
                     const response = await anthropic.messages.create({
-                        model: 'claude-3-haiku-20240307',
+                        model: 'claude-haiku-4-5-20251001',
                         max_tokens: wantsWeek ? 4500 : 1500, // Augmenté pour éviter les textes et JSON tronqués
                         system: systemPrompt + (wantsWeek ? "\n\n[CONSIGNE SEMAINE]: Détaille chaque jour avec ses 4 créneaux. Ne sois pas trop concis." : "") + (isFreeLimited ? "\n[PLAN GRATUIT]: Refuse poliment le menu demain/semaine et invite à s'abonner." : ""),
                         messages: formattedMessages as any
