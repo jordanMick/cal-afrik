@@ -123,6 +123,7 @@ export default function LoginPage() {
                     animate={{ opacity: 1, y: 0 }}
                     style={{ marginBottom: '40px' }}
                 >
+                    <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981', marginBottom: '20px' }}>Cal-Afrik</h2>
                     <div style={{ fontSize: '56px', marginBottom: '16px' }}>
                         {isRegister ? '🥗' : '🥑'}
                     </div>
