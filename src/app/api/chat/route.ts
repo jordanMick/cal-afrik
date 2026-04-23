@@ -191,12 +191,14 @@ export async function POST(req: NextRequest) {
         let messagesUsedToday = profile.chat_messages_today || 0
         let resetUpdates: any = {}
         if (profile.last_usage_reset_date !== today) {
-            // Nouveau jour : on réinitialise les compteurs QUOTIDIENS pour tout le monde
-            messagesUsedToday = 0
-            resetUpdates = { 
-                chat_messages_today: 0,
-                scan_feedbacks_today: 0,
-                last_usage_reset_date: today 
+            // Seuls les abonnés (Pro/Premium) ont une remise à zéro quotidienne
+            if (effectiveTier !== 'free') {
+                messagesUsedToday = 0
+                resetUpdates = { 
+                    chat_messages_today: 0,
+                    scan_feedbacks_today: 0,
+                    last_usage_reset_date: today 
+                }
             }
         }
 
@@ -214,29 +216,55 @@ export async function POST(req: NextRequest) {
         let isUsingPaidMessages = false
         const paidChatMessages = profile.paid_chat_messages_remaining || 0
 
-        if (messagesUsedToday >= maxMessages) {
-            if (paidChatMessages > 0) {
-                isUsingPaidMessages = true
-            } else {
+        if (effectiveTier === 'free') {
+            // Pour les FREE : limite absolue de 10 messages (à vie)
+            // Note: chat_messages_today n'est PAS réinitialisé pour les Free pour compter le total
+            if (messagesUsedToday >= rules.maxChatMessagesPerDay) {
                 return NextResponse.json({
                     success: false,
-                    error: 'Limite de messages atteinte (10/jour). Achète un pack (100 FCFA) pour continuer !',
+                    error: 'Ton cadeau de 10 messages est terminé. Passe au plan Pro pour continuer avec Coach Yao !',
                     code: 'LIMIT_REACHED'
                 }, { status: 200 })
+            }
+        } else {
+            // Pour les PRO/PREMIUM : limite par jour
+            if (messagesUsedToday >= maxMessages) {
+                if (paidChatMessages > 0) {
+                    isUsingPaidMessages = true
+                } else {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Limite de messages atteinte pour aujourd\'hui. Reviens demain ou utilise un pack !',
+                        code: 'LIMIT_REACHED'
+                    }, { status: 200 })
+                }
             }
         }
 
         const isRequestingMenu = normalizedUserMessage.includes('menu') || normalizedUserMessage.includes('composer') || normalizedUserMessage.includes('manger quoi') || normalizedUserMessage.includes('collation') || normalizedUserMessage.includes('grignoter') || normalizedUserMessage.includes('petit dejeuner') || normalizedUserMessage.includes('dejeuner') || normalizedUserMessage.includes('diner')
 
-        // --- BLOCAGE SUGGESTIONS SI QUOTA 4 ATTEINT ---
-        const maxScansAllowed = SUBSCRIPTION_RULES[effectiveTier].maxScansPerDay
-        if (isRequestingMenu && scanFeedbacksToday >= maxScansAllowed) {
-
-            return NextResponse.json({
-                success: false,
-                error: 'Ta limite quotidienne de 4 repas est atteinte. Reviens demain ou utilise un pack !',
-                code: 'LIMIT_REACHED'
-            }, { status: 200 })
+        // --- BLOCAGE SUGGESTIONS (REPAS) ---
+        if (isRequestingMenu) {
+            if (effectiveTier === 'free') {
+                // Pour les FREE : 5 suggestions de repas offertes (à vie)
+                if (scanFeedbacksToday >= rules.maxScansPerDay) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Tes 5 suggestions offertes sont terminées. Passe au plan Pro pour débloquer Coach Yao au quotidien !',
+                        code: 'LIMIT_REACHED'
+                    }, { status: 200 })
+                }
+            } else {
+                // Pour les PRO/PREMIUM : limite par jour (ex: 4/jour pour le Pro)
+                const maxScansAllowed = rules.maxScansPerDay
+                if (scanFeedbacksToday >= maxScansAllowed) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Ta limite quotidienne de repas est atteinte. Reviens demain ou utilise un pack !',
+                        code: 'LIMIT_REACHED'
+                    }, { status: 200 })
+                }
+            }
         }
         const wantsMenuAny = isRequestingMenu || normalizedUserMessage.includes('ingredient') || normalizedUserMessage.includes('j\'ai')
 

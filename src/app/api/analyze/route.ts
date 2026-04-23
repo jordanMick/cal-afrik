@@ -248,12 +248,12 @@ export async function POST(req: Request) {
                 .from('user_profiles')
                 .update({ 
                     scan_feedbacks_today: 0, 
-                    chat_messages_today: 0, // On réinitialise aussi les messages ici par sécurité
+                    chat_messages_today: 0,
                     last_usage_reset_date: todayStr 
                 })
                 .eq('user_id', user.id)
         } else {
-            // Pour les FREE, on met SEULEMENT à jour la date, sans toucher au compteur
+            // Pour les FREE, on met SEULEMENT à jour la date pour le suivi, sans toucher aux compteurs
             await supabase
                 .from('user_profiles')
                 .update({ last_usage_reset_date: todayStr })
