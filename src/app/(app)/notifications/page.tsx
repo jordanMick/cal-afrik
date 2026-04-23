@@ -174,41 +174,67 @@ export default function NotificationsPage() {
 
                 </div>
 
-                {/* Save Button (Relative) */}
-                <div style={{ marginTop: '20px' }}>
+                {/* Save Button (Premium) */}
+                <div style={{ marginTop: '32px', marginBottom: '20px' }}>
                     <button 
                         onClick={handleSave}
                         disabled={loading}
                         style={{
                             width: '100%',
-                            background: saved ? 'var(--success)' : 'var(--accent-primary)',
+                            background: loading ? 'var(--bg-tertiary)' : saved ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, var(--accent-primary), #4f46e5)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '16px',
-                            padding: '18px',
+                            borderRadius: '20px',
+                            padding: '20px',
                             fontSize: '16px',
-                            fontWeight: '700',
+                            fontWeight: '800',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                            boxShadow: saved ? '0 10px 25px rgba(16,185,129,0.3)' : '0 10px 30px rgba(99,102,241,0.25)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '10px',
-                            transition: 'all 0.3s ease'
+                            gap: '12px',
+                            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                            transform: loading ? 'scale(0.98)' : 'scale(1)',
+                            letterSpacing: '0.3px',
+                            position: 'relative',
+                            overflow: 'hidden'
                         }}
                     >
+                        {/* Subtle Shine Effect */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '100%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                            transition: 'left 0.7s ease',
+                            animation: loading ? 'none' : 'shine 3s infinite'
+                        }} />
+                        <style>{`
+                            @keyframes shine {
+                                0% { left: -100%; }
+                                20% { left: 100%; }
+                                100% { left: 100%; }
+                            }
+                        `}</style>
+
                         {loading ? (
-                            'Enregistrement...'
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                                <span>Enregistrement...</span>
+                            </div>
                         ) : saved ? (
                             <>
-                                <Check size={20} />
-                                Enregistré !
+                                <Check size={20} strokeWidth={3} />
+                                <span style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>Enregistré !</span>
                             </>
                         ) : (
-                            'Enregistrer les modifications'
+                            <span style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>Enregistrer les modifications</span>
                         )}
                     </button>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', marginTop: '12px' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', marginTop: '16px', opacity: 0.7 }}>
                         Tes préférences sont liées à ton compte Coach Yao.
                     </p>
                 </div>
