@@ -261,18 +261,26 @@ export async function POST(req: Request) {
         }
     }
 
+    // ─── LECTURE DU BODY ─────────────────────
+    const body = await req.json()
+    const { items, image } = body
+    const isDirectLogging = !!(items && items.length > 0)
+
     // ─── LIMITE PLAN ─────────────────────
     const paidScans = profile?.paid_scans_remaining || 0
 
     let limitReached = false
     let errorMessage = ""
 
-    if (tier === 'free' && scansFeedbacksToday >= 5) {
-        limitReached = true
-        errorMessage = "Tu as atteint ta limite de 5 scans gratuits à vie. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA)."
-    } else if (tier === 'pro' && scansFeedbacksToday >= 4) {
-        limitReached = true
-        errorMessage = "Tu as atteint ta limite de 4 scans aujourd'hui. Reviens demain ou achète un scan à l'unité (100 FCFA)."
+    // On ne bloque QUE si c'est un vrai scan (image sans items pré-remplis)
+    if (!isDirectLogging) {
+        if (tier === 'free' && scansFeedbacksToday >= 5) {
+            limitReached = true
+            errorMessage = "Tu as atteint ta limite de 5 scans gratuits à vie. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA)."
+        } else if (tier === 'pro' && scansFeedbacksToday >= 4) {
+            limitReached = true
+            errorMessage = "Tu as atteint ta limite de 4 scans aujourd'hui. Reviens demain ou achète un scan à l'unité (100 FCFA)."
+        }
     }
 
     if (limitReached) {
@@ -294,18 +302,20 @@ export async function POST(req: Request) {
             })
             .eq('user_id', user.id)
     } else {
-        // 🔥 On incrémente IMMÉDIATEMENT pour éviter les "Race Conditions" (double requête en même temps)
-        const { data: latestProfile } = await supabase.from('user_profiles').select('scan_feedbacks_today').eq('user_id', user.id).single()
-        const currentCount = latestProfile?.scan_feedbacks_today ?? scansFeedbacksToday
-        
-        await supabase
-            .from('user_profiles')
-            .update({ 
-                scan_feedbacks_today: currentCount + 1,
-                last_usage_reset_date: todayStr,
-                updated_at: new Date().toISOString()
-            })
-            .eq('user_id', user.id)
+        // On n'incrémente le compteur QUE pour un vrai scan (pas pour un log direct)
+        if (!isDirectLogging) {
+            const { data: latestProfile } = await supabase.from('user_profiles').select('scan_feedbacks_today').eq('user_id', user.id).single()
+            const currentCount = latestProfile?.scan_feedbacks_today ?? scansFeedbacksToday
+            
+            await supabase
+                .from('user_profiles')
+                .update({ 
+                    scan_feedbacks_today: currentCount + 1,
+                    last_usage_reset_date: todayStr,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', user.id)
+        }
     }
 
 
@@ -350,13 +360,34 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { images } = await req.json()
-        const image = images?.[0]
+        const images = body.images
+        const image = images?.[0] || body.image
         console.log("[ANALYZE] Request payload received", {
             userId: user.id,
+            isDirectLogging,
             hasImages: Array.isArray(images),
             imageCount: Array.isArray(images) ? images.length : 0,
         })
+
+        if (isDirectLogging) {
+            console.log("[ANALYZE] Direct logging mode - skipping AI analysis")
+            const totalCals = items.reduce((sum: number, it: any) => sum + (it.calories || 0), 0)
+            return NextResponse.json({
+                success: true,
+                meal_name: "Repas planifié",
+                total_calories: totalCals,
+                data: items.map((it: any) => ({
+                    detected: it.display_name || it.name,
+                    portion_g: it.portion_g || 100,
+                    calories_detected: it.calories,
+                    protein_detected: it.protein_g,
+                    carbs_detected: it.carbs_g,
+                    fat_detected: it.fat_g,
+                    confidence: 100,
+                    suggestions: []
+                }))
+            })
+        }
 
         if (!image || !image.data) {
             console.error("❌ IMAGE INVALID:", image)
