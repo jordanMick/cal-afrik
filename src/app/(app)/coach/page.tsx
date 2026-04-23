@@ -697,7 +697,7 @@ export default function CoachChatPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
+        <div style={{ height: '100dvh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto', position: 'relative', overflow: 'hidden' }}>
 
             {/* Halos d'ambiance */}
             <div style={{ position: 'fixed', top: '-60px', right: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--warning-rgb), 0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -918,7 +918,14 @@ export default function CoachChatPage() {
             </div>
 
             {/* INPUT AREA (FIXED BOTTOM) */}
-            <div style={{ padding: '16px 20px', background: 'var(--bg-primary)', borderTop: '0.5px solid var(--border-color)', paddingBottom: '100px' }}>
+            <div style={{ 
+                padding: '16px 20px', 
+                background: 'rgba(var(--bg-primary-rgb), 0.95)', 
+                backdropFilter: 'blur(10px)',
+                borderTop: '0.5px solid var(--border-color)', 
+                paddingBottom: '90px', // Espace pour la barre de navigation du bas
+                zIndex: 20
+            }}>
 
                 {/* SUGGESTIONS DE QUESTIONS (Principalement Menu) */}
                 {!activeThreadLimitReached && (
