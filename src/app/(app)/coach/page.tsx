@@ -172,11 +172,11 @@ const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgra
         textAlign: 'center',
         animation: 'fadeInUp 0.5s ease-out'
     }}>
-        <div style={{ fontSize: '40px', marginBottom: '16px' }}>🛑</div>
-        <h3 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Limite de messages atteinte !</h3>
+        <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔒</div>
+        <h3 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Tes 10 messages sont épuisés !</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px', lineHeight: '1.5' }}>
-            Yao a beaucoup travaillé aujourd'hui. <br />
-            Débloque-le pour finaliser ton menu !
+            Coach Yao a utilisé tout ton crédit gratuit. <br />
+            Achète un pack pour démarrer une <strong style={{ color: 'var(--warning)' }}>nouvelle discussion</strong> !
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -229,7 +229,11 @@ export default function CoachChatPage() {
 
     const todayDate = toLocalDateKey()
     const isToday = profile?.last_usage_reset_date === todayDate
-    const initialMessagesUsed = isToday ? (profile?.chat_messages_today || 0) : 0
+    // Pour les Free, le compteur est cumulatif à vie (pas de reset quotidien)
+    const initialMessagesUsed = effectiveTier === 'free'
+        ? (profile?.chat_messages_today || 0)
+        : (isToday ? (profile?.chat_messages_today || 0) : 0)
+    const isFreeQuotaExhausted = effectiveTier === 'free' && initialMessagesUsed >= maxMessages && (profile?.paid_chat_messages_remaining || 0) <= 0
 
     const [threads, setThreads] = useState<ChatThread[]>([])
     const [activeThreadDate, setActiveThreadDate] = useState<string>(todayDate)
@@ -278,16 +282,35 @@ export default function CoachChatPage() {
                 schema: 'public',
                 table: 'user_profiles',
                 filter: `user_id=eq.${uid}`
-            }, (payload) => {
-                console.log('⚡️ Profile Realtime Update:', payload.new)
-                setProfile(payload.new as any)
+            }, async (payload) => {
+                const newProfile = payload.new as any
+                console.log('⚡️ Profile Realtime Update:', newProfile)
+                setProfile(newProfile)
+
+                // 🆕 Si un Free vient de recevoir des messages payants → créer une nouvelle discussion
+                const wasExhausted = isFreeQuotaExhausted
+                const nowHasPaidMessages = (newProfile.paid_chat_messages_remaining || 0) > 0
+                if (wasExhausted && nowHasPaidMessages && effectiveTier === 'free') {
+                    const newDate = toLocalDateKey()
+                    const newThread: ChatThread = {
+                        date: `${newDate}-paid-${Date.now()}`, // Clé unique pour éviter collision
+                        messages: [getWelcomeMessage(newProfile.name)],
+                        messagesUsed: 0,
+                        maxMessages,
+                        updatedAt: new Date().toISOString(),
+                    }
+                    await saveThreadToSupabase(newThread, uid)
+                    setThreads(prev => sanitizeThreads([...prev, newThread]))
+                    setActiveThreadDate(newThread.date)
+                    toast.success('🎉 Nouvelle discussion débloquée ! Coach Yao est prêt.')
+                }
             })
             .subscribe()
 
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [profile?.user_id, profile?.id, setProfile])
+    }, [profile?.user_id, profile?.id, setProfile, isFreeQuotaExhausted, effectiveTier, maxMessages])
 
     // Auto-resize textarea
     useEffect(() => {
@@ -330,15 +353,24 @@ export default function CoachChatPage() {
 
                 const todayThread = stored.find(t => t.date === todayDate)
                 if (!todayThread) {
-                    const newThread: ChatThread = {
-                        date: todayDate,
-                        messages: [getWelcomeMessage(profile?.name)],
-                        messagesUsed: 0,
-                        maxMessages,
-                        updatedAt: new Date().toISOString(),
+                    // 🔒 Pour les Free sans quota : on ne crée PAS de nouveau thread
+                    // Ils restent sur le dernier jusqu'à l'achat d'un pack
+                    if (!isFreeQuotaExhausted) {
+                        const newThread: ChatThread = {
+                            date: todayDate,
+                            messages: [getWelcomeMessage(profile?.name)],
+                            messagesUsed: 0,
+                            maxMessages,
+                            updatedAt: new Date().toISOString(),
+                        }
+                        stored.push(newThread)
+                        await saveThreadToSupabase(newThread, uid)
                     }
-                    stored.push(newThread)
-                    await saveThreadToSupabase(newThread, uid)
+                    // Si quota Free épuisé et pas de thread aujourd'hui → on reste sur le dernier thread dispo
+                    if (stored.length > 0 && isFreeQuotaExhausted) {
+                        const lastThread = stored[stored.length - 1]
+                        setActiveThreadDate(lastThread.date)
+                    }
                 } else {
                     if (todayThread.messages.length === 0) {
                         todayThread.messages = [getWelcomeMessage(profile?.name)]
