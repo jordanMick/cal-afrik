@@ -70,7 +70,7 @@ export default function PrivacyPage() {
                     <FileText size={24} color="var(--text-muted)" style={{ marginBottom: '12px' }} />
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
                         Dernière mise à jour : 24 Avril 2026<br />
-                        Pour toute question : support@cal-afrik.com
+                        Pour toute question : via notre support WhatsApp dans l'application
                     </p>
                 </div>
             </div>
