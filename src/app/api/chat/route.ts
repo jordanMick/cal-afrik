@@ -245,17 +245,8 @@ export async function POST(req: NextRequest) {
 
         // --- BLOCAGE SUGGESTIONS (REPAS) ---
         if (isRequestingMenu) {
-            if (effectiveTier === 'free') {
-                // Pour les FREE : 5 suggestions de repas offertes (à vie)
-                if (scanFeedbacksToday >= rules.maxScansPerDay) {
-                    return NextResponse.json({
-                        success: false,
-                        error: 'Tes 5 suggestions offertes sont terminées. Passe au plan Pro pour débloquer Coach Yao au quotidien !',
-                        code: 'LIMIT_REACHED'
-                    }, { status: 200 })
-                }
-            } else {
-                // Pour les PRO/PREMIUM : limite par jour (ex: 4/jour pour le Pro)
+            if (effectiveTier === 'pro') {
+                // Pour les PRO : limite par jour (4/jour)
                 const maxScansAllowed = rules.maxScansPerDay
                 if (scanFeedbacksToday >= maxScansAllowed) {
                     return NextResponse.json({
@@ -265,6 +256,8 @@ export async function POST(req: NextRequest) {
                     }, { status: 200 })
                 }
             }
+            // Pour les PREMIUM : Illimité (Infinity), donc pas de blocage.
+            // Pour les FREE : Pas de limite de suggestions, seuls les 10 messages comptent.
         }
         const wantsMenuAny = isRequestingMenu || normalizedUserMessage.includes('ingredient') || normalizedUserMessage.includes('j\'ai')
 
