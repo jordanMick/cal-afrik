@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
     const [error, setError] = useState('')
     const [successMsg, setSuccessMsg] = useState('')
     const router = useRouter()
-    const otpRefs = useRef<(HTMLInputElement | null)[]>([])
+    const otpRefs = useRef<(HTMLInputElement | null)[]>(new Array(6).fill(null))
 
     // Step 1: Send OTP
     const handleSendOTP = async (e: React.FormEvent) => {
