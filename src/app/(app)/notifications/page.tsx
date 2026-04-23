@@ -1,15 +1,17 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Bell, Clock, Droplets, Trophy, Check } from 'lucide-react'
+import { ChevronLeft, Bell, Clock, Trophy, Check } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 export default function NotificationsPage() {
     const router = useRouter()
     const { profile, setProfile } = useAppStore()
     const [loading, setLoading] = useState(false)
+    const [pageLoading, setPageLoading] = useState(true)
     
     const [reminders, setReminders] = useState({
         repas: true,
@@ -18,7 +20,7 @@ export default function NotificationsPage() {
     })
     const [saved, setSaved] = useState(false)
 
-    // Synchronisation si le profil change
+    // Synchronisation initiale
     useEffect(() => {
         if (profile) {
             setReminders({
@@ -26,8 +28,15 @@ export default function NotificationsPage() {
                 bilan: profile.notify_reports ?? true,
                 abonnement: profile.notify_subscription ?? true
             })
+            setPageLoading(false)
         }
     }, [profile])
+
+    // Sécurité: si au bout de 2s toujours rien, on libère l'UI
+    useEffect(() => {
+        const timer = setTimeout(() => setPageLoading(false), 2000)
+        return () => clearTimeout(timer)
+    }, [])
 
     const toggle = (key: keyof typeof reminders) => {
         setReminders(prev => ({ ...prev, [key]: !prev[key] }))
@@ -39,7 +48,10 @@ export default function NotificationsPage() {
         setSaved(false)
         try {
             const { data: { session } } = await supabase.auth.getSession()
-            if (!session) return
+            if (!session) {
+                toast.error("Session expirée, reconnecte-toi.")
+                return
+            }
 
             const res = await fetch('/api/user', {
                 method: 'POST',
@@ -48,23 +60,36 @@ export default function NotificationsPage() {
                     Authorization: `Bearer ${session.access_token}` 
                 },
                 body: JSON.stringify({ 
-                    ...profile,
                     notify_meals: reminders.repas,
                     notify_reports: reminders.bilan,
                     notify_subscription: reminders.abonnement
                 })
             })
             const json = await res.json()
+            
             if (json.success) {
                 setProfile(json.data)
                 setSaved(true)
+                toast.success("Préférences enregistrées !")
                 setTimeout(() => setSaved(false), 3000)
+            } else {
+                toast.error("Erreur lors de la sauvegarde: " + (json.error || "Inconnue"))
             }
         } catch (err) {
             console.error('Update notifications error:', err)
+            toast.error("Erreur réseau. Vérifie ta connexion.")
         } finally {
             setLoading(false)
         }
+    }
+
+    if (pageLoading && !profile) {
+        return (
+            <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '30px', height: '30px', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+        )
     }
 
     const ToggleSwitch = ({ active }: { active: boolean }) => (
@@ -84,7 +109,7 @@ export default function NotificationsPage() {
     )
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '120px', position: 'relative' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '140px', position: 'relative' }}>
             {/* Header */}
             <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -183,6 +208,9 @@ export default function NotificationsPage() {
                             'Enregistrer les modifications'
                         )}
                     </button>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', marginTop: '12px' }}>
+                        Tes préférences sont liées à ton compte Coach Yao.
+                    </p>
                 </div>
 
             </div>

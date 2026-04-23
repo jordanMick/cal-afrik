@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
         const { data: profile, error } = await supabaseAdmin
             .from('user_profiles')
-            .upsert(updateData)
+            .upsert(updateData, { onConflict: 'user_id' })
             .select()
             .single()
 
