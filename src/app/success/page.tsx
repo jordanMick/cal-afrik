@@ -157,15 +157,21 @@ function SuccessContent() {
         )}
 
         <h1 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px' }}>
-          {status === 'loading' || status === 'polling' ? 'Vérification en cours…'
+          {status === 'loading' || status === 'polling' ? 'Paiement en cours de validation...'
             : status === 'success' ? 'Paiement réussi !'
             : status === 'timeout' ? 'Traitement en cours…'
             : 'Problème détecté'}
         </h1>
 
-        <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
+        <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '8px' }}>
           {message}
         </p>
+
+        {(status === 'loading' || status === 'polling') && (
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+            Cela peut prendre quelques secondes. Merci de patienter.
+          </p>
+        )}
 
         {/* Barre de progression pendant le polling */}
         {(status === 'polling' || status === 'loading') && (
@@ -184,6 +190,20 @@ function SuccessContent() {
               borderRadius: '2px',
               transition: 'width 0.5s ease'
             }} />
+          </div>
+        )}
+
+        {(status === 'error' || status === 'timeout') && (
+          <div style={{ 
+            background: 'rgba(245, 158, 11, 0.1)', 
+            padding: '16px', 
+            borderRadius: '12px', 
+            marginBottom: '24px',
+            fontSize: '14px',
+            color: 'var(--warning, #f59e0b)',
+            border: '1px solid rgba(245, 158, 11, 0.2)'
+          }}>
+            Si vous avez été débité sans confirmation, le remboursement est automatique sous 24–72h.
           </div>
         )}
 
