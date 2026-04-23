@@ -189,20 +189,46 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: 'Transaction non autorisée' }, { status: 403 });
         }
 
-        // 6. Activer les crédits
-        await activateCredits(user.id, tier, cartId);
-
-        // 7. Enregistrer dans payment_logs (idempotence future + audit)
-        await supabaseAdmin.from('payment_logs').upsert({
+        // 6. 🛡️ VERROU D'IDEMPOTENCE (INSERTION AVANT ACTION)
+        // On tente d'insérer le log. Si ça échoue (cart_id unique), c'est que c'est déjà en cours ou fini.
+        const { error: lockError } = await supabaseAdmin.from('payment_logs').insert({
             cart_id: cartId,
             user_id: user.id,
             tier,
-            status: 'processed',
+            status: 'processing', // Temporaire
             processed_at: new Date().toISOString(),
-        }, { onConflict: 'cart_id' });
+        });
 
-        console.log(`${cartTag} ✅ Paiement activé — user=${user.id}, tier=${tier}`);
-        return NextResponse.json({ success: true, tier });
+        if (lockError) {
+            // Code 23505 = duplicate key (déjà traité)
+            if (lockError.code === '23505') {
+                console.log(`${cartTag} Déjà en cours ou traité (verrou bloqué)`);
+                return NextResponse.json({ success: true, tier, already_processed: true });
+            }
+            console.error(`${cartTag} Erreur lors de la création du verrou:`, lockError.message);
+            throw lockError;
+        }
+
+        try {
+            // 7. Activer les crédits
+            await activateCredits(user.id, tier, cartId);
+
+            // 8. Marquer comme terminé
+            await supabaseAdmin.from('payment_logs')
+                .update({ status: 'processed' })
+                .eq('cart_id', cartId);
+
+            console.log(`${cartTag} ✅ Paiement activé et loggé — user=${user.id}, tier=${tier}`);
+            return NextResponse.json({ success: true, tier });
+
+        } catch (error: any) {
+            // En cas d'erreur lors de l'activation, on supprime le log pour permettre de réessayer ?
+            // Ou on le marque en 'failed'
+            await supabaseAdmin.from('payment_logs')
+                .update({ status: 'failed' })
+                .eq('cart_id', cartId);
+            throw error;
+        }
 
     } catch (error: any) {
         console.error(`${tag} ❌ Erreur:`, error.message);

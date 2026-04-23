@@ -118,33 +118,41 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User not identified' }, { status: 400 });
         }
 
-        // 5. 🛡️ IDEMPOTENCE : vérifier si ce cartId a déjà été traité
-        const { data: existing } = await supabaseAdmin
-            .from('payment_logs')
-            .select('id')
-            .eq('cart_id', cartId)
-            .eq('status', 'processed')
-            .maybeSingle();
-
-        if (existing) {
-            console.warn(`${tag3} Paiement déjà traité (idempotence) — skip`);
-            return NextResponse.json({ received: true, action: 'already_processed' });
-        }
-
-        // 6. Activer les crédits
-        await activateCredits(userId, tier, cartId);
-
-        // 7. Enregistrer dans payment_logs (idempotence + audit)
-        await supabaseAdmin.from('payment_logs').upsert({
+        // 5. 🛡️ VERROU D'IDEMPOTENCE (INSERTION AVANT ACTION)
+        const { error: lockError } = await supabaseAdmin.from('payment_logs').insert({
             cart_id: cartId,
             user_id: userId,
             tier,
-            status: 'processed',
+            status: 'processing',
             processed_at: new Date().toISOString(),
-        }, { onConflict: 'cart_id' });
+        });
+        
+        if (lockError) {
+            if (lockError.code === '23505') {
+                console.log(`${tag3} Déjà en cours ou traité (verrou bloqué)`);
+                return NextResponse.json({ received: true, action: 'already_processed' });
+            }
+            throw lockError;
+        }
 
-        console.log(`${tag3} ✅ Webhook traité avec succès pour user=${userId}, tier=${tier}`);
-        return NextResponse.json({ received: true, action: 'activated' });
+        try {
+            // 6. Activer les crédits
+            await activateCredits(userId, tier, cartId);
+
+            // 7. Marquer comme terminé
+            await supabaseAdmin.from('payment_logs')
+                .update({ status: 'processed' })
+                .eq('cart_id', cartId);
+
+            console.log(`${tag3} ✅ Webhook traité avec succès pour user=${userId}, tier=${tier}`);
+            return NextResponse.json({ received: true, action: 'activated' });
+
+        } catch (error: any) {
+            await supabaseAdmin.from('payment_logs')
+                .update({ status: 'failed' })
+                .eq('cart_id', cartId);
+            throw error;
+        }
 
     } catch (error: any) {
         console.error(`${tag}[${cartId}] ❌ Erreur:`, error.message);
