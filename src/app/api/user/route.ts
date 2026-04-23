@@ -61,31 +61,39 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json()
 
+        const { data: existingProfile } = await supabaseAdmin
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+        const updateData = {
+            user_id: user.id,
+            name: body.name ?? existingProfile?.name,
+            age: body.age ?? existingProfile?.age,
+            gender: body.gender ?? existingProfile?.gender,
+            weight_kg: body.weight_kg ?? existingProfile?.weight_kg,
+            height_cm: body.height_cm ?? existingProfile?.height_cm,
+            activity_level: body.activity_level ?? existingProfile?.activity_level,
+            goal: body.goal ?? existingProfile?.goal,
+            calorie_target: body.calorie_target ?? existingProfile?.calorie_target,
+            protein_target_g: body.protein_target_g ?? existingProfile?.protein_target_g,
+            carbs_target_g: body.carbs_target_g ?? existingProfile?.carbs_target_g,
+            fat_target_g: body.fat_target_g ?? existingProfile?.fat_target_g,
+            preferred_cuisines: body.preferred_cuisines ?? existingProfile?.preferred_cuisines,
+            dietary_restrictions: body.dietary_restrictions ?? existingProfile?.dietary_restrictions,
+            language: body.language || existingProfile?.language || 'fr',
+            country: body.country ?? existingProfile?.country,
+            onboarding_done: true,
+            notify_meals: body.notify_meals !== undefined ? body.notify_meals : existingProfile?.notify_meals,
+            notify_hydration: body.notify_hydration !== undefined ? body.notify_hydration : existingProfile?.notify_hydration,
+            notify_reports: body.notify_reports !== undefined ? body.notify_reports : existingProfile?.notify_reports,
+            notify_subscription: body.notify_subscription !== undefined ? body.notify_subscription : existingProfile?.notify_subscription,
+        }
+
         const { data: profile, error } = await supabaseAdmin
             .from('user_profiles')
-            .upsert({
-                user_id: user.id,
-                name: body.name,
-                age: body.age,
-                gender: body.gender,
-                weight_kg: body.weight_kg,
-                height_cm: body.height_cm,
-                activity_level: body.activity_level,
-                goal: body.goal,
-                calorie_target: body.calorie_target,
-                protein_target_g: body.protein_target_g,
-                carbs_target_g: body.carbs_target_g,
-                fat_target_g: body.fat_target_g,
-                preferred_cuisines: body.preferred_cuisines,
-                dietary_restrictions: body.dietary_restrictions,
-                language: body.language || 'fr',
-                country: body.country,
-                onboarding_done: true,
-                notify_meals: body.notify_meals,
-                notify_hydration: body.notify_hydration,
-                notify_reports: body.notify_reports,
-                notify_subscription: body.notify_subscription,
-            })
+            .upsert(updateData)
             .select()
             .single()
 
