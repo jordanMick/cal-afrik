@@ -174,7 +174,7 @@ export default function ForgotPasswordPage() {
                                         {otp.map((digit, i) => (
                                             <input
                                                 key={i}
-                                                ref={el => otpRefs.current[i] = el}
+                                                ref={el => { if (el) otpRefs.current[i] = el }}
                                                 type="text"
                                                 inputMode="numeric"
                                                 value={digit}
