@@ -1,29 +1,36 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
+import { CheckCircle2, Loader2, XCircle, Clock } from 'lucide-react'
+
+// ─── Config du polling ────────────────────────────────────────────────────────
+const MAX_ATTEMPTS = 12     // 12 × 5s = 60 secondes max
+const POLL_INTERVAL_MS = 5000
+
+type PageStatus = 'loading' | 'polling' | 'success' | 'error' | 'timeout'
 
 function SuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const sessionId = searchParams.get('session_id')
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  // Maketou peut passer ?cartId= ou ?session_id= dans l'URL de redirection
+  const cartIdFromUrl = searchParams.get('cartId') || searchParams.get('session_id')
+
+  const [status, setStatus] = useState<PageStatus>('loading')
   const [message, setMessage] = useState('Vérification du paiement...')
+  const [attempts, setAttempts] = useState(0)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    async function verifyPayment() {
-      // On cherche l'ID dans l'URL OU dans le localStorage (secours)
-      const currentSessionId = sessionId || localStorage.getItem('pending_maketou_cart_id');
+    async function getCartId(): Promise<string | null> {
+      if (cartIdFromUrl) return cartIdFromUrl
+      // Fallback : cartId stocké au moment du checkout
+      return localStorage.getItem('pending_maketou_cart_id')
+    }
 
-      if (!currentSessionId) {
-        setStatus('error')
-        setMessage('Impossible de retrouver votre paiement. Si vous avez été débité, contactez le support.')
-        return
-      }
-
+    async function pollVerification(cartId: string, attempt: number) {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
@@ -37,37 +44,89 @@ function SuccessContent() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`
           },
-          body: JSON.stringify({ transactionId: currentSessionId })
+          body: JSON.stringify({ cartId })
         })
 
         const data = await res.json()
+
         if (data.success) {
+          // ✅ Webhook a bien traité le paiement
+          if (intervalRef.current) clearInterval(intervalRef.current)
+          localStorage.removeItem('pending_maketou_cart_id')
           setStatus('success')
           setMessage('Paiement confirmé ! Votre compte a été mis à jour.')
-          toast.success('Paiement réussi !')
-          localStorage.removeItem('pending_maketou_cart_id'); // Nettoyage
+          toast.success('Paiement réussi ! 🎉')
           setTimeout(() => router.push('/scanner'), 3000)
-        } else {
-          setStatus('error')
-          setMessage(data.message || 'Le paiement n\'a pas encore été confirmé.')
+          return
         }
-      } catch (err) {
-        console.error('Erreur verification:', err)
+
+        if (data.status === 'waiting') {
+          // Paiement en cours — on continue à poller
+          setStatus('polling')
+          setMessage(`Attente de confirmation Maketou… (${attempt}/${MAX_ATTEMPTS})`)
+          return
+        }
+
+        // Statut négatif explicite (failed, abandoned…)
+        if (intervalRef.current) clearInterval(intervalRef.current)
         setStatus('error')
-        setMessage('Erreur lors de la vérification.')
+        setMessage(data.message || 'Le paiement a échoué ou a été abandonné.')
+
+      } catch (err) {
+        console.error('[Success] Erreur polling:', err)
+        // On ne coupe pas le polling sur une erreur réseau ponctuelle
       }
     }
 
-    verifyPayment()
-  }, [sessionId, router])
+    async function start() {
+      const cartId = await getCartId()
+
+      if (!cartId) {
+        setStatus('error')
+        setMessage('Impossible de retrouver votre paiement. Si vous avez été débité, contactez le support.')
+        return
+      }
+
+      // Premier essai immédiat
+      await pollVerification(cartId, 1)
+      setAttempts(1)
+
+      // Polling automatique toutes les POLL_INTERVAL_MS
+      let count = 1
+      intervalRef.current = setInterval(async () => {
+        count++
+        setAttempts(count)
+
+        if (count > MAX_ATTEMPTS) {
+          clearInterval(intervalRef.current!)
+          setStatus('timeout')
+          setMessage(
+            'Votre paiement prend plus de temps que prévu. ' +
+            'Si vous avez été débité, votre compte sera mis à jour automatiquement dans quelques minutes.'
+          )
+          return
+        }
+
+        await pollVerification(cartId, count)
+      }, POLL_INTERVAL_MS)
+    }
+
+    start()
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [cartIdFromUrl, router])
+
+  const progressPct = Math.min((attempts / MAX_ATTEMPTS) * 100, 100)
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
       padding: '20px',
       background: 'var(--bg-primary)',
       color: 'var(--text-primary)',
@@ -79,12 +138,16 @@ function SuccessContent() {
         borderRadius: '24px',
         border: '0.5px solid var(--border-color)',
         textAlign: 'center',
-        maxWidth: '400px',
+        maxWidth: '420px',
         width: '100%',
         boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
       }}>
-        {status === 'loading' && (
+        {/* Icône selon statut */}
+        {(status === 'loading' || status === 'polling') && (
           <Loader2 className="animate-spin" size={48} color="var(--accent)" style={{ margin: '0 auto 20px' }} />
+        )}
+        {status === 'timeout' && (
+          <Clock size={48} color="var(--warning, #f59e0b)" style={{ margin: '0 auto 20px' }} />
         )}
         {status === 'success' && (
           <CheckCircle2 size={48} color="var(--success)" style={{ margin: '0 auto 20px' }} />
@@ -94,14 +157,38 @@ function SuccessContent() {
         )}
 
         <h1 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px' }}>
-          {status === 'loading' ? 'Vérification' : status === 'success' ? 'Succès !' : 'Oups !'}
+          {status === 'loading' || status === 'polling' ? 'Vérification en cours…'
+            : status === 'success' ? 'Paiement réussi !'
+            : status === 'timeout' ? 'Traitement en cours…'
+            : 'Problème détecté'}
         </h1>
-        <p style={{ color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '24px' }}>
+
+        <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
           {message}
         </p>
 
+        {/* Barre de progression pendant le polling */}
+        {(status === 'polling' || status === 'loading') && (
+          <div style={{
+            width: '100%',
+            height: '4px',
+            background: 'var(--border-color)',
+            borderRadius: '2px',
+            marginBottom: '20px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${progressPct}%`,
+              height: '100%',
+              background: 'var(--accent)',
+              borderRadius: '2px',
+              transition: 'width 0.5s ease'
+            }} />
+          </div>
+        )}
+
         {status === 'error' && (
-          <button 
+          <button
             onClick={() => window.location.reload()}
             style={{
               padding: '12px 24px',
@@ -110,16 +197,42 @@ function SuccessContent() {
               border: 'none',
               borderRadius: '12px',
               fontWeight: '600',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              marginBottom: '12px',
+              width: '100%'
             }}
           >
             Réessayer la vérification
           </button>
         )}
 
+        {(status === 'error' || status === 'timeout') && (
+          <button
+            onClick={() => router.push('/upgrade')}
+            style={{
+              padding: '12px 24px',
+              background: 'transparent',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            Retour aux plans
+          </button>
+        )}
+
         {status === 'success' && (
           <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Redirection automatique vers le scanner...
+            Redirection vers le scanner dans 3 secondes…
+          </p>
+        )}
+
+        {status === 'timeout' && (
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '12px' }}>
+            Si le problème persiste après 5 minutes, contactez le support en précisant votre email.
           </p>
         )}
       </div>
