@@ -248,7 +248,7 @@ export const useAppStore = create<AppState>()(
                 const { todayMeals, profile, macroDistributions } = get()
                 if (!profile) return
 
-                const calorieTarget = profile.calorie_target
+                const calorieTarget = profile.calorie_target || 2000
                 const protTarget = profile.protein_target_g || 100
                 const carbsTarget = profile.carbs_target_g || 250
                 const fatTarget = profile.fat_target_g || 65
@@ -552,7 +552,7 @@ export const useAppStore = create<AppState>()(
             },
 
             initSlots: (cal, prot, carbs, fat) => {
-                set({ slots: buildInitialSlots(cal, prot, carbs, fat, get().macroDistributions) })
+                set({ slots: buildInitialSlots(cal || 2000, prot || 100, carbs || 250, fat || 65, get().macroDistributions) })
             },
 
             slots: buildInitialSlots(2000, 100, 250, 65, { calories: DEFAULT_DIST, protein: DEFAULT_DIST, carbs: DEFAULT_DIST, fat: DEFAULT_DIST }),
