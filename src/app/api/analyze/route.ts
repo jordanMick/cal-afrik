@@ -241,14 +241,19 @@ export async function POST(req: Request) {
     let scansFeedbacksToday = profile?.scan_feedbacks_today || 0
 
     if (lastReset !== todayStr) {
-        // Nouveau jour → reset du compteur si pas free
+        // Nouveau jour → reset du compteur seulement si pas free
         if (tier !== 'free') {
             scansFeedbacksToday = 0
             await supabase
                 .from('user_profiles')
-                .update({ scan_feedbacks_today: 0, last_usage_reset_date: todayStr })
+                .update({ 
+                    scan_feedbacks_today: 0, 
+                    chat_messages_today: 0, // On réinitialise aussi les messages ici par sécurité
+                    last_usage_reset_date: todayStr 
+                })
                 .eq('user_id', user.id)
         } else {
+            // Pour les FREE, on met SEULEMENT à jour la date, sans toucher au compteur
             await supabase
                 .from('user_profiles')
                 .update({ last_usage_reset_date: todayStr })
