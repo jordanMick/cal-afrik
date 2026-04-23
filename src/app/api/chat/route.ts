@@ -191,9 +191,12 @@ export async function POST(req: NextRequest) {
         let messagesUsedToday = profile.chat_messages_today || 0
         let resetUpdates: any = {}
         if (profile.last_usage_reset_date !== today) {
-            if (effectiveTier !== 'free') {
-                messagesUsedToday = 0
-                resetUpdates = { scan_feedbacks_today: 0 } // Reset other daily counters too
+            // Nouveau jour : on réinitialise les compteurs QUOTIDIENS pour tout le monde
+            messagesUsedToday = 0
+            resetUpdates = { 
+                chat_messages_today: 0,
+                scan_feedbacks_today: 0,
+                last_usage_reset_date: today 
             }
         }
 
