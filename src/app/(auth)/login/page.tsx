@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, Github, Chrome, ShieldCheck } from 'lucide-react'
+import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 
 export default function LoginPage() {
     const router = useRouter()
