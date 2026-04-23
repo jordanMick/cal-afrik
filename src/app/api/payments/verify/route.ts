@@ -94,6 +94,8 @@ export async function POST(req: Request) {
         }
 
         const cartTag = `${tag}[${cartId}]`;
+        console.log("🔍 VERIFY START");
+        console.log("cartId reçu :", cartId);
 
         // 1. Authentifier l'utilisateur
         const authHeader = req.headers.get('Authorization');
@@ -143,6 +145,12 @@ export async function POST(req: Request) {
         }
 
         const cart = await maketouRes.json();
+        
+        console.log("📦 CART FULL:", JSON.stringify(cart, null, 2));
+        console.log("📊 STATUS:", cart.status);
+        console.log("💳 PAYMENT ID:", cart.paymentId);
+        console.log("👤 META:", cart.meta);
+
         const cartStatus: string = cart?.status || '';
 
         console.log(`${cartTag} Statut Maketou: '${cartStatus}'`);
