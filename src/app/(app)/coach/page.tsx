@@ -832,57 +832,64 @@ export default function CoachChatPage() {
                             {/* Bouton "Ajouter au Scanner" — menu créneau (DATA block) */}
                             {parsed && parsed.dataItems && parsed.slot && (
                                 <button
-                                    onClick={() => handleAddToPlanning(parsed.dataItems!, parsed.slot!, msg.content)}
+                                    onClick={() => !activeThreadLimitReached && handleAddToPlanning(parsed.dataItems!, parsed.slot!, msg.content)}
+                                    disabled={activeThreadLimitReached}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
                                         borderRadius: '14px',
-                                        background: 'linear-gradient(135deg, #10b981, #059669)',
-                                        color: '#fff',
+                                        background: activeThreadLimitReached ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #10b981, #059669)',
+                                        color: activeThreadLimitReached ? 'var(--text-muted)' : '#fff',
                                         border: 'none',
                                         fontSize: '13px',
                                         fontWeight: '700',
-                                        cursor: 'pointer',
+                                        cursor: activeThreadLimitReached ? 'not-allowed' : 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        boxShadow: '0 6px 16px rgba(16,185,129,0.3)',
+                                        boxShadow: activeThreadLimitReached ? 'none' : '0 6px 16px rgba(16,185,129,0.3)',
                                         transition: 'all 0.2s',
+                                        opacity: activeThreadLimitReached ? 0.6 : 1
                                     }}
-                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                    onMouseEnter={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(-1px)')}
+                                    onMouseLeave={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(0)')}
                                 >
-                                    📲 Envoyer au Planning (Aujourd'hui)
+                                    {activeThreadLimitReached ? '🔒 Quota atteint' : '📲 Envoyer au Planning (Aujourd\'hui)'}
                                 </button>
                             )}
                             {/* Bouton "Ajouter au Scanner" — menu demain ou semaine */}
                             {menuKind && (
                                 <button
-                                    onClick={() => handleAddMenuToPlanning(menuKind.kind, menuKind.cleanText)}
+                                    onClick={() => !activeThreadLimitReached && handleAddMenuToPlanning(menuKind.kind, menuKind.cleanText)}
+                                    disabled={activeThreadLimitReached}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
                                         borderRadius: '14px',
-                                        background: menuKind.kind === 'tomorrow'
-                                            ? 'linear-gradient(135deg, #6366f1, #818cf8)'
-                                            : 'linear-gradient(135deg, #f59e0b, #d97706)',
-                                        color: '#fff',
+                                        background: activeThreadLimitReached 
+                                            ? 'var(--bg-tertiary)'
+                                            : (menuKind.kind === 'tomorrow' ? 'linear-gradient(135deg, #6366f1, #818cf8)' : 'linear-gradient(135deg, #f59e0b, #d97706)'),
+                                        color: activeThreadLimitReached ? 'var(--text-muted)' : '#fff',
                                         border: 'none',
                                         fontSize: '13px',
                                         fontWeight: '700',
-                                        cursor: 'pointer',
+                                        cursor: activeThreadLimitReached ? 'not-allowed' : 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        boxShadow: menuKind.kind === 'tomorrow'
-                                            ? '0 6px 16px rgba(99,102,241,0.3)'
-                                            : '0 6px 16px rgba(245,158,11,0.3)',
+                                        boxShadow: activeThreadLimitReached 
+                                            ? 'none'
+                                            : (menuKind.kind === 'tomorrow' ? '0 6px 16px rgba(99,102,241,0.3)' : '0 6px 16px rgba(245,158,11,0.3)'),
                                         transition: 'all 0.2s',
+                                        opacity: activeThreadLimitReached ? 0.6 : 1
                                     }}
-                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                    onMouseEnter={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(-1px)')}
+                                    onMouseLeave={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(0)')}
                                 >
-                                    {menuKind.kind === 'tomorrow' ? '📅' : '🗓️'} Envoyer au Planning ({menuKind.kind === 'tomorrow' ? 'Demain' : 'Semaine'})
+                                    {activeThreadLimitReached 
+                                        ? '🔒 Quota atteint' 
+                                        : `${menuKind.kind === 'tomorrow' ? '📅' : '🗓️'} Envoyer au Planning (${menuKind.kind === 'tomorrow' ? 'Demain' : 'Semaine'})`
+                                    }
                                 </button>
                             )}
                             <span style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '6px', margin: isCoach ? '0 0 0 4px' : '0 4px 0 0' }}>
