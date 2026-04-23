@@ -181,7 +181,7 @@ export default function NotificationsPage() {
                         disabled={loading}
                         style={{
                             width: '100%',
-                            background: loading ? 'var(--bg-tertiary)' : saved ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, var(--accent-primary), #4f46e5)',
+                            background: loading ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #065f46, #10b981)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '20px',
@@ -189,7 +189,7 @@ export default function NotificationsPage() {
                             fontSize: '16px',
                             fontWeight: '800',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            boxShadow: saved ? '0 10px 25px rgba(16,185,129,0.3)' : '0 10px 30px rgba(99,102,241,0.25)',
+                            boxShadow: '0 12px 24px rgba(16,185,129,0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

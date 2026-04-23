@@ -40,7 +40,7 @@ export default function PrivacyPage() {
             </div>
 
             <div style={{ padding: '0 20px' }}>
-                <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.1))', borderRadius: '24px', padding: '24px', marginBottom: '32px', textAlign: 'center', border: '0.5px solid var(--border-color)' }}>
+                <div style={{ background: 'linear-gradient(135deg, rgba(6,95,70,0.1), rgba(16,185,129,0.1))', borderRadius: '24px', padding: '24px', marginBottom: '32px', textAlign: 'center', border: '0.5px solid var(--border-color)' }}>
                     <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
                         <Shield size={28} color="var(--accent-primary)" />
                     </div>
