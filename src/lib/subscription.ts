@@ -20,7 +20,7 @@ export const SUBSCRIPTION_RULES = {
         hasCoachYao: true,
     },
     premium: {
-        maxScansPerDay: 1000,
+        maxScansPerDay: Infinity,
         maxCoachFeedbackPerDay: Infinity,
         maxChatMessagesPerDay: 30, // 30 par jour
         hasGraph: true,
