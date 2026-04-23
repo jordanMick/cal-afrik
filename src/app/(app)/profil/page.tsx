@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
-import { Settings, Bell, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
+import { Settings, Bell, HelpCircle, LogOut, ChevronRight, Shield, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
@@ -554,6 +554,25 @@ export default function ProfilPage() {
                             <span style={{ color: 'var(--danger)', fontSize: '15px', fontWeight: '600' }}>Déconnexion</span>
                         </div>
                         <ChevronRight size={18} color="var(--danger)" strokeWidth={2} />
+                    </button>
+                </div>
+
+                {/* LÉGAL */}
+                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px', marginTop: '16px' }}>Légal</p>
+                <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden', marginBottom: '32px' }}>
+                    <button onClick={() => router.push('/privacy')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--border-color)', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <Shield size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500' }}>Confidentialité</span>
+                        </div>
+                        <ChevronRight size={16} color="var(--text-muted)" />
+                    </button>
+                    <button onClick={() => router.push('/terms')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <FileText size={18} color="var(--text-secondary)" strokeWidth={1.5} />
+                            <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500' }}>Conditions d'utilisation</span>
+                        </div>
+                        <ChevronRight size={16} color="var(--text-muted)" />
                     </button>
                 </div>
 
