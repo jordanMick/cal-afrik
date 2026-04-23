@@ -248,7 +248,10 @@ export default function LoginPage() {
                 </div>
 
                 <div style={{ marginTop: '40px', fontSize: '11px', color: '#444', lineHeight: '1.6' }}>
-                    En continuant, tu acceptes nos <span style={{ textDecoration: 'underline' }}>CGU</span> et <span style={{ textDecoration: 'underline' }}>politique de confidentialité</span>
+                    En continuant, tu acceptes nos{' '}
+                    <span onClick={() => router.push('/terms')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>CGU</span>
+                    {' '}et notre{' '}
+                    <span onClick={() => router.push('/privacy')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>politique de confidentialité</span>
                 </div>
             </div>
         </div>
