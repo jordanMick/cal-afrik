@@ -13,7 +13,6 @@ export default function NotificationsPage() {
     
     const [reminders, setReminders] = useState({
         repas: true,
-        hydratation: false,
         bilan: true,
         abonnement: true
     })
@@ -24,7 +23,6 @@ export default function NotificationsPage() {
         if (profile) {
             setReminders({
                 repas: profile.notify_meals ?? true,
-                hydratation: profile.notify_hydration ?? false,
                 bilan: profile.notify_reports ?? true,
                 abonnement: profile.notify_subscription ?? true
             })
@@ -52,7 +50,6 @@ export default function NotificationsPage() {
                 body: JSON.stringify({ 
                     ...profile,
                     notify_meals: reminders.repas,
-                    notify_hydration: reminders.hydratation,
                     notify_reports: reminders.bilan,
                     notify_subscription: reminders.abonnement
                 })
@@ -87,7 +84,7 @@ export default function NotificationsPage() {
     )
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '100px', position: 'relative' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', fontFamily: 'system-ui, sans-serif', maxWidth: '480px', margin: '0 auto', paddingBottom: '120px', position: 'relative' }}>
             {/* Header */}
             <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={() => router.back()} style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -118,24 +115,11 @@ export default function NotificationsPage() {
                         <ToggleSwitch active={reminders.repas} />
                     </div>
 
-                    <div onClick={() => toggle('hydratation')} style={{ width: '100%', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Droplets size={16} color="#3b82f6" />
-                            </div>
-                            <div>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600', marginBottom: '2px' }}>Hydratation</p>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Boire de l'eau régulièrement</p>
-                            </div>
-                        </div>
-                        <ToggleSwitch active={reminders.hydratation} />
-                    </div>
-
                 </div>
 
                 {/* Section Coach Yao */}
                 <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Mises à jour</p>
-                <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '0.5px solid var(--border-color)', overflow: 'hidden' }}>
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '0.5px solid var(--border-color)', overflow: 'hidden', marginBottom: '32px' }}>
                     
                     <div onClick={() => toggle('bilan')} style={{ width: '100%', padding: '16px 20px', borderBottom: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -165,42 +149,42 @@ export default function NotificationsPage() {
 
                 </div>
 
-            </div>
+                {/* Save Button (Relative) */}
+                <div style={{ marginTop: '20px' }}>
+                    <button 
+                        onClick={handleSave}
+                        disabled={loading}
+                        style={{
+                            width: '100%',
+                            background: saved ? 'var(--success)' : 'var(--accent-primary)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '16px',
+                            padding: '18px',
+                            fontSize: '16px',
+                            fontWeight: '700',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '10px',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        {loading ? (
+                            'Enregistrement...'
+                        ) : saved ? (
+                            <>
+                                <Check size={20} />
+                                Enregistré !
+                            </>
+                        ) : (
+                            'Enregistrer les modifications'
+                        )}
+                    </button>
+                </div>
 
-            {/* Bottom Save Button */}
-            <div style={{ position: 'fixed', bottom: '20px', left: '0', right: '0', padding: '0 20px', maxWidth: '480px', margin: '0 auto' }}>
-                <button 
-                    onClick={handleSave}
-                    disabled={loading}
-                    style={{
-                        width: '100%',
-                        background: saved ? 'var(--success)' : 'var(--accent-primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '16px',
-                        padding: '18px',
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px',
-                        transition: 'all 0.3s ease'
-                    }}
-                >
-                    {loading ? (
-                        'Enregistrement...'
-                    ) : saved ? (
-                        <>
-                            <Check size={20} />
-                            Enregistré !
-                        </>
-                    ) : (
-                        'Enregistrer les modifications'
-                    )}
-                </button>
             </div>
         </div>
     )
