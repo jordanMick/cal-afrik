@@ -122,22 +122,6 @@ export async function POST(req: NextRequest) {
     const paidScans = profile?.paid_scans_remaining || 0
 
     // ─── LIMITE PLAN ABSOLUE (4/JOUR POUR PRO) ───
-    if (tier === 'pro' && scansFeedbacksToday >= 4 && paidScans <= 0) {
-        return NextResponse.json({
-            success: false,
-            code: 'LIMIT_REACHED',
-            error: 'Ta limite quotidienne de 4 repas est atteinte. Reviens demain ou utilise un pack !'
-        }, { status: 403 })
-    }
-
-    if (tier === 'free' && scansFeedbacksToday >= 5 && paidScans <= 0) {
-        return NextResponse.json({
-            success: false,
-            code: 'LIMIT_REACHED',
-            error: 'Ta limite de 5 repas gratuits est atteinte. Passe au Plan Pro !'
-        }, { status: 403 })
-    }
-
     // (La gestion des quotas se fait désormais uniquement lors de la génération IA via api/chat ou api/analyze)
 
     const mealData = {
