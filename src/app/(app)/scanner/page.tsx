@@ -1231,7 +1231,7 @@ export default function ScannerPage() {
                                     Scans disponibles · <span style={{ color: 'var(--accent)' }}>{Math.max(0, 5 - effectiveScansUsed)} restant{5 - effectiveScansUsed !== 1 ? 's' : ''}</span>
                                 </p>
                                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                                    Pour une précision optimale : prends la photo avec un <b>angle de 45°</b> sous une <b>bonne lumière</b>, et place un objet témoin (cuillère, main) à côté du plat.
+                                    Pour une précision optimale, prends la photo sous un <b>angle de 45°</b> avec une <b>bonne lumière</b>. Place un <b>objet témoin</b> (cuillère ou main) à côté du plat pour aider Yao à estimer les portions.
                                 </p>
                             </div>
                         </div>
@@ -1260,7 +1260,7 @@ export default function ScannerPage() {
                         <div>
                             <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>Astuce Précision</p>
                             <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                                Pour une précision optimale : prends la photo avec un <b>angle de 45°</b> sous une <b>bonne lumière</b>, et place un objet témoin (cuillère, main) à côté du plat.
+                                Pour une précision optimale, prends la photo sous un <b>angle de 45°</b> avec une <b>bonne lumière</b>. Place un <b>objet témoin</b> (cuillère ou main) à côté du plat pour aider Yao à estimer les portions.
                             </p>
                         </div>
                     </div>
