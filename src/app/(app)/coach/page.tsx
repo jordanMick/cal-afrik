@@ -1039,7 +1039,8 @@ export default function CoachChatPage() {
                                     handleSendMessage()
                                 }
                             }}
-                            placeholder="Pose ta question à Yao..."
+                            disabled={isTyping}
+                            placeholder={isTyping ? "Yao réfléchit..." : "Pose ta question à Yao..."}
                             rows={1}
                             style={{
                                 flex: 1,
@@ -1059,16 +1060,20 @@ export default function CoachChatPage() {
                         />
                         <button
                             onClick={handleSendMessage}
-                            disabled={!input.trim()}
+                            disabled={!input.trim() || isTyping}
                             style={{
                                 width: '58px', height: '58px', borderRadius: '24px',
-                                background: input.trim() ? 'linear-gradient(135deg, var(--accent), #818cf8)' : 'var(--bg-tertiary)',
-                                color: input.trim() ? '#fff' : 'var(--text-muted)', border: 'none',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default',
+                                background: (input.trim() && !isTyping) ? 'linear-gradient(135deg, var(--accent), #818cf8)' : 'var(--bg-tertiary)',
+                                color: (input.trim() && !isTyping) ? '#fff' : 'var(--text-muted)', border: 'none',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: (input.trim() && !isTyping) ? 'pointer' : 'default',
                                 transition: 'all 0.3s ease',
-                                boxShadow: input.trim() ? '0 10px 20px rgba(var(--accent-rgb), 0.3)' : 'none'
+                                boxShadow: (input.trim() && !isTyping) ? '0 10px 20px rgba(var(--accent-rgb), 0.3)' : 'none'
                             }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+                            {isTyping ? (
+                                <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+                            )}
                         </button>
                     </div>
                 )}
