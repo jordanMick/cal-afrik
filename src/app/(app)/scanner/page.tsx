@@ -1231,7 +1231,7 @@ export default function ScannerPage() {
                                     Scans disponibles · <span style={{ color: 'var(--accent)' }}>{Math.max(0, 5 - effectiveScansUsed)} restant{5 - effectiveScansUsed !== 1 ? 's' : ''}</span>
                                 </p>
                                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                                    Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
+                                    Pour une précision optimale : prends la photo avec un <b>angle de 45°</b> sous une <b>bonne lumière</b>, et place un objet témoin (cuillère, main) à côté du plat.
                                 </p>
                             </div>
                         </div>
@@ -1260,7 +1260,7 @@ export default function ScannerPage() {
                         <div>
                             <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>Astuce Précision</p>
                             <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                                Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.
+                                Pour une précision optimale : prends la photo avec un <b>angle de 45°</b> sous une <b>bonne lumière</b>, et place un objet témoin (cuillère, main) à côté du plat.
                             </p>
                         </div>
                     </div>
