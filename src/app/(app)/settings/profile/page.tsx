@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Pencil, Mail, Key, Check, X } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
@@ -23,6 +23,15 @@ export default function PersonalInfoPage() {
     const [passwordSuccess, setPasswordSuccess] = useState('')
     const [passwordLoading, setPasswordLoading] = useState(false)
 
+    const [isEditingEmail, setIsEditingEmail] = useState(false)
+    const [newEmail, setNewEmail] = useState('')
+    const [stepEmail, setStepEmail] = useState(1) // 1: input, 2: otp
+    const [emailError, setEmailError] = useState('')
+    const [emailSuccess, setEmailSuccess] = useState('')
+    const [emailLoading, setEmailLoading] = useState(false)
+    const [otp, setOtp] = useState(['', '', '', '', '', '', '', ''])
+    const otpRefs = useRef<(HTMLInputElement | null)[]>(new Array(8).fill(null))
+
     useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser()
@@ -30,7 +39,6 @@ export default function PersonalInfoPage() {
         }
         fetchUser()
     }, [])
-
 
     const handleUpdatePassword = async () => {
         setPasswordError('')
@@ -64,6 +72,62 @@ export default function PersonalInfoPage() {
         }
     }
 
+    const handleRequestEmailChange = async () => {
+        if (!newEmail || !newEmail.includes('@')) return setEmailError("Veuillez entrer un email valide.")
+        setEmailLoading(true)
+        setEmailError('')
+        try {
+            const { error } = await supabase.auth.updateUser({ email: newEmail })
+            if (error) throw error
+            setStepEmail(2)
+            toast.success("Code envoyé !")
+        } catch (err: any) {
+            setEmailError(err.message || "Erreur lors de l'envoi du code.")
+        } finally {
+            setEmailLoading(false)
+        }
+    }
+
+    const handleVerifyEmailOTP = async () => {
+        const token = otp.join('')
+        if (token.length < 8) return
+        setEmailLoading(true)
+        setEmailError('')
+        try {
+            const { error } = await supabase.auth.verifyOtp({
+                email: newEmail,
+                token,
+                type: 'email_change'
+            })
+            if (error) throw error
+            setEmailSuccess("Email mis à jour ! 🎉")
+            setUserEmail(newEmail)
+            setTimeout(() => {
+                setIsEditingEmail(false)
+                setStepEmail(1)
+                setEmailSuccess('')
+            }, 2000)
+        } catch (err: any) {
+            setEmailError("Code invalide ou expiré ❌")
+        } finally {
+            setEmailLoading(false)
+        }
+    }
+
+    const handleOtpChange = (value: string, index: number) => {
+        if (!/^\d*$/.test(value)) return
+        const newOtp = [...otp]
+        newOtp[index] = value.slice(-1)
+        setOtp(newOtp)
+        if (value && index < 7) otpRefs.current[index + 1]?.focus()
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            otpRefs.current[index - 1]?.focus()
+        }
+    }
+
     const maskEmail = (email: string) => {
         if (!email) return ''
         const [name, domain] = email.split('@')
@@ -90,16 +154,58 @@ export default function PersonalInfoPage() {
                 <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '16px', marginBottom: '24px', overflow: 'hidden' }}>
                     {/* EMAIL */}
                     <div style={{ padding: '16px', borderBottom: '0.5px solid var(--border-color)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="#6366f1" /></div>
-                                <div>
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Adresse email</p>
-                                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>{maskEmail(userEmail)}</p>
+                        {!isEditingEmail ? (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="#6366f1" /></div>
+                                    <div>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Adresse email</p>
+                                        <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>{maskEmail(userEmail)}</p>
+                                    </div>
                                 </div>
+                                <button onClick={() => setIsEditingEmail(true)} style={{ background: 'transparent', border: 'none', color: '#10b981', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>Modifier</button>
                             </div>
-                            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Non modifiable</span>
-                        </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>Modifier l'email</span>
+                                    <button onClick={() => { setIsEditingEmail(false); setStepEmail(1); setEmailError(''); setEmailSuccess('') }} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={18} color="var(--text-muted)" /></button>
+                                </div>
+                                
+                                {stepEmail === 1 ? (
+                                    <>
+                                        <input type="email" placeholder="Nouvelle adresse email" value={newEmail} onChange={e => setNewEmail(e.target.value)} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} />
+                                        {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px' }}>{emailError}</p>}
+                                        <button onClick={handleRequestEmailChange} disabled={emailLoading} style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, #065f46, #10b981)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.2)' }}>
+                                            {emailLoading ? 'Chargement...' : 'Recevoir le code'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center' }}>Saisis le code reçu sur {newEmail}</p>
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                                            {otp.map((digit, i) => (
+                                                <input
+                                                    key={i}
+                                                    ref={el => { if (el) otpRefs.current[i] = el }}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    value={digit}
+                                                    onChange={e => handleOtpChange(e.target.value, i)}
+                                                    onKeyDown={e => handleKeyDown(e, i)}
+                                                    style={{ width: '32px', height: '44px', textAlign: 'center', fontSize: '16px', fontWeight: '700', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '8px', color: '#10b981', outline: 'none' }}
+                                                />
+                                            ))}
+                                        </div>
+                                        {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px', textAlign: 'center' }}>{emailError}</p>}
+                                        {emailSuccess && <p style={{ color: 'var(--success)', fontSize: '12px', textAlign: 'center' }}>{emailSuccess}</p>}
+                                        <button onClick={handleVerifyEmailOTP} disabled={emailLoading || !!emailSuccess} style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, #065f46, #10b981)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.2)' }}>
+                                            {emailLoading ? 'Vérification...' : 'Confirmer le changement'}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* PASSWORD */}
@@ -126,7 +232,7 @@ export default function PersonalInfoPage() {
                                 <input type="password" placeholder="Confirmer le nouveau" value={passwordForm.confirmNew} onChange={e => setPasswordForm({...passwordForm, confirmNew: e.target.value})} style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} />
                                 {passwordError && <p style={{ color: 'var(--danger)', fontSize: '12px' }}>{passwordError}</p>}
                                 {passwordSuccess && <p style={{ color: 'var(--success)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14}/> {passwordSuccess}</p>}
-                                <button onClick={handleUpdatePassword} disabled={passwordLoading || !!passwordSuccess} style={{ width: '100%', padding: '12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
+                                <button onClick={handleUpdatePassword} disabled={passwordLoading || !!passwordSuccess} style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, #065f46, #10b981)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.2)' }}>
                                     {passwordLoading ? 'Chargement...' : 'Enregistrer'}
                                 </button>
                             </div>
