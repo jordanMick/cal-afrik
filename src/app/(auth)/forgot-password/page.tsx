@@ -9,14 +9,14 @@ import { ChevronLeft, Mail, Send, Lock, ShieldCheck, CheckCircle } from 'lucide-
 export default function ForgotPasswordPage() {
     const [step, setStep] = useState(1) // 1: Email, 2: OTP, 3: New Password
     const [email, setEmail] = useState('')
-    const [otp, setOtp] = useState(['', '', '', '', '', '', '', ''])
+    const [otp, setOtp] = useState(['', '', '', '', '', ''])
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [successMsg, setSuccessMsg] = useState('')
     const router = useRouter()
-    const otpRefs = useRef<(HTMLInputElement | null)[]>(new Array(8).fill(null))
+    const otpRefs = useRef<(HTMLInputElement | null)[]>(new Array(6).fill(null))
 
     // Step 1: Send OTP
     const handleSendOTP = async (e: React.FormEvent) => {
@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
         const newOtp = [...otp]
         newOtp[index] = value.slice(-1)
         setOtp(newOtp)
-        if (value && index < 7) otpRefs.current[index + 1]?.focus()
+        if (value && index < 5) otpRefs.current[index + 1]?.focus()
     }
 
     const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
     const handleVerifyOTP = async (e: React.FormEvent) => {
         e.preventDefault()
         const token = otp.join('')
-        if (token.length < 8) return
+        if (token.length < 6) return
         setLoading(true)
         setError('')
         try {
@@ -110,14 +110,14 @@ export default function ForgotPasswordPage() {
             color: '#fff'
         }}>
             {/* Halos d'ambiance */}
-            <motion.div
+            <motion.div 
                 animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.3, 0.2] }}
                 transition={{ duration: 10, repeat: Infinity }}
-                style={{ position: 'fixed', top: '-10%', right: '-10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none', filter: 'blur(80px)' }}
+                style={{ position: 'fixed', top: '-10%', right: '-10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)', pointerEvents: 'none', filter: 'blur(80px)' }} 
             />
 
             <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center', position: 'relative', zIndex: 10 }}>
-
+                
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '40px' }}>
                     <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981', marginBottom: '20px' }}>Cal-Afrik</h2>
                     <div style={{ fontSize: '56px', marginBottom: '16px' }}>
@@ -131,10 +131,10 @@ export default function ForgotPasswordPage() {
                     </p>
                 </motion.div>
 
-                <motion.div
+                <motion.div 
                     layout
-                    style={{
-                        background: CARD_BG,
+                    style={{ 
+                        background: CARD_BG, 
                         backdropFilter: 'blur(25px)',
                         borderRadius: '32px',
                         padding: '32px',
@@ -150,8 +150,8 @@ export default function ForgotPasswordPage() {
                             exit={{ opacity: 0, x: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <button
-                                onClick={() => step === 1 ? router.push('/login') : setStep(step - 1)}
+                            <button 
+                                onClick={() => step === 1 ? router.push('/login') : setStep(step - 1)} 
                                 style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', marginBottom: '24px', padding: 0 }}
                             >
                                 <ChevronLeft size={16} /> {step === 1 ? 'Retour à la connexion' : 'Retour'}
@@ -170,20 +170,22 @@ export default function ForgotPasswordPage() {
 
                             {step === 2 && (
                                 <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
                                         {otp.map((digit, i) => (
                                             <input
                                                 key={i}
-                                                ref={el => { if (el) otpRefs.current[i] = el }}
+                                                ref={(el) => {
+                                                    otpRefs.current[i] = el;
+                                                }}
                                                 type="text"
                                                 inputMode="numeric"
                                                 value={digit}
                                                 onChange={e => handleOtpChange(e.target.value, i)}
                                                 onKeyDown={e => handleKeyDown(e, i)}
                                                 style={{
-                                                    width: '38px', height: '56px', textAlign: 'center', fontSize: '18px', fontWeight: '800',
+                                                    width: '45px', height: '56px', textAlign: 'center', fontSize: '20px', fontWeight: '800',
                                                     background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
-                                                    borderRadius: '12px', color: '#10b981', outline: 'none'
+                                                    borderRadius: '14px', color: '#10b981', outline: 'none'
                                                 }}
                                             />
                                         ))}

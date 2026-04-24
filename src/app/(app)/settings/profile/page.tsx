@@ -29,8 +29,8 @@ export default function PersonalInfoPage() {
     const [emailError, setEmailError] = useState('')
     const [emailSuccess, setEmailSuccess] = useState('')
     const [emailLoading, setEmailLoading] = useState(false)
-    const [otp, setOtp] = useState(['', '', '', '', '', '', '', ''])
-    const otpRefs = useRef<(HTMLInputElement | null)[]>(new Array(8).fill(null))
+    const [otp, setOtp] = useState(['', '', '', '', '', ''])
+    const otpRefs = useRef<(HTMLInputElement | null)[]>(new Array(6).fill(null))
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -90,7 +90,7 @@ export default function PersonalInfoPage() {
 
     const handleVerifyEmailOTP = async () => {
         const token = otp.join('')
-        if (token.length < 8) return
+        if (token.length < 6) return
         setEmailLoading(true)
         setEmailError('')
         try {
@@ -119,7 +119,7 @@ export default function PersonalInfoPage() {
         const newOtp = [...otp]
         newOtp[index] = value.slice(-1)
         setOtp(newOtp)
-        if (value && index < 7) otpRefs.current[index + 1]?.focus()
+        if (value && index < 5) otpRefs.current[index + 1]?.focus()
     }
 
     const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
@@ -183,7 +183,7 @@ export default function PersonalInfoPage() {
                                 ) : (
                                     <>
                                         <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center' }}>Saisis le code reçu sur {newEmail}</p>
-                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
                                             {otp.map((digit, i) => (
                                                 <input
                                                     key={i}
@@ -193,7 +193,7 @@ export default function PersonalInfoPage() {
                                                     value={digit}
                                                     onChange={e => handleOtpChange(e.target.value, i)}
                                                     onKeyDown={e => handleKeyDown(e, i)}
-                                                    style={{ width: '32px', height: '44px', textAlign: 'center', fontSize: '16px', fontWeight: '700', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '8px', color: '#10b981', outline: 'none' }}
+                                                    style={{ width: '40px', height: '48px', textAlign: 'center', fontSize: '18px', fontWeight: '700', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '8px', color: '#10b981', outline: 'none' }}
                                                 />
                                             ))}
                                         </div>
