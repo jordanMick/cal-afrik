@@ -39,14 +39,15 @@ const GRADIENT = 'linear-gradient(90deg, var(--accent), #10b981)'
 
 export default function ScannerPage() {
     const router = useRouter()
-    const { 
-        addMeal, 
-        profile, 
-        slots, 
-        dailyCalories, 
-        setLastCoachMessage, 
+    const {
+        addMeal,
+        profile,
+        slots,
+        dailyCalories,
+        setLastCoachMessage,
         pendingScannerPrefill,
         setPendingScannerPrefill,
+        refreshProfile,
     } = useAppStore()
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -172,7 +173,7 @@ export default function ScannerPage() {
 
     const handleSelectSuggestion = (fullText: string, slotKey: string) => {
         if (!fullText) return
-        
+
         // On affiche un label court pour l'UI
         const displayLabel = `Menu ${SLOT_LABELS[slotKey as MealSlotKey] || slotKey}`
 
@@ -181,9 +182,9 @@ export default function ScannerPage() {
         let totalProt = 0;
         let totalCarbs = 0;
         let totalFat = 0;
-        
+
         const cleanedLower = fullText.toLowerCase()
-        
+
         // --- 1. Tenter l'extraction via bloc ---DATA--- (Précis) ---
         const sep = '---DATA---'
         const dataIdx = fullText.indexOf(sep)
@@ -217,9 +218,9 @@ export default function ScannerPage() {
                 const fullName = (f.display_name || f.name_standard || "").toLowerCase()
                 // On extrait le nom court sans les parenthèses (ex: "Molou Zogbon (Bouillie de riz)" -> "molou zogbon")
                 const shortName = fullName.replace(/\s*\(.*?\)/g, "").trim()
-                
+
                 return fullName && (
-                    cleanedLower.includes(fullName) || 
+                    cleanedLower.includes(fullName) ||
                     (shortName.length > 3 && cleanedLower.includes(shortName))
                 )
             })
@@ -230,7 +231,7 @@ export default function ScannerPage() {
                     const portionRegex = new RegExp(`${nameEscaped}.*?\\(?(\\d+)\\s*g\\)?`, 'i')
                     const portionMatch = fullText.match(portionRegex)
                     const portion = portionMatch ? parseInt(portionMatch[1]) : (f.default_portion_g || 200)
-                    
+
                     totalCals += (f.calories_per_100g * portion) / 100
                     totalProt += ((f.proteins_100g || 0) * portion) / 100
                     totalCarbs += ((f.carbs_100g || 0) * portion) / 100
@@ -469,6 +470,9 @@ export default function ScannerPage() {
             setSuggestions(enriched)
             setIsSuggestionsExpanded(true)
             if (json.data[0]) { const first = json.data[0] as ScanResultItem; setManualFood({ name_standard: json.meal_name || first.detected, portion_g: first.portion_g, calories: first.calories_detected, protein_g: first.protein_detected, carbs_g: first.carbs_detected, fat_g: first.fat_detected, category: 'plats_composes' }) }
+            
+            // ✅ Rafraîchir le profil pour mettre à jour les compteurs de scans
+            refreshProfile().catch(err => console.warn('⚠️ refreshProfile error:', err))
         } catch (err: any) {
             console.error(err)
             toast.error(`Erreur analyse: ${err?.message || "Erreur inconnue"}`)
@@ -580,6 +584,7 @@ export default function ScannerPage() {
                 // ✅ Décompte du jeton pour les gratuits
                 if (session && profile?.subscription_tier === 'free') {
                     await supabase.rpc('increment_scan_feedback', { user_id_input: session.user.id })
+                    refreshProfile().catch(err => console.warn('⚠️ refreshProfile error:', err))
                 }
             } else {
                 toast.error("Produit non trouvé.");
@@ -723,8 +728,8 @@ export default function ScannerPage() {
 
             // 3. Sauvegarder le repas (Meal) directement
             const isBarcode = scanMode === 'barcode' || !!(window as any).isLastScanFromBarcode;
-            const finalMealName = (mealName && mealName !== 'Repas détecté') 
-                ? mealName 
+            const finalMealName = (mealName && mealName !== 'Repas détecté')
+                ? mealName
                 : (newFoodEntry.name || manualFood.name_standard);
 
             const resMeal = await fetch('/api/meals', {
@@ -777,22 +782,22 @@ export default function ScannerPage() {
             const aiFoods = selectedFoods.filter(f => f.fromCoach)
             if (aiFoods.length > 0) await Promise.all(aiFoods.map(food => saveAIFoodToDB(food, session)))
             const totals = getTotals()
-            const res = await fetch('/api/meals', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, 
-                body: JSON.stringify({ 
-                    custom_name: mealName || selectedFoods.map(f => f.name).join(', '), 
-                    meal_type: currentSlotKey, 
-                    portion_g: Math.round(totals.portion_g), 
-                    calories: Math.round(totals.calories), 
-                    protein_g: Math.round(totals.protein_g * 10) / 10, 
-                    carbs_g: Math.round(totals.carbs_g * 10) / 10, 
-                    fat_g: Math.round(totals.fat_g * 10) / 10, 
-                    image_url: capturedImage, 
-                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length), 
+            const res = await fetch('/api/meals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({
+                    custom_name: mealName || selectedFoods.map(f => f.name).join(', '),
+                    meal_type: currentSlotKey,
+                    portion_g: Math.round(totals.portion_g),
+                    calories: Math.round(totals.calories),
+                    protein_g: Math.round(totals.protein_g * 10) / 10,
+                    carbs_g: Math.round(totals.carbs_g * 10) / 10,
+                    fat_g: Math.round(totals.fat_g * 10) / 10,
+                    image_url: capturedImage,
+                    ai_confidence: Math.round(selectedFoods.reduce((sum, f) => sum + f.confidence, 0) / selectedFoods.length),
                     coach_message: coachMessage || null,
                     is_suggestion: aiFoods.length > 0 // 🔥 FLAG EXPLICITE
-                }) 
+                })
             })
             const json = await res.json()
             if (json.success && json.data) {
@@ -825,10 +830,14 @@ export default function ScannerPage() {
     const displayedRemaining = Math.max(0, isLastSlot ? dailyRemainingNow : (currentSlot?.remaining ?? 0))
     const displayedRemainingLabel = isLastSlot ? "Restant journée" : "Restant créneau"
 
-    const scansUsedToday = profile?.scan_feedbacks_today || 0
+    const todayStr = new Date().toISOString().split('T')[0]
+    const effectiveScansUsed = (effectiveTier !== 'free' && (profile as any)?.last_usage_reset_date !== todayStr)
+        ? 0
+        : ((profile as any)?.scan_feedbacks_today || 0)
+
     const paidScans = profile?.paid_scans_remaining || 0
-    const isProLimit = effectiveTier === 'pro' && scansUsedToday >= 4
-    const isFreeLimit = effectiveTier === 'free' && scansUsedToday >= 5
+    const isProLimit = effectiveTier === 'pro' && effectiveScansUsed >= 4
+    const isFreeLimit = effectiveTier === 'free' && effectiveScansUsed >= 5
     const globalIsBlocked = (isProLimit || isFreeLimit) && paidScans <= 0
 
     return (
@@ -921,11 +930,11 @@ export default function ScannerPage() {
             {(image || isAnalyzing) && (
                 <div style={{ position: 'relative', marginBottom: '24px', width: '100%', aspectRatio: '1/1', borderRadius: '32px', overflow: 'hidden', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', boxShadow: '0 12px 40px rgba(0,0,0,0.15)' }}>
                     {image && (
-                        <motion.img 
+                        <motion.img
                             initial={{ scale: 1.1, opacity: 0 }}
                             animate={{ scale: 1, opacity: isAnalyzing ? 0.6 : 1 }}
-                            src={image} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            src={image}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                     )}
 
@@ -957,15 +966,15 @@ export default function ScannerPage() {
                                     </p>
                                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '12px' }}>
                                         {scanSteps.map((_, i) => (
-                                            <div 
-                                                key={i} 
-                                                style={{ 
-                                                    width: i === scanStep ? '20px' : '6px', 
-                                                    height: '6px', 
-                                                    borderRadius: '3px', 
+                                            <div
+                                                key={i}
+                                                style={{
+                                                    width: i === scanStep ? '20px' : '6px',
+                                                    height: '6px',
+                                                    borderRadius: '3px',
                                                     background: i <= scanStep ? 'var(--accent)' : 'rgba(255,255,255,0.3)',
                                                     transition: 'all 0.3s ease'
-                                                }} 
+                                                }}
                                             />
                                         ))}
                                     </div>
@@ -975,7 +984,7 @@ export default function ScannerPage() {
                     )}
 
                     {!isAnalyzing && (
-                        <button 
+                        <button
                             onClick={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName(''); setShowManualForm(false) }}
                             style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: '40px', height: '40px', color: '#fff', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}
                         >
@@ -995,7 +1004,7 @@ export default function ScannerPage() {
             {/* SUGGESTIONS ACCORDION */}
             {suggestions.length > 0 && !isAnalyzing && (
                 <div style={{ marginBottom: '24px' }}>
-                    <button 
+                    <button
                         onClick={() => setIsSuggestionsExpanded(!isSuggestionsExpanded)}
                         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '18px', cursor: 'pointer', marginBottom: '12px', transition: 'all 0.2s ease' }}
                     >
@@ -1024,18 +1033,18 @@ export default function ScannerPage() {
                                 {suggestions.map((food, idx) => {
                                     const isSelected = !!selectedFoods.find(f => f.id === food.id)
                                     return (
-                                        <div 
-                                            key={`${food.id}-${food.detected}-${idx}`} 
-                                            onClick={() => selectFood(food)} 
-                                            style={{ 
-                                                padding: '16px 20px', 
-                                                borderRadius: '20px', 
-                                                background: isSelected ? 'rgba(var(--accent-rgb), 0.08)' : 'var(--bg-secondary)', 
-                                                cursor: 'pointer', 
-                                                border: isSelected ? `1px solid var(--accent)` : '0.5px solid var(--border-color)', 
-                                                transition: 'all 0.2s ease', 
-                                                position: 'relative', 
-                                                overflow: 'hidden' 
+                                        <div
+                                            key={`${food.id}-${food.detected}-${idx}`}
+                                            onClick={() => selectFood(food)}
+                                            style={{
+                                                padding: '16px 20px',
+                                                borderRadius: '20px',
+                                                background: isSelected ? 'rgba(var(--accent-rgb), 0.08)' : 'var(--bg-secondary)',
+                                                cursor: 'pointer',
+                                                border: isSelected ? `1px solid var(--accent)` : '0.5px solid var(--border-color)',
+                                                transition: 'all 0.2s ease',
+                                                position: 'relative',
+                                                overflow: 'hidden'
                                             }}
                                         >
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -1064,23 +1073,23 @@ export default function ScannerPage() {
 
             {/* MESSAGE SI AUCUNE SUGGESTION DÉTECTÉE */}
             {!isAnalyzing && image && suggestions.length === 0 && coachMessage && (
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    style={{ 
-                        background: 'rgba(var(--warning-rgb), 0.1)', 
-                        border: '1px solid rgba(var(--warning-rgb), 0.3)', 
-                        borderRadius: '20px', 
-                        padding: '20px', 
+                    style={{
+                        background: 'rgba(var(--warning-rgb), 0.1)',
+                        border: '1px solid rgba(var(--warning-rgb), 0.3)',
+                        borderRadius: '20px',
+                        padding: '20px',
                         marginBottom: '24px',
-                        textAlign: 'center' 
+                        textAlign: 'center'
                     }}
                 >
                     <div style={{ fontSize: '32px', marginBottom: '12px' }}>🤔</div>
                     <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600', lineHeight: '1.5', marginBottom: '16px' }}>
                         {coachMessage}
                     </p>
-                    <button 
+                    <button
                         onClick={() => setShowManualForm(true)}
                         style={{ background: 'var(--warning)', color: '#000', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
                     >
@@ -1089,9 +1098,23 @@ export default function ScannerPage() {
                 </motion.div>
             )}
 
-            {/* AJOUT MANUEL */}
-            {!isAnalyzing && image && (
-                <button onClick={() => setShowManualForm(!showManualForm)} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '0.5px dashed #2a2a2a', color: '#444', cursor: 'pointer', marginBottom: '12px', fontSize: '13px' }}>
+            {/* AJOUT MANUEL (Toujours disponible si pas en cours d'analyse) */}
+            {!isAnalyzing && (
+                <button 
+                    onClick={() => setShowManualForm(!showManualForm)} 
+                    style={{ 
+                        width: '100%', 
+                        padding: '12px', 
+                        borderRadius: '12px', 
+                        background: 'transparent', 
+                        border: '0.5px dashed var(--border-color)', 
+                        color: 'var(--text-secondary)', 
+                        cursor: 'pointer', 
+                        marginBottom: '12px', 
+                        fontSize: '13px',
+                        display: showManualForm && !image ? 'none' : 'block' // Cacher si le formulaire est déjà ouvert au-dessus
+                    }}
+                >
                     {showManualForm ? '✕ Fermer le formulaire' : '✏️ Ajouter manuellement'}
                 </button>
             )}
@@ -1118,19 +1141,9 @@ export default function ScannerPage() {
 
             {/* BANNER LIMITE SCANS / ASTUCE */}
             {!image && !isAnalyzing && (() => {
-                const today = new Date().toISOString().split('T')[0]
-                const scansUsedToday = (profile as any)?.last_usage_reset_date === today
-                    ? ((profile as any)?.scan_feedbacks_today || 0)
-                    : 0
-                
-                const paidScans = profile?.paid_scans_remaining || 0
-                const isProLimit = effectiveTier === 'pro' && scansUsedToday >= 4
-                const isFreeLimit = effectiveTier === 'free' && scansUsedToday >= 5
-                const isBlocked = (isProLimit || isFreeLimit) && paidScans <= 0
-
-                if (isBlocked) {
+                if (globalIsBlocked) {
                     return (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             style={{
@@ -1152,11 +1165,11 @@ export default function ScannerPage() {
                                 Limite atteinte
                             </h3>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6', marginBottom: '24px' }}>
-                                {isProLimit 
+                                {isProLimit
                                     ? "Vous avez utilisé vos 4 scans quotidiens. Continuez votre suivi pour seulement 100 FCFA."
                                     : "Vous avez atteint vos 5 scans gratuits à vie. Débloquez la puissance de Yao pour continuer."}
                             </p>
-                            
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <button
                                     onClick={handlePayForScan}
@@ -1168,6 +1181,16 @@ export default function ScannerPage() {
                                     }}
                                 >
                                     ⚡️ Débloquer 1 scan + avis Coach (100F)
+                                </button>
+                                <button
+                                    onClick={() => setShowManualForm(true)}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px',
+                                        borderRadius: '16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+                                    }}
+                                >
+                                    ✏️ Ajouter manuellement
                                 </button>
                                 <button
                                     onClick={() => router.push('/settings/subscription')}
@@ -1205,7 +1228,7 @@ export default function ScannerPage() {
                             </div>
                             <div>
                                 <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>
-                                    Scans disponibles · <span style={{ color: 'var(--accent)' }}>{Math.max(0, 5 - scansUsedToday)} restant{5 - scansUsedToday !== 1 ? 's' : ''}</span>
+                                    Scans disponibles · <span style={{ color: 'var(--accent)' }}>{Math.max(0, 5 - effectiveScansUsed)} restant{5 - effectiveScansUsed !== 1 ? 's' : ''}</span>
                                 </p>
                                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                                     Pour une meilleure estimation des portions, placez un objet de taille connue (cuillère, pièce, ou votre main) à côté du plat avant de prendre la photo.

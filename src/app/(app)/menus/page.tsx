@@ -19,7 +19,16 @@ function normalizeMenuText(raw: string): string {
     const keywords = ['Petit-déjeuner', 'Petit-déj', 'Déjeuner', 'Collation', 'Dîner', 'Jour', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
     keywords.forEach(k => {
         const regex = new RegExp(`([^\\n])\\s*(---*\\s*)?(${k})`, 'gi')
-        text = text.replace(regex, '$1\n$3')
+        text = text.replace(regex, (match, p1, p2, p3, offset) => {
+            // Empêcher de couper "Petit-déjeuner" en "Petit-\ndéjeuner"
+            if (k.toLowerCase() === 'déjeuner') {
+                const before = text.substring(0, offset + p1.length).toLowerCase()
+                if (before.endsWith('petit-') || before.endsWith('petit')) {
+                    return match
+                }
+            }
+            return p1 + '\n' + p3
+        })
     })
     return text.replace(/---*/g, '').replace(/\s{2,}/g, ' ').trim()
 }

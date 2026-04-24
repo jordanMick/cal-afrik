@@ -70,6 +70,7 @@ export interface SlotBilan {
 interface AppState {
     profile: UserProfile | null
     setProfile: (profile: UserProfile | null) => void
+    refreshProfile: () => Promise<void>
 
     todayMeals: Meal[]
     setTodayMeals: (meals: Meal[]) => void
@@ -135,8 +136,8 @@ interface AppState {
 
     // ─── Pont Coach → Scanner ─────────────────────────────────
     pendingScannerPrefill: {
-        items: Array<{ 
-            name: string; 
+        items: Array<{
+            name: string;
             volume_ml: number;
             display_name?: string;
             calories?: number;
@@ -148,9 +149,9 @@ interface AppState {
         }>
         slot: string
     } | null
-    setPendingScannerPrefill: (data: { 
-        items: Array<{ 
-            name: string; 
+    setPendingScannerPrefill: (data: {
+        items: Array<{
+            name: string;
             volume_ml: number;
             display_name?: string;
             calories?: number;
@@ -159,8 +160,8 @@ interface AppState {
             fat_g?: number;
             portion_g?: number;
             id?: string;
-        }>; 
-        slot: string 
+        }>;
+        slot: string
     } | null) => void
 
     // ─── Distributions Macros (Premium) ────────────────────────
@@ -178,7 +179,7 @@ const DEFAULT_DIST: Record<MealSlotKey, number> = {
 const buildInitialSlots = (cal: number, prot: number, carbs: number, fat: number, dists?: Record<string, Record<MealSlotKey, number>>): Record<MealSlotKey, SlotState> => {
     const res = {} as Record<MealSlotKey, SlotState>
     const d = dists || { calories: DEFAULT_DIST, protein: DEFAULT_DIST, carbs: DEFAULT_DIST, fat: DEFAULT_DIST }
-    
+
     for (const key of SLOT_ORDER) {
         res[key] = {
             target: Math.round(cal * (d.calories?.[key] ?? DEFAULT_DIST[key])),
@@ -202,7 +203,7 @@ export const useAppStore = create<AppState>()(
             profile: null,
             setProfile: (profile) => {
                 if (!profile) return set({ profile: null })
-                
+
                 const currentProfile = get().profile
                 const newUserId = profile.user_id || profile.id
                 const oldUserId = currentProfile?.user_id || currentProfile?.id
@@ -224,16 +225,23 @@ export const useAppStore = create<AppState>()(
                 if (get().todayMeals.length > 0) {
                     get().setTodayMeals(get().todayMeals)
                 } else {
-                    set({ 
+                    set({
                         slots: buildInitialSlots(
-                            profile.calorie_target, 
-                            profile.protein_target_g || 100, 
-                            profile.carbs_target_g || 250, 
+                            profile.calorie_target,
+                            profile.protein_target_g || 100,
+                            profile.carbs_target_g || 250,
                             profile.fat_target_g || 65,
                             get().macroDistributions
-                        ) 
+                        )
                     })
                 }
+            },
+            refreshProfile: async () => {
+                const { supabase } = await import('@/lib/supabase')
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) return
+                const { data } = await supabase.from('user_profiles').select('*').eq('user_id', session.user.id).single()
+                if (data) get().setProfile(data)
             },
 
             todayMeals: [],
@@ -254,7 +262,7 @@ export const useAppStore = create<AppState>()(
                 const fatTarget = profile.fat_target_g || 65
 
                 let newSlots = buildInitialSlots(calorieTarget, protTarget, carbsTarget, fatTarget, macroDistributions)
-                
+
                 // 1. Calculer les consommations par créneau
                 for (const meal of todayMeals) {
                     const hour = new Date(meal.logged_at).getHours()
@@ -281,7 +289,7 @@ export const useAppStore = create<AppState>()(
                     consProtPast += newSlots[s].protein_consumed
                     consCarbsPast += newSlots[s].carbs_consumed
                     consFatPast += newSlots[s].fat_consumed
-                    
+
                     // Pour les créneaux passés, l'objectif s'aligne sur la consommation réelle
                     // afin que le reste soit redistribué aux créneaux futurs.
                     newSlots[s].target = newSlots[s].consumed
@@ -297,7 +305,7 @@ export const useAppStore = create<AppState>()(
                 const remFat = Math.max(0, fatTarget - consFatPast)
 
                 const remainingSlots = SLOT_ORDER.slice(currentIdx)
-                
+
                 // On utilise les distributions personnalisées
                 const d = macroDistributions
                 const totalPctRemCal = remainingSlots.reduce((sum, s) => sum + (d.calories?.[s] ?? DEFAULT_DIST[s]), 0)
@@ -309,7 +317,7 @@ export const useAppStore = create<AppState>()(
                     const shareCal = (d.calories?.[slotKey] ?? DEFAULT_DIST[slotKey]) / (totalPctRemCal || 1)
                     newSlots[slotKey].target = Math.round(remCal * shareCal)
                     newSlots[slotKey].remaining = Math.max(0, newSlots[slotKey].target - newSlots[slotKey].consumed)
-                    
+
                     const shareProt = (d.protein?.[slotKey] ?? DEFAULT_DIST[slotKey]) / (totalPctRemProt || 1)
                     newSlots[slotKey].protein_target = Math.round(remProt * shareProt)
 
@@ -472,7 +480,7 @@ export const useAppStore = create<AppState>()(
                 if (profile) {
                     const today = new Date().toISOString().split('T')[0]
                     const currentAlert = get().smartAlert
-                    
+
                     let newAlert: any = null
 
                     const carbRatio = totals.dailyCarbs / (profile.carbs_target_g || 250)
@@ -507,9 +515,9 @@ export const useAppStore = create<AppState>()(
                                                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                                                 body: JSON.stringify({
                                                     type: newAlert.level === 'danger' ? 'warning' : 'info',
-                                                    title: newAlert.nutrient === 'calories' ? 'Objectif Calorique' : 
-                                                           newAlert.nutrient === 'carbs' ? 'Alerte Glucides' : 
-                                                           newAlert.nutrient === 'fat' ? 'Alerte Lipides' : 'Conseil Coach Yao',
+                                                    title: newAlert.nutrient === 'calories' ? 'Objectif Calorique' :
+                                                        newAlert.nutrient === 'carbs' ? 'Alerte Glucides' :
+                                                            newAlert.nutrient === 'fat' ? 'Alerte Lipides' : 'Conseil Coach Yao',
                                                     message: newAlert.message
                                                 })
                                             }).catch(err => console.error('Erreur sauvegarde alerte:', err))
@@ -538,9 +546,9 @@ export const useAppStore = create<AppState>()(
                                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
                                     body: JSON.stringify({
                                         type: smartAlert.level === 'danger' ? 'warning' : 'info',
-                                        title: smartAlert.nutrient === 'calories' ? 'Objectif Calorique' : 
-                                               smartAlert.nutrient === 'carbs' ? 'Alerte Glucides' : 
-                                               smartAlert.nutrient === 'fat' ? 'Alerte Lipides' : 'Conseil Coach Yao',
+                                        title: smartAlert.nutrient === 'calories' ? 'Objectif Calorique' :
+                                            smartAlert.nutrient === 'carbs' ? 'Alerte Glucides' :
+                                                smartAlert.nutrient === 'fat' ? 'Alerte Lipides' : 'Conseil Coach Yao',
                                         message: smartAlert.message
                                     })
                                 }).catch(err => console.error('Erreur backup save alert:', err))
