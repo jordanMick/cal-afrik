@@ -196,6 +196,19 @@ export default function DashboardPage() {
     const exceeded = dailyCalories > calorieTarget
 
     const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+    useEffect(() => {
+        // Charger l'avatar
+        const loadAvatar = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            const meta = user?.user_metadata
+            if (meta?.avatar_url || meta?.picture) {
+                setAvatarUrl(meta.avatar_url || meta.picture)
+            }
+        }
+        loadAvatar()
+    }, [])
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -567,6 +580,30 @@ export default function DashboardPage() {
                     )}
                     <div onClick={() => router.push('/settings')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <Settings color="var(--text-secondary)" size={20} strokeWidth={1.5} />
+                    </div>
+
+                    {/* AVATAR PROFIL */}
+                    <div onClick={() => router.push('/profil')} style={{ 
+                        width: '36px', 
+                        height: '36px', 
+                        borderRadius: '50%', 
+                        background: 'linear-gradient(135deg, var(--accent), #ec4899)', 
+                        border: '2px solid var(--bg-secondary)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                        fontSize: '14px',
+                        fontWeight: '800',
+                        color: '#fff'
+                    }}>
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                            profile?.name?.charAt(0).toUpperCase() || 'U'
+                        )}
                     </div>
                 </div>
             </div>
