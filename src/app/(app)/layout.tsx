@@ -18,7 +18,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const currentIndex = navPaths.indexOf(pathname)
 
     return (
-        <div className="mx-auto max-w-[480px] min-h-screen relative bg-zinc-950 overflow-hidden flex flex-col">
+        <div className="mx-auto max-w-[480px] min-h-screen relative bg-[var(--bg-primary)] overflow-hidden flex flex-col">
+            {/* Background Aura Blobs */}
+            <div className="bg-blob" style={{ top: '-100px', right: '-150px', background: 'var(--success)', opacity: 0.08 }} />
+            <div className="bg-blob" style={{ bottom: '100px', left: '-150px', background: 'var(--accent)', opacity: 0.08 }} />
+            
             <AuthProvider>
                 {/* ✅ Surveille les changements de créneau */}
                 <SlotWatcherInit />

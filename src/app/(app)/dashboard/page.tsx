@@ -747,7 +747,7 @@ export default function DashboardPage() {
 
 
 
-            <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '24px', lineHeight: '1.4' }}>
+            <h2 className="text-gradient" style={{ fontSize: '22px', fontWeight: '900', marginBottom: '28px', lineHeight: '1.3', letterSpacing: '-0.5px' }}>
                 Tu es sur la bonne voie pour tes objectifs !
             </h2>
 
@@ -798,22 +798,22 @@ export default function DashboardPage() {
             </AnimatePresence>
 
             {/* CARTE STATUT KILLED / REDESIGNED */}
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: '24px', padding: '24px', border: '0.5px solid var(--border-color)', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div className="glass-panel" style={{ borderRadius: '32px', padding: '32px 24px', marginBottom: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ position: 'relative', width: '200px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {/* On ajoute une key={dailyCalories} pour forcer le re-rendu complet sur iPhone lors du changement de données */}
                     <svg key={`${dailyCalories}-${calorieTarget}`} width="200" height="120" viewBox="0 0 200 120">
                         {/* Arrière-plan (gris) */}
-                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--border-color)" strokeWidth="12" strokeLinecap="round" />
+                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(var(--text-primary-rgb), 0.05)" strokeWidth="16" strokeLinecap="round" />
                         
                         {/* Jauge progressive (Dégradé Global depuis layout.tsx) */}
                         <motion.path 
                             d="M 20 100 A 80 80 0 0 1 180 100" 
                             fill="none" 
                             stroke="url(#globalDashboardArcGrad)" 
-                            strokeWidth="12" 
+                            strokeWidth="16" 
                             strokeLinecap="round" 
                             strokeDasharray="251.32" 
-                            initial={{ strokeDashoffset: 251.32 }}
+                            style={{ filter: 'drop-shadow(0 0 8px rgba(var(--success-rgb), 0.3))' }}
                             animate={{ 
                                 strokeDashoffset: 251.32 - (251.32 * Math.min(1, (dailyCalories || 0) / (calorieTarget || 2000))) 
                             }}
@@ -878,26 +878,26 @@ export default function DashboardPage() {
             )}
 
             {/* MESSAGE COACH */}
-            <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '14px', padding: '12px 14px', marginBottom: '18px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(var(--accent-rgb), 0.15)', border: '0.5px solid rgba(var(--accent-rgb), 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+            <div style={{ background: 'rgba(var(--bg-secondary-rgb), 0.4)', border: '1px solid var(--border-color)', borderRadius: '18px', padding: '14px 18px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid rgba(var(--accent-rgb), 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0, boxShadow: '0 0 15px rgba(var(--accent-rgb), 0.2)' }}>
                     {coachMsg.emoji}
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.5' }}>{coachMsg.text}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5', fontWeight: '500' }}>{coachMsg.text}</p>
             </div>
 
             {/* MACROS REDESIGNED AS PILLS */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '12px' }}>
                 {[
-                    { label: 'Glucides', val: dailyCarbs, target: carbsTarget, title: 'Glucides', bg: 'rgba(var(--warning-rgb), 0.12)', color: 'var(--warning)' },
-                    { label: 'Protéines', val: dailyProtein, target: proteinTarget, title: 'Protéines', bg: 'rgba(var(--accent-rgb), 0.12)', color: 'var(--accent)' },
-                    { label: 'Lipides', val: dailyFat, target: fatTarget, title: 'Lipides', bg: 'rgba(var(--success-rgb), 0.12)', color: 'var(--success)' },
+                    { label: 'Glucides', val: dailyCarbs, target: carbsTarget, title: 'Glucides', bg: 'rgba(var(--warning-rgb), 0.08)', color: 'var(--warning)' },
+                    { label: 'Protéines', val: dailyProtein, target: proteinTarget, title: 'Protéines', bg: 'rgba(var(--accent-rgb), 0.08)', color: 'var(--accent)' },
+                    { label: 'Lipides', val: dailyFat, target: fatTarget, title: 'Lipides', bg: 'rgba(var(--success-rgb), 0.08)', color: 'var(--success)' },
                 ].map((m) => (
                     <div key={m.title} style={{
-                        flex: 1, background: m.bg, borderRadius: '16px', padding: '12px 6px', textAlign: 'center',
-                        display: 'flex', flexDirection: 'column', gap: '4px'
+                        flex: 1, background: m.bg, borderRadius: '20px', padding: '14px 8px', textAlign: 'center',
+                        display: 'flex', flexDirection: 'column', gap: '4px', border: `1px solid ${m.color}20`
                     }}>
-                        <p style={{ color: m.color, fontSize: '11px', fontWeight: '700' }}>{m.title}</p>
-                        <p style={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: '800' }}>{Math.round(m.val)}/{m.target}</p>
+                        <p style={{ color: m.color, fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{m.title}</p>
+                        <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '900' }}>{Math.round(m.val)}<span style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '600' }}>/{m.target}</span></p>
                     </div>
                 ))}
             </div>
