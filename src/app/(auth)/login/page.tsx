@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, ShieldCheck, ChevronRight, ChevronLeft } from 'lucide-react'
+import { LeafIcon } from '@/components/icons/LeafIcon'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -123,7 +124,10 @@ export default function LoginPage() {
                     animate={{ opacity: 1, y: 0 }}
                     style={{ marginBottom: '40px' }}
                 >
-                    <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981', marginBottom: '20px' }}>Cal-Afrik</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
+                        <LeafIcon size={18} />
+                        <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981' }}>Cal-Afrik</h2>
+                    </div>
                     <div style={{ fontSize: '56px', marginBottom: '16px' }}>
                         {isRegister ? '🥗' : '🥑'}
                     </div>

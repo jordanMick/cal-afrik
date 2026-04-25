@@ -13,6 +13,7 @@ import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2, U
 import NotificationCenter from '@/components/NotificationCenter'
 import PushNotificationManager from '@/components/PushNotificationManager'
 import SurpriseManager from '@/components/SurpriseManager'
+import { LeafIcon } from '@/components/icons/LeafIcon'
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -580,9 +581,12 @@ export default function DashboardPage() {
 
             {/* HEADER */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div>
-                    <h1 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '5px' }}>Cal Afrik</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <LeafIcon size={32} />
+                    <div>
+                        <h1 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '2px' }}>Cal Afrik</h1>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>👋 Hello {profile?.name?.split(' ')[0] || 'Ami'}!</p>
+                    </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {streak > 0 && (
