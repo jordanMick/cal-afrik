@@ -705,8 +705,11 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
-            
+
+            <SurpriseManager />
             <PushNotificationManager />
+            
+
 
             {/* MODAL DE DÉCONNEXION */}
             <AnimatePresence>
@@ -962,7 +965,7 @@ export default function DashboardPage() {
                 })}
             </div>
 
-            <SurpriseManager />
+
 
             {/* GRAPHIQUE 7 DERNIERS JOURS */}
             <WeeklyProgressChart targetKcal={calorieTarget} tier={effectiveTier} />

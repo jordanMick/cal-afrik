@@ -296,14 +296,7 @@ export default function OnboardingPage() {
             const age = currentYear - (form.birth_year || 1995)
             const targets = calculateSafeTargets()
 
-            const generatePromoCode = () => {
-                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-                const variations = ['AFRIKSHINE', 'AFRIKSTAR', 'AFRIKPRO']
-                const base = variations[Math.floor(Math.random() * variations.length)]
-                let res = base
-                for (let i = 0; i < 2; i++) res += chars.charAt(Math.floor(Math.random() * chars.length))
-                return res
-            }
+
 
             const profileData = {
                 name: form.name,
@@ -320,7 +313,6 @@ export default function OnboardingPage() {
                 subscription_tier: currentProfile?.subscription_tier || profile?.subscription_tier || 'free',
                 subscription_expires_at: currentProfile?.subscription_expires_at || profile?.subscription_expires_at,
                 onboarding_done: true,
-                promo_code: (currentProfile as any)?.promo_code || (profile as any)?.promo_code || generatePromoCode(),
                 ...targets,
             }
 

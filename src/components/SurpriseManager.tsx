@@ -16,6 +16,15 @@ const WHEEL_SEGMENTS = [
     { label: '10%', discount: 10, color: '#10b981', textColor: '#fff',    start: 120, end: 360 },
 ]
 
+const generatePromoCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    const variations = ['AFRIKSHINE', 'AFRIKSTAR', 'AFRIKPRO']
+    const base = variations[Math.floor(Math.random() * variations.length)]
+    let res = base
+    for (let i = 0; i < 2; i++) res += chars.charAt(Math.floor(Math.random() * chars.length))
+    return res
+}
+
 export default function SurpriseManager() {
     const { profile, surpriseStatus, setSurpriseStatus, refreshProfile } = useAppStore()
     const [isOpen, setIsOpen] = useState(false)
@@ -88,12 +97,16 @@ export default function SurpriseManager() {
             setIsSpinning(false)
             setStep(3)
 
-            // Sauvegarder dans le profil
+            // Sauvegarder dans le profil (Réduction + Nouveau Code si absent)
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
+                const newCode = generatePromoCode()
                 await supabase
                     .from('user_profiles')
-                    .update({ promo_discount: won.discount })
+                    .update({ 
+                        promo_discount: won.discount,
+                        promo_code: profile?.promo_code || newCode 
+                    })
                     .eq('user_id', session.user.id)
                 await refreshProfile()
             }
