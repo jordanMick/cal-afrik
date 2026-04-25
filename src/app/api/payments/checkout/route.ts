@@ -1,17 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-const PRODUCT_IDS: Record<string, string | undefined> = {
-    pro: process.env.MAKETOU_PRODUCT_ID_PRO,
-    premium: process.env.MAKETOU_PRODUCT_ID_PREMIUM,
-    scan: process.env.MAKETOU_PRODUCT_ID_SCAN,
-    suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION,
-    pro_reduit: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT, // 10%
-    premium_reduit: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT, // 10%
-    pro_reduit5: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT5, // 5%
-    premium_reduit5: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT5 // 5%
-};
-
 // Prix attendus par tier (en FCFA) — validation côté serveur
 const EXPECTED_AMOUNTS: Record<string, number> = {
     pro: 1500,
@@ -23,6 +12,17 @@ const EXPECTED_AMOUNTS: Record<string, number> = {
 export async function POST(req: Request) {
     const tag = '[Maketou Checkout]';
     try {
+        const PRODUCT_IDS: Record<string, string | undefined> = {
+            pro: process.env.MAKETOU_PRODUCT_ID_PRO,
+            premium: process.env.MAKETOU_PRODUCT_ID_PREMIUM,
+            scan: process.env.MAKETOU_PRODUCT_ID_SCAN,
+            suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION,
+            pro_reduit: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT, // 10%
+            premium_reduit: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT, // 10%
+            pro_reduit5: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT5, // 5%
+            premium_reduit5: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT5 // 5%
+        };
+
         const { tier, discount = 0 } = await req.json();
         const apiKey = process.env.MAKETOU_API_KEY;
 
