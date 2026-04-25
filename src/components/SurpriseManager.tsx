@@ -67,12 +67,12 @@ export default function SurpriseManager() {
         let won: typeof WHEEL_SEGMENTS[0]
         let targetAngleMid: number
 
-        if (rand < 0.33) {
-            won = WHEEL_SEGMENTS[0] // 5% → milieu à 60°
-            targetAngleMid = 60
+        if (rand < 0.5) {
+            won = WHEEL_SEGMENTS[0] // 5% → milieu à 90°
+            targetAngleMid = 90
         } else {
-            won = WHEEL_SEGMENTS[1] // 10% → milieu à 240°
-            targetAngleMid = 240
+            won = WHEEL_SEGMENTS[1] // 10% → milieu à 270°
+            targetAngleMid = 270
         }
 
         // Pour amener targetAngleMid en haut (0°), on tourne de (360 - targetAngleMid)
@@ -245,14 +245,14 @@ export default function SurpriseManager() {
                                             style={{
                                                 width: '100%', height: '100%', borderRadius: '50%',
                                                 /* 120° pour 5% (1/3), 240° pour 10% (2/3) */
-                                                background: 'conic-gradient(#e1fcf0 0deg 120deg, #10b981 120deg 360deg)',
+                                                background: 'conic-gradient(#e1fcf0 0deg 180deg, #10b981 180deg 360deg)',
                                                 position: 'relative', border: '8px solid var(--bg-secondary)',
                                                 boxShadow: '0 0 30px rgba(0,0,0,0.2)'
                                             }}
                                         >
                                             {/* Labels */}
                                             <div style={{ position: 'absolute', top: '22%', left: '50%', transform: 'translateX(-50%)', color: '#10b981', fontWeight: '900', fontSize: '22px' }}>5%</div>
-                                            <div style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translateX(-50%)', color: '#fff', fontWeight: '900', fontSize: '22px' }}>10%</div>
+                                            <div style={{ position: 'absolute', top: '62%', left: '50%', transform: 'translateX(-50%)', color: '#fff', fontWeight: '900', fontSize: '22px' }}>10%</div>
                                             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.15)', fontSize: '24px' }}>🌍</div>
                                         </motion.div>
                                     </div>
