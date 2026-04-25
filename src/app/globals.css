@@ -34,25 +34,25 @@
 }
 
 html.light {
-  --bg-primary: #ffffff;
-  --bg-primary-rgb: 255, 255, 255;
-  --bg-secondary: #f8f9fa;
-  --bg-secondary-rgb: 248, 249, 250;
-  --bg-tertiary: #f1f3f5;
-  --bg-tertiary-rgb: 241, 243, 245;
+  --bg-primary: #f2f4f7;
+  --bg-primary-rgb: 242, 244, 247;
+  --bg-secondary: #ffffff;
+  --bg-secondary-rgb: 255, 255, 255;
+  --bg-tertiary: #e9ecef;
+  --bg-tertiary-rgb: 233, 236, 239;
   
-  --text-primary: #000000;
-  --text-primary-rgb: 0, 0, 0;
-  --text-secondary: #4a4a4a;
-  --text-secondary-rgb: 74, 74, 74;
-  --text-muted: #717171;
-  --text-muted-rgb: 113, 113, 113;
+  --text-primary: #111827;
+  --text-primary-rgb: 17, 24, 39;
+  --text-secondary: #4b5563;
+  --text-secondary-rgb: 75, 85, 99;
+  --text-muted: #9ca3af;
+  --text-muted-rgb: 156, 163, 175;
   
-  --border-color: #e9ecef;
-  --border-color-rgb: 233, 236, 239;
+  --border-color: rgba(0, 0, 0, 0.06);
+  --border-color-rgb: 0, 0, 0;
 
   --accent: #2563eb;
-  --accent-rgb: 99, 102, 241;
+  --accent-rgb: 37, 99, 235;
   --success: #10b981;
   --success-rgb: 16, 185, 129;
   --warning: #f59e0b;
@@ -100,10 +100,15 @@ body {
 
 /* Utilitaires Design Cal AI */
 .glass-panel {
-  background: rgba(var(--bg-secondary-rgb), 0.65);
+  background: rgba(var(--bg-secondary-rgb), 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+html:not(.light) .glass-panel {
+  background: rgba(var(--bg-secondary-rgb), 0.65);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
