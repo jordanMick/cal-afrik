@@ -797,45 +797,50 @@ export default function DashboardPage() {
                 )}
             </AnimatePresence>
 
-            {/* CARTE STATUT KILLED / REDESIGNED */}
-            <div className="glass-panel" style={{ borderRadius: '32px', padding: '32px 24px', marginBottom: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ position: 'relative', width: '200px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {/* On ajoute une key={dailyCalories} pour forcer le re-rendu complet sur iPhone lors du changement de données */}
-                    <svg key={`${dailyCalories}-${calorieTarget}`} width="200" height="120" viewBox="0 0 200 120">
-                        {/* Arrière-plan (gris) */}
-                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(var(--text-primary-rgb), 0.05)" strokeWidth="16" strokeLinecap="round" />
-                        
-                        {/* Jauge progressive (Dégradé Global depuis layout.tsx) */}
-                        <motion.path 
-                            d="M 20 100 A 80 80 0 0 1 180 100" 
-                            fill="none" 
+            {/* CARTE STATUT CIRCULAIRE (Nouveau Layout) */}
+            <div className="glass-panel" style={{ borderRadius: '32px', padding: '24px 28px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '42px', fontWeight: '900', color: 'var(--text-primary)', lineHeight: '1', letterSpacing: '-1px' }}>{Math.round(remaining)}</div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: '700', marginTop: '6px', opacity: 0.8 }}>Calories restantes</div>
+                    
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+                        <div>
+                            <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>{dailyCalories}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600' }}>Mangé</div>
+                        </div>
+                        <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }} />
+                        <div>
+                            <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>{calorieTarget}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600' }}>Objectif</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
+                    <svg width="100" height="100" viewBox="0 0 100 100">
+                        {/* Fond du cercle */}
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(var(--text-primary-rgb), 0.04)" strokeWidth="10" />
+                        {/* Jauge circulaire */}
+                        <motion.circle 
+                            cx="50" cy="50" r="42" fill="none" 
                             stroke="url(#globalDashboardArcGrad)" 
-                            strokeWidth="16" 
+                            strokeWidth="10" 
                             strokeLinecap="round" 
-                            strokeDasharray="251.32" 
-                            style={{ filter: 'drop-shadow(0 0 8px rgba(var(--success-rgb), 0.3))' }}
+                            strokeDasharray="263.89" 
+                            initial={{ strokeDashoffset: 263.89 }}
                             animate={{ 
-                                strokeDashoffset: 251.32 - (251.32 * Math.min(1, (dailyCalories || 0) / (calorieTarget || 2000))) 
+                                strokeDashoffset: 263.89 * (1 - Math.min(1, (dailyCalories || 0) / (calorieTarget || 2000))) 
                             }}
                             transition={{ duration: 1.5, ease: "easeOut" }}
                             style={{ 
-                                // Sécurité : au cas où le gradient met du temps à se lier, une couleur unie très proche
-                                stroke: dailyCalories > (calorieTarget * 0.7) ? 'var(--success)' : 'var(--warning)',
-                                strokeOpacity: 0.8
+                                transform: 'rotate(-90deg)', 
+                                transformOrigin: 'center',
+                                filter: 'drop-shadow(0 0 6px rgba(var(--success-rgb), 0.3))'
                             }}
                         />
                     </svg>
-                    <div style={{ position: 'absolute', bottom: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)' }}>{Math.round(remaining)}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>kcal rest.</div>
-                    </div>
-                    <div style={{ position: 'absolute', left: '0', bottom: '0', textAlign: 'center' }}>
-                        <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{dailyCalories}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>mangé</div>
-                    </div>
-                    <div style={{ position: 'absolute', right: '0', bottom: '0', textAlign: 'center' }}>
-                        <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{calorieTarget}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>objectif</div>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                        🔥
                     </div>
                 </div>
             </div>
@@ -885,21 +890,46 @@ export default function DashboardPage() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5', fontWeight: '500' }}>{coachMsg.text}</p>
             </div>
 
-            {/* MACROS REDESIGNED AS PILLS */}
+            {/* MACROS REDESIGNED AS VERTICAL CARDS (Inspiré de l'image) */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '12px' }}>
                 {[
-                    { label: 'Glucides', val: dailyCarbs, target: carbsTarget, title: 'Glucides', bg: 'rgba(var(--warning-rgb), 0.08)', color: 'var(--warning)' },
-                    { label: 'Protéines', val: dailyProtein, target: proteinTarget, title: 'Protéines', bg: 'rgba(var(--accent-rgb), 0.08)', color: 'var(--accent)' },
-                    { label: 'Lipides', val: dailyFat, target: fatTarget, title: 'Lipides', bg: 'rgba(var(--success-rgb), 0.08)', color: 'var(--success)' },
-                ].map((m) => (
-                    <div key={m.title} style={{
-                        flex: 1, background: m.bg, borderRadius: '20px', padding: '14px 8px', textAlign: 'center',
-                        display: 'flex', flexDirection: 'column', gap: '4px', border: `1px solid ${m.color}20`
-                    }}>
-                        <p style={{ color: m.color, fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{m.title}</p>
-                        <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '900' }}>{Math.round(m.val)}<span style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '600' }}>/{m.target}</span></p>
-                    </div>
-                ))}
+                    { label: 'Proteines', val: dailyProtein, target: proteinTarget, emoji: '🥩', color: 'var(--accent)' },
+                    { label: 'Glucides', val: dailyCarbs, target: carbsTarget, emoji: '🌾', color: 'var(--warning)' },
+                    { label: 'Lipides', val: dailyFat, target: fatTarget, emoji: '🥑', color: 'var(--success)' },
+                ].map((m) => {
+                    const remainingMacro = Math.max(0, m.target - m.val);
+                    const percent = Math.min(1, m.val / m.target);
+                    
+                    return (
+                        <div key={m.label} className="glass-panel" style={{
+                            flex: 1, borderRadius: '24px', padding: '16px 10px', textAlign: 'center',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px'
+                        }}>
+                            <div style={{ textAlign: 'left', width: '100%', paddingLeft: '8px' }}>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '900' }}>{Math.round(remainingMacro)}g</p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '700' }}>{m.label}</p>
+                            </div>
+
+                            <div style={{ position: 'relative', width: '44px', height: '44px' }}>
+                                <svg width="44" height="44" viewBox="0 0 44 44">
+                                    <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(var(--text-primary-rgb), 0.05)" strokeWidth="4" />
+                                    <motion.circle 
+                                        cx="22" cy="22" r="18" fill="none" 
+                                        stroke={m.color} strokeWidth="4" strokeLinecap="round"
+                                        strokeDasharray="113.1"
+                                        initial={{ strokeDashoffset: 113.1 }}
+                                        animate={{ strokeDashoffset: 113.1 * (1 - percent) }}
+                                        transition={{ duration: 1.5 }}
+                                        style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                    />
+                                </svg>
+                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
+                                    {m.emoji}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
 
             <SurpriseManager />
