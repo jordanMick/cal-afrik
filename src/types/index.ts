@@ -42,6 +42,8 @@ export interface UserProfile {
     notify_hydration?: boolean
     notify_reports?: boolean
     notify_subscription?: boolean
+    promo_code?: string
+    dismissed_promo_date?: string | null
 }
 
 export interface WeightLog {

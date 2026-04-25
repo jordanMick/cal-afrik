@@ -24,6 +24,8 @@ function PricingContent() {
     const hideFree = searchParams.get('hideFree') === 'true'
     const discountParam = searchParams.get('discount')
     const discount = discountParam ? parseInt(discountParam) : 0
+    const [promoInput, setPromoInput] = useState('')
+    const [isApplying, setIsApplying] = useState(false)
 
     // Plus besoin de charger le script FedaPay ici car Maketou utilise une redirection simple
     useEffect(() => {
@@ -108,7 +110,7 @@ function PricingContent() {
                     <p style={{ color: '#555', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
                 </div>
 
-                {discount > 0 && (
+                {discount > 0 ? (
                     <div style={{ 
                         background: 'rgba(16, 185, 129, 0.1)', 
                         border: '1px dashed #10b981', 
@@ -125,6 +127,65 @@ function PricingContent() {
                         <p style={{ color: '#10b981', fontWeight: '700', fontSize: '14px' }}>
                             Réduction de {discount}% appliquée sur tous les plans !
                         </p>
+                    </div>
+                ) : (
+                    <div style={{ 
+                        background: 'rgba(255, 255, 255, 0.03)', 
+                        border: '1px solid rgba(255, 255, 255, 0.05)', 
+                        borderRadius: '20px', 
+                        padding: '16px 20px', 
+                        marginBottom: '32px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                    }}>
+                        <p style={{ fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.4)' }}>Un code promo ?</p>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <input 
+                                type="text" 
+                                value={promoInput}
+                                onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                                placeholder="ENTREZ VOTRE CODE"
+                                style={{ 
+                                    flex: 1, 
+                                    background: 'rgba(0,0,0,0.2)', 
+                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                    borderRadius: '12px', 
+                                    padding: '12px 16px', 
+                                    color: '#fff', 
+                                    fontSize: '14px',
+                                    fontWeight: '700',
+                                    letterSpacing: '1px'
+                                }}
+                            />
+                            <button 
+                                onClick={() => {
+                                    if (promoInput === profile?.promo_code) {
+                                        setIsApplying(true)
+                                        setTimeout(() => {
+                                            router.push('/upgrade?discount=30')
+                                            setIsApplying(false)
+                                            toast.success('Réduction appliquée !')
+                                        }, 800)
+                                    } else {
+                                        toast.error('Code invalide')
+                                    }
+                                }}
+                                disabled={isApplying || !promoInput}
+                                style={{ 
+                                    padding: '0 24px', 
+                                    background: 'linear-gradient(135deg, #6366f1, #10b981)', 
+                                    border: 'none', 
+                                    borderRadius: '12px', 
+                                    color: '#fff', 
+                                    fontSize: '13px', 
+                                    fontWeight: '700',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {isApplying ? '...' : 'Appliquer'}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -283,51 +344,6 @@ function PricingContent() {
                         </div>
                     )}
 
-                    {/* ── UNITAIRE (SCAN) ── */}
-                    {showFree && (
-                        <div style={{
-                            background: '#1a1005',
-                            border: '1.5px solid #f59e0b',
-                            borderRadius: '20px',
-                            padding: '28px 24px',
-                            display: 'flex', flexDirection: 'column',
-                            position: 'relative',
-                            boxShadow: '0 0 40px rgba(245,158,11,0.08)',
-                        }}>
-                             <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>À l'unité</div>
-
-                            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Scan IA</h2>
-                            <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>100</span>
-                                {discount > 0 && (
-                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(100 * (1 - discount / 100))}</span>
-                                )}
-                                <span style={{ color: '#555', fontSize: '13px' }}>FCFA</span>
-                            </div>
-                            <p style={{ color: '#444', fontSize: '12px', marginBottom: '24px' }}>Par scan supplémentaire</p>
-                            <div style={{ height: '0.5px', background: '#2a2a2a', margin: '20px 0' }} />
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
-                                {[
-                                    '1 Scan IA de ton assiette',
-                                    'Analyse nutritionnelle complète',
-                                    'Conseils de Coach Yao inclus',
-                                    'Utilisable quand tu veux',
-                                    'Pas d\'abonnement récurrent',
-                                ].map((f, i) => (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b', flexShrink: 0 }} />
-                                        <span style={{ color: '#ccc', fontSize: '13px' }}>{f}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <button
-                                disabled={loading !== null}
-                                onClick={() => handleSubscribe('scan' as any)}
-                                style={{ width: '100%', height: '48px', background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '14px', fontWeight: '600', cursor: loading ? 'default' : 'pointer', boxShadow: '0 4px 20px rgba(245,158,11,0.3)' }}>
-                                {loading === 'scan' ? 'Initialisation...' : 'Acheter 1 scan →'}
-                            </button>
-                        </div>
-                    )}
                 </div>
 
                 {/* MOYENS DE PAIEMENT */}

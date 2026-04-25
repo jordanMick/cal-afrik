@@ -5,7 +5,9 @@ const PRODUCT_IDS: Record<string, string | undefined> = {
     pro: process.env.MAKETOU_PRODUCT_ID_PRO,
     premium: process.env.MAKETOU_PRODUCT_ID_PREMIUM,
     scan: process.env.MAKETOU_PRODUCT_ID_SCAN,
-    suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION
+    suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION,
+    pro_reduit: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT,
+    premium_reduit: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT
 };
 
 // Prix attendus par tier (en FCFA) — validation côté serveur
@@ -40,9 +42,16 @@ export async function POST(req: Request) {
         }
 
         // 2. Validation stricte du produit
-        const tierKey = (tier || '').toLowerCase();
+        let tierKey = (tier || '').toLowerCase();
+        
+        // Si réduction, on utilise les IDs produits "réduits" si disponibles
+        if (discount > 0) {
+            if (tierKey === 'pro') tierKey = 'pro_reduit';
+            if (tierKey === 'premium') tierKey = 'premium_reduit';
+        }
+
         const productDocumentId = PRODUCT_IDS[tierKey];
-        const baseAmount = EXPECTED_AMOUNTS[tierKey];
+        const baseAmount = EXPECTED_AMOUNTS[(tier || '').toLowerCase()];
 
         if (!productDocumentId || !baseAmount) {
             console.error(`${tag} Tier invalide: '${tierKey}'`);

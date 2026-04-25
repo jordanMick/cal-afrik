@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
-import { Settings, Bell, HelpCircle, LogOut, ChevronRight, Shield, FileText, Camera, Plus } from 'lucide-react'
+import { Settings, Bell, HelpCircle, LogOut, ChevronRight, Shield, FileText, Camera, Plus, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRef, useCallback } from 'react'
 import Cropper from 'react-easy-crop'
@@ -45,6 +45,41 @@ function getNextSlotInfo(hour: number): { label: string; time: string } {
 
 
 const STAT_COLORS = ['var(--accent)', 'var(--success)', 'var(--warning)', '#ec4899']
+
+function PromoCodeCard({ code }: { code: string }) {
+    const [copied, setCopied] = useState(false)
+    const handleCopy = () => {
+        navigator.clipboard.writeText(code)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+    return (
+        <div style={{
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.1))',
+            border: '1px solid rgba(99,102,241,0.2)',
+            borderRadius: '20px',
+            padding: '18px 20px',
+            marginTop: '28px',
+            marginBottom: '0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        }}>
+            <div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>🎁 Ton code promo</p>
+                <p style={{ color: 'var(--text-primary)', fontSize: '22px', fontWeight: '900', letterSpacing: '3px' }}>{code}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' }}>Utilise-le sur la page d'abonnement</p>
+            </div>
+            <button
+                onClick={handleCopy}
+                style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '14px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#818cf8', fontWeight: '700', fontSize: '13px' }}
+            >
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+                {copied ? 'Copié !' : 'Copier'}
+            </button>
+        </div>
+    )
+}
 
 export default function ProfilPage() {
     const router = useRouter()
@@ -665,6 +700,11 @@ export default function ProfilPage() {
                     Partager mon bilan sur WhatsApp
                 </button>
 
+
+                {/* CODE PROMO */}
+                {profile?.promo_code && (
+                    <PromoCodeCard code={profile.promo_code} />
+                )}
 
                 {/* NOUVEAU MENU (Paramètres, Notifications, etc.) */}
                 <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden', marginTop: '32px', marginBottom: '24px' }}>
