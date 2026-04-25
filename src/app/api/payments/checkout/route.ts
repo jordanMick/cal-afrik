@@ -48,27 +48,39 @@ export async function POST(req: Request) {
         }
 
         // 2. Validation stricte du produit
-        let tierKey = (tier || '').toLowerCase();
-        
-        // Priorité aux IDs de durée (ex: pro_3, premium_12)
+        let tierKey = (tier || '').toUpperCase(); // ex: PRO, PREMIUM
+        let envKey = `MAKETOU_PRODUCT_ID_${tierKey}`;
+
         if (duration > 1) {
-            const durationKey = `${tierKey}_${duration}`;
-            if (PRODUCT_IDS[durationKey]) {
-                tierKey = durationKey;
-            }
-        } else if (discount > 0) {
-            // Si réduction sur 1 mois, on utilise les IDs produits "réduits" correspondants
-            const suffix = discount === 5 ? '_reduit5' : '_reduit';
-            if (tierKey === 'pro') tierKey = `pro${suffix}`;
-            if (tierKey === 'premium') tierKey = `premium${suffix}`;
+            envKey += `_${duration}`;
         }
 
-        const productDocumentId = PRODUCT_IDS[tierKey];
+        if (discount > 0) {
+            // Gestion des variantes avec réduction (ex: _REDUIT10, _REDUIT5)
+            // Note: certaines clés n'ont pas d'underscore avant REDUIT selon le .env
+            const discountSuffix = `REDUIT${discount}`;
+            
+            // On teste d'abord avec underscore
+            if (process.env[`${envKey}_${discountSuffix}`]) {
+                envKey = `${envKey}_${discountSuffix}`;
+            } else if (process.env[`${envKey}${discountSuffix}`]) {
+                // Fallback sans underscore (vu dans .env pour le 12 mois)
+                envKey = `${envKey}${discountSuffix}`;
+            } else {
+                // Fallback legacy (_REDUIT ou _REDUIT5 pour le 1 mois)
+                const legacySuffix = discount === 10 ? '_REDUIT' : '_REDUIT5';
+                if (process.env[`MAKETOU_PRODUCT_ID_${tierKey}${legacySuffix}`]) {
+                    envKey = `MAKETOU_PRODUCT_ID_${tierKey}${legacySuffix}`;
+                }
+            }
+        }
+
+        const productDocumentId = process.env[envKey];
         const tierBase = EXPECTED_AMOUNTS[(tier || '').toLowerCase()];
         const baseAmount = typeof tierBase === 'object' ? tierBase[String(duration)] : tierBase;
 
         if (!productDocumentId || !baseAmount) {
-            console.error(`${tag} Tier ou durée invalide: tier='${tier}', duration='${duration}'`);
+            console.error(`${tag} Produit introuvable pour la clé: '${envKey}' (tier=${tier}, dur=${duration}, disc=${discount})`);
             return NextResponse.json({ error: 'Plan ou durée invalide' }, { status: 400 });
         }
 
