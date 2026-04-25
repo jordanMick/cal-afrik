@@ -4,6 +4,10 @@ export const metadata: Metadata = {
     title: 'Cal Afrik',
     description: 'Suivez vos calories avec des plats africains',
     manifest: '/manifest.json',
+    icons: {
+        icon: '/logo.png',
+        apple: '/logo.png',
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
