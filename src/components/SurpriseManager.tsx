@@ -15,12 +15,9 @@ export default function SurpriseManager() {
     const router = useRouter()
 
     useEffect(() => {
-        // Uniquement pour les comptes gratuits et si aucune surprise n'a été gérée
+        // Apparaît immédiatement pour les comptes gratuits et si aucune surprise n'a été gérée
         if (profile?.subscription_tier === 'free' && surpriseStatus === 'none') {
-            const timer = setTimeout(() => {
-                setSurpriseStatus('pending')
-            }, 120000) // 2 minutes de délai
-            return () => clearTimeout(timer)
+            setSurpriseStatus('pending')
         }
     }, [profile, surpriseStatus, setSurpriseStatus])
 
