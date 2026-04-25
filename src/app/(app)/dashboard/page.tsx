@@ -123,17 +123,17 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     zIndex: 10, padding: '20px', textAlign: 'center'
                 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(var(--accent-rgb), 0.15)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '8px', border: '0.5px solid rgba(var(--accent-rgb), 0.3)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#0a0a0a', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '8px', border: '1px solid rgba(var(--success-rgb), 0.4)', boxShadow: '0 0 15px rgba(var(--success-rgb), 0.3)' }}>
                         🔒
                     </div>
-                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Analyses Coach Yao</p>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '11px', marginBottom: '14px', maxWidth: '200px' }}>Débloquez le plan Pro pour suivre votre constance hebdomadaire.</p>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '800', marginBottom: '4px', letterSpacing: '-0.2px' }}>Analyses Coach Yao</p>
+                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginBottom: '14px', maxWidth: '200px', fontWeight: '500' }}>Débloquez le plan Pro pour suivre votre constance hebdomadaire.</p>
                     <button
                         onClick={() => router.push('/upgrade')}
                         style={{
-                            background: 'var(--accent)', border: 'none', borderRadius: '8px',
-                            color: '#fff', fontSize: '12px', fontWeight: '600', padding: '8px 16px', cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)'
+                            background: 'var(--accent)', border: 'none', borderRadius: '12px',
+                            color: '#fff', fontSize: '13px', fontWeight: '700', padding: '10px 20px', cursor: 'pointer',
+                            boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)'
                         }}
                     >
                         Passer au Pro →
@@ -929,7 +929,7 @@ export default function DashboardPage() {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--branding), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 4px 12px rgba(var(--success-rgb), 0.3)' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: '#0a0a0a', border: '1px solid rgba(var(--success-rgb), 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 0 15px rgba(var(--success-rgb), 0.4)' }}>
                         🍲
                     </div>
                     <div>
@@ -984,7 +984,7 @@ export default function DashboardPage() {
                                             </p>
                                         </div>
                                         <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px' }}>
-                                            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, var(--accent), var(--success))', borderRadius: '3px' }} />
+                                            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #059669, var(--success))', borderRadius: '3px' }} />
                                         </div>
                                         {effectiveTier === 'premium' && (
                                             <div style={{ display: 'flex', gap: '12px' }}>
@@ -1013,9 +1013,9 @@ export default function DashboardPage() {
                 <button onClick={() => fileInputRef.current?.click()} style={{
                     position: 'fixed', bottom: '80px', right: '24px',
                     width: '58px', height: '58px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--branding), var(--success))',
-                    border: 'none', fontSize: '26px', color: '#fff',
-                    boxShadow: '0 8px 28px rgba(var(--success-rgb), 0.4)',
+                    background: '#0a0a0a',
+                    border: '1px solid rgba(var(--success-rgb), 0.3)', fontSize: '26px', color: '#fff',
+                    boxShadow: '0 0 25px rgba(var(--success-rgb), 0.5)',
                     cursor: 'pointer', zIndex: 1000,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>+</button>
