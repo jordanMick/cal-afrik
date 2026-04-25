@@ -199,6 +199,7 @@ export default function DashboardPage() {
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
     const [userEmail, setUserEmail] = useState<string | null>(null)
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -681,10 +682,7 @@ export default function DashboardPage() {
                                         <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
                                         
                                         <div 
-                                            onClick={async () => {
-                                                await supabase.auth.signOut()
-                                                router.push('/login')
-                                            }}
+                                            onClick={() => { setShowLogoutConfirm(true); setIsProfileMenuOpen(false); }}
                                             style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
                                             className="menu-item-hover"
                                         >
@@ -700,6 +698,52 @@ export default function DashboardPage() {
             </div>
             
             <PushNotificationManager />
+
+            {/* MODAL DE DÉCONNEXION */}
+            <AnimatePresence>
+                {showLogoutConfirm && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowLogoutConfirm(false)}
+                            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            style={{
+                                width: '100%', maxWidth: '340px', background: 'var(--bg-secondary)', borderRadius: '28px', padding: '32px 24px',
+                                border: '0.5px solid var(--border-color)', textAlign: 'center', position: 'relative', zIndex: 5001,
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                            }}
+                        >
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                                <LogOut size={28} color="#ef4444" />
+                            </div>
+                            <h3 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Déconnexion</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5', marginBottom: '28px' }}>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <button 
+                                    onClick={async () => {
+                                        await supabase.auth.signOut()
+                                        window.location.href = '/login'
+                                    }} 
+                                    style={{ width: '100%', padding: '16px', background: '#ef4444', borderRadius: '16px', color: '#fff', border: 'none', fontSize: '15px', fontWeight: '800', cursor: 'pointer' }}
+                                >
+                                    Oui, me déconnecter
+                                </button>
+                                <button onClick={() => setShowLogoutConfirm(false)} style={{ width: '100%', padding: '12px', background: 'transparent', color: 'var(--text-muted)', border: 'none', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
+                                    Annuler
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
 
 
