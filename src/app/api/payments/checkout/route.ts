@@ -91,7 +91,7 @@ export async function POST(req: Request) {
         // Calcul du montant final avec réduction
         const finalAmount = Math.round(baseAmount * (1 - (discount / 100)));
 
-        console.log(`${tag} Création panier — user=${user.email}, tier=${tierKey}, base=${baseAmount}, final=${finalAmount} FCFA (Reduction: ${discount}%)`);
+        console.log(`${tag} Création panier — user=${user.email}, tier=${tierUpper}, base=${baseAmount}, final=${finalAmount} FCFA (Reduction: ${discount}%)`);
 
         // 3. Appel API Maketou
         const fullName = user.user_metadata?.full_name || 'Utilisateur CalAfrik';
