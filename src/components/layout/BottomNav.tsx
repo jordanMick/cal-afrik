@@ -135,12 +135,16 @@ export default function BottomNav() {
                             width: '52px',
                             height: '52px',
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg, var(--branding), var(--success))',
+                            background: pathname === '/scanner' 
+                                ? 'linear-gradient(135deg, var(--branding), var(--accent))' 
+                                : 'linear-gradient(135deg, var(--branding), var(--success))',
                             border: '3px solid #040404',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 8px 24px rgba(var(--success-rgb), 0.4)',
+                            boxShadow: pathname === '/scanner'
+                                ? '0 8px 24px rgba(var(--accent-rgb), 0.4)'
+                                : '0 8px 24px rgba(var(--success-rgb), 0.4)',
                             cursor: 'pointer',
                         }}
                     >
@@ -150,7 +154,7 @@ export default function BottomNav() {
                             <rect x="9" y="9" width="6" height="6" rx="1" fill="#fff" />
                         </svg>
                     </button>
-                    <span style={{ fontSize: '10px', color: '#555' }}>Scanner</span>
+                    <span style={{ fontSize: '10px', color: pathname === '/scanner' ? 'var(--accent)' : '#555', fontWeight: pathname === '/scanner' ? '600' : '400' }}>Scanner</span>
                 </div>
 
                 {/* Tab droite : Profil */}

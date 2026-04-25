@@ -1161,8 +1161,8 @@ export default function ScannerPage() {
                             }}
                         >
                             {/* Glow effect */}
-                            <div style={{ position: 'absolute', top: '-20%', left: '50%', transform: 'translateX(-50%)', width: '200px', height: '100px', background: 'radial-gradient(circle, rgba(var(--success-rgb), 0.15) 0%, transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
-                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: '#0a0a0a', border: '1.5px solid rgba(var(--success-rgb), 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px', boxShadow: '0 0 20px rgba(var(--success-rgb), 0.3)' }}>
+                            <div style={{ position: 'absolute', top: '-20%', left: '50%', transform: 'translateX(-50%)', width: '200px', height: '100px', background: 'radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: '#0a0a0a', border: '1.5px solid rgba(var(--accent-rgb), 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px', boxShadow: '0 0 20px rgba(var(--accent-rgb), 0.3)' }}>
                                 🔒
                             </div>
                             <h3 style={{ color: '#fff', fontSize: '22px', fontWeight: '900', marginBottom: '10px', letterSpacing: '-0.5px' }}>
@@ -1178,24 +1178,15 @@ export default function ScannerPage() {
                                 <button
                                     onClick={handlePayForScan}
                                     style={{
-                                        background: 'linear-gradient(135deg, var(--branding), var(--success))',
+                                        background: 'linear-gradient(135deg, var(--branding), var(--accent))',
                                         color: '#fff', border: 'none', padding: '16px',
                                         borderRadius: '18px', fontSize: '15px', fontWeight: '800', cursor: 'pointer',
-                                        boxShadow: '0 10px 25px rgba(var(--success-rgb), 0.3)'
+                                        boxShadow: '0 10px 25px rgba(var(--accent-rgb), 0.3)'
                                     }}
                                 >
                                     ⚡️ Débloquer 1 scan + avis Coach (100F)
                                 </button>
-                                <button
-                                    onClick={() => setShowManualForm(true)}
-                                    style={{
-                                        background: 'rgba(255,255,255,0.03)',
-                                        color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '14px',
-                                        borderRadius: '18px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s'
-                                    }}
-                                >
-                                    ✏️ Ajouter manuellement
-                                </button>
+
                                 <button
                                     onClick={() => router.push('/settings/subscription')}
                                     style={{
