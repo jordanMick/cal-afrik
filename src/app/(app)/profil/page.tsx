@@ -366,7 +366,7 @@ export default function ProfilPage() {
                     boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
                 }}>
                     {/* Décoration en arrière-plan */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--branding), var(--success))', borderRadius: '24px 24px 0 0' }} />
+
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                         <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
@@ -546,7 +546,7 @@ export default function ProfilPage() {
             {/* SECTION BILAN COACH YAO (uniquement quand le plan y a droit) */}
             {canUseAIBilanForActiveSlot && (bilanStatus === 'loading' || bilanStatus === 'done' || bilanStatus === 'empty') && (
                 <div style={{ background: 'var(--bg-secondary)', border: `0.5px solid ${bilanStatus === 'loading' ? 'var(--border-color)' : (bilanColor + '40')}`, borderRadius: '16px', padding: '16px', margin: '0 20px 20px', position: 'relative', overflow: 'hidden' }}>
-                    {bilanStatus === 'done' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: bilanColor }} />}
+
 
                     {bilanStatus === 'loading' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
