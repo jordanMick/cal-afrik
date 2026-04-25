@@ -77,13 +77,13 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
 
     return (
         <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '20px', padding: '20px', marginBottom: '28px', position: 'relative', overflow: 'hidden' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ display: 'inline-block', width: '3px', height: '14px', background: 'linear-gradient(var(--warning), #ec4899)', borderRadius: '2px' }} />
+            <h2 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ display: 'inline-block', width: '3px', height: '12px', background: 'linear-gradient(var(--success), var(--branding))', borderRadius: '2px' }} />
                 7 derniers jours
             </h2>
 
             <div style={{
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '120px', gap: '8px',
+                display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '80px', gap: '6px',
                 filter: isLocked ? 'blur(4px)' : 'none', transition: 'filter 0.3s'
             }}>
                 {weeklyData.map((day) => {
@@ -95,8 +95,8 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'short' }).charAt(0).toUpperCase()
 
                     return (
-                        <div key={day.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '8px' }}>
-                            <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'flex-end', background: 'rgba(var(--text-primary-rgb), 0.03)', borderRadius: '6px', position: 'relative' }}>
+                        <div key={day.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '6px' }}>
+                            <div style={{ width: '100%', height: '60px', display: 'flex', alignItems: 'flex-end', background: 'rgba(var(--text-primary-rgb), 0.03)', borderRadius: '6px', position: 'relative' }}>
                                 {/* Barre de l'objectif sur le conteneur du fond */}
                                 <div style={{ position: 'absolute', bottom: `${(targetKcal / maxCal) * 100}%`, left: 0, right: 0, height: '1px', background: 'rgba(var(--text-primary-rgb), 0.1)', zIndex: 0 }} />
 
@@ -123,17 +123,17 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     zIndex: 10, padding: '20px', textAlign: 'center'
                 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#0a0a0a', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '8px', border: '1px solid rgba(var(--success-rgb), 0.4)', boxShadow: '0 0 15px rgba(var(--success-rgb), 0.3)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#0a0a0a', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', marginBottom: '6px', border: '1px solid rgba(var(--success-rgb), 0.3)', boxShadow: '0 0 10px rgba(var(--success-rgb), 0.2)' }}>
                         🔒
                     </div>
-                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '800', marginBottom: '4px', letterSpacing: '-0.2px' }}>Analyses Coach Yao</p>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginBottom: '14px', maxWidth: '200px', fontWeight: '500' }}>Débloquez le plan Pro pour suivre votre constance hebdomadaire.</p>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '2px' }}>Analyses Coach Yao</p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginBottom: '10px', maxWidth: '180px', fontWeight: '500' }}>Passe au plan Pro pour débloquer ton suivi.</p>
                     <button
                         onClick={() => router.push('/upgrade')}
                         style={{
-                            background: 'var(--accent)', border: 'none', borderRadius: '12px',
-                            color: '#fff', fontSize: '13px', fontWeight: '700', padding: '10px 20px', cursor: 'pointer',
-                            boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)'
+                            background: 'linear-gradient(135deg, var(--branding), var(--success))', border: 'none', borderRadius: '10px',
+                            color: '#fff', fontSize: '11px', fontWeight: '800', padding: '6px 14px', cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(var(--success-rgb), 0.3)'
                         }}
                     >
                         Passer au Pro →
