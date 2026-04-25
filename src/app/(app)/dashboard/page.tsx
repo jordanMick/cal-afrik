@@ -197,6 +197,7 @@ export default function DashboardPage() {
 
     const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+    const [dismissedCoachMsg, setDismissedCoachMsg] = useState<string | null>(null)
     const [userEmail, setUserEmail] = useState<string | null>(null)
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -883,12 +884,30 @@ export default function DashboardPage() {
             )}
 
             {/* MESSAGE COACH */}
-            <div style={{ background: 'rgba(var(--bg-secondary-rgb), 0.4)', border: '1px solid var(--border-color)', borderRadius: '18px', padding: '14px 18px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid rgba(var(--accent-rgb), 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0, boxShadow: '0 0 15px rgba(var(--accent-rgb), 0.2)' }}>
-                    {coachMsg.emoji}
+            {coachMsg && coachMsg.text !== dismissedCoachMsg && (
+                <div style={{ 
+                    background: 'rgba(var(--bg-secondary-rgb), 0.4)', 
+                    border: '1px solid var(--border-color)', 
+                    borderRadius: '18px', 
+                    padding: '14px 18px', 
+                    marginBottom: '24px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '12px',
+                    position: 'relative'
+                }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid rgba(var(--accent-rgb), 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0, boxShadow: '0 0 15px rgba(var(--accent-rgb), 0.2)' }}>
+                        {coachMsg.emoji}
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5', fontWeight: '500', flex: 1, paddingRight: '20px' }}>{coachMsg.text}</p>
+                    <button 
+                        onClick={() => setDismissedCoachMsg(coachMsg.text)}
+                        style={{ position: 'absolute', top: '10px', right: '10px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                    >
+                        <X size={14} />
+                    </button>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5', fontWeight: '500' }}>{coachMsg.text}</p>
-            </div>
+            )}
 
             {/* MACROS REDESIGNED AS VERTICAL CARDS (Inspiré de l'image) */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', gap: '12px' }}>
