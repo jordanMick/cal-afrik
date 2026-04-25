@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Gift, X, Sparkles, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { LeafIcon } from './icons/LeafIcon'
 
 // Segments de la roue avec leur probabilité et position (degrés de début)
 // La roue fait : 0°-120° = 5%, 120°-360° = 10%
@@ -253,7 +254,9 @@ export default function SurpriseManager() {
                                             {/* Labels */}
                                             <div style={{ position: 'absolute', top: '22%', left: '50%', transform: 'translateX(-50%)', color: '#10b981', fontWeight: '900', fontSize: '22px' }}>5%</div>
                                             <div style={{ position: 'absolute', top: '62%', left: '50%', transform: 'translateX(-50%)', color: '#fff', fontWeight: '900', fontSize: '22px' }}>10%</div>
-                                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.15)', fontSize: '24px' }}>🌍</div>
+                                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.15)' }}>
+                                                <LeafIcon size={32} />
+                                            </div>
                                         </motion.div>
                                     </div>
 
