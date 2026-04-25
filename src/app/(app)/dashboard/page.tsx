@@ -197,6 +197,7 @@ export default function DashboardPage() {
 
     const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+    const [userEmail, setUserEmail] = useState<string | null>(null)
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
 
@@ -216,6 +217,9 @@ export default function DashboardPage() {
         const loadAvatar = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             const meta = user?.user_metadata
+            if (user?.email) {
+                setUserEmail(user.email)
+            }
             if (meta?.avatar_url || meta?.picture) {
                 setAvatarUrl(meta.avatar_url || meta.picture)
             }
@@ -653,7 +657,7 @@ export default function DashboardPage() {
                                     {/* Header Menu */}
                                     <div style={{ padding: '16px', borderBottom: '0.5px solid var(--border-color)', background: 'rgba(var(--text-primary-rgb), 0.02)' }}>
                                         <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>{profile?.name || 'Utilisateur'}</p>
-                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.email || ''}</p>
+                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail || ''}</p>
                                     </div>
 
                                     {/* Items Menu */}
