@@ -15,6 +15,10 @@ export async function POST(req: Request) {
         const PRODUCT_IDS: Record<string, string | undefined> = {
             pro: process.env.MAKETOU_PRODUCT_ID_PRO,
             premium: process.env.MAKETOU_PRODUCT_ID_PREMIUM,
+            pro_3: process.env.MAKETOU_PRODUCT_ID_PRO_3M,
+            pro_12: process.env.MAKETOU_PRODUCT_ID_PRO_12M,
+            premium_3: process.env.MAKETOU_PRODUCT_ID_PREMIUM_3M,
+            premium_12: process.env.MAKETOU_PRODUCT_ID_PREMIUM_12M,
             scan: process.env.MAKETOU_PRODUCT_ID_SCAN,
             suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION,
             pro_reduit: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT, // 10%
@@ -46,8 +50,14 @@ export async function POST(req: Request) {
         // 2. Validation stricte du produit
         let tierKey = (tier || '').toLowerCase();
         
-        // Si réduction, on utilise les IDs produits "réduits" correspondants
-        if (discount > 0) {
+        // Priorité aux IDs de durée (ex: pro_3, premium_12)
+        if (duration > 1) {
+            const durationKey = `${tierKey}_${duration}`;
+            if (PRODUCT_IDS[durationKey]) {
+                tierKey = durationKey;
+            }
+        } else if (discount > 0) {
+            // Si réduction sur 1 mois, on utilise les IDs produits "réduits" correspondants
             const suffix = discount === 5 ? '_reduit5' : '_reduit';
             if (tierKey === 'pro') tierKey = `pro${suffix}`;
             if (tierKey === 'premium') tierKey = `premium${suffix}`;
