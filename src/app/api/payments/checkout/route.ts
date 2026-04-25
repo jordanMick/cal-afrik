@@ -12,21 +12,6 @@ const EXPECTED_AMOUNTS: Record<string, any> = {
 export async function POST(req: Request) {
     const tag = '[Maketou Checkout]';
     try {
-        const PRODUCT_IDS: Record<string, string | undefined> = {
-            pro: process.env.MAKETOU_PRODUCT_ID_PRO,
-            premium: process.env.MAKETOU_PRODUCT_ID_PREMIUM,
-            pro_3: process.env.MAKETOU_PRODUCT_ID_PRO_3M,
-            pro_12: process.env.MAKETOU_PRODUCT_ID_PRO_12M,
-            premium_3: process.env.MAKETOU_PRODUCT_ID_PREMIUM_3M,
-            premium_12: process.env.MAKETOU_PRODUCT_ID_PREMIUM_12M,
-            scan: process.env.MAKETOU_PRODUCT_ID_SCAN,
-            suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION,
-            pro_reduit: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT, // 10%
-            premium_reduit: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT, // 10%
-            pro_reduit5: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT5, // 5%
-            premium_reduit5: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT5 // 5%
-        };
-
         const { tier, discount = 0, duration = 1 } = await req.json();
         const apiKey = process.env.MAKETOU_API_KEY;
 
