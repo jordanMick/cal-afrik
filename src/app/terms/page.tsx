@@ -10,12 +10,12 @@ export default function TermsPage() {
         {
             title: "Usage de l'Application",
             icon: <CheckCircle size={20} color="var(--success)" />,
-            content: "Cal Afrik est un outil d'accompagnement nutritionnel. Les conseils de Coach Yao sont générés par IA et ne remplacent en aucun cas l'avis d'un médecin ou d'un nutritionniste certifié."
+            content: "Cal Afrik est un outil d'accompagnement nutritionnel. Les conseils de Coach Yao sont générés et ne remplacent en aucun cas l'avis d'un médecin ou d'un nutritionniste certifié."
         },
         {
             title: "Abonnements & Paiements",
-            icon: <CreditCard size={20} color="var(--accent-primary)" />,
-            content: "Les abonnements Pro et Premium sont facturés via Maketou. Ils sont valables pour la durée choisie (1 mois, 3 mois ou 12 mois) et ne sont pas remboursables après activation des services IA."
+            icon: <CreditCard size={20} color="var(--accent)" />,
+            content: "Les abonnements Pro et Premium sont facturés via Maketou. Ils sont valables pour la durée choisie (1 mois, 3 mois ou 12 mois) et ne sont pas remboursables après activation des services."
         },
         {
             title: "Responsabilité",
@@ -42,7 +42,7 @@ export default function TermsPage() {
             <div style={{ padding: '0 20px' }}>
                 <div style={{ background: 'linear-gradient(135deg, rgba(6,95,70,0.1), rgba(16,185,129,0.1))', borderRadius: '24px', padding: '24px', marginBottom: '32px', textAlign: 'center', border: '0.5px solid var(--border-color)' }}>
                     <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-                        <Scale size={28} color="var(--accent-primary)" />
+                        <Scale size={28} color="var(--accent)" />
                     </div>
                     <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>Règles de bonne conduite</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>

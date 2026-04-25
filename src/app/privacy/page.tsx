@@ -9,8 +9,8 @@ export default function PrivacyPage() {
     const sections = [
         {
             title: "Collecte des données",
-            icon: <Eye size={20} color="var(--accent-primary)" />,
-            content: "Cal Afrik collecte les informations nécessaires à ton suivi nutritionnel : nom, email, âge, poids, taille et tes habitudes alimentaires. Nous stockons également les photos de tes repas pour l'analyse par l'IA de Coach Yao."
+            icon: <Eye size={20} color="var(--accent)" />,
+            content: "Cal Afrik collecte les informations nécessaires à ton suivi nutritionnel : nom, email, âge, poids, taille et tes habitudes alimentaires. Nous stockons également les photos de tes repas pour l'analyse de Coach Yao."
         },
         {
             title: "Utilisation des données",
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
             <div style={{ padding: '0 20px' }}>
                 <div style={{ background: 'linear-gradient(135deg, rgba(6,95,70,0.1), rgba(16,185,129,0.1))', borderRadius: '24px', padding: '24px', marginBottom: '32px', textAlign: 'center', border: '0.5px solid var(--border-color)' }}>
                     <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-                        <Shield size={28} color="var(--accent-primary)" />
+                        <Shield size={28} color="var(--accent)" />
                     </div>
                     <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>Ta vie privée est sacrée</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
