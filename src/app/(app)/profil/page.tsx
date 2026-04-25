@@ -55,8 +55,8 @@ function PromoCodeCard({ code }: { code: string }) {
     }
     return (
         <div style={{
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.1))',
-            border: '1px solid rgba(99,102,241,0.2)',
+            background: 'var(--bg-secondary)',
+            border: '0.5px solid var(--border-color)',
             borderRadius: '20px',
             padding: '18px 20px',
             marginTop: '28px',
