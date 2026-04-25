@@ -221,6 +221,7 @@ export const useAppStore = create<AppState>()(
                         slotBilans: {},
                         smartAlert: null,
                         pendingScannerPrefill: null,
+                        surpriseStatus: 'none',
                     })
                 }
 

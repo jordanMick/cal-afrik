@@ -173,7 +173,8 @@ export default function OnboardingPage() {
     const {
         profile, setProfile,
         onboardingStep: step, setOnboardingStep: setStep,
-        onboardingForm, setOnboardingForm
+        onboardingForm, setOnboardingForm,
+        setSurpriseStatus
     } = useAppStore()
     const [isSaving, setIsSaving] = useState(false)
     const [analysisProgress, setAnalysisProgress] = useState(0)
@@ -332,6 +333,7 @@ export default function OnboardingPage() {
             setProfile(updated)
             setStep(0)
             setOnboardingForm(null)
+            setSurpriseStatus('none')
             router.push(redirectPath)
         } catch (err) {
             console.error(err)
