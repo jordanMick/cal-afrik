@@ -142,7 +142,9 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        console.error(`${tag} ❌ Erreur:`, error.message);
-        return NextResponse.json({ error: 'Erreur de communication avec le service de paiement' }, { status: 500 });
+        console.error(`${tag} ❌ Erreur critique:`, error.message);
+        return NextResponse.json({ 
+            error: `Erreur interne: ${error.message}` 
+        }, { status: 500 });
     }
 }
