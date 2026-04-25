@@ -218,6 +218,18 @@ export async function POST(req: Request) {
                 .update({ status: 'processed' })
                 .eq('cart_id', cartId);
 
+            // 9. Si une réduction a été appliquée, on désactive le code promo
+            const discountPercent = metadata?.discount_percent || 0;
+            if (discountPercent > 0) {
+                await supabaseAdmin.from('user_profiles')
+                    .update({
+                        promo_code: null,
+                        promo_discount: 0
+                    })
+                    .eq('user_id', user.id);
+                console.log(`${cartTag} 🎁 Code promo consommé et retiré pour user=${user.id}`);
+            }
+
             console.log(`${cartTag} ✅ Paiement activé et loggé — user=${user.id}, tier=${tier}`);
             return NextResponse.json({ success: true, tier });
 
