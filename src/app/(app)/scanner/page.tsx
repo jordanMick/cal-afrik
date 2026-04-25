@@ -1009,7 +1009,7 @@ export default function ScannerPage() {
                         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '18px', cursor: 'pointer', marginBottom: '12px', transition: 'all 0.2s ease' }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid rgba(var(--success-rgb), 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', boxShadow: '0 0 10px rgba(var(--success-rgb), 0.2)' }}>✨</div>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>✨</div>
                             <p style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '14px' }}>Suggestions Coach Yao</p>
                         </div>
                         <motion.div
@@ -1162,7 +1162,7 @@ export default function ScannerPage() {
                         >
                             {/* Glow effect */}
                             <div style={{ position: 'absolute', top: '-20%', left: '50%', transform: 'translateX(-50%)', width: '200px', height: '100px', background: 'radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
-                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: '#0a0a0a', border: '1.5px solid rgba(var(--accent-rgb), 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px', boxShadow: '0 0 20px rgba(var(--accent-rgb), 0.3)' }}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'var(--bg-tertiary)', border: '1.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px' }}>
                                 🔒
                             </div>
                             <h3 style={{ color: '#fff', fontSize: '22px', fontWeight: '900', marginBottom: '10px', letterSpacing: '-0.5px' }}>

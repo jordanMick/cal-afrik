@@ -103,14 +103,14 @@ export default function BottomNav() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isActive ? tab.color : '#444',
+                                color: isActive ? tab.color : 'var(--text-muted)',
                                 transition: 'all 0.2s',
                             }}>
                                 {tab.icon}
                             </div>
                             <span style={{
                                 fontSize: '10px',
-                                color: isActive ? tab.color : '#444',
+                                color: isActive ? tab.color : 'var(--text-muted)',
                                 fontWeight: isActive ? '500' : '400',
                                 transition: 'color 0.2s',
                             }}>
@@ -138,7 +138,7 @@ export default function BottomNav() {
                             background: pathname === '/scanner' 
                                 ? 'linear-gradient(135deg, var(--branding), var(--accent))' 
                                 : 'linear-gradient(135deg, var(--branding), var(--success))',
-                            border: '3px solid #040404',
+                            border: '3px solid var(--bg-secondary)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -154,7 +154,7 @@ export default function BottomNav() {
                             <rect x="9" y="9" width="6" height="6" rx="1" fill="#fff" />
                         </svg>
                     </button>
-                    <span style={{ fontSize: '10px', color: pathname === '/scanner' ? 'var(--accent)' : '#555', fontWeight: pathname === '/scanner' ? '600' : '400' }}>Scanner</span>
+                    <span style={{ fontSize: '10px', color: pathname === '/scanner' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: pathname === '/scanner' ? '600' : '400' }}>Scanner</span>
                 </div>
 
                 {/* Tab droite : Profil */}
@@ -185,14 +185,14 @@ export default function BottomNav() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isActive ? tab.color : '#444',
+                                color: isActive ? tab.color : 'var(--text-muted)',
                                 transition: 'all 0.2s',
                             }}>
                                 {tab.icon}
                             </div>
                             <span style={{
                                 fontSize: '10px',
-                                color: isActive ? tab.color : '#444',
+                                color: isActive ? tab.color : 'var(--text-muted)',
                                 fontWeight: isActive ? '500' : '400',
                                 transition: 'color 0.2s',
                             }}>
