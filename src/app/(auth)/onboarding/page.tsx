@@ -296,9 +296,9 @@ export default function OnboardingPage() {
             const targets = calculateSafeTargets()
 
             const generatePromoCode = () => {
-                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Sans O, 0, I, 1 pour éviter les confusions
-                let res = 'AFRIK'
-                for (let i = 0; i < 3; i++) res += chars.charAt(Math.floor(Math.random() * chars.length))
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+                let res = 'AFRIKSHINE'
+                for (let i = 0; i < 2; i++) res += chars.charAt(Math.floor(Math.random() * chars.length))
                 return res
             }
 
