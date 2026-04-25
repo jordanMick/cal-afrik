@@ -939,36 +939,7 @@ export default function DashboardPage() {
 
 
 
-            {/* CARTE ACCÈS MENUS COACH YAO */}
-            <div 
-                onClick={() => router.push('/menus')}
-                style={{ 
-                    background: 'rgba(var(--bg-secondary-rgb), 0.8)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                    border: '0.5px solid var(--border-color)', 
-                    borderRadius: '24px', 
-                    padding: '20px', 
-                    marginBottom: '24px', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: '#0a0a0a', border: '1px solid rgba(var(--success-rgb), 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 0 15px rgba(var(--success-rgb), 0.4)' }}>
-                        🍲
-                    </div>
-                    <div>
-                        <h2 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>Mon Planning & Menus</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Voir les suggestions de Coach Yao</p>
-                    </div>
-                </div>
-                <div style={{ color: 'var(--success)', fontSize: '18px', fontWeight: '800' }}>→</div>
-            </div>
+
 
             {/* REPAS GROUPÉS PAR SLOTS */}
             <div style={{ marginBottom: '32px' }}>

@@ -499,6 +499,39 @@ export default function RapportPage() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>Tes analyses nutritionnelles</p>
             </div>
 
+            <div style={{ padding: '0 20px 24px' }}>
+                {/* CARTE ACCÈS MENUS COACH YAO (Déplacé depuis Dashboard) */}
+                <div 
+                    onClick={() => router.push('/menus')}
+                    style={{ 
+                        background: 'rgba(var(--bg-secondary-rgb), 0.5)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        border: '1px solid var(--border-color)', 
+                        borderRadius: '24px', 
+                        padding: '18px 20px', 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: '#0a0a0a', border: '1px solid rgba(var(--accent-rgb), 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 0 15px rgba(var(--accent-rgb), 0.3)' }}>
+                            🍲
+                        </div>
+                        <div>
+                            <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '800' }}>Mon Planning & Menus</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '500' }}>Suggestions personnalisées Yao</p>
+                        </div>
+                    </div>
+                    <div style={{ color: 'var(--accent)', opacity: 0.8 }}>
+                        <ChevronRight size={20} />
+                    </div>
+                </div>
+            </div>
+
             <div style={{ padding: '18px 20px' }}>
 
                 {/* 7 JOURS */}
