@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getProgressPercent } from '@/lib/nutrition'
 import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
-import { Settings, Bell, HelpCircle, LogOut, ChevronRight, Shield, FileText } from 'lucide-react'
+import { Settings, Bell, HelpCircle, LogOut, ChevronRight, Shield, FileText, Camera, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRef } from 'react'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -91,6 +92,9 @@ export default function ProfilPage() {
 
     const [bilanStatus, setBilanStatus] = useState<'loading' | 'done' | 'empty' | null>(getInitialStatus())
     const [isRenewing, setIsRenewing] = useState(false)
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+    const [isUploading, setIsUploading] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleRenew = async () => {
         if (effectiveTier === 'free') return;
@@ -123,7 +127,62 @@ export default function ProfilPage() {
         } else if (shouldShowExisting) {
             setBilanStatus(getInitialStatus())
         }
+        
+        // Charger l'avatar
+        const loadAvatar = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user?.user_metadata?.avatar_url) {
+                setAvatarUrl(user.user_metadata.avatar_url)
+            }
+        }
+        loadAvatar()
     }, [activeSlot, profile?.subscription_tier, bilanDate])
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click()
+    }
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploading(true)
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('Non authentifié')
+
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${user.id}-${Math.random()}.${fileExt}`
+            const filePath = `avatars/${fileName}`
+
+            // Upload
+            const { error: uploadError } = await supabase.storage
+                .from('meal-images') // On réutilise le bucket existant ou on crée 'avatars' si possible
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            // Get URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('meal-images')
+                .getPublicUrl(filePath)
+
+            // Update user metadata
+            const { error: updateError } = await supabase.auth.updateUser({
+                data: { avatar_url: publicUrl }
+            })
+
+            if (updateError) throw updateError
+
+            setAvatarUrl(publicUrl)
+            toast.success('Photo de profil mise à jour !')
+        } catch (error: any) {
+            console.error('Upload error:', error)
+            toast.error('Erreur lors de l\'envoi de la photo')
+        } finally {
+            setIsUploading(false)
+        }
+    }
 
     const loadBilan = async (slot: MealSlotKey) => {
         const slotMeals = slot !== 'diner'
@@ -241,16 +300,64 @@ export default function ProfilPage() {
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success))' }} />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
-                        <div style={{
-                            width: '68px', height: '68px', borderRadius: '22px',
-                            background: 'linear-gradient(135deg, var(--accent), #ec4899)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '30px', fontWeight: 'bold', color: '#fff',
-                            boxShadow: '0 8px 16px rgba(var(--bg-primary-rgb),0.4)',
-                            flexShrink: 0
-                        }}>
-                            {profile?.name?.charAt(0).toUpperCase() || 'U'}
+                        <div 
+                            onClick={handleAvatarClick}
+                            style={{
+                                width: '80px', height: '80px', borderRadius: '50%',
+                                background: 'linear-gradient(135deg, var(--accent), #ec4899)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '32px', fontWeight: 'bold', color: '#fff',
+                                boxShadow: '0 8px 24px rgba(var(--bg-primary-rgb),0.5)',
+                                flexShrink: 0,
+                                position: 'relative',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                border: '3px solid var(--bg-secondary)'
+                            }}
+                        >
+                            {avatarUrl ? (
+                                <img 
+                                    src={avatarUrl} 
+                                    alt="Profil" 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                />
+                            ) : (
+                                profile?.name?.charAt(0).toUpperCase() || 'U'
+                            )}
+                            
+                            {/* Overlay Plus */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                right: '0',
+                                background: 'var(--accent)',
+                                width: '24px',
+                                height: '24px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '2px solid var(--bg-secondary)',
+                                color: '#fff',
+                                zIndex: 2
+                            }}>
+                                <Plus size={14} strokeWidth={3} />
+                            </div>
+
+                            {isUploading && (
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div className="spinner" style={{ width: '20px', height: '20px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                                </div>
+                            )}
                         </div>
+
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleFileChange} 
+                            accept="image/*" 
+                            style={{ display: 'none' }} 
+                        />
                         <div style={{ flex: 1 }}>
                             <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
