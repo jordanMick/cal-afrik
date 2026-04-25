@@ -9,9 +9,23 @@ import { toast } from 'sonner'
 
 // Plus besoin de déclarer FedaPay car nous utilisons une redirection directe vers Maketou
 
+const durations = [
+    { value: '1', label: '1 mois', discount: null },
+    { value: '3', label: '3 mois', discount: '-10%' },
+    { value: '12', label: '12 mois', discount: '-25%' },
+]
+
 const plans = {
-    pro: { price: '1500', period: 'FCFA/mois', value: 'pro' },
-    premium: { price: '2500', period: 'FCFA/mois', value: 'premium' },
+    pro: {
+        '1': 1500,
+        '3': 4000,
+        '12': 14000
+    },
+    premium: {
+        '1': 2500,
+        '3': 6500,
+        '12': 22000
+    }
 }
 
 function PricingContent() {
@@ -27,6 +41,7 @@ function PricingContent() {
     const [promoInput, setPromoInput] = useState('')
     const [isApplying, setIsApplying] = useState(false)
     const [promoOpen, setPromoOpen] = useState(false)
+    const [duration, setDuration] = useState<'1' | '3' | '12'>('1')
 
     // Plus besoin de charger le script FedaPay ici car Maketou utilise une redirection simple
     useEffect(() => {
@@ -50,7 +65,7 @@ function PricingContent() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ tier, discount })
+                body: JSON.stringify({ tier, discount, duration: parseInt(duration) })
             });
 
             const data = await res.json();
@@ -131,6 +146,56 @@ function PricingContent() {
                     </div>
                 )}
 
+                {/* SELECTEUR DE DURÉE */}
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    marginBottom: '40px',
+                    background: 'rgba(255,255,255,0.03)',
+                    padding: '4px',
+                    borderRadius: '16px',
+                    maxWidth: '360px',
+                    margin: '0 auto 48px',
+                    border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                    {durations.map((d) => (
+                        <button
+                            key={d.value}
+                            onClick={() => setDuration(d.value as any)}
+                            style={{
+                                flex: 1,
+                                padding: '12px 0',
+                                borderRadius: '12px',
+                                border: 'none',
+                                background: duration === d.value ? 'rgba(255,255,255,0.08)' : 'transparent',
+                                color: duration === d.value ? '#fff' : '#555',
+                                fontSize: '13px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                position: 'relative'
+                            }}
+                        >
+                            {d.label}
+                            {d.discount && (
+                                <span style={{ 
+                                    position: 'absolute', 
+                                    top: '-8px', 
+                                    right: '-4px', 
+                                    background: '#10b981', 
+                                    color: '#fff', 
+                                    fontSize: '9px', 
+                                    padding: '2px 6px', 
+                                    borderRadius: '10px',
+                                    fontWeight: '800'
+                                }}>
+                                    {d.discount}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
                 <style>{`
                     @media (max-width: 768px) {
                         .pricing-grid {
@@ -204,11 +269,11 @@ function PricingContent() {
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.pro.price}</span>
+                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.pro[duration]}</span>
                                 {discount > 0 && (
-                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(parseInt(plans.pro.price) * (1 - discount / 100))}</span>
+                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(plans.pro[duration] * (1 - discount / 100))}</span>
                                 )}
-                                <span style={{ color: '#555', fontSize: '13px' }}>{plans.pro.period}</span>
+                                <span style={{ color: '#555', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
                             <div style={{ height: '0.5px', background: '#2a2a2a', margin: '20px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
@@ -253,11 +318,11 @@ function PricingContent() {
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.premium.price}</span>
+                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.premium[duration]}</span>
                                 {discount > 0 && (
-                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(parseInt(plans.premium.price) * (1 - discount / 100))}</span>
+                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(plans.premium[duration] * (1 - discount / 100))}</span>
                                 )}
-                                <span style={{ color: '#555', fontSize: '13px' }}>{plans.premium.period}</span>
+                                <span style={{ color: '#555', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
                             <div style={{ height: '0.5px', background: '#1a2e24', margin: '20px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>

@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 // Prix attendus par tier (en FCFA) — validation côté serveur
-const EXPECTED_AMOUNTS: Record<string, number> = {
-    pro: 1500,
-    premium: 2500,
+const EXPECTED_AMOUNTS: Record<string, any> = {
+    pro: { '1': 1500, '3': 4000, '12': 14000 },
+    premium: { '1': 2500, '3': 6500, '12': 22000 },
     scan: 100,
     suggestion: 100
 };
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
             premium_reduit5: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT5 // 5%
         };
 
-        const { tier, discount = 0 } = await req.json();
+        const { tier, discount = 0, duration = 1 } = await req.json();
         const apiKey = process.env.MAKETOU_API_KEY;
 
         if (!apiKey) {
@@ -54,11 +54,12 @@ export async function POST(req: Request) {
         }
 
         const productDocumentId = PRODUCT_IDS[tierKey];
-        const baseAmount = EXPECTED_AMOUNTS[(tier || '').toLowerCase()];
+        const tierBase = EXPECTED_AMOUNTS[(tier || '').toLowerCase()];
+        const baseAmount = typeof tierBase === 'object' ? tierBase[String(duration)] : tierBase;
 
         if (!productDocumentId || !baseAmount) {
-            console.error(`${tag} Tier invalide: '${tierKey}'`);
-            return NextResponse.json({ error: 'Plan invalide' }, { status: 400 });
+            console.error(`${tag} Tier ou durée invalide: tier='${tier}', duration='${duration}'`);
+            return NextResponse.json({ error: 'Plan ou durée invalide' }, { status: 400 });
         }
 
         // Calcul du montant final avec réduction
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
                 meta: {
                     user_id: user.id,
                     tier: tierKey,
+                    duration: duration,
                     base_amount: baseAmount,
                     discount_percent: discount,
                     expected_amount: finalAmount

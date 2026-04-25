@@ -21,7 +21,7 @@ import { createClient } from '@supabase/supabase-js';
  */
 
 // ─── Helper activation crédits (partagé avec webhook si activé un jour) ──────
-async function activateCredits(userId: string, tier: string, cartId: string) {
+async function activateCredits(userId: string, tier: string, cartId: string, duration: number = 1) {
     const tag = `[Verify][${cartId}]`;
 
     if (tier === 'scan') {
@@ -65,7 +65,12 @@ async function activateCredits(userId: string, tier: string, cartId: string) {
             const currentExp = new Date(profile.subscription_expires_at);
             if (currentExp > baseDate) baseDate = currentExp;
         }
-        baseDate.setDate(baseDate.getDate() + 30);
+
+        let daysToAdd = 30;
+        if (duration === 3) daysToAdd = 90;
+        if (duration === 12) daysToAdd = 365;
+
+        baseDate.setDate(baseDate.getDate() + daysToAdd);
 
         const { error } = await supabaseAdmin
             .from('user_profiles')
@@ -211,7 +216,8 @@ export async function POST(req: Request) {
 
         try {
             // 7. Activer les crédits
-            await activateCredits(user.id, tier, cartId);
+            const duration = Number(metadata?.duration || 1);
+            await activateCredits(user.id, tier, cartId, duration);
 
             // 8. Marquer comme terminé
             await supabaseAdmin.from('payment_logs')
