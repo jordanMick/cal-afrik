@@ -205,7 +205,7 @@ const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgra
                 style={{
                     padding: '12px',
                     borderRadius: '14px',
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'var(--bg-tertiary)',
                     color: 'var(--text-secondary)',
                     border: '0.5px solid var(--border-color)',
                     fontWeight: '700',

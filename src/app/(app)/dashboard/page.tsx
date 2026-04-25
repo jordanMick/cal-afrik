@@ -124,11 +124,11 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     zIndex: 10, padding: '20px', textAlign: 'center'
                 }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#0a0a0a', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', marginBottom: '6px', border: '1px solid rgba(var(--success-rgb), 0.3)', boxShadow: '0 0 10px rgba(var(--success-rgb), 0.2)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#fff', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', marginBottom: '6px', border: '1px solid var(--border-color)', boxShadow: '0 4px 10px rgba(var(--success-rgb), 0.2)' }}>
                         🔒
                     </div>
                     <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '2px' }}>Analyses Coach Yao</p>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginBottom: '10px', maxWidth: '180px', fontWeight: '500' }}>Passe au plan Pro pour débloquer ton suivi.</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '10px', maxWidth: '180px', fontWeight: '500' }}>Passe au plan Pro pour débloquer ton suivi.</p>
                     <button
                         onClick={() => router.push('/upgrade')}
                         style={{
@@ -1047,8 +1047,8 @@ export default function DashboardPage() {
                 <button onClick={() => fileInputRef.current?.click()} style={{
                     position: 'fixed', bottom: '80px', right: '24px',
                     width: '58px', height: '58px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--branding), var(--success))',
-                    border: '1px solid rgba(var(--success-rgb), 0.3)', fontSize: '26px', color: '#fff',
+                    background: '#fff',
+                    border: '1px solid var(--border-color)', fontSize: '26px', color: 'var(--success)',
                     boxShadow: '0 8px 24px rgba(var(--success-rgb), 0.4)',
                     cursor: 'pointer', zIndex: 1000,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
