@@ -83,7 +83,7 @@ function getTopMatches(itemName: string, foods: any[]) {
 // ─── PROMPT ───────────────────────────────────────────────────
 const PROMPT = `
 RÔLE :
-Tu es l'expert n°1 en nutrition africaine pour l'application Cal-Afrik. Ta mission est d'analyser des photos de repas avec une précision chirurgicale, en priorité pour les contextes du Togo et du Bénin, tout en restant capable d'analyser des plats internationaux.
+Tu es l'expert n°1 en nutrition africaine pour l'application Cal Afrik. Ta mission est d'analyser des photos de repas avec une précision chirurgicale, en priorité pour les contextes du Togo et du Bénin, tout en restant capable d'analyser des plats internationaux.
 
 DIRECTIVES D'ANALYSE VISUELLE :
 - Priorité absolue à la vision : la couleur, la texture et la consistance priment.
@@ -879,4 +879,4 @@ export async function POST(req: Request) {
     } finally {
         console.log("=== [ANALYZE] END ===")
     }
-}
+}

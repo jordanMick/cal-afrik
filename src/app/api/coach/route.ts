@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
 
         // 4. Générer le conseil IA
         const dietaryLine = buildDietaryContextLine(profile.dietary_restrictions)
-        const prompt = `Tu es Coach Yao, l'expert nutritionniste de Cal-Afrik. Ton rôle est d'analyser avec précision le repas que l'utilisateur vient de valider et de lui donner un feedback motivant mais scientifiquement pertinent.${dietaryLine}
+        const prompt = `Tu es Coach Yao, l'expert nutritionniste de Cal Afrik. Ton rôle est d'analyser avec précision le repas que l'utilisateur vient de valider et de lui donner un feedback motivant mais scientifiquement pertinent.${dietaryLine}
 
 L'utilisateur a mangé pour son ${slotLabel.toLowerCase()} : ${selectedFoods.join(', ')}.
 

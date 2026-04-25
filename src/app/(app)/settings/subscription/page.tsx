@@ -91,7 +91,7 @@ export default function SubscriptionPage() {
                 </button>
                 <div>
                     <h1 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', lineHeight: 1 }}>Mon abonnement</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>Gérer votre plan Cal-Afrik</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>Gérer votre plan Cal Afrik</p>
                 </div>
             </div>
 

@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
             <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center', position: 'relative', zIndex: 10 }}>
                 
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '40px' }}>
-                    <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981', marginBottom: '20px' }}>Cal-Afrik</h2>
+                    <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981', marginBottom: '20px' }}>Cal Afrik</h2>
                     <div style={{ fontSize: '56px', marginBottom: '16px' }}>{message.includes('!') ? '✅' : '🔐'}</div>
                     <h1 style={{ fontSize: '30px', fontWeight: '900', marginBottom: '8px', letterSpacing: '-1px' }}>
                         {ready ? 'Nouveau départ' : 'Lien expiré'}

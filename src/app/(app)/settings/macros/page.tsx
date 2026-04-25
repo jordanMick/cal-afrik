@@ -63,7 +63,7 @@ export default function MacroStrategyPage() {
                     </div>
                     <h2 style={{ fontSize: '22px', fontWeight: '900', marginBottom: '16px' }}>Fonctionnalité Premium</h2>
                     <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '32px' }}>
-                        La personnalisation avancée des cibles par repas est réservée aux abonnés Premium Cal-Afrik.
+                        La personnalisation avancée des cibles par repas est réservée aux abonnés Premium Cal Afrik.
                     </p>
                     <button onClick={() => router.push('/settings/subscription')} style={{ width: '100%', padding: '18px', background: 'var(--warning)', borderRadius: '20px', color: '#fff', border: 'none', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 10px 20px rgba(var(--warning-rgb), 0.2)' }}>
                         Découvrir le Premium

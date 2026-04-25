@@ -3,7 +3,7 @@ import * as webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
 webpush.setVapidDetails(
-    'mailto:contact@cal-afrik.com',
+    'mailto:contact@Cal Afrik.com',
     'BNfv7lFwqaZzo_KHZe6nmPCyVHse5lLyxy93uIlJql-1FiK0TDbXMEWCqHjszAuMxbUlZyIq-PE3UJy8Ci_vWAI',
     'X7Ar5GPmj-iXaJWadrKgowvIZfYtcDKbJ9LnKlCvoiY'
 )

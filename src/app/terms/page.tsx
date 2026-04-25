@@ -10,7 +10,7 @@ export default function TermsPage() {
         {
             title: "Usage de l'Application",
             icon: <CheckCircle size={20} color="var(--success)" />,
-            content: "Cal-Afrik est un outil d'accompagnement nutritionnel. Les conseils de Coach Yao sont générés par IA et ne remplacent en aucun cas l'avis d'un médecin ou d'un nutritionniste certifié."
+            content: "Cal Afrik est un outil d'accompagnement nutritionnel. Les conseils de Coach Yao sont générés par IA et ne remplacent en aucun cas l'avis d'un médecin ou d'un nutritionniste certifié."
         },
         {
             title: "Abonnements & Paiements",
@@ -20,7 +20,7 @@ export default function TermsPage() {
         {
             title: "Responsabilité",
             icon: <AlertTriangle size={20} color="#f59e0b" />,
-            content: "Cal-Afrik n'est pas responsable des décisions alimentaires prises par l'utilisateur. En cas de pathologie (diabète, hypertension, etc.), consulte impérativement un professionnel de santé avant de modifier ton régime."
+            content: "Cal Afrik n'est pas responsable des décisions alimentaires prises par l'utilisateur. En cas de pathologie (diabète, hypertension, etc.), consulte impérativement un professionnel de santé avant de modifier ton régime."
         },
         {
             title: "Suspension de compte",
@@ -46,7 +46,7 @@ export default function TermsPage() {
                     </div>
                     <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>Règles de bonne conduite</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                        Pour garantir la meilleure expérience à tous les utilisateurs de Cal-Afrik.
+                        Pour garantir la meilleure expérience à tous les utilisateurs de Cal Afrik.
                     </p>
                 </div>
 

@@ -211,11 +211,11 @@ export default function ReportsPage() {
                         <div style={{ display: 'none', marginBottom: '32px' }} className="show-on-print">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent)', paddingBottom: '20px' }}>
                                 <div>
-                                    <h1 style={{ fontSize: '28px', fontWeight: '900', color: 'var(--accent)', margin: 0 }}>Cal-Afrik</h1>
+                                    <h1 style={{ fontSize: '28px', fontWeight: '900', color: 'var(--accent)', margin: 0 }}>Cal Afrik</h1>
                                     <p style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: '600' }}>Bilan Santé Personnel</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <p style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>{profile?.name || 'Utilisateur Cal-Afrik'}</p>
+                                    <p style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>{profile?.name || 'Utilisateur Cal Afrik'}</p>
                                     <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Généré le {new Date().toLocaleDateString('fr-FR')}</p>
                                 </div>
                             </div>
@@ -312,7 +312,7 @@ export default function ReportsPage() {
 
                         {/* Footer PDF Pro */}
                         <div style={{ display: 'none', marginTop: '40px', borderTop: '0.5px solid #eee', paddingTop: '20px', textAlign: 'center' }} className="show-on-print">
-                            <p style={{ fontSize: '13px', color: '#444', fontWeight: '700' }}>Rapport généré par Cal-Afrik</p>
+                            <p style={{ fontSize: '13px', color: '#444', fontWeight: '700' }}>Rapport généré par Cal Afrik</p>
                             <p style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>Document confidentiel destiné à l'usage personnel de l'utilisateur.</p>
                         </div>
 

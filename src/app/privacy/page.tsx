@@ -10,7 +10,7 @@ export default function PrivacyPage() {
         {
             title: "Collecte des données",
             icon: <Eye size={20} color="var(--accent-primary)" />,
-            content: "Cal-Afrik collecte les informations nécessaires à ton suivi nutritionnel : nom, email, âge, poids, taille et tes habitudes alimentaires. Nous stockons également les photos de tes repas pour l'analyse par l'IA de Coach Yao."
+            content: "Cal Afrik collecte les informations nécessaires à ton suivi nutritionnel : nom, email, âge, poids, taille et tes habitudes alimentaires. Nous stockons également les photos de tes repas pour l'analyse par l'IA de Coach Yao."
         },
         {
             title: "Utilisation des données",
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
                     </div>
                     <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>Ta vie privée est sacrée</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                        Chez Cal-Afrik, nous croyons que tes données de santé t'appartiennent. Voici comment nous les protégeons.
+                        Chez Cal Afrik, nous croyons que tes données de santé t'appartiennent. Voici comment nous les protégeons.
                     </p>
                 </div>
 

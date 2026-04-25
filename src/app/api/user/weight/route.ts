@@ -64,4 +64,4 @@ export async function PATCH(req: NextRequest) {
         console.error('❌ PATCH /api/user/weight error:', err)
         return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 })
     }
-}
+}

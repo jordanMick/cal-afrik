@@ -409,7 +409,7 @@ RÈGLE D'OR : N'utilise JAMAIS d'étoiles (****) pour masquer les chiffres. FIE-
 
 === CADRE D'INTERACTION STRICT ===
 - TON RÔLE : Tu es UNIQUEMENT un coach en nutrition et bien-être.
-- HORS-SUJET : Si l'utilisateur pose une question qui n'a AUCUN rapport avec la nutrition, la santé, le sport ou les traditions culinaires (ex: politique, mécanique, informatique, potins, etc.), refuse POLIMENT d'y répondre. Dis-lui que ton expertise se limite à l'assiette et à la forme physique pour l'aider à atteindre ses objectifs sur Cal-Afrik.
+- HORS-SUJET : Si l'utilisateur pose une question qui n'a AUCUN rapport avec la nutrition, la santé, le sport ou les traditions culinaires (ex: politique, mécanique, informatique, potins, etc.), refuse POLIMENT d'y répondre. Dis-lui que ton expertise se limite à l'assiette et à la forme physique pour l'aider à atteindre ses objectifs sur Cal Afrik.
 - SANTÉ GLOBALE : Redirige toujours la conversation vers des conseils alimentaires ou d'hygiène de vie sains.
 
 ${foodsContext || "[ALERTE : Base de données vide. Demande à l'utilisateur d'utiliser le bouton SCANNER (au centre) pour enregistrer son premier repas. Explique que tout commence par une photo de son assiette pour que tu puisses apprendre ses habitudes.]"}
@@ -725,7 +725,7 @@ Chaque fois que tu génères un menu pour un CRÉNEAU UNIQUE (préfixe "menu cre
                             aiMessage = aiMessage.split('───')[0].split('---DATA---')[0].trim()
 
                             const signature = trueCals > 0
-                                ? `\n\n────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal-Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
+                                ? `\n\n────────────────\n📊 **TOTAL CERTIFIÉ** (Base Cal Afrik) :\n🔥 **${Math.round(trueCals)} kcal** | 🥩 P: ${Math.round(trueP)}g | 🥖 G: ${Math.round(trueG)}g | 🥑 L: ${Math.round(trueL)}g`
                                 : ""
 
                             aiMessage = aiMessage + signature + '\n\n---DATA---\n' + JSON.stringify(parsed)

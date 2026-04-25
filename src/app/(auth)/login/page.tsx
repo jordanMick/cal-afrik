@@ -126,7 +126,7 @@ export default function LoginPage() {
                 >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
                         <LeafIcon size={18} />
-                        <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981' }}>Cal-Afrik</h2>
+                        <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981' }}>Cal Afrik</h2>
                     </div>
                     <div style={{ fontSize: '56px', marginBottom: '16px' }}>
                         {isRegister ? '🥗' : '🥑'}
