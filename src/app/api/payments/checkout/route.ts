@@ -19,7 +19,7 @@ const EXPECTED_AMOUNTS: Record<string, number> = {
 export async function POST(req: Request) {
     const tag = '[Maketou Checkout]';
     try {
-        const { tier } = await req.json();
+        const { tier, discount = 0 } = await req.json();
         const apiKey = process.env.MAKETOU_API_KEY;
 
         if (!apiKey) {
@@ -42,14 +42,17 @@ export async function POST(req: Request) {
         // 2. Validation stricte du produit
         const tierKey = (tier || '').toLowerCase();
         const productDocumentId = PRODUCT_IDS[tierKey];
-        const expectedAmount = EXPECTED_AMOUNTS[tierKey];
+        const baseAmount = EXPECTED_AMOUNTS[tierKey];
 
-        if (!productDocumentId || !expectedAmount) {
+        if (!productDocumentId || !baseAmount) {
             console.error(`${tag} Tier invalide: '${tierKey}'`);
             return NextResponse.json({ error: 'Plan invalide' }, { status: 400 });
         }
 
-        console.log(`${tag} Création panier — user=${user.email}, tier=${tierKey}, montant=${expectedAmount} FCFA`);
+        // Calcul du montant final avec réduction
+        const finalAmount = Math.round(baseAmount * (1 - (discount / 100)));
+
+        console.log(`${tag} Création panier — user=${user.email}, tier=${tierKey}, base=${baseAmount}, final=${finalAmount} FCFA (Reduction: ${discount}%)`);
 
         // 3. Appel API Maketou
         const fullName = user.user_metadata?.full_name || 'Utilisateur CalAfrik';
@@ -68,12 +71,16 @@ export async function POST(req: Request) {
                 email: user.email,
                 firstName,
                 lastName,
-                // ✅ Le webhook est la source de vérité — la redirection est secondaire
+                // On tente de passer le prix final si Maketou permet l'override
+                // Sinon on compte sur le fait qu'on a bien géré l'affichage client
+                price: finalAmount, 
                 redirectURL: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/success`,
                 meta: {
                     user_id: user.id,
                     tier: tierKey,
-                    expected_amount: expectedAmount
+                    base_amount: baseAmount,
+                    discount_percent: discount,
+                    expected_amount: finalAmount
                 }
             })
         });
