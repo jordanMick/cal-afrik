@@ -738,13 +738,7 @@ export default function ProfilPage() {
                         <ChevronRight size={18} color="var(--text-muted)" strokeWidth={2} />
                     </button>
 
-                    <button onClick={() => setShowSupportModal(true)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', borderBottom: '0.5px solid var(--border-color)', cursor: 'pointer' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <HelpCircle size={20} color="var(--text-secondary)" strokeWidth={1.5} />
-                            <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Aide & Support</span>
-                        </div>
-                        <ChevronRight size={18} color="var(--text-muted)" strokeWidth={2} />
-                    </button>
+
 
                     <button onClick={handleLogoutTrigger} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
