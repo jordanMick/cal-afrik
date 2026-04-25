@@ -210,6 +210,8 @@ export default function DashboardPage() {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
+
+    useEffect(() => {
         // Charger l'avatar
         const loadAvatar = async () => {
             const { data: { user } } = await supabase.auth.getUser()
