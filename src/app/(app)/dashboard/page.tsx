@@ -913,8 +913,8 @@ export default function DashboardPage() {
             <div 
                 onClick={() => router.push('/menus')}
                 style={{ 
-                    background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--success-rgb), 0.1))', 
-                    border: '1px solid rgba(var(--accent-rgb), 0.2)', 
+                    background: 'var(--bg-secondary)', 
+                    border: '0.5px solid var(--border-color)', 
                     borderRadius: '24px', 
                     padding: '20px', 
                     marginBottom: '24px', 
@@ -922,7 +922,7 @@ export default function DashboardPage() {
                     justifyContent: 'space-between', 
                     alignItems: 'center',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.05)'
+                    transition: 'transform 0.2s'
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
