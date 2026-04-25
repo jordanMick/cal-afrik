@@ -26,6 +26,7 @@ function PricingContent() {
     const discount = discountParam ? parseInt(discountParam) : 0
     const [promoInput, setPromoInput] = useState('')
     const [isApplying, setIsApplying] = useState(false)
+    const [promoOpen, setPromoOpen] = useState(false)
 
     // Plus besoin de charger le script FedaPay ici car Maketou utilise une redirection simple
     useEffect(() => {
@@ -110,7 +111,7 @@ function PricingContent() {
                     <p style={{ color: '#555', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
                 </div>
 
-                {discount > 0 ? (
+                {discount > 0 && (
                     <div style={{ 
                         background: 'rgba(16, 185, 129, 0.1)', 
                         border: '1px dashed #10b981', 
@@ -127,66 +128,6 @@ function PricingContent() {
                         <p style={{ color: '#10b981', fontWeight: '700', fontSize: '14px' }}>
                             Réduction de {discount}% appliquée sur tous les plans !
                         </p>
-                    </div>
-                ) : (
-                    <div style={{ 
-                        background: 'rgba(255, 255, 255, 0.03)', 
-                        border: '1px solid rgba(255, 255, 255, 0.05)', 
-                        borderRadius: '20px', 
-                        padding: '16px 20px', 
-                        marginBottom: '32px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
-                    }}>
-                        <p style={{ fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.4)' }}>Un code promo ?</p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input 
-                                type="text" 
-                                value={promoInput}
-                                onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                                placeholder="ENTREZ VOTRE CODE"
-                                style={{ 
-                                    flex: 1, 
-                                    background: 'rgba(0,0,0,0.2)', 
-                                    border: '1px solid rgba(255,255,255,0.1)', 
-                                    borderRadius: '12px', 
-                                    padding: '12px 16px', 
-                                    color: '#fff', 
-                                    fontSize: '14px',
-                                    fontWeight: '700',
-                                    letterSpacing: '1px'
-                                }}
-                            />
-                            <button 
-                                onClick={() => {
-                                    if (promoInput === profile?.promo_code) {
-                                        const userDiscount = (profile as any)?.promo_discount || 10
-                                        setIsApplying(true)
-                                        setTimeout(() => {
-                                            router.push(`/upgrade?discount=${userDiscount}`)
-                                            setIsApplying(false)
-                                            toast.success(`Réduction de ${userDiscount}% appliquée !`)
-                                        }, 800)
-                                    } else {
-                                        toast.error('Code invalide')
-                                    }
-                                }}
-                                disabled={isApplying || !promoInput}
-                                style={{ 
-                                    padding: '0 24px', 
-                                    background: 'linear-gradient(135deg, #6366f1, #10b981)', 
-                                    border: 'none', 
-                                    borderRadius: '12px', 
-                                    color: '#fff', 
-                                    fontSize: '13px', 
-                                    fontWeight: '700',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {isApplying ? '...' : 'Appliquer'}
-                            </button>
-                        </div>
                     </div>
                 )}
 
@@ -359,10 +300,89 @@ function PricingContent() {
                     </div>
                 )}
 
-                {/* Plus besoin du conteneur FedaPay */}
+                {/* CODE PROMO SECTION (collapsible, en bas) */}
+                {!discount && (
+                    <div style={{ marginTop: '32px', marginBottom: '16px' }}>
+                        <button
+                            onClick={() => setPromoOpen(o => !o)}
+                            style={{
+                                width: '100%', background: 'transparent', border: 'none',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                gap: '8px', cursor: 'pointer', color: 'rgba(255,255,255,0.3)',
+                                fontSize: '13px', fontWeight: '600', padding: '8px'
+                            }}
+                        >
+                            <span>J'ai un code promo</span>
+                            <span style={{ transition: 'transform 0.25s', transform: promoOpen ? 'rotate(180deg)' : 'rotate(0deg)', fontSize: '10px' }}>▼</span>
+                        </button>
+
+                        {promoOpen && (
+                            <div style={{
+                                marginTop: '12px',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid rgba(255,255,255,0.07)',
+                                borderRadius: '20px',
+                                padding: '20px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px'
+                            }}>
+                                <input
+                                    type="text"
+                                    value={promoInput}
+                                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                                    placeholder="ENTREZ VOTRE CODE"
+                                    style={{
+                                        width: '100%',
+                                        background: 'rgba(0,0,0,0.2)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '12px',
+                                        padding: '14px 16px',
+                                        color: '#fff',
+                                        fontSize: '16px',
+                                        fontWeight: '700',
+                                        letterSpacing: '3px',
+                                        textAlign: 'center',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (promoInput === profile?.promo_code) {
+                                            const userDiscount = (profile as any)?.promo_discount || 10
+                                            setIsApplying(true)
+                                            setTimeout(() => {
+                                                router.push(`/upgrade?discount=${userDiscount}`)
+                                                setIsApplying(false)
+                                                toast.success(`Réduction de ${userDiscount}% appliquée !`)
+                                            }, 800)
+                                        } else {
+                                            toast.error('Code invalide')
+                                        }
+                                    }}
+                                    disabled={isApplying || !promoInput}
+                                    style={{
+                                        width: '100%',
+                                        padding: '14px',
+                                        background: promoInput ? 'linear-gradient(135deg, #6366f1, #10b981)' : 'rgba(255,255,255,0.05)',
+                                        border: 'none',
+                                        borderRadius: '12px',
+                                        color: promoInput ? '#fff' : '#555',
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        cursor: promoInput ? 'pointer' : 'default',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {isApplying ? 'Vérification...' : 'Appliquer la réduction'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* FOOTER */}
-                <p style={{ textAlign: 'center', color: '#333', fontSize: '12px', marginTop: '48px' }}>
+                <p style={{ textAlign: 'center', color: '#333', fontSize: '12px', marginTop: '32px' }}>
                     Cal Afrik · Fait avec ❤️ pour l'Afrique
                 </p>
             </div>
