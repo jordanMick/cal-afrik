@@ -4,22 +4,22 @@
 
 :root {
   /* Default: Dark Mode */
-  --bg-primary: #0a0a0a;
-  --bg-primary-rgb: 10, 10, 10;
-  --bg-secondary: #141414;
-  --bg-secondary-rgb: 20, 20, 20;
-  --bg-tertiary: #1a1a1a;
-  --bg-tertiary-rgb: 26, 26, 26;
+  --bg-primary: #040404;
+  --bg-primary-rgb: 4, 4, 4;
+  --bg-secondary: #0a0a0a;
+  --bg-secondary-rgb: 10, 10, 10;
+  --bg-tertiary: #111111;
+  --bg-tertiary-rgb: 17, 17, 17;
   
   --text-primary: #ffffff;
   --text-primary-rgb: 255, 255, 255;
-  --text-secondary: #888888;
-  --text-secondary-rgb: 136, 136, 136;
-  --text-muted: #666666;
-  --text-muted-rgb: 102, 102, 102;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-secondary-rgb: 255, 255, 255;
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --text-muted-rgb: 255, 255, 255;
   
-  --border-color: #222222;
-  --border-color-rgb: 34, 34, 34;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-rgb: 255, 255, 255;
   
   --accent: #2563eb;
   --accent-rgb: 99, 102, 241;
@@ -98,9 +98,9 @@ body {
 
 /* Utilitaires Design Cal AI */
 .glass-panel {
-  background: var(--bg-secondary);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(var(--bg-secondary-rgb), 0.8);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
   border: 1px solid var(--border-color);
 }
 

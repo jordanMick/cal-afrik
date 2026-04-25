@@ -913,7 +913,9 @@ export default function DashboardPage() {
             <div 
                 onClick={() => router.push('/menus')}
                 style={{ 
-                    background: 'var(--bg-secondary)', 
+                    background: 'rgba(var(--bg-secondary-rgb), 0.8)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
                     border: '0.5px solid var(--border-color)', 
                     borderRadius: '24px', 
                     padding: '20px', 
@@ -922,11 +924,12 @@ export default function DashboardPage() {
                     justifyContent: 'space-between', 
                     alignItems: 'center',
                     cursor: 'pointer',
-                    transition: 'transform 0.2s'
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--accent), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--branding), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', boxShadow: '0 4px 12px rgba(var(--success-rgb), 0.3)' }}>
                         🍲
                     </div>
                     <div>
@@ -934,7 +937,7 @@ export default function DashboardPage() {
                         <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Voir les suggestions de Coach Yao</p>
                     </div>
                 </div>
-                <div style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: '800' }}>→</div>
+                <div style={{ color: 'var(--success)', fontSize: '18px', fontWeight: '800' }}>→</div>
             </div>
 
             {/* REPAS GROUPÉS PAR SLOTS */}
@@ -962,9 +965,12 @@ export default function DashboardPage() {
                                     key={slot.id}
                                     onClick={() => handleOpenSlotModal(slot)}
                                     style={{
-                                        background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '18px',
+                                        background: 'rgba(var(--bg-secondary-rgb), 0.7)',
+                                        backdropFilter: 'blur(10px)',
+                                        border: '0.5px solid var(--border-color)',
+                                        borderRadius: '18px',
                                         padding: '16px', display: 'flex', alignItems: 'center', gap: '14px',
-                                        cursor: 'pointer', transition: 'transform 0.2s'
+                                        cursor: 'pointer', transition: 'all 0.2s ease'
                                     }}
                                 >
                                     <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(var(--text-primary-rgb), 0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
@@ -1007,9 +1013,9 @@ export default function DashboardPage() {
                 <button onClick={() => fileInputRef.current?.click()} style={{
                     position: 'fixed', bottom: '80px', right: '24px',
                     width: '58px', height: '58px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--accent), var(--success))',
+                    background: 'linear-gradient(135deg, var(--branding), var(--success))',
                     border: 'none', fontSize: '26px', color: '#fff',
-                    boxShadow: '0 8px 28px rgba(var(--accent-rgb), 0.4)',
+                    boxShadow: '0 8px 28px rgba(var(--success-rgb), 0.4)',
                     cursor: 'pointer', zIndex: 1000,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>+</button>

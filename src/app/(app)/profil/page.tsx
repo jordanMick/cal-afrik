@@ -366,7 +366,7 @@ export default function ProfilPage() {
                     boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
                 }}>
                     {/* Décoration en arrière-plan */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success))', borderRadius: '24px 24px 0 0' }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--branding), var(--success))', borderRadius: '24px 24px 0 0' }} />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                         <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
@@ -374,10 +374,10 @@ export default function ProfilPage() {
                                 onClick={handleAvatarClick}
                                 style={{
                                     width: '100%', height: '100%', borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, var(--accent), #ec4899)',
+                                    background: 'linear-gradient(135deg, var(--branding), var(--success))',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     fontSize: '32px', fontWeight: 'bold', color: '#fff',
-                                    boxShadow: '0 8px 24px rgba(var(--bg-primary-rgb),0.5)',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                                     cursor: 'pointer',
                                     overflow: 'hidden',
                                     border: '3px solid var(--bg-secondary)',
