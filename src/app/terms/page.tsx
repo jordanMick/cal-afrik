@@ -10,7 +10,7 @@ export default function TermsPage() {
         {
             title: "Usage de l'Application",
             icon: <CheckCircle size={20} color="var(--success)" />,
-            content: "Cal Afrik est un outil d'accompagnement nutritionnel. Les conseils de Coach Yao sont générés et ne remplacent en aucun cas l'avis d'un médecin ou d'un nutritionniste certifié."
+            content: "Cal Afrik est un outil d'accompagnement nutritionnel. Les conseils de Coach Yao sont générés par IA et ne remplacent en aucun cas l'avis d'un médecin ou d'un nutritionniste certifié."
         },
         {
             title: "Abonnements & Paiements",
