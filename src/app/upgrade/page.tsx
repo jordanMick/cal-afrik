@@ -361,7 +361,7 @@ function PricingContent() {
                             style={{
                                 width: '100%', background: 'transparent', border: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                gap: '8px', cursor: 'pointer', color: 'rgba(255,255,255,0.3)',
+                                gap: '8px', cursor: 'pointer', color: 'var(--text-muted)',
                                 fontSize: '13px', fontWeight: '600', padding: '8px'
                             }}
                         >
@@ -372,8 +372,8 @@ function PricingContent() {
                         {promoOpen && (
                             <div style={{
                                 marginTop: '12px',
-                                background: 'rgba(255,255,255,0.03)',
-                                border: '1px solid rgba(255,255,255,0.07)',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-color)',
                                 borderRadius: '20px',
                                 padding: '20px',
                                 display: 'flex',
