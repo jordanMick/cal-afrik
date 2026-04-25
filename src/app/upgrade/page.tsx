@@ -10,8 +10,8 @@ import { toast } from 'sonner'
 // Plus besoin de déclarer FedaPay car nous utilisons une redirection directe vers Maketou
 
 const plans = {
-    pro: { price: '100', period: 'FCFA/mois', value: 'pro' },
-    premium: { price: '100', period: 'FCFA/mois', value: 'premium' },
+    pro: { price: '1500', period: 'FCFA/mois', value: 'pro' },
+    premium: { price: '2500', period: 'FCFA/mois', value: 'premium' },
 }
 
 function PricingContent() {
@@ -30,7 +30,7 @@ function PricingContent() {
         // Nettoyage si nécessaire
     }, []);
 
-    const handleSubscribe = async (tier: 'pro' | 'premium') => {
+    const handleSubscribe = async (tier: 'pro' | 'premium' | 'scan') => {
         if (currentTier === tier) return;
 
         setLoading(tier);

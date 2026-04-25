@@ -10,8 +10,8 @@ const PRODUCT_IDS: Record<string, string | undefined> = {
 
 // Prix attendus par tier (en FCFA) — validation côté serveur
 const EXPECTED_AMOUNTS: Record<string, number> = {
-    pro: 2000,
-    premium: 1000,
+    pro: 1500,
+    premium: 2500,
     scan: 100,
     suggestion: 100
 };

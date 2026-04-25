@@ -859,6 +859,7 @@ export default function ProfilPage() {
                                 onCropChange={setCrop}
                                 onCropComplete={onCropComplete}
                                 onZoomChange={setZoom}
+                                cropSize={{ width: 200, height: 200 }}
                             />
                         </div>
                         <div style={{ padding: '30px 20px', background: 'var(--bg-secondary)', display: 'flex', gap: '15px', alignItems: 'center' }}>
