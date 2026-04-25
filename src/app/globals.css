@@ -147,3 +147,7 @@ body {
     opacity: 1;
   }
 }
+
+.menu-item-hover:hover {
+  background: rgba(var(--text-primary-rgb), 0.05);
+}

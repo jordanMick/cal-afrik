@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 import { toast } from 'sonner'
-import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2 } from 'lucide-react'
+import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2, User, Bell, LifeBuoy, LogOut, ChevronDown } from 'lucide-react'
 import NotificationCenter from '@/components/NotificationCenter'
 import PushNotificationManager from '@/components/PushNotificationManager'
 import SurpriseManager from '@/components/SurpriseManager'
@@ -197,8 +197,19 @@ export default function DashboardPage() {
 
     const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
+        // Fermer le menu si on clique ailleurs
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setIsProfileMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
         // Charger l'avatar
         const loadAvatar = async () => {
             const { data: { user } } = await supabase.auth.getUser()
@@ -582,28 +593,111 @@ export default function DashboardPage() {
                         <Settings color="var(--text-secondary)" size={20} strokeWidth={1.5} />
                     </div>
 
-                    {/* AVATAR PROFIL */}
-                    <div onClick={() => router.push('/profil')} style={{ 
-                        width: '36px', 
-                        height: '36px', 
-                        borderRadius: '50%', 
-                        background: 'linear-gradient(135deg, var(--accent), #ec4899)', 
-                        border: '2px solid var(--bg-secondary)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        cursor: 'pointer',
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                        fontSize: '14px',
-                        fontWeight: '800',
-                        color: '#fff'
-                    }}>
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            profile?.name?.charAt(0).toUpperCase() || 'U'
-                        )}
+                    {/* AVATAR PROFIL AVEC DROPDOWN */}
+                    <div style={{ position: 'relative' }} ref={menuRef}>
+                        <div 
+                            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                            style={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <div style={{ 
+                                width: '36px', 
+                                height: '36px', 
+                                borderRadius: '50%', 
+                                background: 'linear-gradient(135deg, var(--accent), #ec4899)', 
+                                border: '2px solid var(--bg-secondary)', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                overflow: 'hidden',
+                                boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                                fontSize: '14px',
+                                fontWeight: '800',
+                                color: '#fff'
+                            }}>
+                                {avatarUrl ? (
+                                    <img src={avatarUrl} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    profile?.name?.charAt(0).toUpperCase() || 'U'
+                                )}
+                            </div>
+                            <ChevronDown size={14} color="var(--text-secondary)" style={{ transform: isProfileMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                        </div>
+
+                        {/* DROPDOWN MENU */}
+                        <AnimatePresence>
+                            {isProfileMenuOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 12px)',
+                                        right: 0,
+                                        width: '240px',
+                                        background: 'var(--bg-secondary)',
+                                        border: '0.5px solid var(--border-color)',
+                                        borderRadius: '16px',
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                                        zIndex: 1000,
+                                        overflow: 'hidden'
+                                    }}
+                                >
+                                    {/* Header Menu */}
+                                    <div style={{ padding: '16px', borderBottom: '0.5px solid var(--border-color)', background: 'rgba(var(--text-primary-rgb), 0.02)' }}>
+                                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>{profile?.name || 'Utilisateur'}</p>
+                                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.email || ''}</p>
+                                    </div>
+
+                                    {/* Items Menu */}
+                                    <div style={{ padding: '8px' }}>
+                                        <div 
+                                            onClick={() => { router.push('/profil'); setIsProfileMenuOpen(false); }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
+                                            className="menu-item-hover"
+                                        >
+                                            <User size={18} color="var(--text-secondary)" />
+                                            <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Profil</span>
+                                        </div>
+                                        <div 
+                                            onClick={() => { router.push('/notifications'); setIsProfileMenuOpen(false); }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
+                                            className="menu-item-hover"
+                                        >
+                                            <Bell size={18} color="var(--text-secondary)" />
+                                            <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Notifications</span>
+                                        </div>
+                                        <div 
+                                            onClick={() => { router.push('/settings?tab=support'); setIsProfileMenuOpen(false); }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
+                                            className="menu-item-hover"
+                                        >
+                                            <LifeBuoy size={18} color="var(--text-secondary)" />
+                                            <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Aide & Support</span>
+                                        </div>
+                                        
+                                        <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
+                                        
+                                        <div 
+                                            onClick={async () => {
+                                                await supabase.auth.signOut()
+                                                router.push('/login')
+                                            }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
+                                            className="menu-item-hover"
+                                        >
+                                            <LogOut size={18} color="#ef4444" />
+                                            <span style={{ fontSize: '14px', fontWeight: '500', color: '#ef4444' }}>Déconnexion</span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>
