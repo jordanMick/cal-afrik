@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 import { toast } from 'sonner'
-import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2, User, Bell, LifeBuoy, LogOut, ChevronDown } from 'lucide-react'
+import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2, User, Bell, LogOut, ChevronDown } from 'lucide-react'
 import NotificationCenter from '@/components/NotificationCenter'
 import PushNotificationManager from '@/components/PushNotificationManager'
 import SurpriseManager from '@/components/SurpriseManager'
@@ -678,15 +678,6 @@ export default function DashboardPage() {
                                             <Bell size={18} color="var(--text-secondary)" />
                                             <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Notifications</span>
                                         </div>
-                                        <div 
-                                            onClick={() => { router.push('/support'); setIsProfileMenuOpen(false); }}
-                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
-                                            className="menu-item-hover"
-                                        >
-                                            <LifeBuoy size={18} color="var(--text-secondary)" />
-                                            <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Aide & Support</span>
-                                        </div>
-                                        
                                         <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
                                         
                                         <div 
