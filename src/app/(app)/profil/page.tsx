@@ -139,8 +139,9 @@ export default function ProfilPage() {
         // Charger l'avatar
         const loadAvatar = async () => {
             const { data: { user } } = await supabase.auth.getUser()
-            if (user?.user_metadata?.avatar_url) {
-                setAvatarUrl(user.user_metadata.avatar_url)
+            const meta = user?.user_metadata
+            if (meta?.avatar_url || meta?.picture) {
+                setAvatarUrl(meta.avatar_url || meta.picture)
             }
         }
         loadAvatar()
