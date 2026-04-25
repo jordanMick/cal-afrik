@@ -85,9 +85,8 @@ export default function NotificationsPage() {
 
     if (pageLoading && !profile) {
         return (
-            <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '30px', height: '30px', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div className="loading-container">
+                <div className="spinner" />
             </div>
         )
     }

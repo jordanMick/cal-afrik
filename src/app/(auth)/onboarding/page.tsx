@@ -345,7 +345,7 @@ export default function OnboardingPage() {
 
     return (
         <div style={{
-            minHeight: '100vh', background: '#000', color: '#fff',
+            minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)',
             fontFamily: 'Inter, system-ui, sans-serif', padding: '40px 24px 100px',
             maxWidth: '500px', margin: '0 auto', display: 'flex', flexDirection: 'column'
         }}>
@@ -359,14 +359,14 @@ export default function OnboardingPage() {
             {step < 12 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
                     {step > 0 && step < 11 ? (
-                        <button onClick={back} style={{ background: '#111', border: '1.5px solid #222', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                            <ChevronLeft color="#fff" size={24} />
+                        <button onClick={back} style={{ background: 'var(--bg-secondary)', border: '1.5px solid var(--border-color)', borderRadius: '12px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                            <ChevronLeft color="var(--text-primary)" size={24} />
                         </button>
                     ) : (
                         // Placeholder to maintain layout when no back button
                         <div style={{ width: '40px', height: '40px', flexShrink: 0 }} />
                     )}
-                    <div style={{ flex: 1, height: '4px', background: '#111', borderRadius: '2px' }}>
+                    <div style={{ flex: 1, height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px' }}>
                         <div style={{
                             width: `${(step / 12) * 100}%`, height: '100%',
                             background: 'linear-gradient(90deg, #22c55e, #10b981)',
@@ -663,7 +663,7 @@ export default function OnboardingPage() {
             {/* 14. PAYWALL */}
             {!isEditMode && step === 14 && (
                 <StepWrapper key="stepPaywall" title="Libérez tout votre potentiel" icon="🚀">
-                    <div style={{ padding: '24px', background: '#111', borderRadius: '20px', border: '1px solid #222', marginBottom: '20px' }}>
+                    <div style={{ padding: '24px', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
                             <span style={{ fontWeight: '800', fontSize: '18px' }}>Premium Elite</span>
                             <span style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>Tout illimité</span>
@@ -704,8 +704,8 @@ function StepWrapper({ children, title, sub, icon }: { children: React.ReactNode
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1)', flex: 1 }}>
             <div style={{ textAlign: 'center' }}>
                 {icon && <div style={{ fontSize: '52px', marginBottom: '24px' }}>{icon}</div>}
-                <h2 style={{ color: '#fff', fontSize: '28px', fontWeight: '900', marginBottom: '12px', letterSpacing: '-0.5px' }}>{title}</h2>
-                {sub && <p style={{ color: '#555', fontSize: '16px', lineHeight: '1.6' }}>{sub}</p>}
+                <h2 style={{ color: 'var(--text-primary)', fontSize: '28px', fontWeight: '900', marginBottom: '12px', letterSpacing: '-0.5px' }}>{title}</h2>
+                {sub && <p style={{ color: 'var(--text-secondary)', fontSize: '16px', lineHeight: '1.6' }}>{sub}</p>}
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '30px' }}>{children}</div>
         </div>
@@ -718,8 +718,8 @@ function NextButton({ disabled = false, label = "Suivant", onClick }: { disabled
             disabled={disabled}
             onClick={onClick}
             style={{
-                width: '100%', height: '58px', background: disabled ? '#111' : '#fff',
-                color: disabled ? '#333' : '#000', borderRadius: '18px',
+                width: '100%', height: '58px', background: disabled ? 'var(--bg-tertiary)' : 'var(--text-primary)',
+                color: disabled ? 'var(--text-muted)' : 'var(--bg-primary)', borderRadius: '18px',
                 fontSize: '17px', fontWeight: '800', cursor: disabled ? 'default' : 'pointer',
                 border: 'none', transition: 'all 0.3s ease',
             }}

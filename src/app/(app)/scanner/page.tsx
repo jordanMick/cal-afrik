@@ -958,8 +958,8 @@ export default function ScannerPage() {
                             {/* Overlays d'étapes */}
                             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(3px)', zIndex: 5 }}>
                                 <div style={{ textAlign: 'center', padding: '20px' }}>
-                                    <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1.5px solid rgba(var(--success-rgb), 0.5)', boxShadow: '0 0 20px rgba(var(--success-rgb), 0.4)' }}>
-                                        <div style={{ width: '20px', height: '20px', border: '3px solid var(--success)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                                    <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1.5px solid var(--border-color)' }}>
+                                        <div className="spinner" style={{ width: '24px', height: '24px' }} />
                                     </div>
                                     <p style={{ color: '#fff', fontSize: '16px', fontWeight: '800', letterSpacing: '-0.2px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                                         {scanSteps[scanStep]}

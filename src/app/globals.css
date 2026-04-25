@@ -166,3 +166,25 @@ html:not(.light) .glass-panel {
 .menu-item-hover:hover {
   background: rgba(var(--text-primary-rgb), 0.05);
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(var(--success-rgb), 0.15);
+  border-top: 3px solid var(--success);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-container {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+

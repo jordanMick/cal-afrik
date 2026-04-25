@@ -67,9 +67,8 @@ export default function ResetPasswordPage() {
 
     if (!ready && !message) {
         return (
-            <div style={{ minHeight: '100vh', background: '#040404', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(16,185,129,0.1)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div className="loading-container">
+                <div className="spinner" />
             </div>
         )
     }

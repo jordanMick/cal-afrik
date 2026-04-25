@@ -300,7 +300,9 @@ export default function HistoriquePage() {
                         </div>
 
                         {isLoading ? (
-                            <div style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '20px' }}>Chargement...</div>
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                                <div className="spinner" />
+                            </div>
                         ) : (selectedDate && selectedDate < limitDate) ? (
                             <div style={{ background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.05), rgba(16,185,129,0.05))', borderRadius: '16px', padding: '40px 20px', textAlign: 'center', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
                                 <div style={{ fontSize: '32px' }}>🔒</div>
