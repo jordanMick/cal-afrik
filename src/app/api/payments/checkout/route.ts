@@ -6,8 +6,10 @@ const PRODUCT_IDS: Record<string, string | undefined> = {
     premium: process.env.MAKETOU_PRODUCT_ID_PREMIUM,
     scan: process.env.MAKETOU_PRODUCT_ID_SCAN,
     suggestion: process.env.MAKETOU_PRODUCT_ID_SUGGESTION,
-    pro_reduit: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT,
-    premium_reduit: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT
+    pro_reduit: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT, // 10%
+    premium_reduit: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT, // 10%
+    pro_reduit5: process.env.MAKETOU_PRODUCT_ID_PRO_REDUIT5, // 5%
+    premium_reduit5: process.env.MAKETOU_PRODUCT_ID_PREMIUM_REDUIT5 // 5%
 };
 
 // Prix attendus par tier (en FCFA) — validation côté serveur
@@ -44,10 +46,11 @@ export async function POST(req: Request) {
         // 2. Validation stricte du produit
         let tierKey = (tier || '').toLowerCase();
         
-        // Si réduction, on utilise les IDs produits "réduits" si disponibles
+        // Si réduction, on utilise les IDs produits "réduits" correspondants
         if (discount > 0) {
-            if (tierKey === 'pro') tierKey = 'pro_reduit';
-            if (tierKey === 'premium') tierKey = 'premium_reduit';
+            const suffix = discount === 5 ? '_reduit5' : '_reduit';
+            if (tierKey === 'pro') tierKey = `pro${suffix}`;
+            if (tierKey === 'premium') tierKey = `premium${suffix}`;
         }
 
         const productDocumentId = PRODUCT_IDS[tierKey];
