@@ -51,35 +51,30 @@ export async function POST(req: Request) {
         let tierUpper = (tier || '').toUpperCase(); // ex: PRO, PREMIUM
         let envKey = '';
 
-        // Cas particulier : Faute de frappe dans le .env pour PREMIUM 12 mois 5%
-        if (tierUpper === 'PREMIUM' && duration === 12 && discount === 5) {
-            envKey = 'MAKETOU_PRODUCT_ID_PREIUM_12_REDUIT5';
-        } else {
-            // Logique standard
-            let base = `MAKETOU_PRODUCT_ID_${tierUpper}`;
-            
-            if (duration === 1) {
-                // 1 mois
-                if (discount === 0) {
-                    envKey = base;
-                } else {
-                    // legacy: _REDUIT (10%) ou _REDUIT5 (5%)
-                    const suffix = discount === 10 ? '_REDUIT' : `_REDUIT${discount}`;
-                    envKey = `${base}${suffix}`;
-                }
+        // Logique standard
+        let base = `MAKETOU_PRODUCT_ID_${tierUpper}`;
+        
+        if (duration === 1) {
+            // 1 mois
+            if (discount === 0) {
+                envKey = base;
             } else {
-                // 3 ou 12 mois
-                let withDuration = `${base}_${duration}`;
-                if (discount === 0) {
-                    envKey = withDuration;
+                // legacy: _REDUIT (10%) ou _REDUIT5 (5%)
+                const suffix = discount === 10 ? '_REDUIT' : `_REDUIT${discount}`;
+                envKey = `${base}${suffix}`;
+            }
+        } else {
+            // 3 ou 12 mois
+            let withDuration = `${base}_${duration}`;
+            if (discount === 0) {
+                envKey = withDuration;
+            } else {
+                const discountSuffix = `REDUIT${discount}`;
+                // On teste les deux variantes (avec ou sans underscore avant REDUIT)
+                if (process.env[`${withDuration}_${discountSuffix}`]) {
+                    envKey = `${withDuration}_${discountSuffix}`;
                 } else {
-                    const discountSuffix = `REDUIT${discount}`;
-                    // On teste les deux variantes (avec ou sans underscore avant REDUIT)
-                    if (process.env[`${withDuration}_${discountSuffix}`]) {
-                        envKey = `${withDuration}_${discountSuffix}`;
-                    } else {
-                        envKey = `${withDuration}${discountSuffix}`;
-                    }
+                    envKey = `${withDuration}${discountSuffix}`;
                 }
             }
         }
