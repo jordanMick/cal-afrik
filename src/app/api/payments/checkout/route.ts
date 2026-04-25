@@ -48,29 +48,38 @@ export async function POST(req: Request) {
         }
 
         // 2. Validation stricte du produit
-        let tierKey = (tier || '').toUpperCase(); // ex: PRO, PREMIUM
-        let envKey = `MAKETOU_PRODUCT_ID_${tierKey}`;
+        let tierUpper = (tier || '').toUpperCase(); // ex: PRO, PREMIUM
+        let envKey = '';
 
-        if (duration > 1) {
-            envKey += `_${duration}`;
-        }
-
-        if (discount > 0) {
-            // Gestion des variantes avec réduction (ex: _REDUIT10, _REDUIT5)
-            // Note: certaines clés n'ont pas d'underscore avant REDUIT selon le .env
-            const discountSuffix = `REDUIT${discount}`;
+        // Cas particulier : Faute de frappe dans le .env pour PREMIUM 12 mois 5%
+        if (tierUpper === 'PREMIUM' && duration === 12 && discount === 5) {
+            envKey = 'MAKETOU_PRODUCT_ID_PREIUM_12_REDUIT5';
+        } else {
+            // Logique standard
+            let base = `MAKETOU_PRODUCT_ID_${tierUpper}`;
             
-            // On teste d'abord avec underscore
-            if (process.env[`${envKey}_${discountSuffix}`]) {
-                envKey = `${envKey}_${discountSuffix}`;
-            } else if (process.env[`${envKey}${discountSuffix}`]) {
-                // Fallback sans underscore (vu dans .env pour le 12 mois)
-                envKey = `${envKey}${discountSuffix}`;
+            if (duration === 1) {
+                // 1 mois
+                if (discount === 0) {
+                    envKey = base;
+                } else {
+                    // legacy: _REDUIT (10%) ou _REDUIT5 (5%)
+                    const suffix = discount === 10 ? '_REDUIT' : `_REDUIT${discount}`;
+                    envKey = `${base}${suffix}`;
+                }
             } else {
-                // Fallback legacy (_REDUIT ou _REDUIT5 pour le 1 mois)
-                const legacySuffix = discount === 10 ? '_REDUIT' : '_REDUIT5';
-                if (process.env[`MAKETOU_PRODUCT_ID_${tierKey}${legacySuffix}`]) {
-                    envKey = `MAKETOU_PRODUCT_ID_${tierKey}${legacySuffix}`;
+                // 3 ou 12 mois
+                let withDuration = `${base}_${duration}`;
+                if (discount === 0) {
+                    envKey = withDuration;
+                } else {
+                    const discountSuffix = `REDUIT${discount}`;
+                    // On teste les deux variantes (avec ou sans underscore avant REDUIT)
+                    if (process.env[`${withDuration}_${discountSuffix}`]) {
+                        envKey = `${withDuration}_${discountSuffix}`;
+                    } else {
+                        envKey = `${withDuration}${discountSuffix}`;
+                    }
                 }
             }
         }
@@ -80,7 +89,7 @@ export async function POST(req: Request) {
         const baseAmount = typeof tierBase === 'object' ? tierBase[String(duration)] : tierBase;
 
         if (!productDocumentId || !baseAmount) {
-            console.error(`${tag} Produit introuvable pour la clé: '${envKey}' (tier=${tier}, dur=${duration}, disc=${discount})`);
+            console.error(`${tag} Produit introuvable. Clé tentée: '${envKey}' (tier=${tierUpper}, dur=${duration}, disc=${discount})`);
             return NextResponse.json({ error: 'Plan ou durée invalide' }, { status: 400 });
         }
 
