@@ -604,7 +604,7 @@ export default function RapportPage() {
 
                 {/* POIDS */}
                 <div style={card}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #6366f1, #ec4899)' }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #2563eb, #ec4899)' }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                         <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600' }}>Poids</p>
                         <button onClick={() => setShowWeightModal(true)} style={{ padding: '7px 16px', borderRadius: '20px', background: 'var(--accent)', border: 'none', color: '#fff', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>+ Ajouter</button>

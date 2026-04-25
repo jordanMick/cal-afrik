@@ -92,14 +92,14 @@ function PricingContent() {
             position: 'relative',
             overflow: 'hidden',
         }}>
-            <div style={{ position: 'fixed', top: '-100px', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-100px', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '0', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div style={{ maxWidth: visibleCards === 1 ? '400px' : '960px', margin: '0 auto', padding: '60px 24px 80px' }}>
 
                 {/* LOGO */}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '36px' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #6366f1, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🌍</div>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #2563eb, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🌍</div>
                     <span style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>Cal Afrik</span>
                 </div>
 
@@ -190,16 +190,16 @@ function PricingContent() {
                     {showPro && (
                         <div style={{
                             background: '#0d0d1a',
-                            border: currentTier === 'pro' ? '1.5px solid #333' : '1.5px solid #6366f1',
+                            border: currentTier === 'pro' ? '1.5px solid #333' : '1.5px solid #2563eb',
                             borderRadius: '20px',
                             padding: '28px 24px',
                             display: 'flex', flexDirection: 'column',
                             position: 'relative',
-                            boxShadow: currentTier === 'pro' ? 'none' : '0 0 40px rgba(99,102,241,0.15)',
+                            boxShadow: currentTier === 'pro' ? 'none' : '0 0 40px rgba(37,99,235,0.15)',
                             opacity: currentTier === 'pro' ? 0.9 : 1
                         }}>
                             {currentTier !== 'pro' && (
-                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Recommandé</div>
+                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, #2563eb, #60a5fa)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Recommandé</div>
                             )}
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
@@ -222,7 +222,7 @@ function PricingContent() {
                                     'Notifications push dynamiques'
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'pro' ? '#444' : '#6366f1', flexShrink: 0 }} />
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'pro' ? '#444' : '#2563eb', flexShrink: 0 }} />
                                         <span style={{ color: currentTier === 'pro' ? '#888' : '#ccc', fontSize: '13px' }}>{f}</span>
                                     </div>
                                 ))}
@@ -230,7 +230,7 @@ function PricingContent() {
                             <button
                                 disabled={loading !== null || currentTier === 'pro'}
                                 onClick={() => handleSubscribe('pro')}
-                                style={{ width: '100%', height: '48px', background: currentTier === 'pro' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #6366f1, #818cf8)', border: currentTier === 'pro' ? '0.5px solid #333' : 'none', borderRadius: '12px', color: currentTier === 'pro' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer', boxShadow: currentTier === 'pro' ? 'none' : '0 4px 20px rgba(99,102,241,0.35)' }}>
+                                style={{ width: '100%', height: '48px', background: currentTier === 'pro' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #2563eb, #60a5fa)', border: currentTier === 'pro' ? '0.5px solid #333' : 'none', borderRadius: '12px', color: currentTier === 'pro' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer', boxShadow: currentTier === 'pro' ? 'none' : '0 4px 20px rgba(37,99,235,0.35)' }}>
                                 {loading === 'pro' ? 'Initialisation...' : currentTier === 'pro' ? 'Plan actuel' : 'Passer au Pro →'}
                             </button>
                         </div>
@@ -352,7 +352,7 @@ function PricingContent() {
                                     style={{
                                         width: '100%',
                                         padding: '14px',
-                                        background: promoInput ? 'linear-gradient(135deg, #6366f1, #10b981)' : 'rgba(255,255,255,0.05)',
+                                        background: promoInput ? 'linear-gradient(135deg, #2563eb, #10b981)' : 'rgba(255,255,255,0.05)',
                                         border: 'none',
                                         borderRadius: '12px',
                                         color: promoInput ? '#fff' : '#555',

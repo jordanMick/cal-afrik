@@ -72,7 +72,7 @@ function PromoCodeCard({ code }: { code: string }) {
             </div>
             <button
                 onClick={handleCopy}
-                style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '14px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#818cf8', fontWeight: '700', fontSize: '13px' }}
+                style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '14px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#60a5fa', fontWeight: '700', fontSize: '13px' }}
             >
                 {copied ? <Check size={16} /> : <Copy size={16} />}
                 {copied ? 'Copié !' : 'Copier'}

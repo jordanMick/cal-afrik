@@ -103,7 +103,7 @@ export const MealRecap = ({
                   {[
                     { label: 'Protéines', value: totals.protein_g, color: '#f59e0b', sub: 'g' },
                     { label: 'Glucides', value: totals.carbs_g, color: '#10b981', sub: 'g' },
-                    { label: 'Lipides', value: totals.fat_g, color: '#6366f1', sub: 'g' },
+                    { label: 'Lipides', value: totals.fat_g, color: '#2563eb', sub: 'g' },
                   ].map(m => (
                     <Card key={m.label} className="bg-zinc-900/40 border-white/5 py-4 text-center">
                       <p className="text-lg font-bold text-white" style={{ color: m.color }}>

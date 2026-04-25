@@ -11,7 +11,7 @@ export default function BottomNav() {
             id: 'accueil',
             label: 'Accueil',
             path: '/dashboard',
-            color: '#6366f1',
+            color: '#2563eb',
             icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M3 9L12 2L21 9V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V9Z"
@@ -135,12 +135,12 @@ export default function BottomNav() {
                             width: '52px',
                             height: '52px',
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                            background: 'linear-gradient(135deg, #2563eb, #10b981)',
                             border: '3px solid #0d0d0d',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 6px 20px rgba(99,102,241,0.4)',
+                            boxShadow: '0 6px 20px rgba(37,99,235,0.4)',
                             cursor: 'pointer',
                         }}
                     >

@@ -23,7 +23,7 @@ const TIER_CONFIG = {
         color: 'var(--accent)',
         bg: 'rgba(var(--accent-rgb), 0.1)',
         border: 'rgba(var(--accent-rgb), 0.25)',
-        gradient: 'linear-gradient(135deg, var(--accent), #4f46e5)',
+        gradient: 'linear-gradient(135deg, var(--accent), #1d4ed8)',
         textColor: '#fff',
     },
     premium: {

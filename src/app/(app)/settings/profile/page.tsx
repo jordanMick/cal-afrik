@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
-const STAT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899']
+const STAT_COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ec4899']
 
 export default function PersonalInfoPage() {
     const router = useRouter()
@@ -157,7 +157,7 @@ export default function PersonalInfoPage() {
                         {!isEditingEmail ? (
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="#6366f1" /></div>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="#2563eb" /></div>
                                     <div>
                                         <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Adresse email</p>
                                         <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>{maskEmail(userEmail)}</p>

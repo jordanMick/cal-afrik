@@ -118,7 +118,7 @@ export default function SurpriseManager() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     onClick={handleOpen}
                     style={{
-                        background: 'linear-gradient(135deg, #6366f1, #10b981)',
+                        background: 'linear-gradient(135deg, #2563eb, #10b981)',
                         padding: '16px 20px',
                         borderRadius: '24px',
                         marginBottom: '24px',
@@ -278,12 +278,12 @@ export default function SurpriseManager() {
 
                                     {/* Code promo affiché */}
                                     {profile?.promo_code && (
-                                        <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '16px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '16px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             <div style={{ textAlign: 'left' }}>
                                                 <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', marginBottom: '4px' }}>Ton code promo</p>
                                                 <p style={{ color: 'var(--text-primary)', fontSize: '24px', fontWeight: '900', letterSpacing: '3px' }}>{profile.promo_code}</p>
                                             </div>
-                                            <button onClick={handleCopy} style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#818cf8', fontWeight: '700', fontSize: '12px' }}>
+                                            <button onClick={handleCopy} style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '12px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#60a5fa', fontWeight: '700', fontSize: '12px' }}>
                                                 {copied ? <Check size={14} /> : <Copy size={14} />}
                                                 {copied ? 'Copié !' : 'Copier'}
                                             </button>

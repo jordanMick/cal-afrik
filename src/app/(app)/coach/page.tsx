@@ -796,14 +796,14 @@ export default function CoachChatPage() {
                             width: '40px',
                             height: '40px',
                             borderRadius: '50%',
-                            background: '#6366f1',
+                            background: '#2563eb',
                             border: '2px solid #fff',
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            boxShadow: '0 8px 24px rgba(99,102,241,0.5)',
+                            boxShadow: '0 8px 24px rgba(37,99,235,0.5)',
                             zIndex: 1000, // Toujours au-dessus
                             animation: 'fadeInUp 0.3s ease-out'
                         }}
@@ -832,7 +832,7 @@ export default function CoachChatPage() {
                                 maxWidth: '85%',
                                 padding: '16px 20px',
                                 borderRadius: isCoach ? '6px 24px 24px 24px' : '24px 24px 6px 24px',
-                                background: isCoach ? 'var(--bg-secondary)' : 'linear-gradient(135deg, var(--accent), #818cf8)',
+                                background: isCoach ? 'var(--bg-secondary)' : 'linear-gradient(135deg, var(--accent), #60a5fa)',
                                 color: isCoach ? 'var(--text-primary)' : '#fff',
                                 fontSize: '15px',
                                 lineHeight: '1.6',
@@ -900,7 +900,7 @@ export default function CoachChatPage() {
                                         borderRadius: '14px',
                                         background: activeThreadLimitReached 
                                             ? 'var(--bg-tertiary)'
-                                            : (menuKind.kind === 'tomorrow' ? 'linear-gradient(135deg, #6366f1, #818cf8)' : 'linear-gradient(135deg, #f59e0b, #d97706)'),
+                                            : (menuKind.kind === 'tomorrow' ? 'linear-gradient(135deg, #2563eb, #60a5fa)' : 'linear-gradient(135deg, #f59e0b, #d97706)'),
                                         color: activeThreadLimitReached ? 'var(--text-muted)' : '#fff',
                                         border: 'none',
                                         fontSize: '13px',
@@ -911,7 +911,7 @@ export default function CoachChatPage() {
                                         gap: '8px',
                                         boxShadow: activeThreadLimitReached 
                                             ? 'none'
-                                            : (menuKind.kind === 'tomorrow' ? '0 6px 16px rgba(99,102,241,0.3)' : '0 6px 16px rgba(245,158,11,0.3)'),
+                                            : (menuKind.kind === 'tomorrow' ? '0 6px 16px rgba(37,99,235,0.3)' : '0 6px 16px rgba(245,158,11,0.3)'),
                                         transition: 'all 0.2s',
                                         opacity: activeThreadLimitReached ? 0.6 : 1
                                     }}
@@ -1063,7 +1063,7 @@ export default function CoachChatPage() {
                             disabled={!input.trim() || isTyping}
                             style={{
                                 width: '58px', height: '58px', borderRadius: '24px',
-                                background: (input.trim() && !isTyping) ? 'linear-gradient(135deg, var(--accent), #818cf8)' : 'var(--bg-tertiary)',
+                                background: (input.trim() && !isTyping) ? 'linear-gradient(135deg, var(--accent), #60a5fa)' : 'var(--bg-tertiary)',
                                 color: (input.trim() && !isTyping) ? '#fff' : 'var(--text-muted)', border: 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: (input.trim() && !isTyping) ? 'pointer' : 'default',
                                 transition: 'all 0.3s ease',
