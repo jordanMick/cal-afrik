@@ -135,12 +135,12 @@ export default function BottomNav() {
                             width: '52px',
                             height: '52px',
                             borderRadius: '50%',
-                            background: '#040404',
-                            border: '1px solid rgba(var(--success-rgb), 0.3)',
+                            background: 'linear-gradient(135deg, var(--branding), var(--success))',
+                            border: '3px solid #040404',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 0 20px rgba(var(--success-rgb), 0.4)',
+                            boxShadow: '0 8px 24px rgba(var(--success-rgb), 0.4)',
                             cursor: 'pointer',
                         }}
                     >

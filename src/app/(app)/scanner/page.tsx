@@ -1144,27 +1144,31 @@ export default function ScannerPage() {
                 if (globalIsBlocked) {
                     return (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
                             style={{
-                                background: 'linear-gradient(135deg, rgba(20,20,20,0.8), rgba(40,40,40,0.8))',
-                                backdropFilter: 'blur(10px)',
-                                border: '1px solid rgba(var(--accent-rgb), 0.3)',
-                                borderRadius: '24px',
-                                padding: '24px',
+                                background: 'rgba(var(--bg-secondary-rgb), 0.8)',
+                                backdropFilter: 'blur(25px)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '32px',
+                                padding: '32px 24px',
                                 textAlign: 'center',
                                 marginTop: '20px',
                                 marginBottom: '20px',
-                                boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+                                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                                position: 'relative',
+                                overflow: 'hidden'
                             }}
                         >
-                            <div style={{ width: '60px', height: '60px', borderRadius: '20px', background: 'rgba(var(--accent-rgb), 0.1)', border: '1px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '28px' }}>
+                            {/* Glow effect */}
+                            <div style={{ position: 'absolute', top: '-20%', left: '50%', transform: 'translateX(-50%)', width: '200px', height: '100px', background: 'radial-gradient(circle, rgba(var(--success-rgb), 0.15) 0%, transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+                            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: '#0a0a0a', border: '1.5px solid rgba(var(--success-rgb), 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px', boxShadow: '0 0 20px rgba(var(--success-rgb), 0.3)' }}>
                                 🔒
                             </div>
-                            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>
+                            <h3 style={{ color: '#fff', fontSize: '22px', fontWeight: '900', marginBottom: '10px', letterSpacing: '-0.5px' }}>
                                 Limite atteinte
                             </h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6', marginBottom: '24px' }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '28px', fontWeight: '500' }}>
                                 {isProLimit
                                     ? "Vous avez utilisé vos 4 scans quotidiens. Continuez votre suivi pour seulement 100 FCFA."
                                     : "Vous avez atteint vos 5 scans gratuits à vie. Débloquez la puissance de Yao pour continuer."}
@@ -1174,10 +1178,10 @@ export default function ScannerPage() {
                                 <button
                                     onClick={handlePayForScan}
                                     style={{
-                                        background: 'linear-gradient(135deg, var(--accent), #10b981)',
-                                        color: '#fff', border: 'none', padding: '14px',
-                                        borderRadius: '16px', fontSize: '14px', fontWeight: '800', cursor: 'pointer',
-                                        boxShadow: '0 8px 16px rgba(var(--accent-rgb), 0.3)'
+                                        background: 'linear-gradient(135deg, var(--branding), var(--success))',
+                                        color: '#fff', border: 'none', padding: '16px',
+                                        borderRadius: '18px', fontSize: '15px', fontWeight: '800', cursor: 'pointer',
+                                        boxShadow: '0 10px 25px rgba(var(--success-rgb), 0.3)'
                                     }}
                                 >
                                     ⚡️ Débloquer 1 scan + avis Coach (100F)
@@ -1185,9 +1189,9 @@ export default function ScannerPage() {
                                 <button
                                     onClick={() => setShowManualForm(true)}
                                     style={{
-                                        background: 'rgba(255,255,255,0.05)',
-                                        color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px',
-                                        borderRadius: '16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+                                        background: 'rgba(255,255,255,0.03)',
+                                        color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '14px',
+                                        borderRadius: '18px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s'
                                     }}
                                 >
                                     ✏️ Ajouter manuellement
@@ -1195,9 +1199,9 @@ export default function ScannerPage() {
                                 <button
                                     onClick={() => router.push('/settings/subscription')}
                                     style={{
-                                        background: 'rgba(255,255,255,0.05)',
-                                        color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '12px',
-                                        borderRadius: '16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+                                        background: 'transparent',
+                                        color: 'var(--text-secondary)', border: 'none', padding: '10px',
+                                        borderRadius: '18px', fontSize: '14px', fontWeight: '600', cursor: 'pointer'
                                     }}
                                 >
                                     💎 Voir les abonnements
