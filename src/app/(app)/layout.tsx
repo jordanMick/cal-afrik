@@ -43,8 +43,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
                 <defs>
                     <linearGradient id="globalDashboardArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#f59e0b" />
-                        <stop offset="100%" stopColor="#10b981" />
+                        <stop offset="0%" stopColor="#0ea5e9" />
+                        <stop offset="100%" stopColor="#34d399" />
                     </linearGradient>
                 </defs>
             </svg>
