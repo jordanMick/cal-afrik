@@ -101,29 +101,29 @@ function PricingContent() {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#080808',
-            fontFamily: 'system-ui, sans-serif',
-            color: '#fff',
+            background: 'var(--bg-primary)',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            color: 'var(--text-primary)',
             position: 'relative',
             overflow: 'hidden',
         }}>
-            <div style={{ position: 'fixed', top: '-100px', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-            <div style={{ position: 'fixed', bottom: '0', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-100px', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--accent-rgb),0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '0', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(var(--success-rgb),0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div style={{ maxWidth: visibleCards === 1 ? '400px' : '960px', margin: '0 auto', padding: '60px 24px 80px' }}>
 
                 {/* LOGO */}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '36px' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #2563eb, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🌍</div>
-                    <span style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>Cal Afrik</span>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, var(--accent), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 8px 24px rgba(var(--success-rgb), 0.2)' }}>🌍</div>
+                    <span style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>Cal Afrik</span>
                 </div>
 
                 {/* TITRE */}
                 <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-                    <h1 style={{ fontSize: '36px', fontWeight: '800', color: '#fff', marginBottom: '10px', letterSpacing: '-0.5px' }}>
+                    <h1 style={{ fontSize: '36px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '10px', letterSpacing: '-0.5px' }}>
                         {currentTier === 'premium' ? 'Votre abonnement' : 'Améliorez votre expérience'}
                     </h1>
-                    <p style={{ color: '#555', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
                 </div>
 
                 {discount > 0 && (
@@ -167,8 +167,8 @@ function PricingContent() {
                                 padding: '12px 0',
                                 borderRadius: '12px',
                                 border: 'none',
-                                background: duration === d.value ? 'rgba(255,255,255,0.08)' : 'transparent',
-                                color: duration === d.value ? '#fff' : '#555',
+                                background: duration === d.value ? 'var(--bg-tertiary)' : 'transparent',
+                                color: duration === d.value ? 'var(--text-primary)' : 'var(--text-muted)',
                                 fontSize: '13px',
                                 fontWeight: '700',
                                 cursor: 'pointer',
@@ -218,19 +218,19 @@ function PricingContent() {
                     {/* ── GRATUIT ── */}
                     {showFree && (
                         <div style={{
-                            background: '#111',
-                            border: '0.5px solid #2a2a2a',
+                            background: 'var(--bg-secondary)',
+                            border: '0.5px solid var(--border-color)',
                             borderRadius: '20px',
                             padding: '28px 24px',
                             display: 'flex', flexDirection: 'column', gap: '0', opacity: 0.8
                         }}>
-                            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Gratuit</h2>
+                            <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Gratuit</h2>
                             <div style={{ marginBottom: '6px' }}>
-                                <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>0</span>
-                                <span style={{ color: '#555', fontSize: '13px', marginLeft: '6px' }}>FCFA</span>
+                                <span style={{ fontSize: '36px', fontWeight: '800', color: 'var(--text-primary)' }}>0</span>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '13px', marginLeft: '6px' }}>FCFA</span>
                             </div>
-                            <p style={{ color: '#444', fontSize: '12px', marginBottom: '24px' }}>Pour toujours</p>
-                            <div style={{ height: '0.5px', background: '#222', marginBottom: '20px' }} />
+                            <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '24px' }}>Pour toujours</p>
+                            <div style={{ height: '0.5px', background: 'var(--border-color)', marginBottom: '20px' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     { text: 'Journal alimentaire de base', active: true },
@@ -240,12 +240,12 @@ function PricingContent() {
                                     { text: 'Support technique WhatsApp', active: true },
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#555', flexShrink: 0 }} />
-                                        <span style={{ color: '#888', fontSize: '13px' }}>{f.text}</span>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
+                                        <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{f.text}</span>
                                     </div>
                                 ))}
                             </div>
-                            <button style={{ width: '100%', height: '48px', background: 'rgba(255,255,255,0.05)', border: '0.5px solid #333', borderRadius: '12px', color: '#666', fontSize: '14px', fontWeight: '600', cursor: 'default' }}>
+                            <button style={{ width: '100%', height: '48px', background: 'var(--bg-tertiary)', border: '0.5px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '14px', fontWeight: '600', cursor: 'default' }}>
                                 Plan actuel
                             </button>
                         </div>
@@ -254,28 +254,28 @@ function PricingContent() {
                     {/* ── PRO ── */}
                     {showPro && (
                         <div style={{
-                            background: '#0d0d1a',
-                            border: currentTier === 'pro' ? '1.5px solid #333' : '1.5px solid #2563eb',
+                            background: 'var(--bg-secondary)',
+                            border: currentTier === 'pro' ? '1.5px solid var(--border-color)' : '1.5px solid var(--accent)',
                             borderRadius: '20px',
                             padding: '28px 24px',
                             display: 'flex', flexDirection: 'column',
                             position: 'relative',
-                            boxShadow: currentTier === 'pro' ? 'none' : '0 0 40px rgba(37,99,235,0.15)',
+                            boxShadow: currentTier === 'pro' ? 'none' : '0 15px 40px rgba(var(--accent-rgb),0.1)',
                             opacity: currentTier === 'pro' ? 0.9 : 1
                         }}>
                             {currentTier !== 'pro' && (
-                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, #2563eb, #60a5fa)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Recommandé</div>
+                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--accent), #60a5fa)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Recommandé</div>
                             )}
 
-                            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
+                            <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.pro[duration]}</span>
+                                <span style={{ fontWeight: '800', color: 'var(--text-primary)', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.pro[duration]}</span>
                                 {discount > 0 && (
-                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(plans.pro[duration] * (1 - discount / 100))}</span>
+                                    <span style={{ fontSize: '36px', fontWeight: '800', color: 'var(--text-primary)' }}>{Math.round(plans.pro[duration] * (1 - discount / 100))}</span>
                                 )}
-                                <span style={{ color: '#555', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
-                            <div style={{ height: '0.5px', background: '#2a2a2a', margin: '20px 0' }} />
+                            <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '20px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     'Scans Photo ILLIMITÉS',
@@ -287,15 +287,15 @@ function PricingContent() {
                                     'Notifications push dynamiques'
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'pro' ? '#444' : '#2563eb', flexShrink: 0 }} />
-                                        <span style={{ color: currentTier === 'pro' ? '#888' : '#ccc', fontSize: '13px' }}>{f}</span>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'pro' ? 'var(--text-muted)' : 'var(--accent)', flexShrink: 0 }} />
+                                        <span style={{ color: currentTier === 'pro' ? 'var(--text-muted)' : 'var(--text-secondary)', fontSize: '13px' }}>{f}</span>
                                     </div>
                                 ))}
                             </div>
                             <button
                                 disabled={loading !== null || currentTier === 'pro'}
                                 onClick={() => handleSubscribe('pro')}
-                                style={{ width: '100%', height: '48px', background: currentTier === 'pro' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #2563eb, #60a5fa)', border: currentTier === 'pro' ? '0.5px solid #333' : 'none', borderRadius: '12px', color: currentTier === 'pro' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer', boxShadow: currentTier === 'pro' ? 'none' : '0 4px 20px rgba(37,99,235,0.35)' }}>
+                                style={{ width: '100%', height: '48px', background: currentTier === 'pro' ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--accent), #60a5fa)', border: currentTier === 'pro' ? '0.5px solid var(--border-color)' : 'none', borderRadius: '12px', color: currentTier === 'pro' ? 'var(--text-muted)' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer', boxShadow: currentTier === 'pro' ? 'none' : '0 4px 20px rgba(var(--accent-rgb),0.3)' }}>
                                 {loading === 'pro' ? 'Initialisation...' : currentTier === 'pro' ? 'Plan actuel' : 'Passer au Pro →'}
                             </button>
                         </div>
@@ -304,27 +304,27 @@ function PricingContent() {
                     {/* ── PREMIUM ── */}
                     {showPremium && (
                         <div style={{
-                            background: '#0a1a14',
-                            border: currentTier === 'premium' ? '1.5px solid #333' : '1.5px solid #10b981',
+                            background: 'var(--bg-secondary)',
+                            border: currentTier === 'premium' ? '1.5px solid var(--border-color)' : '1.5px solid var(--success)',
                             borderRadius: '20px',
                             padding: '28px 24px',
                             display: 'flex', flexDirection: 'column',
                             position: 'relative',
-                            boxShadow: currentTier === 'premium' ? 'none' : '0 0 40px rgba(16,185,129,0.12)',
+                            boxShadow: currentTier === 'premium' ? 'none' : '0 15px 40px rgba(var(--success-rgb),0.12)',
                         }}>
                             {currentTier !== 'premium' && (
-                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, #10b981, #34d399)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Elite</div>
+                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--success), #34d399)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Elite</div>
                             )}
 
-                            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
+                            <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.premium[duration]}</span>
+                                <span style={{ fontWeight: '800', color: 'var(--text-primary)', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.premium[duration]}</span>
                                 {discount > 0 && (
-                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(plans.premium[duration] * (1 - discount / 100))}</span>
+                                    <span style={{ fontSize: '36px', fontWeight: '800', color: 'var(--text-primary)' }}>{Math.round(plans.premium[duration] * (1 - discount / 100))}</span>
                                 )}
-                                <span style={{ color: '#555', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
-                            <div style={{ height: '0.5px', background: '#1a2e24', margin: '20px 0' }} />
+                            <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '20px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     'Tout le contenu du Plan PRO',
@@ -337,15 +337,15 @@ function PricingContent() {
                                     'Alertes contextuelles avancées'
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'premium' ? '#444' : '#10b981', flexShrink: 0 }} />
-                                        <span style={{ color: currentTier === 'premium' ? '#888' : '#ccc', fontSize: '13px' }}>{f}</span>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: currentTier === 'premium' ? 'var(--text-muted)' : 'var(--success)', flexShrink: 0 }} />
+                                        <span style={{ color: currentTier === 'premium' ? 'var(--text-muted)' : 'var(--text-secondary)', fontSize: '13px' }}>{f}</span>
                                     </div>
                                 ))}
                             </div>
                             <button
                                 disabled={loading !== null || currentTier === 'premium'}
                                 onClick={() => handleSubscribe('premium')}
-                                style={{ width: '100%', height: '48px', background: currentTier === 'premium' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #10b981, #34d399)', border: currentTier === 'premium' ? '0.5px solid #333' : 'none', borderRadius: '12px', color: currentTier === 'premium' ? '#666' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'premium') ? 'default' : 'pointer', boxShadow: currentTier === 'premium' ? 'none' : '0 4px 20px rgba(16,185,129,0.3)' }}>
+                                style={{ width: '100%', height: '48px', background: currentTier === 'premium' ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--success), #34d399)', border: currentTier === 'premium' ? '0.5px solid var(--border-color)' : 'none', borderRadius: '12px', color: currentTier === 'premium' ? 'var(--text-muted)' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'premium') ? 'default' : 'pointer', boxShadow: currentTier === 'premium' ? 'none' : '0 4px 20px rgba(var(--success-rgb),0.3)' }}>
                                 {loading === 'premium' ? 'Initialisation...' : currentTier === 'premium' ? 'Plan actuel' : 'Accéder au Premium →'}
                             </button>
                         </div>
@@ -387,11 +387,11 @@ function PricingContent() {
                                     placeholder="ENTREZ VOTRE CODE"
                                     style={{
                                         width: '100%',
-                                        background: 'rgba(0,0,0,0.2)',
-                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        background: 'var(--bg-primary)',
+                                        border: '1px solid var(--border-color)',
                                         borderRadius: '12px',
                                         padding: '14px 16px',
-                                        color: '#fff',
+                                        color: 'var(--text-primary)',
                                         fontSize: '16px',
                                         fontWeight: '700',
                                         letterSpacing: '3px',
@@ -417,10 +417,10 @@ function PricingContent() {
                                     style={{
                                         width: '100%',
                                         padding: '14px',
-                                        background: promoInput ? 'linear-gradient(135deg, #2563eb, #10b981)' : 'rgba(255,255,255,0.05)',
+                                        background: promoInput ? 'linear-gradient(135deg, var(--accent), var(--success))' : 'var(--bg-tertiary)',
                                         border: 'none',
                                         borderRadius: '12px',
-                                        color: promoInput ? '#fff' : '#555',
+                                        color: promoInput ? '#fff' : 'var(--text-muted)',
                                         fontSize: '14px',
                                         fontWeight: '700',
                                         cursor: promoInput ? 'pointer' : 'default',
@@ -437,17 +437,17 @@ function PricingContent() {
                 {/* MOYENS DE PAIEMENT */}
                 {currentTier !== 'premium' && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', marginTop: '40px' }}>
-                        <p style={{ color: '#444', fontSize: '13px', fontWeight: '500' }}>Paiement sécurisé via Maketou</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>Paiement sécurisé via Maketou</p>
                         <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px' }}>
                             {['MTN', 'Orange', 'Moov', 'Wave', 'Visa', 'Mastercard'].map((p) => (
-                                <div key={p} style={{ padding: '8px 20px', background: '#111', border: '0.5px solid #222', borderRadius: '14px', color: '#666', fontSize: '12px', fontWeight: '600' }}>{p}</div>
+                                <div key={p} style={{ padding: '8px 20px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '14px', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>{p}</div>
                             ))}
                         </div>
                     </div>
                 )}
 
                 {/* FOOTER */}
-                <p style={{ textAlign: 'center', color: '#333', fontSize: '12px', marginTop: '32px' }}>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px', marginTop: '32px' }}>
                     Cal Afrik · Fait avec ❤️ pour l'Afrique
                 </p>
             </div>
