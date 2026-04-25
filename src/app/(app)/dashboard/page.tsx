@@ -227,6 +227,10 @@ export default function DashboardPage() {
             }
         }
         loadAvatar()
+
+        // Charger le message Coach Yao déjà ignoré depuis le localStorage
+        const savedMsg = localStorage.getItem('dismissedCoachMsg')
+        if (savedMsg) setDismissedCoachMsg(savedMsg)
     }, [])
 
     useEffect(() => {
@@ -901,7 +905,10 @@ export default function DashboardPage() {
                     </div>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5', fontWeight: '500', flex: 1, paddingRight: '20px' }}>{coachMsg.text}</p>
                     <button 
-                        onClick={() => setDismissedCoachMsg(coachMsg.text)}
+                        onClick={() => {
+                            setDismissedCoachMsg(coachMsg.text)
+                            localStorage.setItem('dismissedCoachMsg', coachMsg.text)
+                        }}
                         style={{ position: 'absolute', top: '10px', right: '10px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
                     >
                         <X size={14} />
