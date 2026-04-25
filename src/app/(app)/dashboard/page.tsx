@@ -679,7 +679,7 @@ export default function DashboardPage() {
                                             <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Notifications</span>
                                         </div>
                                         <div 
-                                            onClick={() => { router.push('/settings'); setIsProfileMenuOpen(false); }}
+                                            onClick={() => { router.push('/support'); setIsProfileMenuOpen(false); }}
                                             style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
                                             className="menu-item-hover"
                                         >

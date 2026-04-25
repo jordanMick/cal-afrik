@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, User, CreditCard, UserMinus, ShieldAlert, ChevronRight, Target, Crown, FileText, LifeBuoy } from 'lucide-react'
+import { ChevronLeft, User, CreditCard, UserMinus, ShieldAlert, ChevronRight, Target, Crown, FileText } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ThemeSelector from '@/components/ThemeSelector'
@@ -104,21 +104,6 @@ export default function SettingsPage() {
                 <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '0.5px solid var(--border-color)', overflow: 'hidden', marginBottom: '28px' }}>
                     {/* ✅ REMPLACÉ: ThemeSelector à la place du bouton alert */}
                     <ThemeSelector />
-                </div>
-
-                {/* Section Support */}
-                <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Aide & Support</p>
-                <div style={{ background: 'var(--bg-secondary)', borderRadius: '16px', border: '0.5px solid var(--border-color)', overflow: 'hidden', marginBottom: '28px' }}>
-                    <button 
-                        onClick={() => window.open('mailto:support@cal-afrik.com')} 
-                        style={{ width: '100%', padding: '16px 20px', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <LifeBuoy size={18} color="var(--text-secondary)" strokeWidth={1.5} />
-                            <span style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500' }}>Contacter le support</span>
-                        </div>
-                        <ChevronRight size={16} color="var(--text-muted)" />
-                    </button>
                 </div>
 
                 {/* Section 3: Danger Zone */}
