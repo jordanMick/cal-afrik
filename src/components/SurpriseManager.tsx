@@ -65,7 +65,7 @@ export default function SurpriseManager() {
                 animate={{ opacity: 1, y: 0 }}
                 onClick={handleOpen}
                 style={{
-                    background: 'linear-gradient(135deg, #ff8a3d, #ff5e3a)',
+                    background: 'linear-gradient(135deg, #10b981, #34d399)',
                     padding: '16px 20px',
                     borderRadius: '20px',
                     marginBottom: '24px',
@@ -73,7 +73,7 @@ export default function SurpriseManager() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    boxShadow: '0 8px 24px rgba(255, 138, 61, 0.25)',
+                    boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)',
                     position: 'relative',
                     overflow: 'hidden'
                 }}
@@ -143,7 +143,7 @@ export default function SurpriseManager() {
                                     </p>
                                     <button
                                         onClick={() => setStep(2)}
-                                        style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #ff8a3d, #ff5e3a)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 24px rgba(255, 94, 58, 0.3)' }}
+                                        style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #10b981, #34d399)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)' }}
                                     >
                                         Découvrir ma surprise
                                     </button>
@@ -157,7 +157,7 @@ export default function SurpriseManager() {
                                     
                                     <div style={{ position: 'relative', width: '260px', height: '260px', margin: '0 auto 40px' }}>
                                         {/* Indicateur (Flèche en haut) */}
-                                        <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, color: '#ff5e3a' }}>
+                                        <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, color: '#10b981' }}>
                                             <div style={{ width: 0, height: 0, borderLeft: '15px solid transparent', borderRight: '15px solid transparent', borderTop: '25px solid currentColor' }} />
                                         </div>
 
@@ -168,20 +168,20 @@ export default function SurpriseManager() {
                                                 width: '100%',
                                                 height: '100%',
                                                 borderRadius: '50%',
-                                                background: 'conic-gradient(#ffebdb 0deg 180deg, #ff8a3d 180deg 360deg)',
+                                                background: 'conic-gradient(#e1fcf0 0deg 180deg, #10b981 180deg 360deg)',
                                                 position: 'relative',
                                                 border: '8px solid var(--bg-secondary)',
                                                 boxShadow: '0 0 30px rgba(0,0,0,0.2)'
                                             }}
                                         >
                                             {/* 5% (Zone claire à droite) */}
-                                            <div style={{ position: 'absolute', top: '50%', left: '75%', transform: 'translate(-50%, -50%) rotate(90deg)', color: '#ff8a3d', fontWeight: '900', fontSize: '24px' }}>5%</div>
-                                            {/* 10% (Zone orange à gauche) */}
+                                            <div style={{ position: 'absolute', top: '50%', left: '75%', transform: 'translate(-50%, -50%) rotate(90deg)', color: '#10b981', fontWeight: '900', fontSize: '24px' }}>5%</div>
+                                            {/* 10% (Zone verte à gauche) */}
                                             <div style={{ position: 'absolute', top: '50%', left: '25%', transform: 'translate(-50%, -50%) rotate(-90deg)', color: '#fff', fontWeight: '900', fontSize: '24px' }}>10%</div>
                                             
                                             {/* Centre */}
                                             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '60px', height: '60px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.15)' }}>
-                                                <div style={{ color: '#ff8a3d', fontWeight: '900', fontSize: '18px' }}>🌎</div>
+                                                <div style={{ color: '#10b981', fontWeight: '900', fontSize: '18px' }}>🌎</div>
                                             </div>
                                         </motion.div>
                                     </div>
@@ -189,7 +189,7 @@ export default function SurpriseManager() {
                                     <button
                                         onClick={spinWheel}
                                         disabled={isSpinning}
-                                        style={{ width: '100%', padding: '18px', background: isSpinning ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #ff8a3d, #ff5e3a)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: isSpinning ? 'default' : 'pointer', boxShadow: isSpinning ? 'none' : '0 8px 24px rgba(255, 94, 58, 0.3)' }}
+                                        style={{ width: '100%', padding: '18px', background: isSpinning ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #10b981, #34d399)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: isSpinning ? 'default' : 'pointer', boxShadow: isSpinning ? 'none' : '0 8px 24px rgba(16, 185, 129, 0.3)' }}
                                     >
                                         {isSpinning ? 'Ça tourne...' : 'Tourner la roue'}
                                     </button>
@@ -214,6 +214,7 @@ export default function SurpriseManager() {
                                     </button>
                                 </motion.div>
                             )}
+
                         </motion.div>
                     </div>
                 )}
