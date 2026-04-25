@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import * as webpush from 'web-push'
+
+webpush.setVapidDetails(
+    'mailto:contact@cal-afrik.com',
+    'BNfv7lFwqaZzo_KHZe6nmPCyVHse5lLyxy93uIlJql-1FiK0TDbXMEWCqHjszAuMxbUlZyIq-PE3UJy8Ci_vWAI',
+    'X7Ar5GPmj-iXaJWadrKgowvIZfYtcDKbJ9LnKlCvoiY'
+)
 
 async function getAuthClient(req: NextRequest) {
     const auth = req.headers.get('authorization')
@@ -66,6 +73,28 @@ export async function POST(req: NextRequest) {
                 message,
                 created_at: new Date().toISOString()
             })
+
+            // 📲 ENVOI PUSH (Coach Yao Smart Alert)
+            try {
+                const { data: subData } = await supabase
+                    .from('push_subscriptions')
+                    .select('subscription')
+                    .eq('user_id', user.id)
+                    .single()
+
+                if (subData?.subscription) {
+                    await webpush.sendNotification(
+                        subData.subscription,
+                        JSON.stringify({
+                            title: `🦁 ${title}`,
+                            body: message,
+                            url: '/dashboard'
+                        })
+                    )
+                }
+            } catch (pushErr) {
+                console.error('Erreur envoi push Smart Alert:', pushErr)
+            }
         }
 
         return NextResponse.json({ success: true })

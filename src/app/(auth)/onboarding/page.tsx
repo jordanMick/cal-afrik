@@ -213,6 +213,25 @@ export default function OnboardingPage() {
         }
     }, [])
 
+    // 🤖 Auto-fill name from Google & Skip Step 0
+    useEffect(() => {
+        const checkGoogleUser = async () => {
+            // On ne le fait que si on est à l'étape 0, qu'on n'est pas en mode édition,
+            // et que le nom n'est pas déjà saisi.
+            if (step === 0 && !isEditMode && !form.name) {
+                const { data: { session } } = await supabase.auth.getSession()
+                const metadata = session?.user?.user_metadata
+                const googleName = metadata?.full_name || metadata?.name || metadata?.display_name
+
+                if (googleName) {
+                    update('name', googleName)
+                    setStep(1) // On passe directement au genre
+                }
+            }
+        }
+        checkGoogleUser()
+    }, [step, isEditMode]) // On ré-exécute si le step revient à 0 ou si le mode édition change
+
     const update = (key: string, value: any) => {
         const newForm = { ...form, [key]: value }
         setOnboardingForm(newForm)
