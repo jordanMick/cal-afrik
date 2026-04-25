@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2 } from 'lucide-react'
 import NotificationCenter from '@/components/NotificationCenter'
 import PushNotificationManager from '@/components/PushNotificationManager'
+import SurpriseManager from '@/components/SurpriseManager'
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -728,6 +729,8 @@ export default function DashboardPage() {
                     </div>
                 ))}
             </div>
+
+            <SurpriseManager />
 
             {/* GRAPHIQUE 7 DERNIERS JOURS */}
             <WeeklyProgressChart targetKcal={calorieTarget} tier={effectiveTier} />

@@ -22,6 +22,8 @@ function PricingContent() {
     const effectiveTier = getEffectiveTier(profile)
     const currentTier = effectiveTier
     const hideFree = searchParams.get('hideFree') === 'true'
+    const discountParam = searchParams.get('discount')
+    const discount = discountParam ? parseInt(discountParam) : 0
 
     // Plus besoin de charger le script FedaPay ici car Maketou utilise une redirection simple
     useEffect(() => {
@@ -45,7 +47,7 @@ function PricingContent() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ tier })
+                body: JSON.stringify({ tier, discount })
             });
 
             const data = await res.json();
@@ -105,6 +107,26 @@ function PricingContent() {
                     </h1>
                     <p style={{ color: '#555', fontSize: '15px' }}>Mangez bien, suivez facilement — conçu pour l'Afrique</p>
                 </div>
+
+                {discount > 0 && (
+                    <div style={{ 
+                        background: 'rgba(16, 185, 129, 0.1)', 
+                        border: '1px dashed #10b981', 
+                        borderRadius: '16px', 
+                        padding: '12px 20px', 
+                        marginBottom: '32px', 
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px'
+                    }}>
+                        <span style={{ fontSize: '20px' }}>🎁</span>
+                        <p style={{ color: '#10b981', fontWeight: '700', fontSize: '14px' }}>
+                            Réduction de {discount}% appliquée sur tous les plans !
+                        </p>
+                    </div>
+                )}
 
                 <style>{`
                     @media (max-width: 768px) {
@@ -179,7 +201,10 @@ function PricingContent() {
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{plans.pro.price}</span>
+                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.pro.price}</span>
+                                {discount > 0 && (
+                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(parseInt(plans.pro.price) * (1 - discount / 100))}</span>
+                                )}
                                 <span style={{ color: '#555', fontSize: '13px' }}>{plans.pro.period}</span>
                             </div>
                             <div style={{ height: '0.5px', background: '#2a2a2a', margin: '20px 0' }} />
@@ -225,7 +250,10 @@ function PricingContent() {
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{plans.premium.price}</span>
+                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>{plans.premium.price}</span>
+                                {discount > 0 && (
+                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(parseInt(plans.premium.price) * (1 - discount / 100))}</span>
+                                )}
                                 <span style={{ color: '#555', fontSize: '13px' }}>{plans.premium.period}</span>
                             </div>
                             <div style={{ height: '0.5px', background: '#1a2e24', margin: '20px 0' }} />
@@ -270,7 +298,10 @@ function PricingContent() {
 
                             <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Scan IA</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>100</span>
+                                <span style={{ fontWeight: '800', color: '#fff', textDecoration: discount > 0 ? 'line-through' : 'none', opacity: discount > 0 ? 0.4 : 1, fontSize: discount > 0 ? '24px' : '36px' }}>100</span>
+                                {discount > 0 && (
+                                    <span style={{ fontSize: '36px', fontWeight: '800', color: '#fff' }}>{Math.round(100 * (1 - discount / 100))}</span>
+                                )}
                                 <span style={{ color: '#555', fontSize: '13px' }}>FCFA</span>
                             </div>
                             <p style={{ color: '#444', fontSize: '12px', marginBottom: '24px' }}>Par scan supplémentaire</p>

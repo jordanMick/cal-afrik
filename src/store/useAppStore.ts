@@ -167,6 +167,10 @@ interface AppState {
     // ─── Distributions Macros (Premium) ────────────────────────
     macroDistributions: Record<string, Record<MealSlotKey, number>>
     updateMacroDistribution: (nutrient: string, slot: MealSlotKey, pct: number) => void
+
+    // ─── Surprise Onboarding ───────────────────────────────────
+    surpriseStatus: 'none' | 'pending' | 'shown' | 'claimed'
+    setSurpriseStatus: (status: 'none' | 'pending' | 'shown' | 'claimed') => void
 }
 
 const DEFAULT_DIST: Record<MealSlotKey, number> = {
@@ -572,6 +576,9 @@ export const useAppStore = create<AppState>()(
 
             pendingScannerPrefill: null,
             setPendingScannerPrefill: (data) => set({ pendingScannerPrefill: data }),
+
+            surpriseStatus: 'none',
+            setSurpriseStatus: (status) => set({ surpriseStatus: status }),
         }),
         {
             name: 'app-storage',
@@ -585,6 +592,7 @@ export const useAppStore = create<AppState>()(
                 chatSuggestedMenus: state.chatSuggestedMenus,
                 macroDistributions: state.macroDistributions,
                 smartAlert: state.smartAlert,
+                surpriseStatus: state.surpriseStatus,
             }),
         }
     )
