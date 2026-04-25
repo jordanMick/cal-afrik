@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import PWARegister from '@/components/PWARegister'
+import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 import ThemeInitializer from '@/components/ThemeInitializer'
 import { DM_Sans, Syne } from 'next/font/google'
 import { metadata as siteMetadata, viewport as siteViewport } from './Metadata'
@@ -58,6 +59,7 @@ export default function RootLayout({
         <Toaster position="top-center" richColors expand={true} />
         <ThemeInitializer />
         <PWARegister />
+        <PWAInstallPrompt />
         {children}
       </body>
     </html>
