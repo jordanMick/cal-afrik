@@ -116,7 +116,7 @@ export async function POST(req: Request) {
                 redirectURL: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/success`,
                 meta: {
                     user_id: user.id,
-                    tier: tierKey,
+                    tier: tierUpper,
                     duration: duration,
                     base_amount: baseAmount,
                     discount_percent: discount,
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
         }
 
         const cartId: string = data.cart?.id || data.cartId || '';
-        console.log(`${tag} ✅ Panier créé: cartId=${cartId}, tier=${tierKey}`);
+        console.log(`${tag} ✅ Panier créé: cartId=${cartId}, tier=${tierUpper}`);
 
         return NextResponse.json({
             success: true,
