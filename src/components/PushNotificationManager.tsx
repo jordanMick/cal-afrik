@@ -100,20 +100,31 @@ export default function PushNotificationManager() {
     return (
         <>
             <div style={{
-                background: 'linear-gradient(135deg, var(--accent), #10b981)',
-                padding: '16px 20px',
-                borderRadius: '20px',
+                background: 'var(--bg-secondary)',
+                padding: '24px',
+                borderRadius: '24px',
                 marginBottom: '28px',
-                color: '#fff',
+                color: 'var(--text-primary)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px',
-                boxShadow: '0 8px 30px rgba(var(--accent-rgb), 0.2)'
+                gap: '16px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                border: '1px solid var(--border-color)',
+                position: 'relative',
+                overflow: 'hidden'
             }}>
-                <div>
-                    <p style={{ fontSize: '15px', fontWeight: '800', marginBottom: '4px' }}>🔔 Ne rate jamais tes objectifs !</p>
-                    <p style={{ fontSize: '11px', opacity: 0.9 }}>Active les notifications pour recevoir des rappels et des conseils quotidiens.</p>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, var(--accent), var(--success))' }} />
+                
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                        🔔
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>Ne rate jamais tes objectifs !</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4', marginTop: '2px' }}>Active les notifications pour recevoir des rappels et des conseils personnalisés.</p>
+                    </div>
                 </div>
+
                 <button 
                     onClick={async () => {
                         const permission = await Notification.requestPermission()
@@ -121,14 +132,15 @@ export default function PushNotificationManager() {
                         if (permission === 'granted') subscribeToPush()
                     }}
                     style={{
-                        background: '#fff',
-                        color: 'var(--accent)',
+                        background: 'linear-gradient(135deg, var(--accent), var(--success))',
+                        color: '#fff',
                         border: 'none',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        cursor: 'pointer'
+                        padding: '14px',
+                        borderRadius: '14px',
+                        fontSize: '14px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        boxShadow: '0 8px 20px rgba(var(--accent-rgb), 0.2)'
                     }}
                 >
                     Activer les notifications
