@@ -95,6 +95,7 @@ export default function ProfilPage() {
     const [isRenewing, setIsRenewing] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [isViewingImage, setIsViewingImage] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Cropping states
@@ -146,6 +147,15 @@ export default function ProfilPage() {
     }, [activeSlot, profile?.subscription_tier, bilanDate])
 
     const handleAvatarClick = () => {
+        if (avatarUrl) {
+            setIsViewingImage(true)
+        } else {
+            fileInputRef.current?.click()
+        }
+    }
+
+    const handlePlusClick = (e: React.MouseEvent) => {
+        e.stopPropagation()
         fileInputRef.current?.click()
     }
 
@@ -353,7 +363,7 @@ export default function ProfilPage() {
 
                             {/* Overlay Plus - Positionné dans le coin en bas à droite, débordant légèrement */}
                             <div 
-                                onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
+                                onClick={handlePlusClick}
                                 style={{
                                     position: 'absolute',
                                     bottom: '2px',
@@ -370,7 +380,7 @@ export default function ProfilPage() {
                                     zIndex: 10,
                                     cursor: 'pointer',
                                     boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                                    transform: 'translate(15%, 15%)' // Fait sortir un peu le bouton du rond
+                                    transform: 'translate(15%, 15%)'
                                 }}
                             >
                                 <Plus size={16} strokeWidth={4} />
@@ -839,6 +849,42 @@ export default function ProfilPage() {
                                     Annuler
                                 </button>
                             </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* MODAL DE VISUALISATION DE L'IMAGE */}
+            <AnimatePresence>
+                {isViewingImage && avatarUrl && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsViewingImage(false)}
+                            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            style={{
+                                width: '300px',
+                                height: '300px',
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                border: '4px solid #fff',
+                                boxShadow: '0 0 50px rgba(0,0,0,0.5)',
+                                position: 'relative',
+                                zIndex: 5001
+                            }}
+                        >
+                            <img 
+                                src={avatarUrl} 
+                                alt="Profil agrandi" 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
                         </motion.div>
                     </div>
                 )}
