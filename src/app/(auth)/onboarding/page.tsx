@@ -297,7 +297,9 @@ export default function OnboardingPage() {
 
             const generatePromoCode = () => {
                 const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-                let res = 'AFRIKSHINE'
+                const variations = ['AFRIKSHINE', 'AFRIKSTAR', 'AFRIKPRO']
+                const base = variations[Math.floor(Math.random() * variations.length)]
+                let res = base
                 for (let i = 0; i < 2; i++) res += chars.charAt(Math.floor(Math.random() * chars.length))
                 return res
             }
