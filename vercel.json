@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/push/send?secret=cal_afrik_push_2024",
-      "schedule": "0 8,12,16,19,22 * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }
