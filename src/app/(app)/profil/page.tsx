@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabase'
 import { checkPermission, getEffectiveTier } from '@/lib/subscription'
 import { Settings, Bell, HelpCircle, LogOut, ChevronRight, Shield, FileText, Camera, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
+import Cropper from 'react-easy-crop'
 
 const GOAL_LABELS: Record<string, string> = { perdre: 'Perdre du poids', maintenir: 'Maintenir le poids', prendre: 'Prendre du poids' }
 const ACTIVITY_LABELS: Record<string, string> = { sedentaire: 'Sédentaire', leger: 'Légèrement actif', modere: 'Modérément actif', actif: 'Très actif', tres_actif: 'Extrêmement actif' }
@@ -96,6 +97,12 @@ export default function ProfilPage() {
     const [isUploading, setIsUploading] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // Cropping states
+    const [imageToCrop, setImageToCrop] = useState<string | null>(null)
+    const [crop, setCrop] = useState({ x: 0, y: 0 })
+    const [zoom, setZoom] = useState(1)
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+
     const handleRenew = async () => {
         if (effectiveTier === 'free') return;
         setIsRenewing(true);
@@ -146,19 +153,35 @@ export default function ProfilPage() {
         const file = e.target.files?.[0]
         if (!file) return
 
+        const reader = new FileReader()
+        reader.addEventListener('load', () => {
+            setImageToCrop(reader.result as string)
+        })
+        reader.readAsDataURL(file)
+    }
+
+    const onCropComplete = useCallback((_area: any, pixels: any) => {
+        setCroppedAreaPixels(pixels)
+    }, [])
+
+    const handleUploadCroppedImage = async () => {
+        if (!imageToCrop || !croppedAreaPixels) return
+
         setIsUploading(true)
+        setImageToCrop(null) // Fermer le recadrage
+
         try {
+            const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels)
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('Non authentifié')
 
-            const fileExt = file.name.split('.').pop()
-            const fileName = `${user.id}-${Math.random()}.${fileExt}`
+            const fileName = `${user.id}-${Date.now()}.jpg`
             const filePath = `avatars/${fileName}`
 
             // Upload
             const { error: uploadError } = await supabase.storage
-                .from('meal-images') // On réutilise le bucket existant ou on crée 'avatars' si possible
-                .upload(filePath, file)
+                .from('meal-images')
+                .upload(filePath, croppedImageBlob)
 
             if (uploadError) throw uploadError
 
@@ -293,62 +316,65 @@ export default function ProfilPage() {
                     marginBottom: isExpiringSoon ? '8px' : '6px',
                     border: '0.5px solid var(--border-color)',
                     position: 'relative',
-                    overflow: 'hidden',
+                    overflow: 'visible', // Changé de hidden pour laisser dépasser le bouton plus
                     boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
                 }}>
                     {/* Décoration en arrière-plan */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success))' }} />
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--accent), var(--success))', borderRadius: '24px 24px 0 0' }} />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
-                        <div 
-                            onClick={handleAvatarClick}
-                            style={{
-                                width: '80px', height: '80px', borderRadius: '50%',
-                                background: 'linear-gradient(135deg, var(--accent), #ec4899)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '32px', fontWeight: 'bold', color: '#fff',
-                                boxShadow: '0 8px 24px rgba(var(--bg-primary-rgb),0.5)',
-                                flexShrink: 0,
-                                position: 'relative',
-                                cursor: 'pointer',
-                                overflow: 'hidden',
-                                border: '3px solid var(--bg-secondary)'
-                            }}
-                        >
-                            {avatarUrl ? (
-                                <img 
-                                    src={avatarUrl} 
-                                    alt="Profil" 
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                />
-                            ) : (
-                                profile?.name?.charAt(0).toUpperCase() || 'U'
-                            )}
-                            
-                            {/* Overlay Plus */}
-                            <div style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                right: '0',
-                                background: 'var(--accent)',
-                                width: '24px',
-                                height: '24px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '2px solid var(--bg-secondary)',
-                                color: '#fff',
-                                zIndex: 2
-                            }}>
-                                <Plus size={14} strokeWidth={3} />
+                        <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
+                            <div 
+                                onClick={handleAvatarClick}
+                                style={{
+                                    width: '100%', height: '100%', borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, var(--accent), #ec4899)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '32px', fontWeight: 'bold', color: '#fff',
+                                    boxShadow: '0 8px 24px rgba(var(--bg-primary-rgb),0.5)',
+                                    cursor: 'pointer',
+                                    overflow: 'hidden',
+                                    border: '3px solid var(--bg-secondary)',
+                                    position: 'relative'
+                                }}
+                            >
+                                {avatarUrl ? (
+                                    <img src={avatarUrl} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    profile?.name?.charAt(0).toUpperCase() || 'U'
+                                )}
+                                
+                                {isUploading && (
+                                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div style={{ width: '24px', height: '24px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                                    </div>
+                                )}
                             </div>
 
-                            {isUploading && (
-                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <div className="spinner" style={{ width: '20px', height: '20px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                                </div>
-                            )}
+                            {/* Overlay Plus - Positionné dans le coin en bas à droite, débordant légèrement */}
+                            <div 
+                                onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
+                                style={{
+                                    position: 'absolute',
+                                    bottom: '2px',
+                                    right: '2px',
+                                    background: 'var(--accent)',
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '2px solid var(--bg-secondary)',
+                                    color: '#fff',
+                                    zIndex: 10,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                                    transform: 'translate(15%, 15%)' // Fait sortir un peu le bouton du rond
+                                }}
+                            >
+                                <Plus size={16} strokeWidth={4} />
+                            </div>
                         </div>
 
                         <input 
@@ -817,6 +843,86 @@ export default function ProfilPage() {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* MODAL DE RECADRAGE */}
+            <AnimatePresence>
+                {imageToCrop && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: '#000', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                            <Cropper
+                                image={imageToCrop}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={1}
+                                cropShape="round"
+                                showGrid={false}
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                            />
+                        </div>
+                        <div style={{ padding: '30px 20px', background: 'var(--bg-secondary)', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                            <button 
+                                onClick={() => setImageToCrop(null)}
+                                style={{ flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)', fontWeight: '600' }}
+                            >
+                                Annuler
+                            </button>
+                            <button 
+                                onClick={handleUploadCroppedImage}
+                                style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'var(--accent)', color: '#fff', fontWeight: '800', border: 'none' }}
+                            >
+                                Valider
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <style>{`
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     )
+}
+
+/**
+ * Utile pour recadrer l'image
+ */
+async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<Blob> {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image()
+        img.addEventListener('load', () => resolve(img))
+        img.addEventListener('error', (error) => reject(error))
+        img.setAttribute('crossOrigin', 'anonymous')
+        img.src = imageSrc
+    })
+
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    if (!ctx) throw new Error('No 2d context')
+
+    canvas.width = pixelCrop.width
+    canvas.height = pixelCrop.height
+
+    ctx.drawImage(
+        image,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        0,
+        0,
+        pixelCrop.width,
+        pixelCrop.height
+    )
+
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+            if (blob) resolve(blob)
+        }, 'image/jpeg')
+    })
 }
