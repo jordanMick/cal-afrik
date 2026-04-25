@@ -161,11 +161,12 @@ function PricingContent() {
                             <button 
                                 onClick={() => {
                                     if (promoInput === profile?.promo_code) {
+                                        const userDiscount = (profile as any)?.promo_discount || 10
                                         setIsApplying(true)
                                         setTimeout(() => {
-                                            router.push('/upgrade?discount=30')
+                                            router.push(`/upgrade?discount=${userDiscount}`)
                                             setIsApplying(false)
-                                            toast.success('Réduction appliquée !')
+                                            toast.success(`Réduction de ${userDiscount}% appliquée !`)
                                         }, 800)
                                     } else {
                                         toast.error('Code invalide')

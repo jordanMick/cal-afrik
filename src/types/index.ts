@@ -43,6 +43,7 @@ export interface UserProfile {
     notify_reports?: boolean
     notify_subscription?: boolean
     promo_code?: string
+    promo_discount?: number
     dismissed_promo_date?: string | null
 }
 
