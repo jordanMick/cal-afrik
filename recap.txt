@@ -52,6 +52,9 @@ RÈGLE DE LOGIQUE (CRITIQUE) :
 --------------------------------------------------------------------------------
 Description : Historique et analyse de la consommation.
 - Journal : Liste chronologique des repas, calories consommées vs objectif.
+- Graphique de poids : 
+  * FREE/PRO : Accès aux vues "7 jours" et "8 semaines".
+  * PREMIUM : Accès à la vue "6 mois".
 - Rapports (Bilan) : Graphique hebdomadaire et analyse textuelle IA.
   (Réservé aux plans PRO et PREMIUM).
 

@@ -141,8 +141,7 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                     {[
                         { id: '7d', label: '7 j', locked: false },
                         { id: '8w', label: '8 sem', locked: false },
-                        { id: '6m', label: '6 mois', locked: !isPro },
-                        { id: '1y', label: '1 an', locked: !isPremium },
+                        { id: '6m', label: '6 mois', locked: !isPremium },
                     ].map(p => (
                         <button
                             key={p.id}
