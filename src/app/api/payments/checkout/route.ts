@@ -68,6 +68,8 @@ export async function POST(req: Request) {
         const tierBase = EXPECTED_AMOUNTS[(tier || '').toLowerCase()];
         const baseAmount = typeof tierBase === 'object' ? tierBase[String(duration)] : tierBase;
 
+        console.log(`${tag} — Key tentée: '${envKey}', ID trouvé: '${productDocumentId ? productDocumentId.substring(0, 8) + '...' : 'AUCUN'}'`);
+
         if (!productDocumentId || !baseAmount) {
             console.error(`${tag} Produit introuvable. Clé tentée: '${envKey}' (tier=${tierUpper}, dur=${duration}, disc=${discount})`);
             return NextResponse.json({ error: 'Plan ou durée invalide' }, { status: 400 });
