@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { calculateCalorieTarget, getStreakIcon } from '@/lib/nutrition'
 import { checkPermission } from '@/lib/subscription'
 import type { Meal } from '@/types'
+import { ChevronRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { toast } from 'sonner'
 
