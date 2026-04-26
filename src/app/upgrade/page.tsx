@@ -277,6 +277,13 @@ function PricingContent() {
                                 <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
 
+                            {/* PRIX MENSUEL ÉQUIVALENT PRO */}
+                            {duration !== '1' && (
+                                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '-8px', marginBottom: '12px', fontWeight: '500' }}>
+                                    (soit {duration === '3' ? Math.round(plans.pro[duration] / 3) : Math.round(plans.pro[duration] / 12)} FCFA / mois)
+                                </p>
+                            )}
+
                             {/* ÉCONOMIE PRO */}
                             {duration !== '1' && (
                                 <div style={{ marginBottom: '16px' }}>
@@ -336,6 +343,13 @@ function PricingContent() {
                                 )}
                                 <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
+
+                            {/* PRIX MENSUEL ÉQUIVALENT PREMIUM */}
+                            {duration !== '1' && (
+                                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '-8px', marginBottom: '12px', fontWeight: '500' }}>
+                                    (soit {duration === '3' ? Math.round(plans.premium[duration] / 3) : Math.round(plans.premium[duration] / 12)} FCFA / mois)
+                                </p>
+                            )}
 
                             {/* ÉCONOMIE PREMIUM */}
                             {duration !== '1' && (
