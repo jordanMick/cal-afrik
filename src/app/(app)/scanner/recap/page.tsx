@@ -82,6 +82,8 @@ export default function ScanRecapPage() {
                     ai_confidence: data.aiConfidence,
                     coach_message: data.coachMessage || null,
                     is_suggestion: false,
+                    health_score: data.healthScore,
+                    vitamins: data.vitamins,
                 })
             })
             const json = await res.json()

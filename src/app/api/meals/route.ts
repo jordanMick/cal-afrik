@@ -86,6 +86,8 @@ export async function GET(req: NextRequest) {
         ai_confidence: Number(row.ai_confidence ?? 0),
         logged_at: row.logged_at ?? row.created_at ?? new Date().toISOString(),
         coach_message: row.coach_message ?? null,
+        health_score: row.health_score ? Number(row.health_score) : null,
+        vitamins: row.vitamins || [],
     }))
 
     return NextResponse.json({ success: true, data: mapped })
@@ -138,6 +140,8 @@ export async function POST(req: NextRequest) {
         ai_confidence: Number(body.ai_confidence || 0),
         meal_type: body.meal_type || null,
         coach_message: body.coach_message || null,
+        health_score: body.health_score ?? null,
+        vitamins: body.vitamins ?? [],
         logged_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
     }
@@ -169,6 +173,8 @@ export async function POST(req: NextRequest) {
         ai_confidence: Number((data as any).ai_confidence ?? body.ai_confidence ?? 0),
         logged_at: (data as any).logged_at ?? (data as any).created_at ?? new Date().toISOString(),
         coach_message: (data as any).coach_message || null,
+        health_score: (data as any).health_score ? Number((data as any).health_score) : null,
+        vitamins: (data as any).vitamins || [],
     }
 
     return NextResponse.json({ success: true, data: mapped })

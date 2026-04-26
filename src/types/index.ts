@@ -101,6 +101,8 @@ export interface Meal {
     logged_at: string
     notes?: string
     coach_message?: string | null
+    health_score?: number | null
+    vitamins?: { name: string; value: string; percentage: number }[]
 }
 
 export type MealType = 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation'

@@ -324,6 +324,27 @@ function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Mea
                             </div>
                         ))}
                     </div>
+                    {meal.health_score !== undefined && meal.health_score !== null && (
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '14px', marginBottom: '16px', border: '0.5px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>Score santé</p>
+                                <p style={{ color: meal.health_score >= 7 ? '#10b981' : meal.health_score >= 5 ? '#f59e0b' : '#ef4444', fontSize: '14px', fontWeight: '800' }}>{meal.health_score.toFixed(1)} /10</p>
+                            </div>
+                            {meal.vitamins && meal.vitamins.length > 0 && (
+                                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '0.5px solid var(--border-color)' }}>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', marginBottom: '8px' }}>Micro-nutriments clés :</p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        {meal.vitamins.map((v, i) => (
+                                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{v.name}</p>
+                                                <p style={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: '600' }}>{v.value} <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: '800', marginLeft: '4px' }}>{v.percentage}%</span></p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {meal.coach_message && (
                         <div style={{ marginBottom: '14px' }}>
                             <button onClick={() => setShowCoach(!showCoach)} style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}>
