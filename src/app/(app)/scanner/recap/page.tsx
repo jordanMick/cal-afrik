@@ -247,7 +247,7 @@ export default function ScanRecapPage() {
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                            style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', background: 'var(--bg-secondary)', borderRadius: '28px 28px 0 0', border: '0.5px solid var(--border-color)', zIndex: 201, maxHeight: '80vh', overflowY: 'auto', paddingBottom: '40px' }}
+                            style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: 'var(--bg-secondary)', borderRadius: '28px 28px 0 0', border: '0.5px solid var(--border-color)', zIndex: 201, maxHeight: '80vh', overflowY: 'auto', paddingBottom: '40px' }}
                         >
                             {/* Handle */}
                             <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 8px' }}>
