@@ -770,8 +770,9 @@ export default function ProfilPage() {
 
                 {/* FOOTER */}
                 <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '32px' }}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>Cal Afrik v1.0.0</p>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '11px', opacity: 0.5 }}>© 2026 Nutrition africaine</p>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '4px' }}>Cal Afrik Version 1.0</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '16px', fontWeight: '500' }}>Scanne. Analyse. Progresse. 📊</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '10px', opacity: 0.6, letterSpacing: '0.02em' }}>© 2026 Cal Afrik - Tous droits réservés</p>
                 </div>
 
             </div>
