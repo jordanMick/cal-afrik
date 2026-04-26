@@ -118,43 +118,56 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }, [])
 
     if (loading) {
+        const isInitialAppLoad = typeof window !== 'undefined' && !sessionStorage.getItem('cal-afrik-splash-shown')
+
         return (
             <div style={{
                 position: 'fixed', inset: 0, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 99999
             }}>
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
-                >
-                    <img
-                        src="/logo.png"
-                        alt="Cal Afrik"
-                        style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '22px' }}
-                    />
-                    <motion.h1
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2, duration: 0.4 }}
-                        style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}
+                {isInitialAppLoad ? (
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
                     >
-                        Cal Afrik
-                    </motion.h1>
-                </motion.div>
+                        <img
+                            src="/logo.png"
+                            alt="Cal Afrik"
+                            style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '22px' }}
+                        />
+                        <motion.h1
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.4 }}
+                            style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}
+                        >
+                            Cal Afrik
+                        </motion.h1>
+                    </motion.div>
+                ) : (
+                    <div className="spinner" style={{ width: '32px', height: '32px', borderWidth: '3px' }} />
+                )}
 
-                {/* Petit loader discret en bas */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5, duration: 0.5 }}
-                    style={{ position: 'absolute', bottom: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
-                >
-                    <div className="spinner" style={{ width: '24px', height: '24px', borderWidth: '2px' }} />
-                    <span style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '500', letterSpacing: '1px', textTransform: 'uppercase' }}>Chargement...</span>
-                </motion.div>
+                {/* Petit loader discret en bas (uniquement au premier chargement) */}
+                {isInitialAppLoad && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5, duration: 0.5 }}
+                        style={{ position: 'absolute', bottom: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
+                    >
+                        <div className="spinner" style={{ width: '24px', height: '24px', borderWidth: '2px' }} />
+                        <span style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '500', letterSpacing: '1px', textTransform: 'uppercase' }}>Chargement...</span>
+                    </motion.div>
+                )}
             </div>
         )
+    }
+
+    // Une fois chargé, on marque comme "splash déjà montré"
+    if (typeof window !== 'undefined' && !sessionStorage.getItem('cal-afrik-splash-shown')) {
+        sessionStorage.setItem('cal-afrik-splash-shown', 'true')
     }
 
     return <>{children}</>
