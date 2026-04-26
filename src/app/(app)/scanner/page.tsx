@@ -963,9 +963,13 @@ export default function ScannerPage() {
                             {/* Overlays d'étapes */}
                             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(3px)', zIndex: 5 }}>
                                 <div style={{ textAlign: 'center', padding: '20px' }}>
-                                    <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1.5px solid var(--border-color)' }}>
-                                        <div className="spinner" style={{ width: '24px', height: '24px' }} />
-                                    </div>
+                                    <motion.div 
+                                        animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }} 
+                                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                        style={{ fontSize: '36px', marginBottom: '16px', filter: 'drop-shadow(0 0 15px rgba(var(--accent-rgb), 0.6))' }}
+                                    >
+                                        ✨
+                                    </motion.div>
                                     <p style={{ color: '#fff', fontSize: '16px', fontWeight: '800', letterSpacing: '-0.2px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                                         {scanSteps[scanStep]}
                                     </p>
@@ -1267,152 +1271,37 @@ export default function ScannerPage() {
                 )
             })()}
 
-            {/* BOUTON RÉCAP */}
+            {/* BOUTON RÉCAP → Nouvelle page */}
             {selectedFoods.length > 0 && (
                 <div style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '0 20px' }}>
-                    <button onClick={() => { setShowRecap(true); setShowCoach(false); setCoachMessage('') }} style={{ width: '100%', padding: '14px', borderRadius: '14px', background: `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: '#fff', border: 'none', fontWeight: '600', fontSize: '15px', cursor: 'pointer', boxShadow: `0 8px 24px rgba(var(--accent-rgb), 0.4)` }}>
+                    <button
+                        onClick={() => {
+                            const totalsNow = getTotals()
+                            const recapData = {
+                                mealName: mealName || selectedFoods.map(f => f.name).join(', '),
+                                imageUrl: image,
+                                totalCalories: totalsNow.calories,
+                                protein_g: totalsNow.protein_g,
+                                carbs_g: totalsNow.carbs_g,
+                                fat_g: totalsNow.fat_g,
+                                portion_g: totalsNow.portion_g,
+                                healthScore,
+                                vitamins,
+                                coachMessage,
+                                slotKey: currentSlotKey,
+                                selectedFoods,
+                                capturedImage,
+                                aiConfidence: selectedFoods.length > 0
+                                    ? Math.round(selectedFoods.reduce((s, f) => s + f.confidence, 0) / selectedFoods.length)
+                                    : 80,
+                            }
+                            sessionStorage.setItem('scan_recap', JSON.stringify(recapData))
+                            router.push('/scanner/recap')
+                        }}
+                        style={{ width: '100%', padding: '14px', borderRadius: '14px', background: `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: '#fff', border: 'none', fontWeight: '600', fontSize: '15px', cursor: 'pointer', boxShadow: `0 8px 24px rgba(var(--accent-rgb), 0.4)` }}
+                    >
                         Voir le récap · {Math.round(totals.calories)} kcal
                     </button>
-                </div>
-            )}
-
-            {showRecap && <div onClick={() => setShowRecap(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(var(--bg-primary-rgb), 0.85)', backdropFilter: 'blur(4px)', zIndex: 1000 }} />}
-
-            {/* POPUP RÉCAP */}
-            {showRecap && (
-                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: '0 auto', width: '100%', maxWidth: '480px', background: 'var(--bg-secondary)', borderRadius: '24px 24px 0 0', border: '0.5px solid var(--border-color)', zIndex: 1010, padding: '0 0 100px 0', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 -10px 40px rgba(var(--bg-primary-rgb),0.2)' }}>
-                    <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: '2px', background: `linear-gradient(90deg, ${slotColor}, var(--accent))` }} />
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}>
-                        <div style={{ width: '36px', height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px' }} />
-                    </div>
-                    <div style={{ padding: '18px 20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '600' }}>Récap de ton repas</h2>
-                            <span style={{ color: slotColor, fontSize: '11px', background: `${slotColor}15`, padding: '4px 10px', borderRadius: '20px', border: `0.5px solid ${slotColor}40` }}>{slotLabel}</span>
-                        </div>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '18px' }}>{selectedFoods.map(f => f.name).join(' · ')}</p>
-
-                        <div style={{ background: 'var(--bg-primary)', borderRadius: '16px', padding: '20px', textAlign: 'center', marginBottom: '12px', border: `0.5px solid ${slotColor}20` }}>
-                            <p style={{ color: 'var(--text-primary)', fontSize: '52px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(totals.calories)}</p>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>kilocalories</p>
-                        </div>
-
-                        <div style={{ background: recapExceeded ? 'rgba(var(--danger-rgb), 0.06)' : 'var(--bg-primary)', border: `0.5px solid ${recapExceeded ? 'rgba(var(--danger-rgb), 0.3)' : 'var(--border-color)'}`, borderRadius: '12px', padding: '12px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{isLastSlot ? `Journée · objectif ${calorieTarget} kcal` : `Créneau ${slotLabel}`}</p>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '2px' }}>{isLastSlot ? `${Math.round(dailyConsumed)} + ${Math.round(totals.calories)} kcal` : `${Math.round(currentSlot.consumed)} + ${Math.round(totals.calories)} kcal`}</p>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{recapExceeded ? '⚠️ Dépassement' : 'Restant après repas'}</p>
-                                <p style={{ color: recapExceeded ? 'var(--danger)' : slotColor, fontWeight: '700', fontSize: '18px' }}>
-                                    {recapExceeded ? `+${Math.abs(Math.round(recapRemainingAfter))} kcal` : `${Math.round(recapRemainingAfter)} kcal`}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-                            {[
-                                { label: 'Protéines', value: totals.protein_g, color: 'var(--success)' },
-                                { label: 'Glucides', value: totals.carbs_g, color: 'var(--accent)' },
-                                { label: 'Lipides', value: totals.fat_g, color: 'var(--warning)' },
-                            ].map(m => (
-                                <div key={m.label} style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
-                                    <p style={{ color: m.color, fontSize: '20px', fontWeight: '600' }}>{Math.round(m.value * 10) / 10}g</p>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>{m.label}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* ── HEALTH SCORE ─────────────────────────────── */}
-                        {healthScore !== null && (
-                            <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '14px 16px', marginBottom: '12px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>Health Score</p>
-                                    <p style={{ color: '#f59e0b', fontSize: '15px', fontWeight: '800' }}>{healthScore.toFixed(1)} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>/ 10</span></p>
-                                </div>
-                                <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
-                                    <div style={{ height: '100%', width: `${(healthScore / 10) * 100}%`, background: 'linear-gradient(90deg, #f59e0b, #fcd34d)', borderRadius: '4px', transition: 'width 0.6s ease' }} />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ── VITAMINES ────────────────────────────────── */}
-                        {vitamins.length > 0 && (
-                            <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '14px 16px', marginBottom: '14px', border: '0.5px solid rgba(14,165,233,0.15)' }}>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700', marginBottom: '12px' }}>Micro-nutriments</p>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {vitamins.map((v, i) => (
-                                        <div key={i}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>{v.name}</p>
-                                                <p style={{ color: '#0ea5e9', fontSize: '12px', fontWeight: '700' }}>{v.value} · <span style={{ color: 'var(--text-muted)', fontWeight: '500' }}>{v.percentage}% AJR</span></p>
-                                            </div>
-                                            <div style={{ height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px', overflow: 'hidden' }}>
-                                                <div style={{ height: '100%', width: `${Math.min(v.percentage, 100)}%`, background: 'linear-gradient(90deg, #0ea5e9, #38bdf8)', borderRadius: '2px', transition: 'width 0.5s ease' }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* On n'affiche le conseil du coach QUE si ce n'est pas un menu déjà suggéré par Yao ou venant du planning */}
-                        {!selectedFoods.some(f => f.id.startsWith('suggested-') || f.id.startsWith('coach-') || f.fromCoach) && (
-                            <>
-                                <button onClick={loadCoachMessage} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: showCoach ? 'rgba(var(--warning-rgb), 0.08)' : 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', marginBottom: '12px', textAlign: 'left' }}>
-                                    {showCoach ? 'Conseil personnalisé de votre coach' : 'Demander l\'avis du coach →'}
-                                </button>
-                                {showCoach && (
-                                    <div style={{ background: 'rgba(var(--warning-rgb), 0.06)', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '0.5px solid rgba(var(--warning-rgb), 0.2)' }}>
-                                        {isLoadingCoach ? (
-                                            <p style={{ color: 'var(--warning)', fontSize: '13px' }}>⏳ Yao analyse ton assiette...</p>
-                                        ) : coachMessage === '__FREE_USED__' ? (
-                                            <div style={{ textAlign: 'center' }}>
-                                                <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase tracking-widest opacity-50">ANALYSE COACH YAO</p>
-                                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Essai gratuit déjà utilisé</p>
-                                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Tu as déjà vu le talent de Coach Yao ! Passe au Plan Pro pour ses conseils chaque jour.</p>
-                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'var(--warning)', color: '#000', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Voir le Plan Pro →</div>
-                                            </div>
-                                        ) : coachMessage === '__PRO_LIMIT__' ? (
-                                            <div style={{ textAlign: 'center' }}>
-                                                <p style={{ fontSize: '24px', marginBottom: '8px' }}>⏰</p>
-                                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>Conseil du jour déjà utilisé</p>
-                                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: '1.5', marginBottom: '12px' }}>Yao vous a déjà conseillé aujourd'hui. Passez au Premium pour un accès illimité !</p>
-                                                <div onClick={() => router.push('/upgrade')} style={{ padding: '8px 16px', background: 'var(--accent)', color: '#fff', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', display: 'inline-block' }}>Débloquer le Premium →</div>
-                                            </div>
-                                        ) : coachMessage ? (
-                                            <div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                                    <span style={{ fontSize: '18px' }}>💡</span>
-                                                    <span style={{ color: 'var(--warning)', fontSize: '13px', fontWeight: '600' }}>Coach Yao</span>
-                                                    {profile?.subscription_tier === 'free' && (
-                                                        <span style={{ marginLeft: 'auto', background: 'rgba(var(--warning-rgb), 0.15)', color: 'var(--warning)', fontSize: '10px', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Essai gratuit</span>
-                                                    )}
-                                                </div>
-                                                {coachMessage
-                                                    .replace(/\*\*/g, '')
-                                                    .replace(/###|##|# /g, '')
-                                                    .replace(/---*/g, '')
-                                                    .split('\n')
-                                                    .filter(l => l.trim())
-                                                    .map((line, i) => (
-                                                        <p key={i} style={{ color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '6px' }}>{line.trim()}</p>
-                                                    ))
-                                                }
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                )}
-                            </>
-                        )}
-
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => setShowRecap(false)} style={{ flex: 1, padding: '14px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>← Modifier</button>
-                            <button onClick={handleSaveMeal} disabled={isSaving} style={{ flex: 2, padding: '14px', borderRadius: '12px', background: `linear-gradient(135deg, ${slotColor}, var(--accent))`, color: '#fff', border: 'none', fontWeight: '600', fontSize: '14px', cursor: 'pointer', opacity: isSaving ? 0.7 : 1 }}>
-                                {isSaving ? 'Ajout...' : '✅ Ajouter au journal'}
-                            </button>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>
