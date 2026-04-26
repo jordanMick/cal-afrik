@@ -252,7 +252,7 @@ function SuccessContent() {
 
         {status === 'timeout' && (
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '12px' }}>
-            Si le problème persiste après 5 minutes, contactez le support en précisant votre email.
+            Si le problème persiste après 5 minutes, rafraîchissez la page ou vérifiez vos paramètres.
           </p>
         )}
       </div>

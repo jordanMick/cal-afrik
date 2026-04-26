@@ -237,7 +237,7 @@ function PricingContent() {
                                     { text: '2 Scans Photo / jour', active: true },
                                     { text: 'Base locale (35+ aliments)', active: true },
                                     { text: 'Calcul des besoins (kcal/macros)', active: true },
-                                    { text: 'Support technique WhatsApp', active: true },
+                                    { text: 'Analyses nutritionnelles IA', active: true },
                                 ].map((f, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
