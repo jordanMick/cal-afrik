@@ -217,14 +217,17 @@ export async function POST(req: NextRequest) {
         const paidChatMessages = profile.paid_chat_messages_remaining || 0
 
         if (effectiveTier === 'free') {
-            // Pour les FREE : limite absolue de 10 messages (à vie)
-            // Note: chat_messages_today n'est PAS réinitialisé pour les Free pour compter le total
+            // Pour les FREE : limite absolue de 10 messages offerts
             if (messagesUsedToday >= rules.maxChatMessagesPerDay) {
-                return NextResponse.json({
-                    success: false,
-                    error: 'Ton cadeau de 10 messages est terminé. Passe au plan Pro pour continuer avec Coach Yao !',
-                    code: 'LIMIT_REACHED'
-                }, { status: 200 })
+                if (paidChatMessages > 0) {
+                    isUsingPaidMessages = true
+                } else {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Ton crédit de messages gratuits est terminé. Achète un pack de 10 messages ou passe au plan Pro pour continuer à discuter !',
+                        code: 'LIMIT_REACHED'
+                    }, { status: 200 })
+                }
             }
         } else {
             // Pour les PRO/PREMIUM : limite par jour
@@ -234,7 +237,7 @@ export async function POST(req: NextRequest) {
                 } else {
                     return NextResponse.json({
                         success: false,
-                        error: 'Limite de messages atteinte pour aujourd\'hui. Reviens demain ou utilise un pack !',
+                        error: 'Tu as atteint ta limite de messages pour aujourd\'hui. Reviens demain ou débloque 10 messages immédiatement avec un pack !',
                         code: 'LIMIT_REACHED'
                     }, { status: 200 })
                 }
@@ -248,10 +251,19 @@ export async function POST(req: NextRequest) {
             if (effectiveTier === 'pro') {
                 // Pour les PRO : limite par jour (4/jour)
                 const maxScansAllowed = rules.maxScansPerDay
-                if (scanFeedbacksToday >= maxScansAllowed) {
+                if (scanFeedbacksToday >= maxScansAllowed && paidChatMessages <= 0) {
                     return NextResponse.json({
                         success: false,
                         error: 'Ta limite quotidienne de repas est atteinte. Reviens demain ou utilise un pack !',
+                        code: 'LIMIT_REACHED'
+                    }, { status: 200 })
+                }
+            } else if (effectiveTier === 'free') {
+                const maxScansAllowed = 5 // Limite cadeau Free
+                if (scanFeedbacksToday >= maxScansAllowed && paidChatMessages <= 0) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Ton cadeau de 5 repas est terminé. Passe Pro ou utilise un pack pour continuer !',
                         code: 'LIMIT_REACHED'
                     }, { status: 200 })
                 }
@@ -457,7 +469,7 @@ RÈGLES STRICTES (OBLIGATOIRES) :
    - Dès qu'un utilisateur valide une suggestion pour aujourd'hui via "Envoyer au planning", elle s'ajoute à son journal.
 
 5) FORMAT MENU : Très détaillé pour aujourd'hui, liste complète pour demain/semaine.
-5) DISCIPLINE DE LA BASE DE DONNÉES : Utilise uniquement les [ID_BD:...] fournis.
+6) CONSEIL PRÉCISION : Chaque fois que tu proposes un menu ou un aliment, rappelle poliment à l'utilisateur que pour une précision nutritionnelle maximale, il est préférable de prendre une photo de son plat une fois servi en utilisant le bouton "Scanner" (au centre).
 
 RÈGLE DE SORTIE ABSOLUE (CRITIQUE) :
 Toute suggestion de repas POUR AUJOURD'HUI (menu creneau) DOIT IMPÉRATIVEMENT se terminer par le bloc technique "---DATA---" suivi du JSON des aliments. Si tu proposes un repas mais que tu oublies ce bloc, l'utilisateur ne pourra pas l'ajouter à son journal et ton travail sera inutile. Propose uniquement des aliments présents dans la liste [ID_BD:...] ci-dessus.

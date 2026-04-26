@@ -565,7 +565,7 @@ export default function ScannerPage() {
 
             if (profile?.subscription_tier === 'free' && scansUsed >= 5 && paidScans <= 0) {
                 limitReached = true
-                errorMessage = "Limite de 5 scans à vie atteinte."
+                errorMessage = "Limite de 5 scans gratuits atteinte."
                 errorDesc = "Débloquez Coach Yao pour continuer !"
             } else if (profile?.subscription_tier === 'pro' && scansUsed >= 4 && paidScans <= 0) {
                 limitReached = true
@@ -1210,7 +1210,7 @@ export default function ScannerPage() {
                             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', marginBottom: '28px', fontWeight: '500' }}>
                                 {isProLimit
                                     ? "Vous avez utilisé vos 4 scans quotidiens. Continuez votre suivi pour seulement 100 FCFA."
-                                    : "Vous avez atteint vos 5 scans gratuits à vie. Débloquez la puissance de Yao pour continuer."}
+                                    : "Vous avez atteint vos 5 scans offerts à l'inscription. Débloquez la puissance de Yao pour continuer."}
                             </p>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

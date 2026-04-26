@@ -39,12 +39,12 @@ const TIER_CONFIG = {
 
 const PLAN_FEATURES: Record<string, { label: string; free: string; pro: string; premium: string }[]> = {
     features: [
-        { label: 'Scans', free: '5 à vie', pro: '4 / jour', premium: 'Illimité' },
+        { label: 'Scans', free: '5 offerts', pro: '4 / jour', premium: 'Illimité' },
         { label: 'Planification Menus', free: 'Du jour', pro: 'Sur 2 jours', premium: 'Semaine entière' },
         { label: 'Bilans Nutritionnels', free: 'Basique', pro: 'Détaillé', premium: 'Bilan Hebdo Avancé' },
         { label: 'Smart Alerts Coach Yao', free: '✗', pro: '✓', premium: '✓' },
         { label: 'Notifications intelligentes', free: '✗', pro: '✓', premium: '✓' },
-        { label: 'Conseil scanner', free: '5 à vie', pro: '2 / jour', premium: 'Illimité' },
+        { label: 'Conseil scanner', free: '5 offerts', pro: '2 / jour', premium: 'Illimité' },
         { label: 'Graphique de poids', free: '8 sem', pro: '6 mois', premium: '1 an' },
         { label: 'Recalcul auto calories', free: '✗', pro: '✓', premium: '✓' },
         { label: 'Macros par repas (P/G/L)', free: '✗', pro: '✗', premium: '✓' },
@@ -149,7 +149,7 @@ export default function SubscriptionPage() {
                                 <ScanLine size={18} color="var(--accent)" />
                             </div>
                             <div>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '600' }}>{effectiveTier === 'free' ? 'Scans utilisés (à vie)' : 'Scans aujourd\'hui'}</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '600' }}>{effectiveTier === 'free' ? 'Scans utilisés (total)' : 'Scans aujourd\'hui'}</p>
                                 <p style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '800', marginTop: '2px' }}>
                                     {usedScans}
                                     <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '400' }}>

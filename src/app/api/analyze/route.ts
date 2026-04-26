@@ -290,7 +290,7 @@ export async function POST(req: Request) {
     if (!isDirectLogging) {
         if (tier === 'free' && scansFeedbacksToday >= 5) {
             limitReached = true
-            errorMessage = "Tu as atteint ta limite de 5 scans gratuits à vie. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA)."
+            errorMessage = "Tu as atteint ta limite de 5 scans offerts à l'inscription. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA)."
         } else if (tier === 'pro' && scansFeedbacksToday >= 4) {
             limitReached = true
             errorMessage = "Tu as atteint ta limite de 4 scans aujourd'hui. Reviens demain ou achète un scan à l'unité (100 FCFA)."

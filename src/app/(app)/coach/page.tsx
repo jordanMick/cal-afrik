@@ -160,64 +160,78 @@ function parseMenuKind(text: string): { kind: 'tomorrow' | 'week'; cleanText: st
     return null
 }
 
-const LimitPaywall = ({ onPayUnit, onUpgrade }: { onPayUnit: () => void, onUpgrade: () => void }) => (
-    <div style={{
-        margin: '20px 0',
-        padding: '24px',
-        borderRadius: '24px',
-        background: 'linear-gradient(135deg, rgba(var(--bg-secondary-rgb), 0.9), rgba(var(--bg-tertiary-rgb), 0.9))',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(var(--warning-rgb), 0.3)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-        textAlign: 'center',
-        animation: 'fadeInUp 0.5s ease-out'
-    }}>
-        <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔒</div>
-        <h3 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Tes 10 messages sont épuisés !</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px', lineHeight: '1.5' }}>
-            Coach Yao a utilisé tout ton crédit gratuit. <br />
-            Achète un pack pour démarrer une <strong style={{ color: 'var(--warning)' }}>nouvelle discussion</strong> !
-        </p>
+const LimitPaywall = ({ tier, onPayUnit, onUpgrade }: { tier: string, onPayUnit: () => void, onUpgrade: () => void }) => {
+    const isFree = tier === 'free'
+    return (
+        <div style={{
+            margin: '20px 0',
+            padding: '24px',
+            borderRadius: '24px',
+            background: 'linear-gradient(135deg, rgba(var(--bg-secondary-rgb), 0.9), rgba(var(--bg-tertiary-rgb), 0.9))',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(var(--warning-rgb), 0.3)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            textAlign: 'center',
+            animation: 'fadeInUp 0.5s ease-out'
+        }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔒</div>
+            <h3 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>
+                Crédit messages épuisé !
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px', lineHeight: '1.5' }}>
+                {isFree ? (
+                    <>
+                        Coach Yao a utilisé tout ton crédit gratuit. <br />
+                        Achète un pack de <strong style={{ color: 'var(--warning)' }}>10 messages</strong> ou passe au plan supérieur pour continuer !
+                    </>
+                ) : (
+                    <>
+                        Tu as atteint ta limite de messages pour aujourd'hui. <br />
+                        Reviens <strong style={{ color: 'var(--warning)' }}>demain</strong> ou débloque 10 messages maintenant !
+                    </>
+                )}
+            </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button
-                onClick={onPayUnit}
-                style={{
-                    padding: '14px',
-                    borderRadius: '14px',
-                    background: 'var(--warning)',
-                    color: '#000',
-                    border: 'none',
-                    fontWeight: '800',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    boxShadow: '0 8px 20px rgba(var(--warning-rgb), 0.3)',
-                    transition: 'transform 0.2s'
-                }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-            >
-                ⚡️ Débloquer 10 messages (100 FCFA)
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                    onClick={onPayUnit}
+                    style={{
+                        padding: '14px',
+                        borderRadius: '14px',
+                        background: 'var(--warning)',
+                        color: '#000',
+                        border: 'none',
+                        fontWeight: '800',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        boxShadow: '0 8px 20px rgba(var(--warning-rgb), 0.3)',
+                        transition: 'transform 0.2s'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    ⚡️ Débloquer 10 messages (100 FCFA)
+                </button>
 
-            <button
-                onClick={onUpgrade}
-                style={{
-                    padding: '12px',
-                    borderRadius: '14px',
-                    background: 'var(--bg-tertiary)',
-                    color: 'var(--text-secondary)',
-                    border: '0.5px solid var(--border-color)',
-                    fontWeight: '700',
-                    fontSize: '13px',
-                    cursor: 'pointer'
-                }}
-            >
-                💎 Passer au Plan Supérieur
-            </button>
+                <button
+                    onClick={onUpgrade}
+                    style={{
+                        padding: '12px',
+                        borderRadius: '14px',
+                        background: 'var(--bg-tertiary)',
+                        color: 'var(--text-secondary)',
+                        border: '0.5px solid var(--border-color)',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    💎 {tier === 'premium' ? 'Gérer mon Abonnement' : 'Passer au Plan Supérieur'}
+                </button>
+            </div>
         </div>
-    </div>
-)
+    )
+}
 
 
 export default function CoachChatPage() {
@@ -596,13 +610,13 @@ export default function CoachChatPage() {
     const limitReached = messagesUsedToday >= maxMessages && paidChatMessages <= 0
     const activeThread = threads.find(t => t.date === activeThreadDate)
 
-    // La limite est atteinte si : 
+    const isOldThread = activeThread?.date !== todayDate
+    const isQuotaReached = messagesUsedToday >= maxMessages && paidChatMessages <= 0
+    
+    // La limite de CHAT est atteinte si : 
     // 1. On est sur le thread d'aujourd'hui ET (quota global atteint ET pas de messages payés)
     // 2. OU si c'est un ancien thread (on ne peut pas réécrire dans le passé par défaut)
-    const activeThreadLimitReached = !!activeThread && (
-        activeThread.date !== todayDate ||
-        (messagesUsedToday >= maxMessages && paidChatMessages <= 0)
-    )
+    const activeThreadLimitReached = !!activeThread && (isOldThread || isQuotaReached)
 
     /**
      * Ajoute le menu suggéré dans la vue de planning "Aujourd'hui" (slot concerné)
@@ -864,62 +878,62 @@ export default function CoachChatPage() {
                             {/* Bouton "Ajouter au Scanner" — menu créneau (DATA block) */}
                             {parsed && parsed.dataItems && parsed.slot && (
                                 <button
-                                    onClick={() => !activeThreadLimitReached && handleAddToPlanning(parsed.dataItems!, parsed.slot!, msg.content)}
-                                    disabled={activeThreadLimitReached}
+                                    onClick={() => !isOldThread && handleAddToPlanning(parsed.dataItems!, parsed.slot!, msg.content)}
+                                    disabled={isOldThread}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
                                         borderRadius: '14px',
-                                        background: activeThreadLimitReached ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #10b981, #059669)',
-                                        color: activeThreadLimitReached ? 'var(--text-muted)' : '#fff',
+                                        background: isOldThread ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #10b981, #059669)',
+                                        color: isOldThread ? 'var(--text-muted)' : '#fff',
                                         border: 'none',
                                         fontSize: '13px',
                                         fontWeight: '700',
-                                        cursor: activeThreadLimitReached ? 'not-allowed' : 'pointer',
+                                        cursor: isOldThread ? 'not-allowed' : 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        boxShadow: activeThreadLimitReached ? 'none' : '0 6px 16px rgba(16,185,129,0.3)',
+                                        boxShadow: isOldThread ? 'none' : '0 6px 16px rgba(16,185,129,0.3)',
                                         transition: 'all 0.2s',
-                                        opacity: activeThreadLimitReached ? 0.6 : 1
+                                        opacity: isOldThread ? 0.6 : 1
                                     }}
-                                    onMouseEnter={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(-1px)')}
-                                    onMouseLeave={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(0)')}
+                                    onMouseEnter={e => !isOldThread && (e.currentTarget.style.transform = 'translateY(-1px)')}
+                                    onMouseLeave={e => !isOldThread && (e.currentTarget.style.transform = 'translateY(0)')}
                                 >
-                                    {activeThreadLimitReached ? '🔒 Quota atteint' : '📲 Envoyer au Planning (Aujourd\'hui)'}
+                                    {isOldThread ? '🔒 Thread archivé' : '📲 Envoyer au Planning (Aujourd\'hui)'}
                                 </button>
                             )}
                             {/* Bouton "Ajouter au Scanner" — menu demain ou semaine */}
                             {menuKind && (
                                 <button
-                                    onClick={() => !activeThreadLimitReached && handleAddMenuToPlanning(menuKind.kind, menuKind.cleanText)}
-                                    disabled={activeThreadLimitReached}
+                                    onClick={() => !isOldThread && handleAddMenuToPlanning(menuKind.kind, menuKind.cleanText)}
+                                    disabled={isOldThread}
                                     style={{
                                         marginTop: '10px',
                                         padding: '10px 18px',
                                         borderRadius: '14px',
-                                        background: activeThreadLimitReached 
+                                        background: isOldThread 
                                             ? 'var(--bg-tertiary)'
                                             : (menuKind.kind === 'tomorrow' ? 'linear-gradient(135deg, #2563eb, #60a5fa)' : 'linear-gradient(135deg, #f59e0b, #d97706)'),
-                                        color: activeThreadLimitReached ? 'var(--text-muted)' : '#fff',
+                                        color: isOldThread ? 'var(--text-muted)' : '#fff',
                                         border: 'none',
                                         fontSize: '13px',
                                         fontWeight: '700',
-                                        cursor: activeThreadLimitReached ? 'not-allowed' : 'pointer',
+                                        cursor: isOldThread ? 'not-allowed' : 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        boxShadow: activeThreadLimitReached 
+                                        boxShadow: isOldThread 
                                             ? 'none'
                                             : (menuKind.kind === 'tomorrow' ? '0 6px 16px rgba(37,99,235,0.3)' : '0 6px 16px rgba(245,158,11,0.3)'),
                                         transition: 'all 0.2s',
-                                        opacity: activeThreadLimitReached ? 0.6 : 1
+                                        opacity: isOldThread ? 0.6 : 1
                                     }}
-                                    onMouseEnter={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(-1px)')}
-                                    onMouseLeave={e => !activeThreadLimitReached && (e.currentTarget.style.transform = 'translateY(0)')}
+                                    onMouseEnter={e => !isOldThread && (e.currentTarget.style.transform = 'translateY(-1px)')}
+                                    onMouseLeave={e => !isOldThread && (e.currentTarget.style.transform = 'translateY(0)')}
                                 >
-                                    {activeThreadLimitReached 
-                                        ? '🔒 Quota atteint' 
+                                    {isOldThread 
+                                        ? '🔒 Thread archivé' 
                                         : `${menuKind.kind === 'tomorrow' ? '📅' : '🗓️'} Envoyer au Planning (${menuKind.kind === 'tomorrow' ? 'Demain' : 'Semaine'})`
                                     }
                                 </button>
@@ -949,6 +963,7 @@ export default function CoachChatPage() {
 
                 {activeThreadLimitReached && (
                     <LimitPaywall
+                        tier={effectiveTier}
                         onPayUnit={handlePayForSuggestion}
                         onUpgrade={() => router.push('/settings/subscription')}
                     />

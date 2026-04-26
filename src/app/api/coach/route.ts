@@ -55,8 +55,7 @@ export async function POST(req: NextRequest) {
                 if (paidFeedbacks <= 0) {
                     return NextResponse.json({
                         success: false,
-                        code: 'FREE_LIFETIME_USED',
-                        error: `Tu as déjà utilisé tes ${limit} analyses gratuites à vie. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA) !`,
+                        error: `Tu as déjà utilisé tes ${limit} analyses offertes à l'inscription. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA) !`,
                     }, { status: 403 })
                 }
                 mustUsePaid = true
