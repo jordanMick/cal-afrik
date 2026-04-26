@@ -6,6 +6,9 @@ export default function BottomNav() {
     const router = useRouter()
     const pathname = usePathname()
 
+    const isMainTab = ['/dashboard', '/journal', '/scanner', '/coach', '/profil'].includes(pathname)
+    if (!isMainTab) return null
+
     const tabs = [
         {
             id: 'accueil',

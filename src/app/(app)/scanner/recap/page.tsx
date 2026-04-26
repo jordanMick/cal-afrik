@@ -221,7 +221,7 @@ export default function ScanRecapPage() {
             </div>
 
             {/* ── ACTIONS FIXES EN BAS ───────────────────────── */}
-            <div style={{ position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '16px 20px', background: 'var(--bg-primary)', borderTop: '0.5px solid var(--border-color)', backdropFilter: 'blur(20px)', display: 'flex', gap: '10px', zIndex: 100 }}>
+            <div style={{ position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '16px 20px', background: 'var(--bg-primary)', borderTop: '0.5px solid var(--border-color)', backdropFilter: 'blur(20px)', display: 'flex', gap: '10px', zIndex: 100 }}>
                 <button
                     onClick={() => router.back()}
                     style={{ flex: 1, padding: '14px', borderRadius: '14px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', color: 'var(--text-primary)', fontWeight: '600', fontSize: '14px', cursor: 'pointer' }}
