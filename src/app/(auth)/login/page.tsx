@@ -28,17 +28,39 @@ export default function LoginPage() {
         return err
     }
 
+    const DISPOSABLE_DOMAINS = [
+        'yopmail.com', 'yopmail.fr', 'yopmail.net', 'cool.fr.nf', 'jetable.fr.nf',
+        'nospam.ze.tc', 'nomail.xl.cx', 'mega.zik.dj', 'speed.1s.fr', 'p0p.tw.6x.to',
+        'temp-mail.org', 'guerrillamail.com', 'sharklasers.com', 'mailinator.com',
+        '10minutemail.com', 'trashmail.com', 'dispostable.com'
+    ]
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (isRegister && regStep === 1) {
-            setRegStep(2)
+        // Validation Email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(email)) {
+            setError("L'adresse email n'est pas valide ❌")
             return
         }
 
-        if (isRegister && password !== confirmPassword) {
-            setError("Les mots de passe ne correspondent pas ❌")
-            return
+        if (isRegister) {
+            const domain = email.split('@')[1]?.toLowerCase()
+            if (DISPOSABLE_DOMAINS.includes(domain)) {
+                setError("Les emails jetables ne sont pas autorisés pour garantir la sécurité de ton compte 🛑")
+                return
+            }
+
+            if (regStep === 1) {
+                setRegStep(2)
+                return
+            }
+
+            if (password !== confirmPassword) {
+                setError("Les mots de passe ne correspondent pas ❌")
+                return
+            }
         }
 
         setIsLoading(true)
