@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 import { toast } from 'sonner'
+import ReactMarkdown from 'react-markdown'
 import { Settings, AlertTriangle, X, ShieldAlert, Edit2, Check, Clock, Trash2, User, Bell, LogOut, ChevronDown } from 'lucide-react'
 import NotificationCenter from '@/components/NotificationCenter'
 import PushNotificationManager from '@/components/PushNotificationManager'
@@ -800,9 +801,16 @@ export default function DashboardPage() {
                                 <p style={{ color: smartAlert.level === 'danger' ? 'var(--danger)' : 'var(--warning)', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>
                                     Conseil Coach Yao
                                 </p>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.5', fontWeight: '500' }}>
-                                    {smartAlert.message}
-                                </p>
+                                <div style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.5', fontWeight: '500' }}>
+                                    <ReactMarkdown
+                                        components={{
+                                            p: ({ children }) => <span style={{ display: 'block' }}>{children}</span>,
+                                            strong: ({ children }) => <strong style={{ fontWeight: 700, color: smartAlert.level === 'danger' ? 'var(--danger)' : 'var(--warning)' }}>{children}</strong>,
+                                        }}
+                                    >
+                                        {smartAlert.message}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
                             <button 
                                 onClick={clearSmartAlert}
@@ -916,7 +924,16 @@ export default function DashboardPage() {
                     <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#0a0a0a', border: '1px solid rgba(var(--accent-rgb), 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0, boxShadow: '0 0 15px rgba(var(--accent-rgb), 0.2)' }}>
                         {coachMsg.emoji}
                     </div>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5', fontWeight: '500', flex: 1, paddingRight: '20px' }}>{coachMsg.text}</p>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '13.5px', lineHeight: '1.5', fontWeight: '500', flex: 1, paddingRight: '20px' }}>
+                        <ReactMarkdown
+                            components={{
+                                p: ({ children }) => <span style={{ display: 'inline' }}>{children}</span>,
+                                strong: ({ children }) => <strong style={{ color: 'var(--accent)', fontWeight: 700 }}>{children}</strong>,
+                            }}
+                        >
+                            {coachMsg.text}
+                        </ReactMarkdown>
+                    </div>
                     <button 
                         onClick={() => {
                             setDismissedCoachMsg(coachMsg.text)

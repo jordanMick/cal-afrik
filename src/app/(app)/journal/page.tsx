@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase'
 import { calculateCalorieTarget, getStreakIcon } from '@/lib/nutrition'
 import { checkPermission } from '@/lib/subscription'
 import type { Meal } from '@/types'
-import { ChevronRight } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import { toast } from 'sonner'
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -371,7 +372,21 @@ function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Mea
                             <button onClick={() => setShowCoach(!showCoach)} style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}>
                                 {showCoach ? '💡 Conseil du coach' : '💡 Voir le conseil du coach →'}
                             </button>
-                            {showCoach && <div style={{ background: 'rgba(var(--warning-rgb), 0.06)', borderRadius: '10px', padding: '12px', border: '0.5px solid rgba(var(--warning-rgb), 0.2)' }}><p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6' }}>{meal.coach_message}</p></div>}
+                            {showCoach && (
+                                <div style={{ background: 'rgba(var(--warning-rgb), 0.06)', borderRadius: '10px', padding: '12px', border: '0.5px solid rgba(var(--warning-rgb), 0.2)' }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6' }}>
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ children }) => <p style={{ margin: '0 0 8px 0' }}>{children}</p>,
+                                                strong: ({ children }) => <strong style={{ color: 'var(--warning)', fontWeight: 700 }}>{children}</strong>,
+                                                em: ({ children }) => <em style={{ color: 'var(--accent)' }}>{children}</em>,
+                                            }}
+                                        >
+                                            {meal.coach_message}
+                                        </ReactMarkdown>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                     <div style={{ display: 'flex', gap: '8px' }}>
