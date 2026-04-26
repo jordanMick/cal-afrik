@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Calendar, Trash2 } from 'lucide-react'
+import { ChevronLeft, Calendar, Trash2, ShieldCheck } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -129,12 +130,56 @@ function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Mea
                         </div>
                     </div>
 
+                    {/* HEALTH SCORE SECTION */}
+                    <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '12px 16px', border: '0.5px solid var(--border-color)', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(var(--success-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <ShieldCheck size={18} color="var(--success)" />
+                            </div>
+                            <div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>Score Santé</p>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '800' }}>{meal.health_score || 85}/100</p>
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <p style={{ color: 'var(--success)', fontSize: '11px', fontWeight: '700' }}>Excellent</p>
+                        </div>
+                    </div>
+
+                    {/* MICRO-NUTRIMENTS SECTION */}
+                    <div style={{ marginBottom: '14px' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '8px', paddingLeft: '4px' }}>Micro-nutriments</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <div style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '10px 14px', border: '0.5px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Fibres</span>
+                                <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>{meal.fibers_g || 0}g</span>
+                            </div>
+                            <div style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '10px 14px', border: '0.5px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Sodium</span>
+                                <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>{meal.sodium_mg || 0}mg</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {meal.coach_message && (
                         <div style={{ marginBottom: '14px' }}>
                             <button onClick={() => setShowCoach(!showCoach)} style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: '0.5px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning)', fontWeight: '500', fontSize: '13px', cursor: 'pointer', textAlign: 'left', marginBottom: showCoach ? '8px' : '0' }}>
                                 {showCoach ? '💡 Conseil du coach' : '💡 Voir le conseil du coach →'}
                             </button>
-                            {showCoach && <div style={{ background: 'rgba(var(--warning-rgb), 0.06)', borderRadius: '10px', padding: '14px', border: '0.5px solid rgba(var(--warning-rgb), 0.2)' }}><p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6' }}>{meal.coach_message}</p></div>}
+                            {showCoach && (
+                                <div style={{ background: 'rgba(var(--warning-rgb), 0.06)', borderRadius: '10px', padding: '14px', border: '0.5px solid rgba(var(--warning-rgb), 0.2)' }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6' }}>
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ children }) => <p style={{ marginBottom: '8px' }}>{children}</p>,
+                                                strong: ({ children }) => <strong style={{ color: 'var(--accent)', fontWeight: 700 }}>{children}</strong>,
+                                            }}
+                                        >
+                                            {meal.coach_message}
+                                        </ReactMarkdown>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
