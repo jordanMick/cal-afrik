@@ -353,82 +353,122 @@ function PricingContent() {
 
                 </div>
 
-                {/* CODE PROMO SECTION (collapsible) */}
+                {/* CODE PROMO SECTION (Premium Redesign) */}
                 {!discount && (
-                    <div style={{ marginTop: '40px', marginBottom: '0' }}>
-                        <button
-                            onClick={() => setPromoOpen(o => !o)}
-                            style={{
-                                width: '100%', background: 'transparent', border: 'none',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                gap: '8px', cursor: 'pointer', color: 'var(--text-muted)',
-                                fontSize: '13px', fontWeight: '600', padding: '8px'
-                            }}
-                        >
-                            <span>J'ai un code promo</span>
-                            <span style={{ transition: 'transform 0.25s', transform: promoOpen ? 'rotate(180deg)' : 'rotate(0deg)', fontSize: '10px' }}>▼</span>
-                        </button>
-
-                        {promoOpen && (
+                    <div style={{ marginTop: '48px', textAlign: 'center' }}>
+                        {!promoOpen ? (
+                            <button
+                                onClick={() => setPromoOpen(true)}
+                                style={{
+                                    background: 'var(--bg-secondary)',
+                                    border: '1.5px dashed var(--border-color)',
+                                    borderRadius: '16px',
+                                    padding: '12px 24px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    cursor: 'pointer',
+                                    margin: '0 auto',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    color: 'var(--text-secondary)'
+                                }}
+                            >
+                                <span style={{ fontSize: '20px' }}>🎁</span>
+                                <span style={{ fontSize: '14px', fontWeight: '600' }}>J'ai un code privilège</span>
+                            </button>
+                        ) : (
                             <div style={{
-                                marginTop: '12px',
+                                animation: 'fadeIn 0.4s ease-out',
                                 background: 'var(--bg-secondary)',
                                 border: '1px solid var(--border-color)',
-                                borderRadius: '20px',
-                                padding: '20px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px'
+                                borderRadius: '24px',
+                                padding: '24px',
+                                maxWidth: '380px',
+                                margin: '0 auto',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                                position: 'relative',
+                                overflow: 'hidden'
                             }}>
-                                <input
-                                    type="text"
-                                    value={promoInput}
-                                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                                    placeholder="ENTREZ VOTRE CODE"
-                                    style={{
-                                        width: '100%',
-                                        background: 'var(--bg-primary)',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '12px',
-                                        padding: '14px 16px',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '16px',
-                                        fontWeight: '700',
-                                        letterSpacing: '3px',
-                                        textAlign: 'center',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
-                                <button
-                                    onClick={() => {
-                                        if (promoInput === profile?.promo_code) {
-                                            const userDiscount = (profile as any)?.promo_discount || 10
-                                            setIsApplying(true)
-                                            setTimeout(() => {
-                                                router.push(`/upgrade?discount=${userDiscount}`)
-                                                setIsApplying(false)
-                                                toast.success(`Réduction de ${userDiscount}% appliquée !`)
-                                            }, 800)
-                                        } else {
-                                            toast.error('Code invalide')
-                                        }
-                                    }}
-                                    disabled={isApplying || !promoInput}
-                                    style={{
-                                        width: '100%',
-                                        padding: '14px',
-                                        background: promoInput ? 'linear-gradient(135deg, var(--accent), var(--success))' : 'var(--bg-tertiary)',
-                                        border: 'none',
-                                        borderRadius: '12px',
-                                        color: promoInput ? '#fff' : 'var(--text-muted)',
-                                        fontSize: '14px',
-                                        fontWeight: '700',
-                                        cursor: promoInput ? 'pointer' : 'default',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    {isApplying ? 'Vérification...' : 'Appliquer la réduction'}
-                                </button>
+                                {/* Decorative elements for voucher look */}
+                                <div style={{ position: 'absolute', top: '50%', left: '-12px', width: '24px', height: '24px', background: 'var(--bg-primary)', borderRadius: '50%', transform: 'translateY(-50%)', border: '1px solid var(--border-color)' }} />
+                                <div style={{ position: 'absolute', top: '50%', right: '-12px', width: '24px', height: '24px', background: 'var(--bg-primary)', borderRadius: '50%', transform: 'translateY(-50%)', border: '1px solid var(--border-color)' }} />
+                                
+                                <h3 style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px' }}>Coupon Privilège</h3>
+                                
+                                <div style={{ position: 'relative', marginBottom: '16px' }}>
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={promoInput}
+                                        onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                                        placeholder="EX: CALAFRIK24"
+                                        style={{
+                                            width: '100%',
+                                            background: 'var(--bg-primary)',
+                                            border: '2px dashed var(--border-color)',
+                                            borderRadius: '14px',
+                                            padding: '16px',
+                                            color: 'var(--text-primary)',
+                                            fontSize: '18px',
+                                            fontWeight: '800',
+                                            letterSpacing: '4px',
+                                            textAlign: 'center',
+                                            outline: 'none',
+                                            transition: 'border-color 0.3s'
+                                        }}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={() => setPromoOpen(false)}
+                                        style={{
+                                            flex: 1,
+                                            padding: '14px',
+                                            background: 'transparent',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '12px',
+                                            color: 'var(--text-secondary)',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (promoInput === profile?.promo_code) {
+                                                const userDiscount = (profile as any)?.promo_discount || 10
+                                                setIsApplying(true)
+                                                setTimeout(() => {
+                                                    router.push(`/upgrade?discount=${userDiscount}`)
+                                                    setIsApplying(false)
+                                                    toast.success(`Réduction de ${userDiscount}% appliquée ! 🎊`)
+                                                }, 1200)
+                                            } else {
+                                                toast.error('Code invalide ou expiré')
+                                            }
+                                        }}
+                                        disabled={isApplying || !promoInput}
+                                        style={{
+                                            flex: 2,
+                                            padding: '14px',
+                                            background: promoInput ? 'linear-gradient(135deg, var(--accent), var(--success))' : 'var(--bg-tertiary)',
+                                            border: 'none',
+                                            borderRadius: '12px',
+                                            color: '#fff',
+                                            fontSize: '14px',
+                                            fontWeight: '700',
+                                            cursor: promoInput ? 'pointer' : 'default',
+                                            transition: 'all 0.3s',
+                                            opacity: isApplying ? 0.7 : 1,
+                                            boxShadow: promoInput ? '0 8px 20px rgba(var(--success-rgb), 0.2)' : 'none'
+                                        }}
+                                    >
+                                        {isApplying ? 'Validation...' : 'Activer'}
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
