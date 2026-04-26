@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const LeafIcon = ({ size = 20, className = "", style = {} }: { size?: number, className?: string, style?: React.CSSProperties }) => (
+export const LeafIcon = ({ size = 20, color, className = "", style = {} }: { size?: number, color?: string, className?: string, style?: React.CSSProperties }) => (
     <svg 
         width={size} 
         height={size} 
@@ -18,7 +18,7 @@ export const LeafIcon = ({ size = 20, className = "", style = {} }: { size?: num
         </defs>
         <path 
             d="M20 85C20 85 35 15 85 15C85 15 70 85 20 85Z" 
-            fill="url(#leafGradient)" 
+            fill={color || "url(#leafGradient)"} 
         />
         <path 
             d="M20 85L52 50" 
