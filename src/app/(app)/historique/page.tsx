@@ -91,75 +91,50 @@ function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Mea
                         {imageUploading ? '⏳' : '📷'} {imageUploading ? 'Envoi...' : 'Changer'}
                     </button>
                 </div>
-                <div style={{ padding: '20px' }}>
+                <div style={{ padding: '18px 20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                         <h2 style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: '600', flex: 1, marginRight: '12px' }}>{meal.custom_name || 'Repas'}</h2>
-                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>{formatTime(meal.logged_at)}</span>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{formatTime(meal.logged_at)}</span>
                     </div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '16px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'} {MEAL_TYPE_LABELS[meal.meal_type] || ''} · {meal.portion_g}g</p>
-
+                    <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '14px' }}>{MEAL_TYPE_EMOJIS[meal.meal_type] || '🍽️'} · {meal.portion_g}g</p>
                     <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '16px', textAlign: 'center', marginBottom: '12px', border: '0.5px solid rgba(var(--accent-rgb), 0.2)' }}>
                         <p style={{ color: 'var(--accent)', fontSize: '44px', fontWeight: '700', letterSpacing: '-2px' }}>{Math.round(meal.calories)}</p>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>kilocalories</p>
                     </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '16px' }}>
                         {[
-                            { label: 'Protéines', value: meal.protein_g, color: 'var(--success)', pct: macros.protein },
-                            { label: 'Glucides', value: meal.carbs_g, color: 'var(--accent)', pct: macros.carbs },
-                            { label: 'Lipides', value: meal.fat_g, color: 'var(--warning)', pct: macros.fat },
+                            { label: 'Protéines', value: meal.protein_g, color: 'var(--success)', bg: 'rgba(var(--success-rgb), 0.1)' },
+                            { label: 'Glucides', value: meal.carbs_g, color: 'var(--accent)', bg: 'rgba(var(--accent-rgb), 0.1)' },
+                            { label: 'Lipides', value: meal.fat_g, color: 'var(--warning)', bg: 'rgba(var(--warning-rgb), 0.1)' }
                         ].map(m => (
-                            <div key={m.label} style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
-                                <p style={{ color: m.color, fontSize: '18px', fontWeight: '600' }}>{m.value}g</p>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '10px', marginTop: '2px' }}>{m.label}</p>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '9px', marginTop: '2px' }}>{m.pct}%</p>
+                            <div key={m.label} style={{ background: m.bg, borderRadius: '14px', padding: '12px 8px', textAlign: 'center', border: `0.5px solid ${m.color}20` }}>
+                                <p style={{ color: m.color, fontSize: '16px', fontWeight: '800' }}>{Math.round(m.value)}g</p>
+                                <p style={{ color: m.color, opacity: 0.8, fontSize: '9px', marginTop: '2px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{m.label}</p>
                             </div>
                         ))}
                     </div>
 
-                    <div style={{ marginBottom: '16px' }}>
-                        <div style={{ display: 'flex', height: '4px', borderRadius: '4px', overflow: 'hidden', gap: '2px' }}>
-                            <div style={{ width: `${macros.protein}%`, background: 'var(--success)', borderRadius: '4px 0 0 4px' }} />
-                            <div style={{ width: `${macros.carbs}%`, background: 'var(--accent)' }} />
-                            <div style={{ width: `${macros.fat}%`, background: 'var(--warning)', borderRadius: '0 4px 4px 0' }} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                            <span style={{ color: 'var(--success)', fontSize: '9px' }}>Prot. {macros.protein}%</span>
-                            <span style={{ color: 'var(--accent)', fontSize: '9px' }}>Gluc. {macros.carbs}%</span>
-                            <span style={{ color: 'var(--warning)', fontSize: '9px' }}>Lip. {macros.fat}%</span>
-                        </div>
-                    </div>
-
-                    {/* HEALTH SCORE SECTION */}
-                    <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '12px 16px', border: '0.5px solid var(--border-color)', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(var(--success-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <ShieldCheck size={18} color="var(--success)" />
+                    {meal.health_score !== undefined && meal.health_score !== null && (
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '14px', marginBottom: '16px', border: '0.5px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>Score santé</p>
+                                <p style={{ color: meal.health_score >= 7 ? '#10b981' : meal.health_score >= 5 ? '#f59e0b' : '#ef4444', fontSize: '14px', fontWeight: '800' }}>{meal.health_score.toFixed(1)} /10</p>
                             </div>
-                            <div>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>Score Santé</p>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '800' }}>{meal.health_score || 85}/100</p>
-                            </div>
+                            {meal.vitamins && meal.vitamins.length > 0 && (
+                                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '0.5px solid var(--border-color)' }}>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', marginBottom: '8px' }}>Micro-nutriments clés :</p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        {meal.vitamins.map((v, i) => (
+                                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{v.name}</p>
+                                                <p style={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: '600' }}>{v.value} <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: '800', marginLeft: '4px' }}>{v.percentage}%</span></p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <p style={{ color: 'var(--success)', fontSize: '11px', fontWeight: '700' }}>Excellent</p>
-                        </div>
-                    </div>
-
-                    {/* MICRO-NUTRIMENTS SECTION */}
-                    <div style={{ marginBottom: '14px' }}>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '8px', paddingLeft: '4px' }}>Micro-nutriments</p>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                            <div style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '10px 14px', border: '0.5px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Fibres</span>
-                                <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>{meal.fibers_g || 0}g</span>
-                            </div>
-                            <div style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '10px 14px', border: '0.5px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Sodium</span>
-                                <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>{meal.sodium_mg || 0}mg</span>
-                            </div>
-                        </div>
-                    </div>
+                    )}
 
                     {meal.coach_message && (
                         <div style={{ marginBottom: '14px' }}>
@@ -171,8 +146,9 @@ function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Mea
                                     <div style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6' }}>
                                         <ReactMarkdown
                                             components={{
-                                                p: ({ children }) => <p style={{ marginBottom: '8px' }}>{children}</p>,
-                                                strong: ({ children }) => <strong style={{ color: 'var(--accent)', fontWeight: 700 }}>{children}</strong>,
+                                                p: ({ children }) => <p style={{ margin: '0 0 8px 0' }}>{children}</p>,
+                                                strong: ({ children }) => <strong style={{ color: 'var(--warning)', fontWeight: 700 }}>{children}</strong>,
+                                                em: ({ children }) => <em style={{ color: 'var(--accent)' }}>{children}</em>,
                                             }}
                                         >
                                             {meal.coach_message}
