@@ -223,8 +223,14 @@ export default function DashboardPage() {
             if (user?.email) {
                 setUserEmail(user.email)
             }
-            if (meta?.avatar_url || meta?.picture) {
-                setAvatarUrl(meta.avatar_url || meta.picture)
+            
+            // Priorité : Métadonnées Auth (live) > Profil DB (persistant) > Picture Google
+            if (meta?.avatar_url) {
+                setAvatarUrl(meta.avatar_url)
+            } else if (profile?.avatar_url) {
+                setAvatarUrl(profile.avatar_url)
+            } else if (meta?.picture) {
+                setAvatarUrl(meta.picture)
             }
         }
         loadAvatar()

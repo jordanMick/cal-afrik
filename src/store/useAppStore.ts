@@ -225,6 +225,7 @@ export const useAppStore = create<AppState>()(
                     })
                 }
 
+                // Récupérer l'avatar si présent dans le profil ou garder l'actuel
                 set({ profile })
                 // Déclencher un refresh des repas pour recalculer les slots avec le nouveau profil
                 if (get().todayMeals.length > 0) {

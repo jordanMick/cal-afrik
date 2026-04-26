@@ -1,0 +1,158 @@
+================================================================================
+CAL-AFRIK : RÉCAPITULATIF COMPLET DES FONCTIONNALITÉS & QUOTAS
+================================================================================
+Date de révision : 26 Avril 2026
+Objectif : Vérification pré-marketing (V1.0)
+
+--------------------------------------------------------------------------------
+1. MODULE SCANNER IA (Analyse de l'assiette)
+--------------------------------------------------------------------------------
+Description : Analyse de photo de plat pour détection automatique des calories.
+- Détection d'aliments africains et internationaux.
+- Estimation automatique des portions (g) et des macros (P, G, L).
+- Possibilité de corriger manuellement les portions après scan.
+- Ajout manuel : Toujours disponible (ne consomme pas de crédit scan).
+
+QUOTAS PAR PLAN :
+- FREE    : 5 scans offerts (cadeau à l'inscription).
+- PRO     : 4 scans par jour (reset quotidien à 00:00).
+- PREMIUM : Illimité.
+
+--------------------------------------------------------------------------------
+2. COACH YAO (Chat Nutritionnel & IA)
+--------------------------------------------------------------------------------
+Description : Expert en nutrition africaine disponible par chat.
+- Conseils personnalisés basés sur le profil (poids, sexe, objectif).
+- Mémoire du journal (Yao sait ce que vous avez mangé aujourd'hui).
+- Suggestions de menus directs dans le chat.
+
+QUOTAS PAR PLAN :
+- FREE    : 10 messages offerts (cadeau à l'inscription).
+- PRO     : 10 messages par jour (reset quotidien à 00:00).
+- PREMIUM : 30 messages par jour (reset quotidien à 00:00).
+
+--------------------------------------------------------------------------------
+3. PLANNING INTELLIGENT (Menus & Suggestions)
+--------------------------------------------------------------------------------
+Description : Centralisation des repas suggérés par Coach Yao.
+- Les menus générés dans le chat apparaissent dans l'onglet Planning.
+- Bouton "Choisir ce repas" pour basculer vers le scanner avec pré-remplissage.
+
+QUOTAS D'ACCÈS :
+- FREE    : Accès au planning d'AUJOURD'HUI uniquement.
+- PRO     : Accès AUJOURD'HUI + DEMAIN.
+- PREMIUM : Accès AUJOURD'HUI + DEMAIN + SEMAINE complète.
+
+RÈGLE DE LOGIQUE (CRITIQUE) :
+- Enregistrer une suggestion dans le journal (bouton "Choisir ce repas") est
+  bloqué si le quota de SCAN est atteint (car c'est une analyse IA).
+
+--------------------------------------------------------------------------------
+4. JOURNAL & BILANS
+--------------------------------------------------------------------------------
+Description : Historique et analyse de la consommation.
+- Journal : Liste chronologique des repas, calories consommées vs objectif.
+- Rapports (Bilan) : Graphique hebdomadaire et analyse textuelle IA.
+  (Réservé aux plans PRO et PREMIUM).
+
+--------------------------------------------------------------------------------
+5. SYSTÈME DE PAIEMENT & PACKS (MAKETOU)
+--------------------------------------------------------------------------------
+Architecture : Intégration Maketou (Mobile Money / Carte).
+- Abonnement PRO (Mensuel/Trimestriel/Annuel).
+- Abonnement PREMIUM (Mensuel/Trimestriel/Annuel).
+- Packs à l'unité (100 FCFA) :
+  * Pack Suggestion : +10 messages Coach.
+  * Pack Scan : +1 scan photo + 1 conseil nutritionnel.
+- Idempotence : Un paiement traité ne peut pas être doublonné.
+- Utilisation des crédits : Les packs payants prennent le relais AUTOMATIQUEMENT
+  dès que le quota gratuit du jour est atteint.
+
+--------------------------------------------------------------------------------
+6. LOGIQUE DE QUOTAS & TERMINOLOGIE
+--------------------------------------------------------------------------------
+- Suppression de la mention "à vie" : Remplacée par "offert à l'inscription"
+  ou "total" pour une image plus professionnelle.
+- Flexibilité : L'utilisateur peut toujours LOGUER ses repas manuellement
+  même s'il n'a plus de crédits IA.
+- Suggestions : Demander un menu dans le chat ne consomme PAS de scan,
+  uniquement des messages.
+
+--------------------------------------------------------------------------------
+7. ARCHITECTURE TECHNIQUE
+--------------------------------------------------------------------------------
+- Frontend : Next.js (App Router), CSS Vanilla, Framer Motion (Animations).
+- Backend : Supabase (DB, Auth, Edge Functions).
+- IA : Claude (Anthropic) pour Coach Yao, Gemini (Google) pour l'analyse de photos.
+- Mobile : Progressive Web App (PWA) optimisée pour mobile.
+
+================================================================================
+8. STRUCTURE DÉTAILLÉE (Fichier par Fichier)
+================================================================================
+
+--- 📂 PAGES PRINCIPALES (src/app/(app)/) ---
+- coach/page.tsx           : Interface du Chat avec Yao (envoi msg, bulles, suggestions).
+- scanner/page.tsx         : Caméra, analyse visuelle et formulaire d'ajout manuel.
+- journal/page.tsx         : Tableau de bord calorique et liste des repas du jour.
+- menus/page.tsx           : Gestion du planning (Aujourd'hui / Demain / Semaine).
+- historique/page.tsx      : Calendrier pour revoir les repas des jours passés.
+- notifications/page.tsx   : Liste des alertes et messages système reçus.
+- profil/page.tsx          : Modification des infos (Nom, Poids, Objectif, Allergies).
+- settings/subscription/   : Boutique, gestion des plans et suivi des crédits.
+- settings/reports/        : Génération des graphiques et bilans nutritionnels.
+
+--- 📂 AUTHENTIFICATION (src/app/(auth)/) ---
+- login/page.tsx           : Formulaire de connexion (Email / Mot de passe).
+- register/page.tsx        : Formulaire d'inscription (Initialisation du profil).
+- forgot-password/         : Demande de lien de récupération.
+- reset-password/          : Saisie du nouveau mot de passe après récupération.
+- onboarding/page.tsx      : Questionnaire de bienvenue (calcul des besoins caloriques).
+
+--- 📂 MOTEURS API (src/app/api/) ---
+- chat/route.ts            : Cerveau de Yao (Claude). Définit sa personnalité et ses règles.
+- analyze/route.ts         : Moteur de vision (Gemini). Traduit l'image en calories/macros.
+- coach/route.ts           : Gère les conseils spécifiques après un scan d'aliment.
+- payments/checkout/       : Initialise les paiements via Maketou.
+- payments/verify/         : Valide les transactions et active les crédits/abonnements.
+- meals/route.ts           : Gère l'enregistrement et la suppression des repas en DB.
+- user/weight/route.ts     : Enregistre l'évolution du poids pour les graphiques.
+- foods/route.ts           : Accès à la base de données des aliments locaux.
+
+--- 📂 LOGIQUE & DONNÉES (src/lib/ & src/store/) ---
+- subscription.ts          : Définition stricte des quotas et des règles par plan.
+- supabase.ts              : Configuration de l'accès à la base de données.
+- dietaryContext.ts        : Traduit le profil utilisateur pour l'IA (allergies, etc.).
+- useAppStore.ts           : Mémoire vive (Zustand) pour une navigation fluide et rapide.
+- useTheme.ts              : Mémorise le choix du mode sombre/clair.
+
+--- 📂 COMPOSANTS UI & DESIGN (src/components/) ---
+- ui/                      : Dossier contenant les briques de base (Button, Card, Input, Badge, etc.).
+- scanner/                 : Composants du scanner (ScannerHeader, MealRecap, ManualFoodForm).
+- AppLogo.tsx              : Design du logo mortier/feuilles (SVG).
+- ThemeSelector.tsx        : Gestion du mode Sombre / Clair.
+- NotificationCenter.tsx   : Système d'alertes et notifications utilisateur.
+- Splash.tsx               : Écran de chargement animé au démarrage de l'app.
+
+--- 📂 CONFIGURATION & TYPES (Racine) ---
+- next.config.mjs          : Configuration du serveur et des domaines d'images.
+- tailwind.config.ts       : Définition des couleurs, polices et styles visuels.
+- package.json             : Liste de toutes les bibliothèques utilisées par l'app.
+- recap.txt                : (Ce fichier) Manuel complet de l'application.
+- src/store/useAppStore.ts : Gestion de l'état global (Profil, Repas, Quotas, Avatar).
+
+--------------------------------------------------------------------------------
+9. NOTES TECHNIQUES & MAINTENANCE (POST-FIX)
+--------------------------------------------------------------------------------
+- Fix Photo de Profil (Avril 2026) : 
+  L'avatar est désormais synchronisé entre Supabase Auth et la table `user_profiles`. 
+  Ceci évite la disparition de la photo lors d'un changement de plan (upgrade).
+  
+- MIGRATION SQL REQUISE :
+  Pour que la persistance soit parfaite, exécuter ce SQL dans le dashboard Supabase :
+  ```sql
+  ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+  ```
+
+================================================================================
+FIN DU RÉCAPITULATIF
+================================================================================

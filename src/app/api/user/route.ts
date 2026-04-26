@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
             protein_target_g: body.protein_target_g ?? existingProfile?.protein_target_g,
             carbs_target_g: body.carbs_target_g ?? existingProfile?.carbs_target_g,
             fat_target_g: body.fat_target_g ?? existingProfile?.fat_target_g,
+            avatar_url: body.avatar_url ?? existingProfile?.avatar_url,
             preferred_cuisines: body.preferred_cuisines ?? existingProfile?.preferred_cuisines,
             dietary_restrictions: body.dietary_restrictions ?? existingProfile?.dietary_restrictions,
             language: body.language || existingProfile?.language || 'fr',

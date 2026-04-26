@@ -190,8 +190,13 @@ export default function ProfilPage() {
         const loadAvatar = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             const meta = user?.user_metadata
-            if (meta?.avatar_url || meta?.picture) {
-                setAvatarUrl(meta.avatar_url || meta.picture)
+            // Priorité : Métadonnées Auth (live) > Profil DB (persistant) > Picture Google
+            if (meta?.avatar_url) {
+                setAvatarUrl(meta.avatar_url)
+            } else if (profile?.avatar_url) {
+                setAvatarUrl(profile.avatar_url)
+            } else if (meta?.picture) {
+                setAvatarUrl(meta.picture)
             }
         }
         loadAvatar()
@@ -251,12 +256,15 @@ export default function ProfilPage() {
                 .from('meal-images')
                 .getPublicUrl(filePath)
 
-            // Update user metadata
+            // 2. Mettre à jour les métadonnées Auth
             const { error: updateError } = await supabase.auth.updateUser({
                 data: { avatar_url: publicUrl }
             })
 
             if (updateError) throw updateError
+
+            // 3. Mettre à jour la table user_profiles pour la persistence
+            await supabase.from('user_profiles').update({ avatar_url: publicUrl }).eq('user_id', user.id)
 
             setAvatarUrl(publicUrl)
             toast.success('Photo de profil mise à jour !')

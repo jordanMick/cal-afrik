@@ -45,6 +45,7 @@ export interface UserProfile {
     promo_code?: string
     promo_discount?: number
     dismissed_promo_date?: string | null
+    avatar_url?: string
 }
 
 export interface WeightLog {
