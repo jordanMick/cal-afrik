@@ -64,7 +64,28 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
         return result
     }
 
-    const chartData = selectedPeriod === '8w' ? getWeeklyData(8)
+    // Vue quotidienne : dernière pesée par jour
+    const getDailyData = (daysCount: number) => {
+        const result: { label: string; weight: number; date: string }[] = []
+        const now = new Date()
+        for (let i = daysCount - 1; i >= 0; i--) {
+            const d = new Date(now)
+            d.setDate(now.getDate() - i)
+            const dateStr = d.toISOString().split('T')[0]
+            const label = d.toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 3)
+            const dayEntries = entries.filter(e => e.date.startsWith(dateStr))
+            if (dayEntries.length > 0) {
+                result.push({ label, weight: dayEntries[dayEntries.length - 1].weight, date: dateStr })
+            } else if (result.length > 0) {
+                // Pour éviter les trous dans le graphe, on peut optionnellement répéter le dernier poids
+                // Mais ici on préfère ne rien afficher s'il n'y a pas de pesée ce jour-là pour la courbe.
+            }
+        }
+        return result
+    }
+
+    const chartData = selectedPeriod === '7d' ? getDailyData(7)
+        : selectedPeriod === '8w' ? getWeeklyData(8)
         : selectedPeriod === '6m' ? getMonthlyData(6)
         : getMonthlyData(12)
     
@@ -118,6 +139,7 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                 <p style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>Période</p>
                 <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '8px', padding: '2px', border: '0.5px solid var(--border-color)' }}>
                     {[
+                        { id: '7d', label: '7 j', locked: false },
                         { id: '8w', label: '8 sem', locked: false },
                         { id: '6m', label: '6 mois', locked: !isPro },
                         { id: '1y', label: '1 an', locked: !isPremium },
@@ -126,10 +148,10 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                             key={p.id}
                             onClick={() => p.locked ? null : setSelectedPeriod(p.id)}
                             style={{
-                                padding: '4px 10px',
+                                padding: '4px 8px',
                                 borderRadius: '6px',
                                 border: 'none',
-                                fontSize: '10px',
+                                fontSize: '9px',
                                 fontWeight: '700',
                                 background: selectedPeriod === p.id ? 'var(--bg-tertiary)' : 'transparent',
                                 color: p.locked ? 'var(--text-muted)' : selectedPeriod === p.id ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -370,7 +392,7 @@ export default function RapportPage() {
     const [weightEntries, setWeightEntries] = useState<{ date: string; weight: number }[]>([])
     const [showWeightModal, setShowWeightModal] = useState(false)
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
-    const [selectedPeriod, setSelectedPeriod] = useState('8w')
+    const [selectedPeriod, setSelectedPeriod] = useState('7d')
     const [isLoading, setIsLoading] = useState(true)
     const [targetUpdate, setTargetUpdate] = useState<{ old: number, new: number, isLocked: boolean } | null>(null)
 
