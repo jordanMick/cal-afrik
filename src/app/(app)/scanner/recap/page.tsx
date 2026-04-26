@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, X, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
+import { getEffectiveTier } from '@/lib/subscription'
 
 interface VitaminEntry {
     name: string
@@ -56,6 +57,8 @@ export default function ScanRecapPage() {
     const dailyConsumed = dailyCalories
     const remaining = calorieTarget - dailyConsumed - data.totalCalories
     const exceeded = remaining < 0
+
+    const tier = getEffectiveTier(profile)
 
     const scoreColor = data.healthScore
         ? data.healthScore >= 7 ? '#10b981' : data.healthScore >= 5 ? '#f59e0b' : '#ef4444'
@@ -185,7 +188,7 @@ export default function ScanRecapPage() {
                 </div>
 
                 {/* Health Score */}
-                {data.healthScore !== null && (
+                {data.healthScore !== null && tier !== 'free' && (
                     <div style={{ background: 'var(--bg-secondary)', borderRadius: '18px', padding: '16px 18px', marginBottom: '16px', border: `0.5px solid ${scoreColor}25` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                             <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>Score santé</p>
@@ -205,12 +208,12 @@ export default function ScanRecapPage() {
                 )}
 
                 {/* Bouton voir les détails */}
-                {data.vitamins.length > 0 && (
+                {data.vitamins.length > 0 && tier !== 'free' && (
                     <button
                         onClick={() => setShowVitamins(true)}
                         style={{ width: '100%', padding: '15px 18px', borderRadius: '18px', background: 'transparent', border: '0.5px solid rgba(14,165,233,0.35)', color: '#0ea5e9', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}
                     >
-                        <span>🔬 Voir les micro-nutriments</span>
+                        <span>🔬 Voir les micro-nutriments {tier === 'pro' && '🔒'}</span>
                         <ChevronRight size={18} />
                     </button>
                 )}
@@ -270,41 +273,58 @@ export default function ScanRecapPage() {
                                     </button>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                    {data.vitamins.map((v, i) => {
-                                        const pct = Math.min(v.percentage, 100)
-                                        const barColor = pct >= 50 ? '#10b981' : pct >= 25 ? '#0ea5e9' : '#f59e0b'
-                                        return (
-                                            <motion.div
-                                                key={i}
-                                                initial={{ opacity: 0, x: -10 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: i * 0.06 }}
-                                            >
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                                                    <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>{v.name}</p>
-                                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>{v.value}</p>
-                                                        <p style={{ color: barColor, fontSize: '12px', fontWeight: '800' }}>{v.percentage}%</p>
-                                                        <p style={{ color: 'var(--text-muted)', fontSize: '10px' }}>AJR</p>
-                                                    </div>
-                                                </div>
-                                                <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden' }}>
+                                {tier === 'pro' ? (
+                                    <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                        <div style={{ fontSize: '40px', marginBottom: '12px' }}>💎</div>
+                                        <h3 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Exclusivité Premium</h3>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: '1.5', marginBottom: '24px', padding: '0 20px' }}>
+                                            L'analyse détaillée des micro-nutriments (Vitamines, Minéraux) est réservée aux abonnés Premium.
+                                        </p>
+                                        <button 
+                                            onClick={() => router.push('/upgrade')}
+                                            style={{ background: 'linear-gradient(135deg, var(--accent), #10b981)', color: '#fff', border: 'none', padding: '14px 32px', borderRadius: '14px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(var(--accent-rgb), 0.3)' }}
+                                        >
+                                            Débloquer Premium
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                            {data.vitamins.map((v, i) => {
+                                                const pct = Math.min(v.percentage, 100)
+                                                const barColor = pct >= 50 ? '#10b981' : pct >= 25 ? '#0ea5e9' : '#f59e0b'
+                                                return (
                                                     <motion.div
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${pct}%` }}
-                                                        transition={{ duration: 0.5, delay: 0.1 + i * 0.06 }}
-                                                        style={{ height: '100%', background: `linear-gradient(90deg, ${barColor}, ${barColor}99)`, borderRadius: '3px' }}
-                                                    />
-                                                </div>
-                                            </motion.div>
-                                        )
-                                    })}
-                                </div>
-
-                                <p style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', marginTop: '24px', lineHeight: '1.5' }}>
-                                    Valeurs estimées par l'IA. Elles peuvent varier selon la préparation et les ingrédients exacts.
-                                </p>
+                                                        key={i}
+                                                        initial={{ opacity: 0, x: -10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: i * 0.06 }}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                                                            <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>{v.name}</p>
+                                                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                                                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>{v.value}</p>
+                                                                <p style={{ color: barColor, fontSize: '12px', fontWeight: '800' }}>{v.percentage}%</p>
+                                                                <p style={{ color: 'var(--text-muted)', fontSize: '10px' }}>AJR</p>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                            <motion.div
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${pct}%` }}
+                                                                transition={{ duration: 0.5, delay: 0.1 + i * 0.06 }}
+                                                                style={{ height: '100%', background: `linear-gradient(90deg, ${barColor}, ${barColor}99)`, borderRadius: '3px' }}
+                                                            />
+                                                        </div>
+                                                    </motion.div>
+                                                )
+                                            })}
+                                        </div>
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', marginTop: '24px', lineHeight: '1.5' }}>
+                                            Valeurs estimées par l'IA. Elles peuvent varier selon la préparation et les ingrédients exacts.
+                                        </p>
+                                    </>
+                                )}
                             </div>
                         </motion.div>
                     </>
