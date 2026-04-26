@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { LeafIcon } from '@/components/icons/LeafIcon'
+import { motion } from 'framer-motion'
 
 const toLocalDateString = (date = new Date()) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -118,8 +120,38 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     if (loading) {
         return (
-            <div className="loading-container">
-                <div className="spinner" />
+            <div style={{
+                position: 'fixed', inset: 0, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 99999
+            }}>
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}
+                >
+                    <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'linear-gradient(135deg, var(--branding), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 32px rgba(16,185,129,0.3)' }}>
+                        <LeafIcon size={48} color="#fff" />
+                    </div>
+                    <motion.h1 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.4 }}
+                        style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}
+                    >
+                        Cal Afrik
+                    </motion.h1>
+                </motion.div>
+
+                {/* Petit loader discret en bas */}
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                    style={{ position: 'absolute', bottom: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
+                >
+                    <div className="spinner" style={{ width: '24px', height: '24px', borderWidth: '2px' }} />
+                    <span style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '500', letterSpacing: '1px', textTransform: 'uppercase' }}>Chargement...</span>
+                </motion.div>
             </div>
         )
     }

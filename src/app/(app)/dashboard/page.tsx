@@ -122,9 +122,9 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     position: 'absolute', inset: 0,
                     background: 'rgba(var(--bg-primary-rgb), 0.6)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 10, padding: '20px', textAlign: 'center'
+                    zIndex: 10, padding: '20px', textAlign: 'center', backdropFilter: 'blur(4px)'
                 }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#fff', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', marginBottom: '6px', border: '1px solid var(--border-color)', boxShadow: '0 4px 10px rgba(var(--success-rgb), 0.2)' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '8px', border: '1px solid var(--border-color)', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
                         🔒
                     </div>
                     <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '2px' }}>Analyses Coach Yao</p>
