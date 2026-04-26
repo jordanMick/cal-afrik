@@ -256,16 +256,17 @@ function PricingContent() {
                         <div style={{
                             background: 'var(--bg-secondary)',
                             border: currentTier === 'pro' ? '1.5px solid var(--border-color)' : '1.5px solid var(--accent)',
-                            borderRadius: '20px',
-                            padding: '28px 24px',
+                            borderRadius: '24px',
+                            padding: '32px 24px',
                             display: 'flex', flexDirection: 'column',
                             position: 'relative',
-                            boxShadow: currentTier === 'pro' ? 'none' : '0 15px 40px rgba(var(--accent-rgb),0.1)',
-                            opacity: currentTier === 'pro' ? 0.9 : 1
+                            boxShadow: currentTier === 'pro' ? 'none' : '0 20px 50px rgba(var(--accent-rgb),0.12)',
+                            opacity: currentTier === 'pro' ? 0.9 : 1,
+                            transition: 'transform 0.3s'
                         }}>
-                            {currentTier !== 'pro' && (
-                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--accent), #60a5fa)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Recommandé</div>
-                            )}
+                            <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '6px 20px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--accent), #60a5fa)', color: '#fff', fontSize: '11px', fontWeight: '800', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)' }}>
+                                {currentTier === 'pro' ? 'Votre Plan' : 'Populaire'}
+                            </div>
 
                             <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Pro</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
@@ -275,7 +276,17 @@ function PricingContent() {
                                 )}
                                 <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
-                            <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '20px 0' }} />
+                            
+                            {/* ÉCONOMIE PRO */}
+                            {duration !== '1' && (
+                                <div style={{ marginBottom: '16px' }}>
+                                    <span style={{ background: 'rgba(var(--accent-rgb), 0.1)', color: 'var(--accent)', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700' }}>
+                                        📉 Éco. {duration === '3' ? '500' : '4 000'} FCFA
+                                    </span>
+                                </div>
+                            )}
+
+                            <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '16px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     'Scans Photo ILLIMITÉS',
@@ -295,8 +306,8 @@ function PricingContent() {
                             <button
                                 disabled={loading !== null || currentTier === 'pro'}
                                 onClick={() => handleSubscribe('pro')}
-                                style={{ width: '100%', height: '48px', background: currentTier === 'pro' ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--accent), #60a5fa)', border: currentTier === 'pro' ? '0.5px solid var(--border-color)' : 'none', borderRadius: '12px', color: currentTier === 'pro' ? 'var(--text-muted)' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer', boxShadow: currentTier === 'pro' ? 'none' : '0 4px 20px rgba(var(--accent-rgb),0.3)' }}>
-                                {loading === 'pro' ? 'Initialisation...' : currentTier === 'pro' ? 'Plan actuel' : 'Passer au Pro →'}
+                                style={{ width: '100%', height: '52px', background: currentTier === 'pro' ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--accent), #60a5fa)', border: currentTier === 'pro' ? '1px solid var(--border-color)' : 'none', borderRadius: '14px', color: currentTier === 'pro' ? 'var(--text-muted)' : '#fff', fontSize: '14px', fontWeight: '700', cursor: (loading || currentTier === 'pro') ? 'default' : 'pointer', boxShadow: currentTier === 'pro' ? 'none' : '0 8px 24px rgba(var(--accent-rgb),0.3)' }}>
+                                {loading === 'pro' ? 'Initialisation...' : currentTier === 'pro' ? 'Plan actuel' : 'Passer au Pro'}
                             </button>
                         </div>
                     )}
@@ -306,15 +317,16 @@ function PricingContent() {
                         <div style={{
                             background: 'var(--bg-secondary)',
                             border: currentTier === 'premium' ? '1.5px solid var(--border-color)' : '1.5px solid var(--success)',
-                            borderRadius: '20px',
-                            padding: '28px 24px',
+                            borderRadius: '24px',
+                            padding: '32px 24px',
                             display: 'flex', flexDirection: 'column',
                             position: 'relative',
-                            boxShadow: currentTier === 'premium' ? 'none' : '0 15px 40px rgba(var(--success-rgb),0.12)',
+                            boxShadow: currentTier === 'premium' ? 'none' : '0 25px 60px rgba(var(--success-rgb),0.15)',
+                            transition: 'transform 0.3s'
                         }}>
-                            {currentTier !== 'premium' && (
-                                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '5px 18px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--success), #34d399)', color: '#fff', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>Elite</div>
-                            )}
+                            <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '6px 20px', borderRadius: '20px', background: 'linear-gradient(135deg, var(--success), #34d399)', color: '#fff', fontSize: '11px', fontWeight: '800', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 4px 12px rgba(var(--success-rgb), 0.3)' }}>
+                                {currentTier === 'premium' ? 'Votre Plan' : 'Meilleure Offre'}
+                            </div>
 
                             <h2 style={{ color: 'var(--text-primary)', fontSize: '20px', fontWeight: '700', marginBottom: '16px' }}>Premium</h2>
                             <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'baseline', gap: '6px' }}>
@@ -324,7 +336,17 @@ function PricingContent() {
                                 )}
                                 <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
-                            <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '20px 0' }} />
+
+                            {/* ÉCONOMIE PREMIUM */}
+                            {duration !== '1' && (
+                                <div style={{ marginBottom: '16px' }}>
+                                    <span style={{ background: 'rgba(var(--success-rgb), 0.1)', color: 'var(--success)', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700' }}>
+                                        🔥 Éco. {duration === '3' ? '1 000' : '8 000'} FCFA
+                                    </span>
+                                </div>
+                            )}
+
+                            <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '16px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     'Tout le contenu du Plan PRO',
@@ -345,8 +367,8 @@ function PricingContent() {
                             <button
                                 disabled={loading !== null || currentTier === 'premium'}
                                 onClick={() => handleSubscribe('premium')}
-                                style={{ width: '100%', height: '48px', background: currentTier === 'premium' ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--success), #34d399)', border: currentTier === 'premium' ? '0.5px solid var(--border-color)' : 'none', borderRadius: '12px', color: currentTier === 'premium' ? 'var(--text-muted)' : '#fff', fontSize: '14px', fontWeight: '600', cursor: (loading || currentTier === 'premium') ? 'default' : 'pointer', boxShadow: currentTier === 'premium' ? 'none' : '0 4px 20px rgba(var(--success-rgb),0.3)' }}>
-                                {loading === 'premium' ? 'Initialisation...' : currentTier === 'premium' ? 'Plan actuel' : 'Accéder au Premium →'}
+                                style={{ width: '100%', height: '52px', background: currentTier === 'premium' ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, var(--success), #34d399)', border: currentTier === 'premium' ? '1px solid var(--border-color)' : 'none', borderRadius: '14px', color: currentTier === 'premium' ? 'var(--text-muted)' : '#fff', fontSize: '14px', fontWeight: '700', cursor: (loading || currentTier === 'premium') ? 'default' : 'pointer', boxShadow: currentTier === 'premium' ? 'none' : '0 8px 24px rgba(var(--success-rgb),0.3)' }}>
+                                {loading === 'premium' ? 'Initialisation...' : currentTier === 'premium' ? 'Plan actuel' : 'Accéder au Premium'}
                             </button>
                         </div>
                     )}
