@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { AppLogo } from '@/components/icons/AppLogo'
 import { motion } from 'framer-motion'
 
 const toLocalDateString = (date = new Date()) =>
@@ -37,10 +36,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             if (!session) {
                 // Toujours pas de session ? On vérifie si on est sur une page protégée
                 const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/onboarding') || pathname.startsWith('/reset-password')
-                
+
                 if (!isAuthPage) {
                     router.push('/login')
-                    return 
+                    return
                 }
                 setLoading(false)
                 return
@@ -68,7 +67,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
             // ✅ Mettre en place l'abonnement direct à la base de données (Temps réel)
             if (!(window as any)._profileSubscribed && session.user.id) {
-                ;(window as any)._profileSubscribed = true
+                ; (window as any)._profileSubscribed = true
                 supabase.channel('global_profile_updates')
                     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_profiles', filter: `user_id=eq.${session.user.id}` }, (payload) => {
                         console.log('[Realtime] Modif profil détectée:', payload.new)
@@ -92,7 +91,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     console.error('Error loading meals:', mealErr)
                 }
             }
-            
+
             setLoading(false)
 
         } catch (err) {
@@ -129,8 +128,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     transition={{ duration: 0.5, ease: 'easeOut' }}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
                 >
-                    <AppLogo size={100} />
-                    <motion.h1 
+                    <img
+                        src="/logo.png"
+                        alt="Cal Afrik"
+                        style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '22px' }}
+                    />
+                    <motion.h1
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2, duration: 0.4 }}
@@ -141,7 +144,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 </motion.div>
 
                 {/* Petit loader discret en bas */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5, duration: 0.5 }}
