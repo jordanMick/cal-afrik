@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { LeafIcon } from '@/components/icons/LeafIcon'
+import { AppLogo } from '@/components/icons/AppLogo'
 import { motion } from 'framer-motion'
 
 const toLocalDateString = (date = new Date()) =>
@@ -127,11 +127,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.5, ease: 'easeOut' }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
                 >
-                    <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'linear-gradient(135deg, var(--branding), var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 32px rgba(16,185,129,0.3)' }}>
-                        <LeafIcon size={48} color="#fff" />
-                    </div>
+                    <AppLogo size={100} />
                     <motion.h1 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
