@@ -93,6 +93,7 @@ export default function ScanRecapPage() {
             if (json.success && json.data) {
                 addMeal(json.data)
                 sessionStorage.removeItem('scan_recap')
+                sessionStorage.removeItem('scan_state_backup')
                 router.push('/journal')
             } else if (json.code === 'LIMIT_REACHED') {
                 router.push('/upgrade')

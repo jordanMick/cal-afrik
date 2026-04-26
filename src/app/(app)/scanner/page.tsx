@@ -87,7 +87,7 @@ export default function ScannerPage() {
                 if (backup.coachMessage) setCoachMessage(backup.coachMessage)
                 if (backup.capturedImage) setCapturedImage(backup.capturedImage)
                 if (backup.scanMode) setScanMode(backup.scanMode)
-                sessionStorage.removeItem('scan_state_backup')
+                // On ne supprime plus le backup ici pour éviter qu'un re-rendu Next.js en arrière-plan ne le détruise.
             } catch (e) {
                 console.error('Failed to restore scan state', e)
             }
@@ -438,6 +438,7 @@ export default function ScannerPage() {
         setSelectedFoods([]); setSuggestions([]); setMealName('')
         setTotalCaloriesCoach(0); setShowManualForm(false); setShowRecap(false); setCoachMessage('')
         setHealthScore(null); setVitamins([])
+        sessionStorage.removeItem('scan_state_backup')
         try {
             // Compression prioritaire
             const compressedFile = await compressImage(file)
@@ -1016,7 +1017,14 @@ export default function ScannerPage() {
 
                     {!isAnalyzing && (
                         <button
-                            onClick={() => { setImage(null); setSuggestions([]); setSelectedFoods([]); setMealName(''); setShowManualForm(false) }}
+                            onClick={() => { 
+                                setImage(null); 
+                                setSuggestions([]); 
+                                setSelectedFoods([]); 
+                                setMealName(''); 
+                                setShowManualForm(false);
+                                sessionStorage.removeItem('scan_state_backup');
+                            }}
                             style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: '40px', height: '40px', color: '#fff', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}
                         >
                             ✕

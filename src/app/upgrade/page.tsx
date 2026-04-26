@@ -297,6 +297,7 @@ function PricingContent() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     'Scans Photo ILLIMITÉS',
+                                    'Score Santé des repas (IA)',
                                     'Graphiques de progression (6 mois)',
                                     'Recalcul auto des objectifs',
                                     'Historique détaillé sur 6 mois',
@@ -364,6 +365,7 @@ function PricingContent() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
                                     'Tout le contenu du Plan PRO',
+                                    'Analyse des Micro-nutriments',
                                     'Menus Hebdomadaires Personnalisés',
                                     'Accès aux menus futurs (7 jours)',
                                     'Historique ILLIMITÉ',
