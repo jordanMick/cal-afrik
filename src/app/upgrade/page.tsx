@@ -296,7 +296,7 @@ function PricingContent() {
                             <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '16px 0' }} />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px', flex: 1 }}>
                                 {[
-                                    'Scans Photo ILLIMITÉS',
+                                    '4 Scans Photo / jour',
                                     'Score Santé des repas (IA)',
                                     'Graphiques de progression (6 mois)',
                                     'Recalcul auto des objectifs',
