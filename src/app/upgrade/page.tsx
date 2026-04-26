@@ -127,12 +127,12 @@ function PricingContent() {
                 </div>
 
                 {discount > 0 && (
-                    <div style={{ 
-                        background: 'rgba(16, 185, 129, 0.1)', 
-                        border: '1px dashed #10b981', 
-                        borderRadius: '16px', 
-                        padding: '12px 20px', 
-                        marginBottom: '32px', 
+                    <div style={{
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px dashed #10b981',
+                        borderRadius: '16px',
+                        padding: '12px 20px',
+                        marginBottom: '32px',
                         textAlign: 'center',
                         display: 'flex',
                         alignItems: 'center',
@@ -147,9 +147,9 @@ function PricingContent() {
                 )}
 
                 {/* SELECTEUR DE DURÉE */}
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
                     marginBottom: '40px',
                     background: 'rgba(255,255,255,0.03)',
                     padding: '4px',
@@ -178,14 +178,14 @@ function PricingContent() {
                         >
                             {d.label}
                             {d.discount && (
-                                <span style={{ 
-                                    position: 'absolute', 
-                                    top: '-8px', 
-                                    right: '-4px', 
-                                    background: '#10b981', 
-                                    color: '#fff', 
-                                    fontSize: '9px', 
-                                    padding: '2px 6px', 
+                                <span style={{
+                                    position: 'absolute',
+                                    top: '-8px',
+                                    right: '-4px',
+                                    background: '#10b981',
+                                    color: '#fff',
+                                    fontSize: '9px',
+                                    padding: '2px 6px',
                                     borderRadius: '10px',
                                     fontWeight: '800'
                                 }}>
@@ -205,7 +205,7 @@ function PricingContent() {
                 `}</style>
 
                 {/* CARDS GRID */}
-                <div 
+                <div
                     className="pricing-grid"
                     style={{
                         display: 'grid',
@@ -276,7 +276,7 @@ function PricingContent() {
                                 )}
                                 <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>FCFA / {duration === '1' ? 'mois' : duration === '3' ? '3 mois' : 'an'}</span>
                             </div>
-                            
+
                             {/* ÉCONOMIE PRO */}
                             {duration !== '1' && (
                                 <div style={{ marginBottom: '16px' }}>
@@ -414,9 +414,9 @@ function PricingContent() {
                                 {/* Decorative elements for voucher look */}
                                 <div style={{ position: 'absolute', top: '50%', left: '-12px', width: '24px', height: '24px', background: 'var(--bg-primary)', borderRadius: '50%', transform: 'translateY(-50%)', border: '1px solid var(--border-color)' }} />
                                 <div style={{ position: 'absolute', top: '50%', right: '-12px', width: '24px', height: '24px', background: 'var(--bg-primary)', borderRadius: '50%', transform: 'translateY(-50%)', border: '1px solid var(--border-color)' }} />
-                                
+
                                 <h3 style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px' }}>Coupon Privilège</h3>
-                                
+
                                 <div style={{ position: 'relative', marginBottom: '16px' }}>
                                     <input
                                         autoFocus
@@ -509,8 +509,8 @@ function PricingContent() {
                 )}
 
                 {/* FOOTER */}
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', marginTop: '40px', opacity: 0.6 }}>
-                    Cal Afrik © 2024 · Plateforme de Nutrition Intelligente
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px', marginTop: '32px' }}>
+                    Cal Afrik · Nutrition africaine intelligente 🧠
                 </p>
             </div>
         </div>
