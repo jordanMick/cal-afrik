@@ -72,6 +72,28 @@ export default function ScannerPage() {
     const [healthScore, setHealthScore] = useState<number | null>(null)
     const [vitamins, setVitamins] = useState<{ name: string; value: string; percentage: number }[]>([])
 
+    // ─── Restauration de l'état si retour depuis la page récap ───────
+    useEffect(() => {
+        const backupStr = sessionStorage.getItem('scan_state_backup')
+        if (backupStr) {
+            try {
+                const backup = JSON.parse(backupStr)
+                if (backup.image) setImage(backup.image)
+                if (backup.suggestions) setSuggestions(backup.suggestions)
+                if (backup.selectedFoods) setSelectedFoods(backup.selectedFoods)
+                if (backup.mealName) setMealName(backup.mealName)
+                if (backup.healthScore !== undefined) setHealthScore(backup.healthScore)
+                if (backup.vitamins) setVitamins(backup.vitamins)
+                if (backup.coachMessage) setCoachMessage(backup.coachMessage)
+                if (backup.capturedImage) setCapturedImage(backup.capturedImage)
+                if (backup.scanMode) setScanMode(backup.scanMode)
+                sessionStorage.removeItem('scan_state_backup')
+            } catch (e) {
+                console.error('Failed to restore scan state', e)
+            }
+        }
+    }, [])
+
     // ─── Pont Coach → Scanner : traitement du pre-fill ───────────────
     useEffect(() => {
         if (!pendingScannerPrefill || !pendingScannerPrefill.items.length) return
@@ -1295,6 +1317,9 @@ export default function ScannerPage() {
                                     ? Math.round(selectedFoods.reduce((s, f) => s + f.confidence, 0) / selectedFoods.length)
                                     : 80,
                             }
+                            sessionStorage.setItem('scan_state_backup', JSON.stringify({
+                                image, suggestions, selectedFoods, mealName, healthScore, vitamins, coachMessage, capturedImage, scanMode
+                            }))
                             sessionStorage.setItem('scan_recap', JSON.stringify(recapData))
                             router.push('/scanner/recap')
                         }}
