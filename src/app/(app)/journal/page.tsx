@@ -519,7 +519,7 @@ export default function RapportPage() {
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: '#fff', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(var(--success-rgb), 0.25)' }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(var(--success-rgb), 0.25)' }}>
                             <img src="/logo.png" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
                         </div>
                         <div>

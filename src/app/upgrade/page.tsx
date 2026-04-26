@@ -509,8 +509,8 @@ function PricingContent() {
                 )}
 
                 {/* FOOTER */}
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px', marginTop: '32px' }}>
-                    Cal Afrik · Fait avec ❤️ pour l'Afrique
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', marginTop: '40px', opacity: 0.6 }}>
+                    Cal Afrik © 2024 · Plateforme de Nutrition Intelligente
                 </p>
             </div>
         </div>

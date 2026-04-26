@@ -1047,7 +1047,7 @@ export default function DashboardPage() {
                 <button onClick={() => fileInputRef.current?.click()} style={{
                     position: 'fixed', bottom: '80px', right: '24px',
                     width: '58px', height: '58px', borderRadius: '50%',
-                    background: '#fff',
+                    background: 'var(--bg-secondary)',
                     border: '1px solid var(--border-color)', fontSize: '26px', color: 'var(--success)',
                     boxShadow: '0 8px 24px rgba(var(--success-rgb), 0.4)',
                     cursor: 'pointer', zIndex: 1000,
