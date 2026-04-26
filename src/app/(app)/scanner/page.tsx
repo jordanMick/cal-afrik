@@ -69,6 +69,8 @@ export default function ScannerPage() {
     const [scanMode, setScanMode] = useState<'ai' | 'barcode'>('ai')
     const [isScanningBarcode, setIsScanningBarcode] = useState(false)
     const [manualFood, setManualFood] = useState<ManualFood>({ name_standard: '', portion_g: 200, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, category: 'plats_composes' })
+    const [healthScore, setHealthScore] = useState<number | null>(null)
+    const [vitamins, setVitamins] = useState<{ name: string; value: string; percentage: number }[]>([])
 
     // ─── Pont Coach → Scanner : traitement du pre-fill ───────────────
     useEffect(() => {
@@ -413,6 +415,7 @@ export default function ScannerPage() {
         setIsAnalyzing(true)
         setSelectedFoods([]); setSuggestions([]); setMealName('')
         setTotalCaloriesCoach(0); setShowManualForm(false); setShowRecap(false); setCoachMessage('')
+        setHealthScore(null); setVitamins([])
         try {
             // Compression prioritaire
             const compressedFile = await compressImage(file)
@@ -462,6 +465,8 @@ export default function ScannerPage() {
             setMealName(json.meal_name || 'Repas détecté')
             setTotalCaloriesCoach(json.total_calories || 0)
             setCoachMessage(json.coach_message || '')
+            setHealthScore(typeof json.health_score === 'number' ? json.health_score : null)
+            setVitamins(Array.isArray(json.vitamins) ? json.vitamins : [])
             const enriched: EnrichedSuggestion[] = (json.data as ScanResultItem[]).flatMap((item): EnrichedSuggestion[] => {
                 const suggs = item.suggestions ?? []
                 if (suggs.length > 0) return suggs.map((s): EnrichedSuggestion => ({ ...s, portion_g: item.portion_g ?? 0, calories_detected: item.calories_detected ?? 0, protein_detected: item.protein_detected ?? 0, carbs_detected: item.carbs_detected ?? 0, fat_detected: item.fat_detected ?? 0, confidence: item.confidence ?? 0, detected: item.detected ?? 'Inconnu', fromCoach: false }))
@@ -1317,6 +1322,39 @@ export default function ScannerPage() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* ── HEALTH SCORE ─────────────────────────────── */}
+                        {healthScore !== null && (
+                            <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '14px 16px', marginBottom: '12px', border: '0.5px solid rgba(245,158,11,0.2)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}>Health Score</p>
+                                    <p style={{ color: '#f59e0b', fontSize: '15px', fontWeight: '800' }}>{healthScore.toFixed(1)} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>/ 10</span></p>
+                                </div>
+                                <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${(healthScore / 10) * 100}%`, background: 'linear-gradient(90deg, #f59e0b, #fcd34d)', borderRadius: '4px', transition: 'width 0.6s ease' }} />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── VITAMINES ────────────────────────────────── */}
+                        {vitamins.length > 0 && (
+                            <div style={{ background: 'var(--bg-primary)', borderRadius: '14px', padding: '14px 16px', marginBottom: '14px', border: '0.5px solid rgba(14,165,233,0.15)' }}>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700', marginBottom: '12px' }}>Micro-nutriments</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {vitamins.map((v, i) => (
+                                        <div key={i}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '600' }}>{v.name}</p>
+                                                <p style={{ color: '#0ea5e9', fontSize: '12px', fontWeight: '700' }}>{v.value} · <span style={{ color: 'var(--text-muted)', fontWeight: '500' }}>{v.percentage}% AJR</span></p>
+                                            </div>
+                                            <div style={{ height: '4px', background: 'var(--bg-tertiary)', borderRadius: '2px', overflow: 'hidden' }}>
+                                                <div style={{ height: '100%', width: `${Math.min(v.percentage, 100)}%`, background: 'linear-gradient(90deg, #0ea5e9, #38bdf8)', borderRadius: '2px', transition: 'width 0.5s ease' }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* On n'affiche le conseil du coach QUE si ce n'est pas un menu déjà suggéré par Yao ou venant du planning */}
                         {!selectedFoods.some(f => f.id.startsWith('suggested-') || f.id.startsWith('coach-') || f.fromCoach) && (

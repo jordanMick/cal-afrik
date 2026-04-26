@@ -119,13 +119,27 @@ Retourne exclusivement ce format, sans texte avant ou après :
       }
     }
   ],
-  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 }
+  "total_summary": { 
+    "calories": 0, 
+    "proteins": 0, 
+    "carbs": 0, 
+    "lipids": 0,
+    "health_score": 7.5, 
+    "vitamins": [
+      { "name": "Vitamine C", "value": "12mg", "percentage": 15 }
+    ]
+  }
 }
+
+DIRECTIVES NUTRITIONNELLES AVANCÉES :
+- health_score (1 à 10) : Évalue la qualité nutritionnelle globale. Bonus pour les fibres, les légumes et les protéines maigres. Malus pour le sel excessif, les graisses saturées et les produits ultra-transformés.
+- vitamins : Identifie les 3 à 5 micro-nutriments (vitamines/minéraux) les plus significatifs du plat. Estime la quantité et le % des Apports Journaliers Recommandés (AJR).
+
 Vérifie deux fois la structure syntaxique de ton JSON. Chaque objet dans "items" doit être parfaitement fermé par une virgule ou un crochet.
 Si aucune image n'est fournie, si l'image est illisible, ou si l'image ne montre pas de nourriture, renvoie:
 {
   "items": [],
-  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0 }
+  "total_summary": { "calories": 0, "proteins": 0, "carbs": 0, "lipids": 0, "health_score": 0, "vitamins": [] }
 }
 
 ERREUR DE POIDS CRITIQUE :
@@ -845,11 +859,18 @@ export async function POST(req: Request) {
 
         console.log("✅ Analysis successful")
 
+        const healthScore = Number(geminiResult?.total_summary?.health_score) || null
+        const vitamins = Array.isArray(geminiResult?.total_summary?.vitamins)
+            ? geminiResult.total_summary.vitamins
+            : []
+
         return NextResponse.json({
             success: true,
             meal_name: finalMealName,
             total_calories: totalCalories,
             data: results,
+            health_score: healthScore,
+            vitamins: vitamins,
             coach_message: results.length === 0 ? "Je n'ai pas réussi à identifier d'aliments sur cette photo. Assure-toi que ton plat est bien visible et éclairé, ou ajoute-le manuellement." : null
         })
 
