@@ -33,6 +33,7 @@ export default function SurpriseManager() {
     const [isSpinning, setIsSpinning] = useState(false)
     const [wonDiscount, setWonDiscount] = useState<number>(10)
     const [copied, setCopied] = useState(false)
+    const [timeLeft, setTimeLeft] = useState<number | null>(null)
     const router = useRouter()
 
     useEffect(() => {
@@ -40,6 +41,42 @@ export default function SurpriseManager() {
             setSurpriseStatus('pending')
         }
     }, [profile, surpriseStatus, setSurpriseStatus])
+
+    // Gestion du timer de 30 minutes
+    useEffect(() => {
+        if (surpriseStatus === 'pending' || surpriseStatus === 'shown') {
+            const STORAGE_KEY = `surprise_start_${profile?.user_id}`
+            let startTime = localStorage.getItem(STORAGE_KEY)
+            
+            if (!startTime) {
+                startTime = Date.now().toString()
+                localStorage.setItem(STORAGE_KEY, startTime)
+            }
+
+            const interval = setInterval(() => {
+                const now = Date.now()
+                const elapsed = now - parseInt(startTime!)
+                const total = 30 * 60 * 1000 // 30 minutes
+                const remaining = total - elapsed
+
+                if (remaining <= 0) {
+                    setSurpriseStatus('claimed') // On le cache
+                    clearInterval(interval)
+                    setTimeLeft(0)
+                } else {
+                    setTimeLeft(remaining)
+                }
+            }, 1000)
+
+            return () => clearInterval(interval)
+        }
+    }, [surpriseStatus, profile?.user_id, setSurpriseStatus])
+
+    const formatTime = (ms: number) => {
+        const mins = Math.floor(ms / 60000)
+        const secs = Math.floor((ms % 60000) / 1000)
+        return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
 
     // Bannière dashboard : afficher si pending/shown ET que l'utilisateur a un code promo
     const showBanner = (surpriseStatus === 'pending' || surpriseStatus === 'shown') && !!(profile?.promo_code)
@@ -72,26 +109,26 @@ export default function SurpriseManager() {
         if (isSpinning) return
         setIsSpinning(true)
 
-        // Probabilité : 1/3 de chance de 5%, 2/3 de chance de 10%
+        // Probabilité : 1/2 de chance de 5%, 1/2 de chance de 10% (selon le design 50/50 actuel)
         const rand = Math.random()
-        let won: typeof WHEEL_SEGMENTS[0]
         let targetAngleMid: number
+        let wonVal: number
 
         if (rand < 0.5) {
-            won = WHEEL_SEGMENTS[0] // 5% → milieu à 90°
+            wonVal = 5 // 5% → milieu de la tranche 1 (0-180) = 90°
             targetAngleMid = 90
         } else {
-            won = WHEEL_SEGMENTS[1] // 10% → milieu à 270°
+            wonVal = 10 // 10% → milieu de la tranche 2 (180-360) = 270°
             targetAngleMid = 270
         }
 
         // Pour amener targetAngleMid en haut (0°), on tourne de (360 - targetAngleMid)
         const toTop = (360 - targetAngleMid) % 360
         const tours = 7
-        const finalRotation = 360 * tours + toTop + (Math.random() * 10 - 5)
+        const finalRotation = 360 * tours + toTop
 
         setRotation(finalRotation)
-        setWonDiscount(won.discount)
+        setWonDiscount(wonVal)
 
         setTimeout(async () => {
             setIsSpinning(false)
@@ -104,7 +141,7 @@ export default function SurpriseManager() {
                 await supabase
                     .from('user_profiles')
                     .update({ 
-                        promo_discount: won.discount,
+                        promo_discount: wonVal,
                         promo_code: profile?.promo_code || newCode 
                     })
                     .eq('user_id', session.user.id)
@@ -132,7 +169,7 @@ export default function SurpriseManager() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     onClick={handleOpen}
                     style={{
-                        background: 'linear-gradient(135deg, #2563eb, #10b981)',
+                        background: 'linear-gradient(135deg, #065f46, #10b981)',
                         padding: '16px 20px',
                         borderRadius: '24px',
                         marginBottom: '24px',
@@ -140,7 +177,7 @@ export default function SurpriseManager() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        boxShadow: '0 8px 30px rgba(99, 102, 241, 0.2)',
+                        boxShadow: '0 8px 30px rgba(16, 185, 129, 0.2)',
                         position: 'relative',
                         border: '1px solid rgba(255,255,255,0.1)'
                     }}
@@ -150,8 +187,15 @@ export default function SurpriseManager() {
                             <Gift color="#fff" size={20} />
                         </div>
                         <div>
-                            <p style={{ color: '#fff', fontSize: '13px', fontWeight: '800' }}>Ta réduction de {profile?.promo_discount || discount}% 🎁</p>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <p style={{ color: '#fff', fontSize: '13px', fontWeight: '800' }}>Ta réduction de {profile?.promo_discount || discount}% 🎁</p>
+                                {timeLeft !== null && (
+                                    <span style={{ fontSize: '10px', color: '#fca5a5', fontWeight: '800', background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+                                        ⏱️ {formatTime(timeLeft)}
+                                    </span>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                                 <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px' }}>Code :</p>
                                 <span style={{ color: '#fff', fontSize: '14px', fontWeight: '900', letterSpacing: '1px', background: 'rgba(0,0,0,0.2)', padding: '2px 8px', borderRadius: '6px' }}>
                                     {profile?.promo_code}
@@ -178,9 +222,9 @@ export default function SurpriseManager() {
                     animate={{ opacity: 1, y: 0 }}
                     onClick={handleOpen}
                     style={{
-                        background: 'linear-gradient(135deg, #10b981, #34d399)',
+                        background: 'linear-gradient(135deg, #10b981, #065f46)',
                         padding: '16px 20px',
-                        borderRadius: '20px',
+                        borderRadius: '24px',
                         marginBottom: '24px',
                         cursor: 'pointer',
                         display: 'flex',
@@ -188,19 +232,25 @@ export default function SurpriseManager() {
                         justifyContent: 'space-between',
                         boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        border: '1px solid rgba(255,255,255,0.1)'
                     }}
                 >
-                    <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.2 }}>
+                    <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.1 }}>
                         <Sparkles size={60} color="#fff" />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', zIndex: 1 }}>
-                        <div style={{ background: 'rgba(255,255,255,0.2)', padding: '10px', borderRadius: '14px' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.2)', padding: '10px', borderRadius: '14px', position: 'relative' }}>
                             <Gift color="#fff" size={24} />
+                            {timeLeft !== null && (
+                                <div style={{ position: 'absolute', bottom: '-8px', right: '-8px', background: '#ef4444', color: '#fff', fontSize: '8px', padding: '2px 4px', borderRadius: '4px', fontWeight: '900' }}>
+                                    {formatTime(timeLeft)}
+                                </div>
+                            )}
                         </div>
                         <div>
                             <p style={{ color: '#fff', fontSize: '14px', fontWeight: '800' }}>On t'a préparé une surprise !</p>
-                            <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '12px' }}>Clique ici pour découvrir ton cadeau 🎁</p>
+                            <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '12px' }}>Clique ici pour découvrir ton cadeau {timeLeft !== null && `(Expire dans ${formatTime(timeLeft)})`} 🎁</p>
                         </div>
                     </div>
                     <motion.div animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>
@@ -236,7 +286,7 @@ export default function SurpriseManager() {
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
                                         On a préparé une surprise rien que pour toi. Tente ta chance pour obtenir une réduction exclusive !
                                     </p>
-                                    <button onClick={() => setStep(2)} style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #10b981, #34d399)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)' }}>
+                                    <button onClick={() => setStep(2)} style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #10b981, #065f46)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)' }}>
                                         Découvrir ma surprise
                                     </button>
                                 </motion.div>
@@ -248,33 +298,37 @@ export default function SurpriseManager() {
                                     <h2 style={{ fontSize: '22px', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '8px' }}>Tente ta chance !</h2>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>Tourne la roue pour découvrir ta réduction</p>
 
-                                    <div style={{ position: 'relative', width: '260px', height: '260px', margin: '0 auto 32px' }}>
+                                    <div style={{ position: 'relative', width: '280px', height: '280px', margin: '0 auto 32px' }}>
                                         {/* Flèche indicateur */}
-                                        <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, color: '#10b981' }}>
-                                            <div style={{ width: 0, height: 0, borderLeft: '12px solid transparent', borderRight: '12px solid transparent', borderTop: '22px solid currentColor' }} />
+                                        <div style={{ position: 'absolute', top: '-15px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, color: '#10b981' }}>
+                                            <div style={{ width: 0, height: 0, borderLeft: '14px solid transparent', borderRight: '14px solid transparent', borderTop: '24px solid currentColor' }} />
                                         </div>
+                                        
                                         <motion.div
                                             animate={{ rotate: rotation }}
                                             transition={{ duration: 4.5, ease: [0.45, 0.05, 0.55, 0.95] }}
-                                            style={{
-                                                width: '100%', height: '100%', borderRadius: '50%',
-                                                /* 120° pour 5% (1/3), 240° pour 10% (2/3) */
-                                                background: 'conic-gradient(#e1fcf0 0deg 180deg, #10b981 180deg 360deg)',
-                                                position: 'relative', border: '8px solid var(--bg-secondary)',
-                                                boxShadow: '0 0 30px rgba(0,0,0,0.2)'
-                                            }}
+                                            style={{ width: '100%', height: '100%', position: 'relative' }}
                                         >
-                                            {/* Labels */}
-                                            <div style={{ position: 'absolute', top: '22%', left: '50%', transform: 'translateX(-50%)', color: '#10b981', fontWeight: '900', fontSize: '22px' }}>5%</div>
-                                            <div style={{ position: 'absolute', top: '62%', left: '50%', transform: 'translateX(-50%)', color: '#fff', fontWeight: '900', fontSize: '22px' }}>10%</div>
-                                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.15)' }}>
+                                            <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', borderRadius: '50%', border: '8px solid var(--bg-secondary)', boxShadow: '0 0 30px rgba(0,0,0,0.3)', overflow: 'visible' }}>
+                                                {/* Tranche 1 (5%) : 0 à 180° */}
+                                                <path d="M 50 50 L 50 0 A 50 50 0 0 1 50 100 Z" fill="#e1fcf0" />
+                                                {/* Tranche 2 (10%) : 180 à 360° */}
+                                                <path d="M 50 50 L 50 100 A 50 50 0 0 1 50 0 Z" fill="#10b981" />
+                                                
+                                                {/* Textes parfaitement centrés dans les tranches */}
+                                                <text x="75" y="50" transform="rotate(0, 75, 50)" textAnchor="middle" dominantBaseline="middle" fill="#10b981" fontSize="8" fontWeight="900">5%</text>
+                                                <text x="25" y="50" transform="rotate(0, 25, 50)" textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="8" fontWeight="900">10%</text>
+                                            </svg>
+
+                                            {/* Centre de la roue (fixe par rapport à la roue qui tourne) */}
+                                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.15)', zIndex: 5 }}>
                                                 <LeafIcon size={32} />
                                             </div>
                                         </motion.div>
                                     </div>
 
                                     <button onClick={spinWheel} disabled={isSpinning}
-                                        style={{ width: '100%', padding: '18px', background: isSpinning ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #10b981, #34d399)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: isSpinning ? 'default' : 'pointer', boxShadow: isSpinning ? 'none' : '0 8px 24px rgba(16, 185, 129, 0.3)' }}>
+                                        style={{ width: '100%', padding: '18px', background: isSpinning ? 'var(--bg-tertiary)' : 'linear-gradient(135deg, #10b981, #065f46)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: isSpinning ? 'default' : 'pointer', boxShadow: isSpinning ? 'none' : '0 8px 24px rgba(16, 185, 129, 0.3)' }}>
                                         {isSpinning ? 'Ça tourne...' : 'Tourner la roue'}
                                     </button>
                                 </motion.div>
@@ -294,19 +348,19 @@ export default function SurpriseManager() {
 
                                     {/* Code promo affiché */}
                                     {profile?.promo_code && (
-                                        <div style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '16px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '16px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                             <div style={{ textAlign: 'left' }}>
                                                 <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', marginBottom: '4px' }}>Ton code promo</p>
                                                 <p style={{ color: 'var(--text-primary)', fontSize: '24px', fontWeight: '900', letterSpacing: '3px' }}>{profile.promo_code}</p>
                                             </div>
-                                            <button onClick={handleCopy} style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '12px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#60a5fa', fontWeight: '700', fontSize: '12px' }}>
+                                            <button onClick={handleCopy} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#10b981', fontWeight: '700', fontSize: '12px' }}>
                                                 {copied ? <Check size={14} /> : <Copy size={14} />}
                                                 {copied ? 'Copié !' : 'Copier'}
                                             </button>
                                         </div>
                                     )}
 
-                                    <button onClick={applyReduction} style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #10b981, #34d399)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)', marginBottom: '12px' }}>
+                                    <button onClick={applyReduction} style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #10b981, #065f46)', border: 'none', borderRadius: '20px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)', marginBottom: '12px' }}>
                                         Appliquer la réduction →
                                     </button>
                                     <button onClick={() => setIsOpen(false)} style={{ width: '100%', padding: '14px', background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}>
