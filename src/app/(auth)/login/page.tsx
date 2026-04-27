@@ -10,6 +10,7 @@ import { LeafIcon } from '@/components/icons/LeafIcon'
 export default function LoginPage() {
     const router = useRouter()
     const [email, setEmail] = useState('')
+    const [confirmEmail, setConfirmEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -37,8 +38,10 @@ export default function LoginPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setError('')
+        setSuccessMsg('')
 
-        // Validation Email
+        // Validation Email (Format)
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(email)) {
             setError("L'adresse email n'est pas valide ❌")
@@ -46,40 +49,67 @@ export default function LoginPage() {
         }
 
         if (isRegister) {
-            const domain = email.split('@')[1]?.toLowerCase()
-            if (DISPOSABLE_DOMAINS.includes(domain)) {
-                setError("Les emails jetables ne sont pas autorisés pour garantir la sécurité de ton compte 🛑")
-                return
-            }
-
+            // ÉTAPE 1 : Validation E-mail et Domaine
             if (regStep === 1) {
-                setRegStep(2)
+                if (email !== confirmEmail) {
+                    setError("Les adresses e-mail ne correspondent pas ❌")
+                    return
+                }
+
+                const domain = email.split('@')[1]?.toLowerCase()
+                if (DISPOSABLE_DOMAINS.includes(domain)) {
+                    setError("Les emails jetables ne sont pas autorisés 🛑")
+                    return
+                }
+
+                setIsLoading(true)
+                try {
+                    const res = await fetch('/api/auth/verify-domain', {
+                        method: 'POST',
+                        body: JSON.stringify({ email })
+                    })
+                    const data = await res.json()
+                    if (!data.success) {
+                        setError(data.error || "Domaine invalide")
+                        return
+                    }
+                    setRegStep(2)
+                } catch (err) {
+                    setError("Erreur lors de la vérification du domaine")
+                } finally {
+                    setIsLoading(false)
+                }
                 return
             }
 
+            // ÉTAPE 2 : Validation Mot de passe
             if (password !== confirmPassword) {
                 setError("Les mots de passe ne correspondent pas ❌")
+                return
+            }
+            if (password.length < 6) {
+                setError("Le mot de passe doit faire au moins 6 caractères 🔑")
                 return
             }
         }
 
         setIsLoading(true)
-        setError('')
-        setSuccessMsg('')
         try {
             if (isRegister) {
-                const siteUrl = window.location.origin
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
-                    options: { emailRedirectTo: `${siteUrl}/onboarding` }
+                    options: { data: { email_confirmed: true } }
                 })
                 if (error) { setError(translateError(error.message)); return }
-                if (!data.session) {
-                    setSuccessMsg('Compte créé ! Vérifie ta boîte mail pour valider ton inscription 📧')
-                    return
+                
+                // Si l'auto-confirm est activé dans Supabase, on a une session
+                if (data.session) {
+                    router.push('/onboarding')
+                } else {
+                    // Si on n'a pas de session, c'est que l'e-mail a été envoyé (donc pas désactivé dans Supabase)
+                    setSuccessMsg('Compte créé ! Vérifie tes mails (si tu ne les as pas encore désactivés dans Supabase) 📧')
                 }
-                router.push('/onboarding')
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password })
                 if (error) { setError(translateError(error.message)); return }
@@ -259,6 +289,24 @@ export default function LoginPage() {
                                                 borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
                                             }}
                                         />
+                                        
+                                        {isRegister && (
+                                            <div style={{ position: 'relative', marginTop: '14px' }}>
+                                                <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
+                                                    <Mail size={18} />
+                                                </div>
+                                                <input
+                                                    type="email" value={confirmEmail}
+                                                    onChange={(e) => setConfirmEmail(e.target.value)}
+                                                    placeholder="Confirmer l'e-mail" required
+                                                    style={{
+                                                        width: '100%', height: '56px', padding: '0 18px 0 50px',
+                                                        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                                                        borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
