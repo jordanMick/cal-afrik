@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ 
             success: false, 
-            error: "Ce domaine d'e-mail ne semble pas pouvoir recevoir de messages. Vérifie l'orthographe." 
+            error: "Cet e-mail ne semble pas pouvoir recevoir de messages. Vérifie l'orthographe." 
         }, { status: 400 })
 
     } catch (err) {
