@@ -74,17 +74,17 @@ function PromoCodeCard({ code }: { code: string }) {
             </div>
             <button
                 onClick={handleCopy}
-                style={{ 
-                    background: copied ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--accent-rgb), 0.1)', 
-                    border: 'none', 
-                    borderRadius: '10px', 
-                    padding: '8px 12px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px', 
-                    cursor: 'pointer', 
-                    color: copied ? 'var(--success)' : 'var(--accent)', 
-                    fontWeight: '700', 
+                style={{
+                    background: copied ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--accent-rgb), 0.1)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    color: copied ? 'var(--success)' : 'var(--accent)',
+                    fontWeight: '700',
                     fontSize: '12px',
                     transition: 'all 0.2s'
                 }}
@@ -185,7 +185,7 @@ export default function ProfilPage() {
         } else if (shouldShowExisting) {
             setBilanStatus(getInitialStatus())
         }
-        
+
         // Charger l'avatar
         const loadAvatar = async () => {
             const { data: { user } } = await supabase.auth.getUser()
@@ -392,7 +392,7 @@ export default function ProfilPage() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                         <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
-                            <div 
+                            <div
                                 onClick={handleAvatarClick}
                                 style={{
                                     width: '100%', height: '100%', borderRadius: '50%',
@@ -411,7 +411,7 @@ export default function ProfilPage() {
                                 ) : (
                                     profile?.name?.charAt(0).toUpperCase() || 'U'
                                 )}
-                                
+
                                 {isUploading && (
                                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <div style={{ width: '24px', height: '24px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -420,7 +420,7 @@ export default function ProfilPage() {
                             </div>
 
                             {/* Overlay Plus - Positionné dans le coin en bas à droite, débordant légèrement */}
-                            <div 
+                            <div
                                 onClick={handlePlusClick}
                                 style={{
                                     position: 'absolute',
@@ -445,12 +445,12 @@ export default function ProfilPage() {
                             </div>
                         </div>
 
-                        <input 
-                            type="file" 
-                            ref={fileInputRef} 
-                            onChange={handleFileChange} 
-                            accept="image/*" 
-                            style={{ display: 'none' }} 
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept="image/*"
+                            style={{ display: 'none' }}
                         />
                         <div style={{ flex: 1 }}>
                             <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>{profile?.name || 'Utilisateur'}</h2>
@@ -462,7 +462,7 @@ export default function ProfilPage() {
                                     <span style={{ opacity: 0.7 }}>🎯</span> {GOAL_LABELS[profile?.goal || ''] || 'Définir un objectif'}
                                 </p>
                             </div>
-                             <div style={{
+                            <div style={{
                                 display: 'inline-flex', padding: '4px 10px', borderRadius: '10px',
                                 background: effectiveTier === 'pro' ? 'rgba(var(--accent-rgb), 0.15)' : effectiveTier === 'premium' ? 'rgba(var(--success-rgb), 0.15)' : 'rgba(var(--text-primary-rgb), 0.05)',
                                 color: effectiveTier === 'pro' ? 'var(--accent)' : effectiveTier === 'premium' ? 'var(--success)' : 'var(--text-muted)',
@@ -703,7 +703,7 @@ export default function ProfilPage() {
                 {profile?.promo_code && (
                     <PromoCodeCard code={profile.promo_code} />
                 )}
-                
+
                 <button
                     onClick={handleShareWhatsApp}
                     style={{
@@ -777,7 +777,7 @@ export default function ProfilPage() {
 
                 {/* FOOTER */}
                 <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '32px' }}>
-                    <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '4px' }}>Cal Afrik Version 1.0</p>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '4px' }}>Version 1.0</p>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '16px', fontWeight: '500' }}>Scanne. Analyse. Progresse. 📊</p>
                     <p style={{ color: 'var(--text-muted)', fontSize: '10px', opacity: 0.6, letterSpacing: '0.02em' }}>© 2026 Cal Afrik - Tous droits réservés</p>
                 </div>
@@ -884,10 +884,10 @@ export default function ProfilPage() {
                                 zIndex: 5001
                             }}
                         >
-                            <img 
-                                src={avatarUrl} 
-                                alt="Profil agrandi" 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            <img
+                                src={avatarUrl}
+                                alt="Profil agrandi"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                         </motion.div>
                     </div>
@@ -913,13 +913,13 @@ export default function ProfilPage() {
                             />
                         </div>
                         <div style={{ padding: '30px 20px', background: 'var(--bg-secondary)', display: 'flex', gap: '15px', alignItems: 'center' }}>
-                            <button 
+                            <button
                                 onClick={() => setImageToCrop(null)}
                                 style={{ flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)', fontWeight: '600' }}
                             >
                                 Annuler
                             </button>
-                            <button 
+                            <button
                                 onClick={handleUploadCroppedImage}
                                 style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'var(--accent)', color: '#fff', fontWeight: '800', border: 'none' }}
                             >
