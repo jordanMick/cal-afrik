@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         if (count !== null && count >= 2) {
             return NextResponse.json({ 
                 success: false, 
-                error: "Trop de comptes créés depuis cette connexion." 
+                error: "Trop de comptes créés." 
             }, { status: 429 })
         }
 
