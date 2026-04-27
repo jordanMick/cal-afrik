@@ -441,8 +441,27 @@ export default function ScanRecapPage() {
                     </div>
                 )}
 
-                {/* Bouton voir les détails */}
-                {data.vitamins.length > 0 && tier !== 'free' && (
+                {/* Message info micro-nutriments pour Planning (Pro/Premium seulement) */}
+                {data.isPlanningMenu && tier !== 'free' && (
+                    <div style={{ 
+                        background: 'rgba(14,165,233,0.08)', 
+                        borderRadius: '18px', 
+                        padding: '16px', 
+                        border: '0.5px solid rgba(14,165,233,0.3)', 
+                        marginBottom: '16px',
+                        display: 'flex',
+                        gap: '12px',
+                        alignItems: 'center'
+                    }}>
+                        <div style={{ fontSize: '20px' }}>🔬</div>
+                        <p style={{ color: '#0ea5e9', fontSize: '13px', fontWeight: '600', lineHeight: '1.4', margin: 0 }}>
+                            Scanne un repas pour obtenir l'analyse détaillée des micro-nutriments.
+                        </p>
+                    </div>
+                )}
+
+                {/* Bouton voir les détails (Uniquement si données présentes et pas Free) */}
+                {data.vitamins && data.vitamins.length > 0 && tier !== 'free' && (
                     <button
                         onClick={() => setShowVitamins(true)}
                         style={{ width: '100%', padding: '15px 18px', borderRadius: '18px', background: 'transparent', border: '0.5px solid rgba(14,165,233,0.35)', color: '#0ea5e9', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}
