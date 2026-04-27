@@ -271,7 +271,7 @@ function WeightModal({ currentWeight, onClose, onSave }: { currentWeight: number
 }
 
 function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Meal; onClose: () => void; onDelete: (id: string) => Promise<void>; onImageUpdate?: (id: string, url: string) => void }) {
-    const [showCoach, setShowCoach] = useState(false)
+    const [showCoach, setShowCoach] = useState(true)
     const [imageUploading, setImageUploading] = useState(false)
     const [localImageUrl, setLocalImageUrl] = useState(meal.image_url)
     const fileInputRef = useRef<HTMLInputElement>(null)
