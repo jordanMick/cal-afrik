@@ -14,7 +14,7 @@ const supabaseAdmin = createClient(
 export async function POST(req: Request) {
     try {
         const { email, logSignup } = await req.json()
-        
+
         // 1. Récupérer l'IP
         const forwarded = req.headers.get('x-forwarded-for')
         const ip = forwarded ? forwarded.split(',')[0] : '127.0.0.1'
@@ -36,9 +36,9 @@ export async function POST(req: Request) {
         if (countErr) console.error('Erreur check IP logs:', countErr)
 
         if (count !== null && count >= 2) {
-            return NextResponse.json({ 
-                success: false, 
-                error: "Trop de comptes créés." 
+            return NextResponse.json({
+                success: false,
+                error: "Trop de comptes créés depuis cette connexion. Réessaie demain."
             }, { status: 429 })
         }
 
@@ -57,9 +57,9 @@ export async function POST(req: Request) {
             console.error('DNS MX lookup failed:', dnsErr)
         }
 
-        return NextResponse.json({ 
-            success: false, 
-            error: "Cet e-mail ne semble pas pouvoir recevoir de messages. Vérifie l'orthographe." 
+        return NextResponse.json({
+            success: false,
+            error: "Cet e-mail ne semble pas pouvoir recevoir de messages. Vérifie l'orthographe."
         }, { status: 400 })
 
     } catch (err) {
