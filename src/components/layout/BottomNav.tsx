@@ -1,9 +1,9 @@
 'use client'
 
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 export default function BottomNav() {
-    const router = useRouter()
     const pathname = usePathname()
 
     const isMainTab = ['/dashboard', '/journal', '/scanner', '/coach', '/profil'].includes(pathname)
@@ -82,9 +82,10 @@ export default function BottomNav() {
                 {tabs.slice(0, 2).map((tab) => {
                     const isActive = pathname === tab.path
                     return (
-                        <button
+                        <Link
                             key={tab.id}
-                            onClick={() => router.push(tab.path)}
+                            href={tab.path}
+                            prefetch={true}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -95,6 +96,7 @@ export default function BottomNav() {
                                 cursor: 'pointer',
                                 minWidth: '72px',
                                 padding: 0,
+                                textDecoration: 'none'
                             }}
                         >
                             <div style={{
@@ -119,7 +121,7 @@ export default function BottomNav() {
                             }}>
                                 {tab.label}
                             </span>
-                        </button>
+                        </Link>
                     )
                 })}
 
@@ -132,8 +134,9 @@ export default function BottomNav() {
                     minWidth: '72px',
                     marginTop: '-20px',
                 }}>
-                    <button
-                        onClick={() => router.push('/scanner')}
+                    <Link
+                        href="/scanner"
+                        prefetch={true}
                         style={{
                             width: '52px',
                             height: '52px',
@@ -156,7 +159,7 @@ export default function BottomNav() {
                                 stroke="#fff" strokeWidth="2" strokeLinecap="round" />
                             <rect x="9" y="9" width="6" height="6" rx="1" fill="#fff" />
                         </svg>
-                    </button>
+                    </Link>
                     <span style={{ fontSize: '10px', color: pathname === '/scanner' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: pathname === '/scanner' ? '600' : '400' }}>Scanner</span>
                 </div>
 
@@ -164,9 +167,10 @@ export default function BottomNav() {
                 {tabs.slice(2).map((tab) => {
                     const isActive = pathname === tab.path
                     return (
-                        <button
+                        <Link
                             key={tab.id}
-                            onClick={() => router.push(tab.path)}
+                            href={tab.path}
+                            prefetch={true}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -177,6 +181,7 @@ export default function BottomNav() {
                                 cursor: 'pointer',
                                 minWidth: '72px',
                                 padding: 0,
+                                textDecoration: 'none'
                             }}
                         >
                             <div style={{
@@ -201,7 +206,7 @@ export default function BottomNav() {
                             }}>
                                 {tab.label}
                             </span>
-                        </button>
+                        </Link>
                     )
                 })}
             </div>

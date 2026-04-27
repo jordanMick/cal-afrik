@@ -6,6 +6,7 @@ import { type Meal } from '@/types'
 import { getProgressPercent, getStreakIcon } from '@/lib/nutrition'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getEffectiveTier } from '@/lib/subscription'
 import { toast } from 'sonner'
@@ -130,16 +131,19 @@ function WeeklyProgressChart({ targetKcal, tier }: { targetKcal: number, tier: s
                     </div>
                     <p style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: '800', marginBottom: '2px' }}>Analyses Coach Yao</p>
                     <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '10px', maxWidth: '180px', fontWeight: '500' }}>Passe au plan Pro pour débloquer ton suivi.</p>
-                    <button
-                        onClick={() => router.push('/upgrade')}
+                    <Link
+                        href="/upgrade"
+                        prefetch={true}
                         style={{
                             background: 'linear-gradient(135deg, var(--branding), var(--success))', border: 'none', borderRadius: '10px',
                             color: '#fff', fontSize: '11px', fontWeight: '800', padding: '6px 14px', cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(var(--success-rgb), 0.3)'
+                            boxShadow: '0 4px 12px rgba(var(--success-rgb), 0.3)',
+                            textDecoration: 'none',
+                            display: 'inline-block'
                         }}
                     >
                         Passer au Pro →
-                    </button>
+                    </Link>
                 </div>
             ) : (
                 (() => {
@@ -597,7 +601,7 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {streak > 0 && (
-                        <div onClick={() => router.push('/journal')} style={{ 
+                        <Link href="/journal" prefetch={true} style={{ 
                             height: '36px', 
                             borderRadius: '10px', 
                             background: 'rgba(var(--warning-rgb), 0.1)', 
@@ -606,15 +610,16 @@ export default function DashboardPage() {
                             alignItems: 'center', 
                             padding: '0 10px',
                             gap: '4px',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            textDecoration: 'none'
                         }}>
                             <span style={{ fontSize: '18px' }}>{getStreakIcon(streak)}</span>
                             <span style={{ color: 'var(--warning)', fontSize: '14px', fontWeight: '800' }}>{streak}</span>
-                        </div>
+                        </Link>
                     )}
-                    <div onClick={() => router.push('/settings')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <Link href="/settings" prefetch={true} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', textDecoration: 'none' }}>
                         <Settings color="var(--text-secondary)" size={20} strokeWidth={1.5} />
-                    </div>
+                    </Link>
 
                     {/* AVATAR PROFIL AVEC DROPDOWN */}
                     <div style={{ position: 'relative' }} ref={menuRef}>
@@ -679,22 +684,26 @@ export default function DashboardPage() {
 
                                     {/* Items Menu */}
                                     <div style={{ padding: '8px' }}>
-                                        <div 
-                                            onClick={() => { router.push('/profil'); setIsProfileMenuOpen(false); }}
-                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
+                                        <Link 
+                                            href="/profil"
+                                            prefetch={true}
+                                            onClick={() => setIsProfileMenuOpen(false)}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s', textDecoration: 'none' }}
                                             className="menu-item-hover"
                                         >
                                             <User size={18} color="var(--text-secondary)" />
                                             <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Profil</span>
-                                        </div>
-                                        <div 
-                                            onClick={() => { router.push('/notifications'); setIsProfileMenuOpen(false); }}
-                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }}
+                                        </Link>
+                                        <Link 
+                                            href="/notifications"
+                                            prefetch={true}
+                                            onClick={() => setIsProfileMenuOpen(false)}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s', textDecoration: 'none' }}
                                             className="menu-item-hover"
                                         >
                                             <Bell size={18} color="var(--text-secondary)" />
                                             <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Notifications</span>
-                                        </div>
+                                        </Link>
                                         <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
                                         
                                         <div 

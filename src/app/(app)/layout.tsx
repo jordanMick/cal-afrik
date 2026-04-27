@@ -27,14 +27,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {/* ✅ Surveille les changements de créneau */}
                 <SlotWatcherInit />
 
-                <AnimatePresence mode="popLayout" initial={false} custom={currentIndex}>
+                <AnimatePresence mode="wait">
                     <motion.div
                         key={pathname}
-                        custom={currentIndex}
-                        initial={{ x: '100%', opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: '-100%', opacity: 0 }}
-                        transition={{ type: 'tween', ease: [0.25, 0.46, 0.45, 0.94], duration: 0.25 }}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
                         className="flex-1"
                     >
                         {children}
