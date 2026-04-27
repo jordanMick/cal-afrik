@@ -208,6 +208,48 @@ export default function ScanRecapPage() {
                     </div>
                 )}
 
+                {/* Conseil Coach Yao */}
+                {data.coachMessage && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ 
+                            background: 'rgba(var(--accent-rgb), 0.08)', 
+                            borderRadius: '20px', 
+                            padding: '18px', 
+                            marginBottom: '16px', 
+                            border: '0.5px solid rgba(var(--accent-rgb), 0.2)',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                            <div style={{ 
+                                width: '36px', 
+                                height: '36px', 
+                                borderRadius: '12px', 
+                                background: 'var(--accent)', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                fontSize: '18px',
+                                boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)'
+                            }}>
+                                💡
+                            </div>
+                            <div>
+                                <p style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                                    Conseil Coach Yao
+                                </p>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500', lineHeight: '1.5', margin: 0 }}>
+                                    {data.coachMessage}
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
                 {/* Bouton voir les détails */}
                 {data.vitamins.length > 0 && tier !== 'free' && (
                     <button
