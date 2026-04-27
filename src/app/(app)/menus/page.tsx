@@ -262,10 +262,46 @@ export default function MenusPage() {
                                 if (idx !== -1) { 
                                     try { 
                                         const data = JSON.parse(text.substring(idx + 10).trim()); 
-                                        setPendingScannerPrefill({ items: data.items, slot: currentSlotKey }); 
+                                        
+                                        // Calcul des macros pour le récap
+                                        let totalCals = 0, totalProt = 0, totalCarbs = 0, totalFat = 0;
+                                        data.items.forEach((it: any) => {
+                                            totalCals += (it.calories || 0);
+                                            totalProt += (it.protein_g || 0);
+                                            totalCarbs += (it.carbs_g || 0);
+                                            totalFat += (it.fat_g || 0);
+                                        });
+
+                                        const recapObj = {
+                                            mealName: "Menu Coach Yao",
+                                            imageUrl: null,
+                                            capturedImage: null,
+                                            totalCalories: totalCals,
+                                            protein_g: totalProt,
+                                            carbs_g: totalCarbs,
+                                            fat_g: totalFat,
+                                            portion_g: 0,
+                                            healthScore: null,
+                                            vitamins: [],
+                                            coachMessage: "", // Pas d'avis coach pour le planning
+                                            slotKey: currentSlotKey,
+                                            selectedFoods: data.items.map((it: any) => ({
+                                                ...it,
+                                                id: it.id || `planning-${Date.now()}-${it.name}`,
+                                                fromCoach: true
+                                            })),
+                                            isPlanningMenu: true,
+                                            aiConfidence: 100
+                                        };
+
+                                        sessionStorage.setItem('scan_recap', JSON.stringify(recapObj));
+                                        setPendingScannerPrefill(null); 
                                         clearChatSuggestedMenu('today', currentSlotKey); 
-                                        router.push('/scanner'); 
-                                    } catch (e) { toast.error("Erreur"); } 
+                                        router.push('/scanner/recap'); 
+                                    } catch (e) { 
+                                        console.error(e);
+                                        toast.error("Erreur de format du menu"); 
+                                    } 
                                 }
                             }} 
                             style={{ 
