@@ -223,24 +223,7 @@ function WeightChart({ entries, profile, selectedPeriod, setSelectedPeriod }: { 
                 </div>
             )}
 
-            {/* Message de Yao */}
-            {prog && (
-                <div style={{
-                    marginTop: '16px',
-                    padding: '12px 14px',
-                    borderRadius: '16px',
-                    background: prog.isPositive ? 'rgba(var(--success-rgb), 0.08)' : 'rgba(var(--danger-rgb), 0.08)',
-                    border: `0.5px solid ${prog.isPositive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--danger-rgb), 0.2)'}`,
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '10px'
-                }}>
-                    <span style={{ fontSize: '18px' }}>{prog.isPositive ? '✨' : '💡'}</span>
-                    <p style={{ color: prog.isPositive ? 'var(--success)' : 'var(--danger)', fontSize: '12px', lineHeight: '1.5', fontWeight: '500' }}>
-                        {prog.message}
-                    </p>
-                </div>
-            )}
+            {/* Le graphique s'arrête ici, le message de Yao est maintenant géré par le parent */}
         </div>
     )
 }
@@ -402,7 +385,10 @@ function MealDetailPanel({ meal, onClose, onDelete, onImageUpdate }: { meal: Mea
 
 export default function RapportPage() {
     const router = useRouter()
-    const { profile, setProfile } = useAppStore()
+    const { 
+        profile, setProfile, todayMeals, setTodayMeals, 
+        smartAlert, clearSmartAlert, dailyReview 
+    } = useAppStore()
     const [meals7days, setMeals7days] = useState<Meal[]>([])
     const [weightEntries, setWeightEntries] = useState<{ date: string; weight: number }[]>([])
     const [showWeightModal, setShowWeightModal] = useState(false)
@@ -410,6 +396,54 @@ export default function RapportPage() {
     const [selectedPeriod, setSelectedPeriod] = useState('7d')
     const [isLoading, setIsLoading] = useState(true)
     const [targetUpdate, setTargetUpdate] = useState<{ old: number, new: number, isLocked: boolean } | null>(null)
+
+    // Calcul de la progression (extrait de WeightChart pour être global)
+    const getProgressionInfo = () => {
+        // On récupère les données selon la période sélectionnée (logique identique à WeightChart)
+        const getDailyData = (daysCount: number) => {
+            const res: { weight: number }[] = []
+            const now = new Date()
+            for (let i = daysCount - 1; i >= 0; i--) {
+                const d = new Date(now); d.setDate(now.getDate() - i)
+                const dateStr = d.toISOString().split('T')[0]
+                const dayEntries = weightEntries.filter(e => e.date.startsWith(dateStr))
+                if (dayEntries.length > 0) res.push({ weight: dayEntries[dayEntries.length - 1].weight })
+            }
+            return res
+        }
+        
+        const data = getDailyData(selectedPeriod === '7d' ? 7 : 30) // Simplifié pour le calcul de diff
+        if (data.length < 2) return null
+
+        const first = data[0].weight
+        const last = data[data.length - 1].weight
+        const diff = Math.round((last - first) * 10) / 10
+        const goal = profile?.goal || 'maintenir'
+        
+        let isPositive = false
+        let message = ""
+
+        if (goal === 'perdre') {
+            isPositive = diff < 0
+            message = isPositive 
+                ? `Super ! Tu as perdu ${Math.abs(diff)}kg sur cette période. Continue comme ça ! 🔥` 
+                : (diff === 0 ? "Ton poids est stable. Reste vigilant sur tes portions pour relancer la perte. 💪" : `Ton poids a augmenté de ${diff}kg. Yao te conseille de bouger un peu plus cette semaine. ⚠️`)
+        } else if (goal === 'prendre') {
+            isPositive = diff > 0
+            message = isPositive 
+                ? `Excellent ! +${diff}kg de masse. Tes muscles te remercient ! 💪` 
+                : (diff === 0 ? "Stabilité parfaite. Pour prendre du muscle, essaie d'augmenter tes protéines. 🥩" : `Oups, -${Math.abs(diff)}kg. N'oublie pas de manger suffisamment ! 🍽️`)
+        } else {
+            isPositive = Math.abs(diff) <= 0.5
+            message = isPositive 
+                ? "Maintien parfait ! Ton équilibre actuel est idéal. 🎯" 
+                : `Léger écart de ${Math.abs(diff)}kg. Reviens doucement vers ton poids de forme. ⚖️`
+        }
+
+        return { message, isPositive }
+    }
+
+    const progInfo = getProgressionInfo()
 
     const last7 = getLast7Days()
     const todayStr = today()
@@ -558,6 +592,51 @@ export default function RapportPage() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>Tes analyses nutritionnelles</p>
             </div>
 
+            {/* CONSEIL COACH YAO (Smart Alert du jour) */}
+            <div style={{ padding: '0 20px 24px' }}>
+                {smartAlert && !smartAlert.dismissed && smartAlert.date === todayStr && (
+                    <div style={{
+                        background: smartAlert.level === 'danger' ? 'rgba(var(--danger-rgb), 0.08)' : 'rgba(var(--warning-rgb), 0.08)',
+                        border: `1px solid ${smartAlert.level === 'danger' ? 'var(--danger)' : 'var(--warning)'}33`,
+                        borderRadius: '24px',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        gap: '14px',
+                        position: 'relative',
+                        marginBottom: '16px'
+                    }}>
+                        <div style={{
+                            width: '36px', height: '36px', borderRadius: '12px',
+                            background: smartAlert.level === 'danger' ? 'rgba(var(--danger-rgb), 0.15)' : 'rgba(var(--warning-rgb), 0.15)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                        }}>
+                            <span style={{ fontSize: '18px' }}>{smartAlert.level === 'danger' ? '⚠️' : '💡'}</span>
+                        </div>
+                        <div style={{ flex: 1, paddingRight: '20px' }}>
+                            <p style={{ color: smartAlert.level === 'danger' ? 'var(--danger)' : 'var(--warning)', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>
+                                Conseil Coach Yao
+                            </p>
+                            <div style={{ color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.5', fontWeight: '500' }}>
+                                <ReactMarkdown
+                                    components={{
+                                        p: ({ children }) => <span style={{ display: 'block' }}>{children}</span>,
+                                        strong: ({ children }) => <strong style={{ fontWeight: 700, color: smartAlert.level === 'danger' ? 'var(--danger)' : 'var(--warning)' }}>{children}</strong>,
+                                    }}
+                                >
+                                    {smartAlert.message}
+                                </ReactMarkdown>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={clearSmartAlert}
+                            style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
+            </div>
+
             <div style={{ padding: '0 20px 24px' }}>
                 {/* CARTE ACCÈS MENUS COACH YAO (Déplacé depuis Dashboard) */}
                 <div 
@@ -589,6 +668,37 @@ export default function RapportPage() {
                         <ChevronRight size={20} />
                     </div>
                 </div>
+            </div>
+
+            {/* BILAN DÉTAILLÉ DU JOUR (IA) */}
+            <div style={{ padding: '0 20px 24px' }}>
+                {dailyReview && dailyReview.date === todayStr && (
+                    <div style={{
+                        background: 'rgba(var(--accent-rgb), 0.05)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '24px',
+                        padding: '20px',
+                        marginBottom: '16px'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <span>📊</span>
+                            </div>
+                            <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '800' }}>Bilan de ta journée</p>
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6' }}>
+                            <ReactMarkdown
+                                components={{
+                                    p: ({ children }) => <p style={{ margin: '0 0 10px 0' }}>{children}</p>,
+                                    strong: ({ children }) => <strong style={{ fontWeight: 700, color: 'var(--accent)' }}>{children}</strong>,
+                                    li: ({ children }) => <li style={{ marginBottom: '6px' }}>{children}</li>
+                                }}
+                            >
+                                {dailyReview.content}
+                            </ReactMarkdown>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div style={{ padding: '18px 20px' }}>
@@ -776,7 +886,7 @@ export default function RapportPage() {
                 <div 
                     onClick={() => router.push('/upgrade')}
                     style={{
-                        margin: '0 20px 20px',
+                        margin: '0 0 20px',
                         height: '140px',
                         background: 'var(--bg-secondary)',
                         borderRadius: '24px',
@@ -791,6 +901,25 @@ export default function RapportPage() {
                     <span style={{ fontSize: '24px' }}>📈</span>
                     <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>Activez le graphique avec le plan Pro</p>
                     <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 'bold' }}>DÉCOUVRIR →</span>
+                </div>
+            )}
+            
+            {/* MESSAGE DE YAO SUR LA PROGRESSION (Visible pour tous) */}
+            {progInfo && (
+                <div style={{
+                    marginTop: '16px',
+                    padding: '12px 14px',
+                    borderRadius: '16px',
+                    background: progInfo.isPositive ? 'rgba(var(--success-rgb), 0.08)' : 'rgba(var(--danger-rgb), 0.08)',
+                    border: `0.5px solid ${progInfo.isPositive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--danger-rgb), 0.2)'}`,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px'
+                }}>
+                    <span style={{ fontSize: '18px' }}>{progInfo.isPositive ? '✨' : '💡'}</span>
+                    <p style={{ color: progInfo.isPositive ? 'var(--success)' : 'var(--danger)', fontSize: '12px', lineHeight: '1.5', fontWeight: '500' }}>
+                        {progInfo.message}
+                    </p>
                 </div>
             )}
                         </div>
