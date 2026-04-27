@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, X, ChevronRight } from 'lucide-react'
+import { ArrowLeft, X, ChevronRight, Star } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
 import { getEffectiveTier } from '@/lib/subscription'
@@ -28,6 +29,7 @@ interface RecapData {
     slotKey: string
     selectedFoods: any[]
     capturedImage: string | null
+    isPlanningMenu: boolean
     aiConfidence: number
 }
 
@@ -52,6 +54,34 @@ export default function ScanRecapPage() {
             router.replace('/scanner')
         }
     }, [])
+
+    const handlePayForCoach = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push('/login');
+                return;
+            }
+
+            const res = await fetch('/api/payments/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ tier: 'scan' }) // 100 FCFA
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Erreur inconnue');
+            }
+
+            window.location.href = data.url;
+        } catch (error: any) {
+            toast.error(`Erreur: ${error.message}`);
+        }
+    }
 
     const loadCoachMessage = async () => {
         if (!data || isLoadingCoach) return
@@ -254,70 +284,153 @@ export default function ScanRecapPage() {
                 )}
 
                 {/* Conseil Coach Yao */}
-                <div style={{ marginBottom: '16px' }}>
-                    {localCoachMessage ? (
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            style={{ 
-                                background: 'rgba(var(--accent-rgb), 0.08)', 
-                                borderRadius: '20px', 
-                                padding: '18px', 
-                                border: '0.5px solid rgba(var(--accent-rgb), 0.2)',
-                                position: 'relative'
-                            }}
-                        >
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                                <div style={{ 
-                                    width: '36px', height: '36px', borderRadius: '12px', background: 'var(--accent)', 
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '18px',
-                                    boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)'
-                                }}>
-                                    💡
+                {!data.isPlanningMenu && (
+                    <div style={{ marginBottom: '24px' }}>
+                        {localCoachMessage ? (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                style={{ 
+                                    background: 'linear-gradient(135deg, rgba(var(--accent-rgb), 0.12) 0%, rgba(139, 92, 246, 0.12) 100%)', 
+                                    borderRadius: '24px', 
+                                    padding: '24px', 
+                                    border: '1px solid rgba(var(--accent-rgb), 0.25)',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 10px 30px rgba(var(--accent-rgb), 0.1)'
+                                }}
+                            >
+                                {/* Étoiles décoratives animées */}
+                                <motion.div 
+                                    animate={{ 
+                                        scale: [1, 1.2, 1], 
+                                        opacity: [0.3, 0.7, 0.3],
+                                        rotate: [0, 10, 0]
+                                    }}
+                                    transition={{ duration: 3, repeat: Infinity }}
+                                    style={{ position: 'absolute', top: '15px', right: '15px', color: 'var(--accent)', opacity: 0.5 }}
+                                >
+                                    <Star size={16} fill="currentColor" />
+                                </motion.div>
+                                <motion.div 
+                                    animate={{ 
+                                        scale: [1, 1.3, 1], 
+                                        opacity: [0.2, 0.5, 0.2]
+                                    }}
+                                    transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+                                    style={{ position: 'absolute', bottom: '20px', left: '15px', color: '#8b5cf6', opacity: 0.4 }}
+                                >
+                                    <Star size={12} fill="currentColor" />
+                                </motion.div>
+                                <motion.div 
+                                    animate={{ 
+                                        scale: [1, 1.5, 1], 
+                                        opacity: [0.1, 0.3, 0.1]
+                                    }}
+                                    transition={{ duration: 5, repeat: Infinity, delay: 2 }}
+                                    style={{ position: 'absolute', top: '40px', left: '40%', color: 'var(--accent)', opacity: 0.2 }}
+                                >
+                                    <Star size={8} fill="currentColor" />
+                                </motion.div>
+
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+                                    <div style={{ 
+                                        width: '44px', height: '44px', borderRadius: '14px', 
+                                        background: 'linear-gradient(135deg, var(--accent), #8b5cf6)', 
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '20px',
+                                        boxShadow: '0 8px 16px rgba(var(--accent-rgb), 0.4)'
+                                    }}>
+                                        ✨
+                                    </div>
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                            <p style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+                                                Conseil Coach Yao
+                                            </p>
+                                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent)', opacity: 0.5 }} />
+                                            <Star size={10} color="var(--accent)" fill="currentColor" />
+                                        </div>
+                                        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600', lineHeight: '1.6', margin: 0, letterSpacing: '-0.2px' }}>
+                                            {localCoachMessage}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
-                                        Conseil Coach Yao
-                                    </p>
-                                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500', lineHeight: '1.5', margin: 0 }}>
-                                        {localCoachMessage}
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ) : (
-                        <button
-                            onClick={loadCoachMessage}
-                            disabled={isLoadingCoach}
-                            style={{ 
-                                width: '100%', 
-                                padding: '16px', 
-                                borderRadius: '18px', 
-                                background: 'var(--bg-secondary)', 
-                                border: '0.5px solid var(--border-color)', 
-                                color: 'var(--text-primary)', 
-                                fontWeight: '700', 
-                                fontSize: '14px', 
-                                cursor: 'pointer', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
-                                gap: '10px',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                            }}
-                        >
-                            {isLoadingCoach ? (
-                                <motion.div
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                    style={{ width: '18px', height: '18px', border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }}
-                                />
-                            ) : (
-                                <><span>🤖</span> Demander l'avis du Coach Yao</>
-                            )}
-                        </button>
-                    )}
-                </div>
+                            </motion.div>
+                        ) : (() => {
+                            const advicesUsed = (profile as any)?.coach_advices_today || 0;
+                            const paidFeedbacks = profile?.paid_coach_feedbacks_remaining || 0;
+                            const tier = getEffectiveTier(profile);
+                            
+                            const limit = tier === 'pro' ? 2 : 1;
+                            const hasQuota = advicesUsed < limit || paidFeedbacks > 0;
+
+                            if (!hasQuota) {
+                                return (
+                                    <button
+                                        onClick={handlePayForCoach}
+                                        style={{ 
+                                            width: '100%', 
+                                            padding: '18px', 
+                                            borderRadius: '20px', 
+                                            background: 'rgba(var(--accent-rgb), 0.05)', 
+                                            border: '1.5px dashed var(--accent)', 
+                                            color: 'var(--text-primary)', 
+                                            fontWeight: '800', 
+                                            fontSize: '14px', 
+                                            cursor: 'pointer', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            gap: '12px',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <Star size={18} color="var(--accent)" fill="currentColor" />
+                                        ⚡️ Débloquer l'avis Coach Yao (100F)
+                                    </button>
+                                );
+                            }
+
+                            return (
+                                <button
+                                    onClick={loadCoachMessage}
+                                    disabled={isLoadingCoach}
+                                    style={{ 
+                                        width: '100%', 
+                                        padding: '18px', 
+                                        borderRadius: '22px', 
+                                        background: 'var(--bg-secondary)', 
+                                        border: '1px solid var(--border-color)', 
+                                        color: 'var(--text-primary)', 
+                                        fontWeight: '800', 
+                                        fontSize: '15px', 
+                                        cursor: 'pointer', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center', 
+                                        gap: '12px',
+                                        boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    {isLoadingCoach ? (
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                            style={{ width: '20px', height: '20px', border: '2.5px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }}
+                                        />
+                                    ) : (
+                                        <>
+                                            <span style={{ fontSize: '20px' }}>🤖</span> 
+                                            Demander l'avis du Coach Yao
+                                            <Star size={14} color="var(--accent)" fill="currentColor" style={{ opacity: 0.6 }} />
+                                        </>
+                                    )}
+                                </button>
+                            );
+                        })()}
+                    </div>
+                )}
 
                 {/* Bouton voir les détails */}
                 {data.vitamins.length > 0 && tier !== 'free' && (

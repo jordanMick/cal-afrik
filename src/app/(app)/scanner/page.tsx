@@ -1331,6 +1331,7 @@ export default function ScannerPage() {
                                 slotKey: currentSlotKey,
                                 selectedFoods,
                                 capturedImage,
+                                isPlanningMenu: selectedFoods.some(f => f.fromCoach),
                                 aiConfidence: selectedFoods.length > 0
                                     ? Math.round(selectedFoods.reduce((s, f) => s + f.confidence, 0) / selectedFoods.length)
                                     : 80,

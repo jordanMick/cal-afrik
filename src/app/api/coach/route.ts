@@ -44,30 +44,38 @@ export async function POST(req: NextRequest) {
         const today = new Date().toISOString().split('T')[0]
         const isToday = profile.last_usage_reset_date === today
 
-        // 2. Calcul des quotas de feedback scanner par tier
-        const scanFeedbacksUsed = profile.scan_feedbacks_today || 0
+        // 2. Calcul des quotas d'avis coach
+        const advicesUsed = profile.coach_advices_today || 0
         const paidFeedbacks = profile.paid_coach_feedbacks_remaining || 0
+        const scansUsed = profile.scan_feedbacks_today || 0
 
         let mustUsePaid = false
-        if (effectiveTier === 'free') {
-            const limit = Number(SUBSCRIPTION_RULES.free.maxCoachFeedbackPerDay || 5)
-            if (scanFeedbacksUsed >= limit) {
+        
+        if (effectiveTier === 'pro') {
+            const limit = Number(SUBSCRIPTION_RULES.pro.maxCoachFeedbackPerDay || 2)
+            if (advicesUsed >= limit) {
                 if (paidFeedbacks <= 0) {
                     return NextResponse.json({
                         success: false,
-                        error: `Tu as déjà utilisé tes ${limit} analyses offertes à l'inscription. Passe au Plan Pro ou achète un scan à l'unité (100 FCFA) !`,
+                        code: 'COACH_LIMIT_REACHED',
+                        error: `Tu as déjà demandé tes ${limit} conseils du jour. Reviens demain ou débloque un avis à l'unité (100 FCFA) !`,
                     }, { status: 403 })
                 }
                 mustUsePaid = true
             }
-        } else if (effectiveTier === 'pro') {
-            const limit = Number(SUBSCRIPTION_RULES.pro.maxCoachFeedbackPerDay || 2)
-            if (scanFeedbacksUsed >= limit) {
-                if (paidFeedbacks <= 0) {
+        } else {
+            // Pour les autres (Free), on autorise 1 avis s'ils ont encore des scans (gratuits ou payés)
+            const freeScansLimit = Number(SUBSCRIPTION_RULES.free.maxScansPerDay || 5)
+            const hasFreeScans = scansUsed < freeScansLimit
+            const hasPaidScans = (profile.paid_scans_remaining || 0) > 0
+            
+            // S'ils ont déjà demandé un avis pour ce scan ou s'ils n'ont plus de scans
+            if (advicesUsed >= 1 && !hasPaidScans) {
+                 if (paidFeedbacks <= 0) {
                     return NextResponse.json({
                         success: false,
-                        code: 'PRO_DAILY_LIMIT',
-                        error: `Tu as déjà demandé tes ${limit} conseils du jour. Reviens demain ou achète un scan à l'unité (100 FCFA) !`,
+                        code: 'COACH_LIMIT_REACHED',
+                        error: `Ton quota d'avis gratuit est épuisé. Débloque un conseil personnalisé pour 100 FCFA !`,
                     }, { status: 403 })
                 }
                 mustUsePaid = true
@@ -164,10 +172,16 @@ Ton ton doit rester celui d'un grand frère bienveillant, expert et encourageant
                     updated_at: new Date().toISOString()
                 })
                 .eq('user_id', user.id)
-        } else if (profile.last_usage_reset_date !== today) {
+        } else {
+            // Incrémenter le quota gratuit quotidien
+            const currentAdvices = isToday ? advicesUsed : 0
             await supabase
                 .from('user_profiles')
-                .update({ last_usage_reset_date: today })
+                .update({ 
+                    coach_advices_today: currentAdvices + 1,
+                    last_usage_reset_date: today,
+                    updated_at: new Date().toISOString()
+                })
                 .eq('user_id', user.id)
         }
 
