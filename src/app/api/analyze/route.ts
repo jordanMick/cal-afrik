@@ -34,36 +34,50 @@ const SYNONYMS: Record<string, string[]> = {
     sauce: ["ragout", "bouillon", "soupe"],
 }
 
-// ─── SCORE ────────────────────────────────────────────────────
+const COMMON_WORDS = new Set(['sauce', 'riz', 'pate', 'pates', 'bouillon', 'viande', 'poisson', 'huile', 'eau', 'accompagnement', 'plat'])
+
 function scoreFood(itemName: string, food: any) {
     const input = normalize(itemName)
-
     const names = [
         food.name_standard,
         food.display_name
     ].filter(Boolean).map(normalize)
 
-    let score = 0
+    let maxScore = 0
 
     for (const name of names) {
-        if (input === name) score += 100
-        if (input.includes(name)) score += 50
-        if (name.includes(input)) score += 40
+        let currentScore = 0
+        
+        // Match exact (Priorité Absolue)
+        if (input === name) {
+            currentScore += 200
+        } else {
+            // Contenance
+            if (input.includes(name)) currentScore += 40
+            if (name.includes(input)) currentScore += 30
 
-        const inputWords = input.split(" ")
-        const nameWords = name.split(" ")
+            // Mots individuels
+            const inputWords = input.split(" ")
+            const nameWords = name.split(" ")
 
-        for (const word of inputWords) {
-            if (word.length > 2 && nameWords.includes(word)) score += 15
+            for (const word of inputWords) {
+                if (word.length > 2 && nameWords.includes(word)) {
+                    // Si c'est un mot commun, on donne très peu de points
+                    currentScore += COMMON_WORDS.has(word) ? 5 : 25
+                }
+            }
         }
 
+        // Synonymes
         const syns = SYNONYMS[name] || []
         for (const syn of syns) {
-            if (input.includes(syn)) score += 60
+            if (input.includes(syn)) currentScore += 50
         }
+
+        if (currentScore > maxScore) maxScore = currentScore
     }
 
-    return score
+    return maxScore
 }
 
 // ─── TOP 3 MATCHES ────────────────────────────────────────────
@@ -74,9 +88,9 @@ function getTopMatches(itemName: string, foods: any[]) {
     }))
 
     return scored
-        .filter(s => s.score > 0)
+        .filter(s => s.score >= 25) // Seuil minimum pour éviter le bruit
         .sort((a, b) => b.score - a.score)
-        .slice(0, 3)
+        .slice(0, 2) // Limité à 2 suggestions pour éviter la surcharge
 }
 
 // ─── PROMPT ───────────────────────────────────────────────────
