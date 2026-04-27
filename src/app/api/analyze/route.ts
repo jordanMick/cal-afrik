@@ -814,7 +814,7 @@ export async function POST(req: Request) {
                 carbs_detected: carbsDetected,
                 fat_detected: fatDetected,
                 confidence: Number(component?.confidence || 80),
-                suggestions: finalSuggestions.slice(0, 4) // Limiter à 4 suggestions par item
+                suggestions: finalSuggestions.slice(0, 2) // Limiter à 2 suggestions max par item pour éviter de surcharger l'UI
             })
         }
 
