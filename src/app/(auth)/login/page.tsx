@@ -103,6 +103,16 @@ export default function LoginPage() {
                 })
                 if (error) { setError(translateError(error.message)); return }
                 
+                // Enregistrer le succès de l'inscription pour la limite d'IP
+                try {
+                    await fetch('/api/auth/verify-domain', {
+                        method: 'POST',
+                        body: JSON.stringify({ email, logSignup: true })
+                    })
+                } catch (logErr) {
+                    console.error('Erreur logging signup IP:', logErr)
+                }
+
                 // Si l'auto-confirm est activé dans Supabase, on a une session
                 if (data.session) {
                     router.push('/onboarding')
