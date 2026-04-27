@@ -24,15 +24,14 @@ function normalizeTechnicalKey(text?: string | null) {
 }
 
 const SYNONYMS: Record<string, string[]> = {
-    spaghetti: ["pasta", "noodles", "nouilles"],
+    spaghetti: ["pasta", "noodles", "nouilles", "pates"],
     riz: ["rice"],
     poulet: ["chicken"],
     thon: ["tuna"],
     oeuf: ["egg"],
-    to: ["tô", "toh", "pate de mais"],
-    fufu: ["foufou", "foo foo"],
-    attieke: ["attiéké", "attieke"],
-    sauce: ["ragoût", "ragout", "bouillon"],
+    pates: ["spaghetti", "macaroni", "nouilles"],
+    frites: ["pomme de terre", "chips"],
+    sauce: ["ragout", "bouillon", "soupe"],
 }
 
 // ─── SCORE ────────────────────────────────────────────────────
@@ -184,6 +183,10 @@ const TECHNICAL_MATCH_ALLOWED = [
     "beignet_legumineuse_frit",
     "snack_arachide_pate",
     "banane_plantain_frite",
+    "pates_alimentaires_cuites",
+    "frites_pomme_de_terre",
+    "pain_baguette_ble",
+    "riz_au_gras_complet",
     "unknown",
 ]
 
@@ -773,18 +776,36 @@ export async function POST(req: Request) {
             const displayDetected = matchedFood
                 ? (matchedFood?.display_name || matchedFood?.detected_name || detectedName)
                 : detectedName
-            const finalResolvedSuggestion = matchedFood
-                ? [{
-                    id: matchedFood.id,
-                    name: matchedFood.display_name || matchedFood.detected_name || matchedFood.name_standard,
-                    score: 100,
-                    calories: Math.round(((Number(matchedFood?.calories_per_100g) || 0) * weight) / 100),
-                    protein_g: Math.round((((Number(matchedFood?.proteins_100g) || 0) * weight) / 100) * 10) / 10,
-                    carbs_g: Math.round((((Number(matchedFood?.carbs_100g) || 0) * weight) / 100) * 10) / 10,
-                    fat_g: Math.round((((Number(matchedFood?.lipids_100g) || 0) * weight) / 100) * 10) / 10,
-                }]
-                : []
 
+            const aiSuggestion = {
+                id: `ai-${normalizeTechnicalKey(detectedName)}-${Date.now()}`,
+                name: displayDetected,
+                score: 100,
+                calories: caloriesDetected,
+                protein_g: proteinDetected,
+                carbs_g: carbsDetected,
+                fat_g: fatDetected,
+                is_ai_fallback: !matchedFood
+            }
+            
+            // On combine la suggestion directe de l'IA avec les meilleurs matchs de la BD
+            const finalSuggestions = [aiSuggestion]
+            
+            // Ajouter les top matches s'ils ne sont pas déjà le match principal
+            topMatches.forEach(m => {
+                if (!matchedFood || m.food.id !== matchedFood.id) {
+                    finalSuggestions.push({
+                        id: m.food.id,
+                        name: m.food.display_name || m.food.name_standard,
+                        score: m.score,
+                        calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
+                        protein_g: Math.round((((Number(m.food.proteins_100g) || 0) * weight) / 100) * 10) / 10,
+                        carbs_g: Math.round((((Number(m.food.carbs_100g) || 0) * weight) / 100) * 10) / 10,
+                        fat_g: Math.round((((Number(m.food.lipids_100g) || 0) * weight) / 100) * 10) / 10,
+                    } as any)
+                }
+            })
+            
             results.push({
                 detected: displayDetected,
                 portion_g: Math.round(weight),
@@ -793,15 +814,7 @@ export async function POST(req: Request) {
                 carbs_detected: carbsDetected,
                 fat_detected: fatDetected,
                 confidence: Number(component?.confidence || 80),
-                suggestions: finalResolvedSuggestion.length > 0 ? finalResolvedSuggestion : topMatches.map(m => ({
-                    id: m.food.id,
-                    name: m.food.display_name || m.food.name_standard,
-                    score: m.score,
-                    calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
-                    protein_g: Math.round(((((Number(m.food.proteins_100g) || 0) * weight) / 100) * 10)) / 10,
-                    carbs_g: Math.round((((Number(m.food.carbs_100g) || 0) * weight) / 100) * 10) / 10,
-                    fat_g: Math.round((((Number(m.food.lipids_100g) || 0) * weight) / 100) * 10) / 10,
-                }))
+                suggestions: finalSuggestions.slice(0, 4) // Limiter à 4 suggestions par item
             })
         }
 
