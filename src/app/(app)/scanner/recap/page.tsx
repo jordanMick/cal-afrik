@@ -38,16 +38,61 @@ export default function ScanRecapPage() {
     const [data, setData] = useState<RecapData | null>(null)
     const [isSaving, setIsSaving] = useState(false)
     const [showVitamins, setShowVitamins] = useState(false)
+    const [isLoadingCoach, setIsLoadingCoach] = useState(false)
+    const [localCoachMessage, setLocalCoachMessage] = useState('')
 
     useEffect(() => {
         try {
             const raw = sessionStorage.getItem('scan_recap')
             if (!raw) { router.replace('/scanner'); return }
-            setData(JSON.parse(raw))
+            const parsed = JSON.parse(raw)
+            setData(parsed)
+            if (parsed.coachMessage) setLocalCoachMessage(parsed.coachMessage)
         } catch {
             router.replace('/scanner')
         }
     }, [])
+
+    const loadCoachMessage = async () => {
+        if (!data || isLoadingCoach) return
+        setIsLoadingCoach(true)
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            const res = await fetch('/api/coach', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({
+                    selectedFoods: data.selectedFoods.map(f => f.name || f.detected),
+                    totals: {
+                        calories: Math.round(data.totalCalories),
+                        protein_g: Math.round(data.protein_g * 10) / 10,
+                        carbs_g: Math.round(data.carbs_g * 10) / 10,
+                        fat_g: Math.round(data.fat_g * 10) / 10
+                    },
+                    slotLabel,
+                    slotTarget: exceeded ? calorieTarget : (slots[currentSlotKey as MealSlotKey]?.target || 500),
+                    slotConsumed: slots[currentSlotKey as MealSlotKey]?.consumed || 0,
+                    slotRemaining: remaining,
+                    dailyCalories: dailyCalories,
+                    calorieTarget
+                })
+            })
+            const json = await res.json()
+            if (json.success) {
+                setLocalCoachMessage(json.message)
+                // Optionnel: mettre à jour le sessionStorage pour persister le message
+                const updatedData = { ...data, coachMessage: json.message }
+                setData(updatedData)
+                sessionStorage.setItem('scan_recap', JSON.stringify(updatedData))
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setIsLoadingCoach(false)
+        }
+    }
 
     if (!data) return null
 
@@ -209,46 +254,70 @@ export default function ScanRecapPage() {
                 )}
 
                 {/* Conseil Coach Yao */}
-                {data.coachMessage && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{ 
-                            background: 'rgba(var(--accent-rgb), 0.08)', 
-                            borderRadius: '20px', 
-                            padding: '18px', 
-                            marginBottom: '16px', 
-                            border: '0.5px solid rgba(var(--accent-rgb), 0.2)',
-                            position: 'relative',
-                            overflow: 'hidden'
-                        }}
-                    >
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                            <div style={{ 
-                                width: '36px', 
-                                height: '36px', 
-                                borderRadius: '12px', 
-                                background: 'var(--accent)', 
+                <div style={{ marginBottom: '16px' }}>
+                    {localCoachMessage ? (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            style={{ 
+                                background: 'rgba(var(--accent-rgb), 0.08)', 
+                                borderRadius: '20px', 
+                                padding: '18px', 
+                                border: '0.5px solid rgba(var(--accent-rgb), 0.2)',
+                                position: 'relative'
+                            }}
+                        >
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                                <div style={{ 
+                                    width: '36px', height: '36px', borderRadius: '12px', background: 'var(--accent)', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '18px',
+                                    boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)'
+                                }}>
+                                    💡
+                                </div>
+                                <div>
+                                    <p style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                                        Conseil Coach Yao
+                                    </p>
+                                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500', lineHeight: '1.5', margin: 0 }}>
+                                        {localCoachMessage}
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <button
+                            onClick={loadCoachMessage}
+                            disabled={isLoadingCoach}
+                            style={{ 
+                                width: '100%', 
+                                padding: '16px', 
+                                borderRadius: '18px', 
+                                background: 'var(--bg-secondary)', 
+                                border: '0.5px solid var(--border-color)', 
+                                color: 'var(--text-primary)', 
+                                fontWeight: '700', 
+                                fontSize: '14px', 
+                                cursor: 'pointer', 
                                 display: 'flex', 
                                 alignItems: 'center', 
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                                fontSize: '18px',
-                                boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)'
-                            }}>
-                                💡
-                            </div>
-                            <div>
-                                <p style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
-                                    Conseil Coach Yao
-                                </p>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500', lineHeight: '1.5', margin: 0 }}>
-                                    {data.coachMessage}
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
+                                justifyContent: 'center', 
+                                gap: '10px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                            }}
+                        >
+                            {isLoadingCoach ? (
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                    style={{ width: '18px', height: '18px', border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%' }}
+                                />
+                            ) : (
+                                <><span>🤖</span> Demander l'avis du Coach Yao</>
+                            )}
+                        </button>
+                    )}
+                </div>
 
                 {/* Bouton voir les détails */}
                 {data.vitamins.length > 0 && tier !== 'free' && (
