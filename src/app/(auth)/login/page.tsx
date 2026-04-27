@@ -360,13 +360,7 @@ export default function LoginPage() {
                                     </>
                                 )}
 
-                                {!isRegister && (
-                                    <div style={{ textAlign: 'right', marginTop: '-8px' }}>
-                                        <button type="button" onClick={() => router.push('/forgot-password')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}>
-                                            Mot de passe oublié ?
-                                        </button>
-                                    </div>
-                                )}
+                                {/* Lien mot de passe oublié supprimé pour éviter les envois d'emails */}
 
                                 {error && (
                                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '12px', background: 'rgba(239,68,68,0.08)', borderRadius: '14px', color: '#f87171', fontSize: '13px', border: '1px solid rgba(239,68,68,0.1)' }}>
