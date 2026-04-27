@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
 import { ArrowLeft, X, ChevronRight, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -350,9 +351,9 @@ export default function ScanRecapPage() {
                                             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent)', opacity: 0.5 }} />
                                             <Star size={10} color="var(--accent)" fill="currentColor" />
                                         </div>
-                                        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '600', lineHeight: '1.6', margin: 0, letterSpacing: '-0.2px' }}>
-                                            {localCoachMessage}
-                                        </p>
+                                        <div style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: '500', lineHeight: '1.6', margin: 0, letterSpacing: '-0.2px' }}>
+                                            <ReactMarkdown>{localCoachMessage}</ReactMarkdown>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

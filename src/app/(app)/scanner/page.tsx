@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
 import { Info, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppStore, getMealSlot, SLOT_LABELS, type MealSlotKey } from '@/store/useAppStore'
@@ -1135,9 +1136,9 @@ export default function ScannerPage() {
                     }}
                 >
                     <div style={{ fontSize: '32px', marginBottom: '12px' }}>🤔</div>
-                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600', lineHeight: '1.5', marginBottom: '16px' }}>
-                        {coachMessage}
-                    </p>
+                    <div style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500', lineHeight: '1.5', marginBottom: '16px' }}>
+                        <ReactMarkdown>{coachMessage}</ReactMarkdown>
+                    </div>
                     <button
                         onClick={() => setShowManualForm(true)}
                         style={{ background: 'var(--warning)', color: '#000', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}
