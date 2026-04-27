@@ -51,7 +51,10 @@ export async function POST(req: NextRequest) {
 
         let mustUsePaid = false
         
-        if (effectiveTier === 'pro') {
+        if (effectiveTier === 'premium') {
+            // Accès illimité pour Premium
+            mustUsePaid = false;
+        } else if (effectiveTier === 'pro') {
             const limit = Number(SUBSCRIPTION_RULES.pro.maxCoachFeedbackPerDay || 2)
             if (advicesUsed >= limit) {
                 if (paidFeedbacks <= 0) {
@@ -172,8 +175,8 @@ Ton ton doit rester celui d'un grand frère bienveillant, expert et encourageant
                     updated_at: new Date().toISOString()
                 })
                 .eq('user_id', user.id)
-        } else {
-            // Incrémenter le quota gratuit quotidien
+        } else if (effectiveTier !== 'premium') {
+            // Incrémenter le quota gratuit quotidien uniquement si PAS Premium
             const currentAdvices = isToday ? advicesUsed : 0
             await supabase
                 .from('user_profiles')

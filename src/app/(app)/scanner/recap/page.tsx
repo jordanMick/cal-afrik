@@ -361,8 +361,16 @@ export default function ScanRecapPage() {
                             const paidFeedbacks = profile?.paid_coach_feedbacks_remaining || 0;
                             const tier = getEffectiveTier(profile);
                             
-                            const limit = tier === 'pro' ? 2 : 1;
-                            const hasQuota = advicesUsed < limit || paidFeedbacks > 0;
+                            // Logique de quota robuste
+                            let hasQuota = false;
+                            if (tier === 'premium') {
+                                hasQuota = true;
+                            } else if (tier === 'pro') {
+                                hasQuota = advicesUsed < 2 || paidFeedbacks > 0;
+                            } else {
+                                // Free : 1 avis par jour ou scans payés
+                                hasQuota = advicesUsed < 1 || paidFeedbacks > 0;
+                            }
 
                             if (!hasQuota) {
                                 return (
