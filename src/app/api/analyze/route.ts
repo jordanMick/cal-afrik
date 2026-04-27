@@ -697,8 +697,8 @@ export async function POST(req: Request) {
             }
 
             const matchedByAlias = matchedByAliasSql || aliasToFood.get(normalizedLabel) || null
-            // L'ordre demandé : Alias -> unknown_logs -> technical_match
-            const matchedFood = matchedByAlias || unknownLogMatch || matchedByTechnical || null
+            // L'ordre demandé : Alias -> technical_match -> unknown_logs
+            const matchedFood = matchedByAlias || matchedByTechnical || unknownLogMatch || null
             console.log("🧪 FOOD ITEM MATCH:", matchedFood)
             console.log("Match trouvé en BD ?:", !!matchedFood)
             const topMatches = getTopMatches(detectedName, foodItems || [])
