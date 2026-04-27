@@ -23,12 +23,6 @@ export default function PersonalInfoPage() {
     const [passwordSuccess, setPasswordSuccess] = useState('')
     const [passwordLoading, setPasswordLoading] = useState(false)
 
-    const [isEditingEmail, setIsEditingEmail] = useState(false)
-    const [emailForm, setEmailForm] = useState({ currentEmail: '', newEmail: '', confirmNew: '' })
-    const [emailError, setEmailError] = useState('')
-    const [emailSuccess, setEmailSuccess] = useState('')
-    const [emailLoading, setEmailLoading] = useState(false)
-
     useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser()
@@ -69,60 +63,6 @@ export default function PersonalInfoPage() {
         }
     }
 
-    const handleUpdateEmail = async () => {
-        setEmailError('')
-        setEmailSuccess('')
-        
-        if (!emailForm.currentEmail || !emailForm.newEmail || !emailForm.confirmNew) {
-            return setEmailError("Veuillez remplir tous les champs.")
-        }
-        
-        if (emailForm.currentEmail.toLowerCase() !== userEmail.toLowerCase()) {
-            return setEmailError("L'e-mail actuel est incorrect.")
-        }
-        
-        if (emailForm.newEmail !== emailForm.confirmNew) {
-            return setEmailError("Les nouveaux e-mails ne correspondent pas.")
-        }
-        
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(emailForm.newEmail)) {
-            return setEmailError("Veuillez entrer un email valide.")
-        }
-
-        setEmailLoading(true)
-        try {
-            const { error } = await supabase.auth.updateUser({ email: emailForm.newEmail })
-            if (error) throw error
-            
-            setEmailSuccess("E-mail mis à jour ! 🎉")
-            setUserEmail(emailForm.newEmail)
-            setTimeout(() => {
-                setIsEditingEmail(false)
-                setEmailForm({ currentEmail: '', newEmail: '', confirmNew: '' })
-                setEmailSuccess('')
-            }, 2000)
-        } catch (err: any) {
-            setEmailError(err.message || "Erreur lors de la mise à jour de l'e-mail.")
-        } finally {
-            setEmailLoading(false)
-        }
-    }
-
-    const handleOtpChange = (value: string, index: number) => {
-        if (!/^\d*$/.test(value)) return
-        const newOtp = [...otp]
-        newOtp[index] = value.slice(-1)
-        setOtp(newOtp)
-        if (value && index < 5) otpRefs.current[index + 1]?.focus()
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-        if (e.key === 'Backspace' && !otp[index] && index > 0) {
-            otpRefs.current[index - 1]?.focus()
-        }
-    }
-
     const maskEmail = (email: string) => {
         if (!email) return ''
         const [name, domain] = email.split('@')
@@ -147,58 +87,20 @@ export default function PersonalInfoPage() {
             <div style={{ padding: '0 20px', marginTop: '10px' }}>
                 <p style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', marginLeft: '4px' }}>Sécurité et Connexion</p>
                 <div style={{ background: 'var(--bg-secondary)', border: '0.5px solid var(--border-color)', borderRadius: '16px', marginBottom: '24px', overflow: 'hidden' }}>
-                    {/* EMAIL */}
+                    {/* EMAIL (VERROUILLÉ) */}
                     <div style={{ padding: '16px', borderBottom: '0.5px solid var(--border-color)' }}>
-                        {!isEditingEmail ? (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="#2563eb" /></div>
-                                    <div>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Adresse email</p>
-                                        <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>{maskEmail(userEmail)}</p>
-                                    </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(var(--text-primary-rgb), 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mail size={16} color="var(--text-muted)" /></div>
+                                <div>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>Adresse email</p>
+                                    <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>{maskEmail(userEmail)}</p>
                                 </div>
-                                <button onClick={() => setIsEditingEmail(true)} style={{ background: 'transparent', border: 'none', color: '#10b981', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>Modifier</button>
                             </div>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                     <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>Modifier l'email</span>
-                                     <button onClick={() => { setIsEditingEmail(false); setEmailError(''); setEmailSuccess('') }} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={18} color="var(--text-muted)" /></button>
-                                 </div>
-                                 
-                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                     <input 
-                                         type="email" 
-                                         placeholder="E-mail actuel" 
-                                         value={emailForm.currentEmail} 
-                                         onChange={e => setEmailForm({...emailForm, currentEmail: e.target.value})} 
-                                         style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} 
-                                     />
-                                     <input 
-                                         type="email" 
-                                         placeholder="Nouvel e-mail" 
-                                         value={emailForm.newEmail} 
-                                         onChange={e => setEmailForm({...emailForm, newEmail: e.target.value})} 
-                                         style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} 
-                                     />
-                                     <input 
-                                         type="email" 
-                                         placeholder="Confirmer nouvel e-mail" 
-                                         value={emailForm.confirmNew} 
-                                         onChange={e => setEmailForm({...emailForm, confirmNew: e.target.value})} 
-                                         style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '0.5px solid var(--border-color)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '14px' }} 
-                                     />
-                                 </div>
-
-                                 {emailError && <p style={{ color: 'var(--danger)', fontSize: '12px' }}>{emailError}</p>}
-                                 {emailSuccess && <p style={{ color: 'var(--success)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14}/> {emailSuccess}</p>}
-                                 
-                                 <button onClick={handleUpdateEmail} disabled={emailLoading || !!emailSuccess} style={{ width: '100%', padding: '12px', background: 'linear-gradient(135deg, #065f46, #10b981)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.2)' }}>
-                                     {emailLoading ? 'Mise à jour...' : 'Enregistrer le nouvel e-mail'}
-                                 </button>
+                            <div style={{ background: 'rgba(var(--text-primary-rgb), 0.03)', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', border: '0.5px solid var(--border-color)' }}>
+                                <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Non modifiable</span>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* PASSWORD */}

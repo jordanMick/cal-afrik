@@ -275,20 +275,22 @@ export default function LoginPage() {
                             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
                                 {(!isRegister || regStep === 1) && (
-                                    <div style={{ position: 'relative' }}>
-                                        <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
-                                            <Mail size={18} />
+                                    <>
+                                        <div style={{ position: 'relative' }}>
+                                            <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
+                                                <Mail size={18} />
+                                            </div>
+                                            <input
+                                                type="email" value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                placeholder="Email" required
+                                                style={{
+                                                    width: '100%', height: '56px', padding: '0 18px 0 50px',
+                                                    background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                                                    borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
+                                                }}
+                                            />
                                         </div>
-                                        <input
-                                            type="email" value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="Email" required
-                                            style={{
-                                                width: '100%', height: '56px', padding: '0 18px 0 50px',
-                                                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
-                                                borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
-                                            }}
-                                        />
                                         
                                         {isRegister && (
                                             <div style={{ position: 'relative', marginTop: '14px' }}>
@@ -307,7 +309,7 @@ export default function LoginPage() {
                                                 />
                                             </div>
                                         )}
-                                    </div>
+                                    </>
                                 )}
 
                                 {(!isRegister || regStep === 2) && (
