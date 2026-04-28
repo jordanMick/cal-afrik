@@ -461,104 +461,38 @@ export async function POST(req: Request) {
             }, { status: 500 })
         }
 
-        // ─── APPEL IA (Gemini) ───────────────────────────────────────
-        const inputParts = [
-            {
-                inlineData: {
-                    mimeType: image.mimeType || "image/jpeg",
-                    data: image.data,
+        // --- MODE TEST ACTIVÉ ---
+        const responseText = JSON.stringify({
+            meal_name: "Attiéké au Poisson (Test)",
+            total_calories: 650,
+            items: [
+                {
+                    detected_name: "Attiéké",
+                    technical_match: "attieke",
+                    estimated_weight_g: 300,
+                    calories_per_100g: 180,
+                    protein_g: 1.5,
+                    carbs_g: 40,
+                    fat_g: 0.5,
+                    confidence: 100,
+                    fallback_data: { calories_per_100g: 180, proteins_100g: 0.5, lipids_100g: 0.2, carbs_100g: 45, density_g_ml: 1.2 }
                 },
-            },
-            { text: buildPrompt(profile?.country) },
-        ]
-        let responseText = ""
-        let generationError: any = null
-        let lastTriedModel = ""
-
-        for (const modelName of GEMINI_MODEL_CANDIDATES) {
-            lastTriedModel = modelName
-            console.log("[ANALYZE] Trying Gemini model", modelName)
-            const model = genAI.getGenerativeModel({ model: modelName })
-            
-            try {
-                const maxAttempts = 3
-                for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                    try {
-                        console.log("[ANALYZE] Gemini attempt", { modelName, attempt, maxAttempts })
-                        const result = await model.generateContent({
-                            contents: [{ role: 'user', parts: inputParts as any }],
-                            generationConfig: {
-                                temperature: 0.1,
-                                responseMimeType: "application/json",
-                            },
-                        })
-                        responseText = result.response.text()
-                        generationError = null
-                        console.log(`✅ Gemini modèle utilisé: ${modelName} (attempt ${attempt}/${maxAttempts})`)
-                        break
-                    } catch (err: any) {
-                        const rawErr = String(err?.message || "")
-                        const isUnavailable =
-                            err?.status === 503
-                            || rawErr.includes("UNAVAILABLE")
-                            || rawErr.toLowerCase().includes("high demand")
-                        generationError = err
-                        console.error(err)
-                        console.error(`❌ Gemini tentative ${attempt}/${maxAttempts} échouée avec ${modelName}`)
-                        if (!isUnavailable || attempt === maxAttempts) break
-                        await wait(800 * attempt)
-                    }
+                {
+                    detected_name: "Poisson frit",
+                    technical_match: "poisson_frit",
+                    estimated_weight_g: 150,
+                    calories_per_100g: 220,
+                    protein_g: 18,
+                    carbs_g: 0,
+                    fat_g: 12,
+                    confidence: 100,
+                    fallback_data: { calories_per_100g: 220, proteins_100g: 20, lipids_100g: 14, carbs_100g: 0, density_g_ml: 1.0 }
                 }
-                if (!generationError) break
-            } catch (err: any) {
-                generationError = err
-                console.error(err)
-                console.error(`❌ Gemini generateContent échoue avec ${modelName}`)
-            }
-        }
-
-        if (generationError) {
-            const rawError = generationError?.message || "Gemini generateContent error"
-            const isQuotaExceeded =
-                generationError?.status === 429
-                || String(rawError).includes("RESOURCE_EXHAUSTED")
-                || String(rawError).toLowerCase().includes("quota")
-            const isTemporarilyUnavailable =
-                generationError?.status === 503
-                || String(rawError).includes("UNAVAILABLE")
-                || String(rawError).toLowerCase().includes("high demand")
-
-            if (isQuotaExceeded) {
-                return NextResponse.json({
-                    success: false,
-                    meal_name: "",
-                    total_calories: 0,
-                    data: [],
-                    code: "GEMINI_QUOTA_EXCEEDED",
-                    error: `Quota Gemini dépassé sur ${lastTriedModel}. Vérifie ton plan/facturation Google AI Studio ou réessaie plus tard.`,
-                    raw_error: rawError,
-                }, { status: 429 })
-            }
-            if (isTemporarilyUnavailable) {
-                return NextResponse.json({
-                    success: false,
-                    meal_name: "",
-                    total_calories: 0,
-                    data: [],
-                    code: "GEMINI_TEMP_UNAVAILABLE",
-                    error: `Gemini temporairement indisponible sur ${lastTriedModel}. Réessaie dans quelques secondes.`,
-                    raw_error: rawError,
-                }, { status: 503 })
-            }
-
-            return NextResponse.json({
-                success: false,
-                meal_name: "",
-                total_calories: 0,
-                data: [],
-                error: rawError,
-            }, { status: 502 })
-        }
+            ],
+            coach_message: "C'est un excellent choix de test ! L'attiéké est une semoule de manioc légère et le poisson apporte les protéines nécessaires. Attention à la friture pour le poisson !"
+        });
+        const generationError = null;
+        const lastTriedModel = "MODE_TEST";
 
         console.log("🔥 RAW RESPONSE:", responseText)
 
