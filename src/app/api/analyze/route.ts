@@ -461,38 +461,64 @@ export async function POST(req: Request) {
             }, { status: 500 })
         }
 
-        // --- MODE TEST ACTIVÉ ---
-        const responseText = JSON.stringify({
-            meal_name: "Attiéké au Poisson",
-            total_calories: 650,
-            items: [
-                {
-                    detected_name: "Attiéké",
-                    technical_match: "attieke",
-                    estimated_weight_g: 300,
-                    calories_per_100g: 180,
-                    protein_g: 1.5,
-                    carbs_g: 40,
-                    fat_g: 0.5,
-                    confidence: 100,
-                    fallback_data: { calories_per_100g: 180, proteins_100g: 0.5, lipids_100g: 0.2, carbs_100g: 45, density_g_ml: 1.2 }
-                },
-                {
-                    detected_name: "Poisson frit",
-                    technical_match: "poisson_frit",
-                    estimated_weight_g: 150,
-                    calories_per_100g: 220,
-                    protein_g: 18,
-                    carbs_g: 0,
-                    fat_g: 12,
-                    confidence: 100,
-                    fallback_data: { calories_per_100g: 220, proteins_100g: 20, lipids_100g: 14, carbs_100g: 0, density_g_ml: 1.0 }
+        // ─── GÉNÉRATION GEMINI ────────────────────────────────
+        let responseText = ""
+        let lastTriedModel = ""
+        let generationError: any = null
+
+        for (const modelName of GEMINI_MODEL_CANDIDATES) {
+            try {
+                lastTriedModel = modelName
+                console.log(`[ANALYZE] Attempting with model: ${modelName}`)
+                
+                const model = genAI.getGenerativeModel({ 
+                    model: modelName,
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+
+                const prompt = buildPrompt(profile?.country)
+                
+                const result = await model.generateContent([
+                    prompt,
+                    {
+                        inlineData: {
+                            data: image.data,
+                            mimeType: image.mimeType
+                        }
+                    }
+                ])
+
+                const response = await result.response
+                responseText = response.text()
+                
+                if (responseText) {
+                    generationError = null
+                    break
                 }
-            ],
-            coach_message: "C'est un excellent choix de test ! L'attiéké est une semoule de manioc légère et le poisson apporte les protéines nécessaires. Attention à la friture pour le poisson !"
-        });
-        const generationError = null;
-        const lastTriedModel = "MODE_TEST";
+            } catch (err: any) {
+                console.error(`❌ Gemini Error (${modelName}):`, err)
+                generationError = err
+                // Si c'est une erreur de quota ou de surcharge, on peut attendre un peu
+                if (err?.message?.includes('429') || err?.message?.includes('503')) {
+                    await wait(1000)
+                }
+                continue
+            }
+        }
+
+        if (generationError || !responseText) {
+            const isQuota = generationError?.message?.includes('429') || generationError?.status === 429
+            const isOverloaded = generationError?.message?.includes('503') || generationError?.status === 503
+
+            return NextResponse.json({
+                success: false,
+                meal_name: "",
+                total_calories: 0,
+                data: [],
+                error: isQuota ? "Quota Gemini dépassé" : isOverloaded ? "Gemini surchargé" : "Gemini indisponible",
+                code: isQuota ? "GEMINI_QUOTA_EXCEEDED" : isOverloaded ? "GEMINI_TEMP_UNAVAILABLE" : "GEMINI_ERROR"
+            }, { status: isQuota ? 429 : 503 })
+        }
 
         console.log("🔥 RAW RESPONSE:", responseText)
 
