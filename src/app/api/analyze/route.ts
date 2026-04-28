@@ -32,6 +32,8 @@ const SYNONYMS: Record<string, string[]> = {
     pates: ["spaghetti", "macaroni", "nouilles"],
     frites: ["pomme de terre", "chips"],
     sauce: ["ragout", "bouillon", "soupe"],
+    gari: ["semoule de manioc", "eba", "pinon"],
+    attieke: ["semoule de manioc", "cassava", "ivoirien"],
 }
 
 const COMMON_WORDS = new Set(['sauce', 'riz', 'pate', 'pates', 'bouillon', 'viande', 'poisson', 'huile', 'eau', 'accompagnement', 'plat'])
@@ -803,20 +805,25 @@ export async function POST(req: Request) {
             }
             
             // On combine la suggestion directe de l'IA avec les meilleurs matchs de la BD
-            const finalSuggestions = [aiSuggestion]
+            const finalSuggestions: any[] = [aiSuggestion]
+            const seenNames = new Set([normalize(aiSuggestion.name)])
             
-            // Ajouter les top matches s'ils ne sont pas déjà le match principal
+            // Ajouter les top matches s'ils ne sont pas déjà le match principal et ne sont pas des doublons
             topMatches.forEach(m => {
-                if (!matchedFood || m.food.id !== matchedFood.id) {
+                const name = m.food.display_name || m.food.name_standard
+                const normalizedName = normalize(name)
+
+                if (!seenNames.has(normalizedName)) {
                     finalSuggestions.push({
                         id: m.food.id,
-                        name: m.food.display_name || m.food.name_standard,
+                        name: name,
                         score: m.score,
                         calories: Math.round(((Number(m.food.calories_per_100g) || 0) * weight) / 100),
                         protein_g: Math.round((((Number(m.food.proteins_100g) || 0) * weight) / 100) * 10) / 10,
                         carbs_g: Math.round((((Number(m.food.carbs_100g) || 0) * weight) / 100) * 10) / 10,
                         fat_g: Math.round((((Number(m.food.lipids_100g) || 0) * weight) / 100) * 10) / 10,
                     } as any)
+                    seenNames.add(normalizedName)
                 }
             })
             
