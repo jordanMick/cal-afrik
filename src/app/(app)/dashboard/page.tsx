@@ -229,11 +229,11 @@ export default function DashboardPage() {
                 setUserEmail(user.email)
             }
             
-            // Priorité : Métadonnées Auth (live) > Profil DB (persistant) > Picture Google
-            if (meta?.avatar_url) {
-                setAvatarUrl(meta.avatar_url)
-            } else if (profile?.avatar_url) {
+            // Priorité : Profil DB (persistant) > Métadonnées Auth (live) > Picture Google
+            if (profile?.avatar_url) {
                 setAvatarUrl(profile.avatar_url)
+            } else if (meta?.avatar_url) {
+                setAvatarUrl(meta.avatar_url)
             } else if (meta?.picture) {
                 setAvatarUrl(meta.picture)
             }

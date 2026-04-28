@@ -178,6 +178,7 @@ export default function OnboardingPage() {
     } = useAppStore()
     const [isSaving, setIsSaving] = useState(false)
     const [analysisProgress, setAnalysisProgress] = useState(0)
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
     const currentYear = new Date().getFullYear()
 
@@ -200,6 +201,23 @@ export default function OnboardingPage() {
     // 🛡️ Corrigé : On fusionne initialForm et onboardingForm pour éviter les champs manquants
     // si un ancien onboarding partiel est stocké en local.
     const form = { ...initialForm, ...(onboardingForm || {}) }
+
+    useEffect(() => {
+        // Charger l'avatar
+        const loadAvatar = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            const meta = user?.user_metadata
+            // Priorité : Profil DB (persistant) > Métadonnées Auth (live) > Picture Google
+            if (profile?.avatar_url) {
+                setAvatarUrl(profile.avatar_url)
+            } else if (meta?.avatar_url) {
+                setAvatarUrl(meta.avatar_url)
+            } else if (meta?.picture) {
+                setAvatarUrl(meta.picture)
+            }
+        }
+        loadAvatar()
+    }, [profile?.avatar_url]) // Dépendance sur profile.avatar_url pour réagir aux updates
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -289,7 +307,7 @@ export default function OnboardingPage() {
 
             const { data: currentProfile } = await supabase
                 .from('user_profiles')
-                .select('subscription_tier, subscription_expires_at')
+                .select('subscription_tier, subscription_expires_at, avatar_url')
                 .eq('user_id', session.user.id)
                 .single()
 
@@ -297,6 +315,23 @@ export default function OnboardingPage() {
             const targets = calculateSafeTargets()
 
 
+
+            // Gestion de l'avatar par défaut ou Google
+            const { data: { user } } = await supabase.auth.getUser()
+            const meta = user?.user_metadata
+            let finalAvatarUrl = profile?.avatar_url || currentProfile?.avatar_url
+
+            if (!finalAvatarUrl) {
+                // Si pas d'avatar en DB, on regarde les métadonnées Auth (Google)
+                const providerAvatar = meta?.avatar_url || meta?.picture
+                if (providerAvatar) {
+                    finalAvatarUrl = providerAvatar
+                } else {
+                    // Si toujours rien (Email user), on génère un avatar par défaut sympa (Dicebear)
+                    const nameSeed = encodeURIComponent(form.name || 'User')
+                    finalAvatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${nameSeed}&backgroundColor=065f46,10b981,0ea5e9,f59e0b`
+                }
+            }
 
             const profileData = {
                 name: form.name,
@@ -313,6 +348,7 @@ export default function OnboardingPage() {
                 subscription_tier: currentProfile?.subscription_tier || profile?.subscription_tier || 'free',
                 subscription_expires_at: currentProfile?.subscription_expires_at || profile?.subscription_expires_at,
                 onboarding_done: true,
+                avatar_url: finalAvatarUrl,
                 ...targets,
             }
 

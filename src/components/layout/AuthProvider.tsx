@@ -63,6 +63,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 return
             }
 
+            // ✅ Correction automatique de l'avatar si manquant
+            if (!profile.avatar_url) {
+                const meta = session.user.user_metadata
+                const providerAvatar = meta?.avatar_url || meta?.picture
+                if (providerAvatar) {
+                    await supabase.from('user_profiles').update({ avatar_url: providerAvatar }).eq('user_id', session.user.id)
+                    profile.avatar_url = providerAvatar // Update local object for immediate use
+                } else {
+                    const nameSeed = encodeURIComponent(profile.name || 'User')
+                    const defaultAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${nameSeed}&backgroundColor=065f46,10b981,0ea5e9,f59e0b`
+                    await supabase.from('user_profiles').update({ avatar_url: defaultAvatar }).eq('user_id', session.user.id)
+                    profile.avatar_url = defaultAvatar
+                }
+            }
+
             setProfile(profile)
 
             // ✅ Mettre en place l'abonnement direct à la base de données (Temps réel)
