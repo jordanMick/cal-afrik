@@ -463,7 +463,7 @@ export async function POST(req: Request) {
 
         // --- MODE TEST ACTIVÉ ---
         const responseText = JSON.stringify({
-            meal_name: "Attiéké au Poisson (Test)",
+            meal_name: "Attiéké au Poisson",
             total_calories: 650,
             items: [
                 {
