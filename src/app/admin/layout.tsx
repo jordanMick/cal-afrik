@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
-import { ShieldAlert, Loader2 } from 'lucide-react'
+import { ShieldAlert, Loader2, LogOut } from 'lucide-react'
 
 const ADMIN_EMAILS = ['jomickeal11@gmail.com']
 
@@ -39,23 +39,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     if (authorized === null) {
         return (
-            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-[#10b981] animate-spin" />
+            <div style={{ minHeight: '100vh', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="spinner" style={{ width: '32px', height: '32px' }} />
             </div>
         )
     }
 
     if (authorized === false) {
         return (
-            <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">
-                <ShieldAlert className="w-16 h-16 text-red-500 mb-6" />
-                <h1 className="text-2xl font-black text-white mb-2">Accès Restreint</h1>
-                <p className="text-gray-400 max-w-md">
+            <div style={{ minHeight: '100vh', background: '#050505', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
+                <ShieldAlert size={64} color="#ef4444" style={{ marginBottom: '24px' }} />
+                <h1 style={{ fontSize: '24px', fontWeight: '900', color: '#fff', marginBottom: '8px' }}>Accès Restreint</h1>
+                <p style={{ color: 'rgba(255,255,255,0.4)', maxWidth: '400px', lineHeight: '1.6' }}>
                     Désolé, vous n'avez pas les permissions nécessaires pour accéder à l'interface d'administration.
                 </p>
                 <button 
                     onClick={() => router.push('/dashboard')}
-                    className="mt-8 px-6 py-3 bg-white text-black rounded-xl font-bold"
+                    style={{ marginTop: '32px', padding: '16px 32px', background: '#fff', color: '#000', borderRadius: '16px', fontWeight: '800', border: 'none', cursor: 'pointer' }}
                 >
                     Retour au Dashboard
                 </button>
@@ -64,30 +64,45 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white selection:bg-[#10b981] selection:text-black">
-            {/* Sidebar / Header Simplifié pour l'admin */}
-            <header className="border-b border-white/5 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-black">
+        <div style={{ 
+            minHeight: '100vh', 
+            background: '#050505', 
+            color: '#fff', 
+            fontFamily: 'Inter, system-ui, sans-serif' 
+        }}>
+            {/* Header Simplifié */}
+            <header style={{ 
+                borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                background: 'rgba(0,0,0,0.8)', 
+                backdropFilter: 'blur(20px)', 
+                position: 'sticky', 
+                top: 0, 
+                zIndex: 1000,
+                height: '80px',
+                display: 'flex',
+                alignItems: 'center'
+            }}>
+                <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+                        <div style={{ width: '42px', height: '42px', background: 'linear-gradient(135deg, #059669, #10b981)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#000', fontSize: '20px' }}>
                             A
                         </div>
                         <div>
-                            <h1 className="font-black text-lg leading-none">Cal-Afrik Admin</h1>
-                            <p className="text-emerald-500 text-xs font-bold uppercase tracking-widest mt-1">Console de Contrôle</p>
+                            <h1 style={{ fontSize: '18px', fontWeight: '900', margin: 0, letterSpacing: '-0.5px' }}>Cal-Afrik Admin</h1>
+                            <p style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', textTransform: 'uppercase', letterSpacing: '2px', marginTop: '2px' }}>Console de Contrôle</p>
                         </div>
                     </div>
                     
                     <button 
                         onClick={() => router.push('/dashboard')}
-                        className="text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 18px', borderRadius: '12px', color: '#fff', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
-                        Quitter l'Admin
+                        Quitter
                     </button>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-6 py-10">
+            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
                 {children}
             </main>
         </div>

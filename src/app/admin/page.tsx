@@ -10,14 +10,19 @@ import {
     Search,
     Filter,
     MoreHorizontal,
-    Activity
+    Activity,
+    TrendingUp,
+    Clock,
+    UserCheck,
+    Globe
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 
 export default function AdminDashboard() {
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState('general') // 'general', 'users', 'payments'
 
     useEffect(() => {
         fetchStats()
@@ -41,153 +46,259 @@ export default function AdminDashboard() {
     }
 
     if (loading) return (
-        <div className="flex items-center justify-center h-96">
-            <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px' }}>
+            <div className="spinner" style={{ width: '40px', height: '40px' }} />
         </div>
     )
 
     const stats = [
-        { label: 'Utilisateurs Totaux', value: data?.stats.totalUsers, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: 'Abonnés Premium', value: data?.stats.premiumUsers, icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-        { label: 'Scans Réalisés', value: data?.stats.totalScans, icon: Camera, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Paiements (Récents)', value: data?.recentPayments.length, icon: CreditCard, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { label: 'Utilisateurs', value: data?.stats.totalUsers, icon: Users, color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+        { label: 'Premium', value: data?.stats.premiumUsers, icon: Zap, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+        { label: 'Scans', value: data?.stats.totalScans, icon: Camera, color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+        { label: 'Revenu Est.', value: '---', icon: TrendingUp, color: '#a855f7', bg: 'rgba(168, 85, 247, 0.1)' },
     ]
 
+    const tabStyle = (id: string) => ({
+        padding: '12px 24px',
+        borderRadius: '12px',
+        fontSize: '14px',
+        fontWeight: '800',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease',
+        background: activeTab === id ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+        color: activeTab === id ? '#10b981' : 'rgba(255,255,255,0.4)',
+        border: activeTab === id ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid transparent',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+    })
+
     return (
-        <div className="space-y-10 pb-20">
-            {/* Header section with Welcome */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h2 className="text-3xl font-black text-white">Tableau de bord</h2>
-                    <p className="text-gray-400 mt-2">Vue d'ensemble de l'activité de Cal-Afrik.</p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                    <button className="h-12 px-6 rounded-xl bg-white/5 border border-white/10 text-sm font-bold flex items-center gap-2 hover:bg-white/10 transition-all">
-                        <Filter size={16} /> Filtrer
-                    </button>
-                    <button className="h-12 px-6 rounded-xl bg-emerald-500 text-black text-sm font-black flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
-                        Exporter les données
-                    </button>
-                </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+            
+            {/* Nav Tabs */}
+            <div style={{ 
+                display: 'flex', 
+                gap: '8px', 
+                background: 'rgba(255,255,255,0.03)', 
+                padding: '6px', 
+                borderRadius: '16px', 
+                width: 'fit-content',
+                border: '1px solid rgba(255,255,255,0.05)'
+            }}>
+                <div onClick={() => setActiveTab('general')} style={tabStyle('general')}><Activity size={16} /> Général</div>
+                <div onClick={() => setActiveTab('users')} style={tabStyle('users')}><Users size={16} /> Utilisateurs</div>
+                <div onClick={() => setActiveTab('payments')} style={tabStyle('payments')}><CreditCard size={16} /> Paiements</div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, i) => (
+            <AnimatePresence mode="wait">
+                {activeTab === 'general' && (
                     <motion.div 
+                        key="general"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        key={stat.label}
-                        className="p-6 rounded-3xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all"
+                        exit={{ opacity: 0, y: -20 }}
+                        style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
-                                <stat.icon size={24} />
-                            </div>
-                            <div className="text-emerald-500 text-xs font-black bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
-                                <ArrowUpRight size={12} /> +12%
-                            </div>
+                        {/* Stats Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
+                            {stats.map((stat, i) => (
+                                <div 
+                                    key={stat.label}
+                                    style={{ 
+                                        padding: '32px', 
+                                        borderRadius: '32px', 
+                                        background: 'rgba(255,255,255,0.02)', 
+                                        border: '1px solid rgba(255,255,255,0.05)',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'between', marginBottom: '24px' }}>
+                                        <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color }}>
+                                            <stat.icon size={24} />
+                                        </div>
+                                        <div style={{ fontSize: '11px', fontWeight: '900', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '4px 10px', borderRadius: '20px' }}>
+                                            +12.5%
+                                        </div>
+                                    </div>
+                                    <p style={{ fontSize: '13px', fontWeight: '700', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>{stat.label}</p>
+                                    <p style={{ fontSize: '36px', fontWeight: '900', color: '#fff', marginTop: '4px', letterSpacing: '-1px' }}>{stat.value?.toLocaleString() || '0'}</p>
+                                </div>
+                            ))}
                         </div>
-                        <p className="text-gray-400 font-bold text-sm">{stat.label}</p>
-                        <p className="text-3xl font-black text-white mt-1">{stat.value?.toLocaleString()}</p>
-                    </motion.div>
-                ))}
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Derniers utilisateurs */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <Activity className="text-emerald-500" /> Nouveaux Utilisateurs
-                        </h3>
-                        <button className="text-sm font-bold text-emerald-500">Voir tout</button>
-                    </div>
-
-                    <div className="rounded-3xl overflow-hidden border border-white/5 bg-white/[0.02]">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-white/[0.02] border-b border-white/5">
-                                    <th className="px-6 py-4 text-xs font-black uppercase text-gray-500 tracking-widest">Utilisateur</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase text-gray-500 tracking-widest">Plan</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase text-gray-500 tracking-widest">Date d'inscription</th>
-                                    <th className="px-6 py-4"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data?.latestUsers.map((u: any) => (
-                                    <tr key={u.email} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-all group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center font-black overflow-hidden border border-white/10 shadow-lg shadow-emerald-500/10">
-                                                    {u.avatar_url ? (
-                                                        <img src={u.avatar_url} className="w-full h-full object-cover" />
-                                                    ) : u.name?.charAt(0) || '?'}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-white text-sm">{u.name || 'Sans nom'}</p>
-                                                    <p className="text-gray-500 text-xs">{u.email}</p>
-                                                </div>
+                        {/* Recent Activity */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }}>
+                            <CardWrapper title="Nouveaux inscrits" icon={<UserCheck size={20} color="#10b981" />}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {data?.latestUsers.slice(0, 5).map((u: any) => (
+                                        <div key={u.email} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #059669, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', overflow: 'hidden' }}>
+                                                {u.avatar_url ? <img src={u.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : u.name?.charAt(0) || 'U'}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                u.subscription_tier === 'premium' ? 'bg-amber-500/10 text-amber-500' : 
-                                                u.subscription_tier === 'pro' ? 'bg-blue-500/10 text-blue-500' : 'bg-gray-500/10 text-gray-500'
-                                            }`}>
-                                                {u.subscription_tier}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-400 font-medium">
-                                            {new Date(u.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="p-2 rounded-xl hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100">
-                                                <MoreHorizontal size={18} className="text-gray-400" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Flux financier (Recent Payments) */}
-                <div className="space-y-6">
-                    <h3 className="text-xl font-black text-white flex items-center gap-3">
-                        <CreditCard className="text-amber-500" /> Flux de Paiements
-                    </h3>
-
-                    <div className="space-y-4">
-                        {data?.recentPayments.map((p: any) => (
-                            <div key={p.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between group hover:bg-white/[0.05] transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                        <ArrowUpRight size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-white">{p.amount} {p.currency || 'XOF'}</p>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{p.provider || 'Maketou'}</p>
-                                    </div>
+                                            <div style={{ flex: 1 }}>
+                                                <p style={{ fontSize: '14px', fontWeight: '800' }}>{u.name || 'Utilisateur'}</p>
+                                                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{u.email}</p>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <span style={{ fontSize: '10px', fontWeight: '900', color: u.subscription_tier === 'premium' ? '#f59e0b' : '#666', textTransform: 'uppercase' }}>{u.subscription_tier}</span>
+                                                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', marginTop: '2px' }}>{new Date(u.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] font-black text-emerald-500 mb-1">SUCCÈS</p>
-                                    <p className="text-[10px] text-gray-600 font-medium">{new Date(p.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
-                                </div>
-                            </div>
-                        ))}
+                            </CardWrapper>
 
-                        {data?.recentPayments.length === 0 && (
-                            <div className="p-10 text-center rounded-3xl border border-dashed border-white/10 bg-white/[0.01]">
-                                <p className="text-gray-500 text-sm font-bold">Aucun paiement récent.</p>
+                            <CardWrapper title="Paiements récents" icon={<CreditCard size={20} color="#f59e0b" />}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {data?.recentPayments.slice(0, 5).map((p: any) => (
+                                        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+                                                <CreditCard size={20} />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <p style={{ fontSize: '14px', fontWeight: '800' }}>{p.amount} {p.currency || 'XOF'}</p>
+                                                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>{p.provider || 'Maketou'}</p>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <span style={{ fontSize: '10px', fontWeight: '900', color: '#10b981' }}>RÉUSSI</span>
+                                                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', marginTop: '2px' }}>{new Date(p.created_at).toLocaleTimeString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {data?.recentPayments.length === 0 && (
+                                        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '40px 0', fontSize: '14px' }}>Aucun paiement récent.</p>
+                                    )}
+                                </div>
+                            </CardWrapper>
+                        </div>
+                    </motion.div>
+                )}
+
+                {activeTab === 'users' && (
+                    <motion.div 
+                        key="users"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                    >
+                        <CardWrapper title="Tous les utilisateurs" icon={<Users size={20} color="#3b82f6" />}>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left' }}>
+                                            <th style={thStyle}>Utilisateur</th>
+                                            <th style={thStyle}>Plan</th>
+                                            <th style={thStyle}>Pays</th>
+                                            <th style={thStyle}>Inscrit le</th>
+                                            <th style={thStyle}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data?.latestUsers.map((u: any) => (
+                                            <tr key={u.email} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                <td style={tdStyle}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '900' }}>
+                                                            {u.name?.charAt(0) || 'U'}
+                                                        </div>
+                                                        <div>
+                                                            <p style={{ fontSize: '13px', fontWeight: '700' }}>{u.name}</p>
+                                                            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{u.email}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style={tdStyle}>
+                                                    <span style={{ fontSize: '10px', fontWeight: '900', color: u.subscription_tier === 'premium' ? '#f59e0b' : '#666', textTransform: 'uppercase' }}>{u.subscription_tier}</span>
+                                                </td>
+                                                <td style={tdStyle}><span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>{u.country || '---'}</span></td>
+                                                <td style={tdStyle}><span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>{new Date(u.created_at).toLocaleDateString()}</span></td>
+                                                <td style={tdStyle}>
+                                                    <button style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}><MoreHorizontal size={18} /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+                        </CardWrapper>
+                    </motion.div>
+                )}
+
+                {activeTab === 'payments' && (
+                    <motion.div 
+                        key="payments"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                    >
+                        <CardWrapper title="Historique des transactions" icon={<CreditCard size={20} color="#f59e0b" />}>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left' }}>
+                                            <th style={thStyle}>ID Transaction</th>
+                                            <th style={thStyle}>Montant</th>
+                                            <th style={thStyle}>Méthode</th>
+                                            <th style={thStyle}>Date</th>
+                                            <th style={thStyle}>Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data?.recentPayments.map((p: any) => (
+                                            <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                <td style={tdStyle}><span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>{p.id.substring(0, 8)}...</span></td>
+                                                <td style={tdStyle}><span style={{ fontSize: '14px', fontWeight: '800' }}>{p.amount} {p.currency}</span></td>
+                                                <td style={tdStyle}><span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>{p.provider}</span></td>
+                                                <td style={tdStyle}><span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>{new Date(p.created_at).toLocaleString()}</span></td>
+                                                <td style={tdStyle}><span style={{ fontSize: '10px', fontWeight: '900', color: '#10b981' }}>SUCCESS</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {data?.recentPayments.length === 0 && (
+                                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '60px 0', fontSize: '14px' }}>Aucune transaction trouvée.</p>
+                                )}
+                            </div>
+                        </CardWrapper>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
+}
+
+function CardWrapper({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) {
+    return (
+        <div style={{ 
+            background: 'rgba(255,255,255,0.02)', 
+            border: '1px solid rgba(255,255,255,0.05)', 
+            borderRadius: '32px', 
+            padding: '32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px'
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {icon}
+                <h3 style={{ fontSize: '18px', fontWeight: '900', letterSpacing: '-0.5px' }}>{title}</h3>
+            </div>
+            {children}
+        </div>
+    )
+}
+
+const thStyle: React.CSSProperties = {
+    padding: '16px',
+    fontSize: '11px',
+    fontWeight: '900',
+    color: 'rgba(255,255,255,0.3)',
+    textTransform: 'uppercase',
+    letterSpacing: '1.5px'
+}
+
+const tdStyle: React.CSSProperties = {
+    padding: '16px',
+    verticalAlign: 'middle'
 }
