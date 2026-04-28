@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ 
             success: true, 
-            message: `L'utilisateur ${targetUser.email} est maintenant ADMIN. Vous pouvez accéder à /admin/dashboard` 
+            message: `L'utilisateur ${targetUser.email} est maintenant ADMIN. Vous pouvez accéder à /admin` 
         })
 
     } catch (err: any) {
