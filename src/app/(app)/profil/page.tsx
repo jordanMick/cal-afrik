@@ -27,10 +27,10 @@ function getActiveBilanSlot(hour: number, minutes: number = 0): MealSlotKey {
     // Règle : Un bilan reste affiché jusqu'à 30 minutes avant le début du suivant
     const time = hour + minutes / 60
 
-    if (time >= 22.5 || time < 11.5) return 'diner'           // Bilan journée visible de 22h30 à 11h30
+    if (time >= 22.5 || time < 8) return 'diner'              // Bilan journée visible de 22h30 à 08h00
     if (time >= 18.5 && time < 22.5) return 'collation'       // Bilan collation visible de 18h30 à 22h30
     if (time >= 15.5 && time < 18.5) return 'dejeuner'        // Bilan déjeuner visible de 15h30 à 18h30
-    if (time >= 11.5 && time < 15.5) return 'petit_dejeuner'  // Bilan petit-déjeuner de 11h30 à 15h30
+    if (time >= 8 && time < 15.5) return 'petit_dejeuner'    // Bilan petit-déjeuner de 08h00 à 15h30
 
     return 'diner'
 }
@@ -111,8 +111,8 @@ export default function ProfilPage() {
     const minutes = now.getMinutes()
     const today = now.toISOString().split('T')[0]
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-    const isBefore11 = hour < 11
-    const bilanDinerDate = isBefore11 ? yesterday : today
+    const isBefore8 = hour < 8
+    const bilanDinerDate = isBefore8 ? yesterday : today
 
     // Calcul de l'urgence d'expiration (J-7)
     const expiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null
@@ -129,9 +129,11 @@ export default function ProfilPage() {
     // VALIDITÉ : On ajoute un check sur le message si l'utilisateur est Premium
     const needsYaoMessage = profile?.subscription_tier === 'premium' && (!existingBilan?.message || existingBilan.message === "")
     const bilanIsValid = existingBilan && existingBilan.date === bilanDate && !existingBilan.needsRefresh && !needsYaoMessage
-
-    const shouldGenerate = !!activeSlot && canUseAIBilanForActiveSlot && !bilanIsValid
-    const shouldShowExisting = !!activeSlot && canUseAIBilanForActiveSlot && bilanIsValid
+    
+    // CRITIQUE : Après minuit et avant 8h, on ne génère RIEN pour le diner (on garde l'archive de hier)
+    const isNightFreeze = isBefore8 && activeSlot === 'diner'
+    const shouldGenerate = !!activeSlot && canUseAIBilanForActiveSlot && !bilanIsValid && !isNightFreeze
+    const shouldShowExisting = !!activeSlot && canUseAIBilanForActiveSlot && (bilanIsValid || isNightFreeze)
 
     // Déterminer le statut initial si on a déjà un bilan
     const getInitialStatus = () => {
