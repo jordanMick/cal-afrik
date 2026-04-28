@@ -704,6 +704,19 @@ export default function DashboardPage() {
                                             <Bell size={18} color="var(--text-secondary)" />
                                             <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>Notifications</span>
                                         </Link>
+
+                                        {profile?.is_admin && (
+                                            <Link 
+                                                href="/admin"
+                                                onClick={() => setIsProfileMenuOpen(false)}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s', textDecoration: 'none' }}
+                                                className="menu-item-hover"
+                                            >
+                                                <ShieldCheck size={18} color="#10b981" />
+                                                <span style={{ fontSize: '14px', fontWeight: '700', color: '#10b981' }}>Console Admin</span>
+                                            </Link>
+                                        )}
+                                        
                                         <div style={{ height: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
                                         
                                         <div 
