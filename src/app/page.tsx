@@ -156,29 +156,26 @@ export default function LandingPage() {
                                     <CheckCircle2 size={20} /> Résultat prêt
                                 </div>
                                 
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginBottom: '40px' }}>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '64px', fontWeight: 'bold' }}>{analysisResult.total_summary.calories}</div>
-                                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px' }}>Calories</div>
+                                <div style={{ marginBottom: '40px' }}>
+                                    <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', fontFamily: 'var(--font-syne), sans-serif' }}>Analyse terminée !</h3>
+                                    <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: '1.6' }}>
+                                        Votre plat a été identifié avec succès. Inscrivez-vous maintenant pour débloquer les détails nutritionnels (Calories, Macros) et profitez de <strong>5 scans gratuits</strong> offerts.
+                                    </p>
+                                </div>
+                                
+                                <div style={{ display: 'flex', gap: '20px', marginBottom: '40px', opacity: 0.3, filter: 'blur(4px)', pointerEvents: 'none' }}>
+                                    <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', minWidth: '80px' }}>
+                                        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>450</div>
+                                        <div style={{ fontSize: '10px', textTransform: 'uppercase' }}>Kcal</div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '32px', flex: 1, borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: '32px' }}>
-                                        <div>
-                                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{analysisResult.total_summary.proteins}g</div>
-                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 'bold' }}>Prot.</div>
-                                        </div>
-                                        <div>
-                                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{analysisResult.total_summary.carbs}g</div>
-                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 'bold' }}>Gluc.</div>
-                                        </div>
-                                        <div>
-                                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{analysisResult.total_summary.lipids}g</div>
-                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 'bold' }}>Lip.</div>
-                                        </div>
+                                    <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', minWidth: '80px' }}>
+                                        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>25g</div>
+                                        <div style={{ fontSize: '10px', textTransform: 'uppercase' }}>Prot.</div>
                                     </div>
                                 </div>
 
-                                <Link href="/login?mode=register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '16px', background: '#fff', color: '#000', borderRadius: '12px', fontWeight: 'bold', textDecoration: 'none', fontSize: '18px' }}>
-                                    S'inscrire pour voir l'analyse <ChevronRight size={20} />
+                                <Link href="/login?mode=register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '20px', background: '#10b981', color: '#fff', borderRadius: '16px', fontWeight: 'bold', textDecoration: 'none', fontSize: '18px', boxShadow: '0 10px 30px rgba(16,185,129,0.3)' }}>
+                                    Voir mon résultat + 5 scans offerts <ChevronRight size={20} />
                                 </Link>
                                 
                                 <button onClick={() => setAnalysisResult(null)} style={{ marginTop: '24px', width: '100%', background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', cursor: 'pointer' }}>
