@@ -85,6 +85,7 @@ export default function LandingPage() {
     // Styles
     const navStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '0 24px', height: '80px' }
     const heroStyle = { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', textAlign: 'center' as const, maxWidth: '800px', margin: '0 auto', padding: '160px 24px 80px' }
+    const featureGridStyle = { display: 'flex', justifyContent: 'center', gap: '60px', width: '100%', maxWidth: '600px', margin: '60px auto 0' }
     const LOGIN_GRADIENT = 'linear-gradient(135deg, #065f46 0%, #10b981 100%)'
 
     return (
