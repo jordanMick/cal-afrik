@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, Sparkles, CheckCircle2, ChevronRight, AlertCircle, Upload, Clock, Star } from 'lucide-react'
+import { Camera, Sparkles, CheckCircle2, ChevronRight, AlertCircle, Upload, Clock, Star, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -56,7 +56,7 @@ export default function LandingPage() {
     // Inline Styles for bulletproof layout
     const navStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '0 24px', height: '80px' }
     const heroStyle = { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', textAlign: 'center' as const, maxWidth: '800px', margin: '0 auto', padding: '160px 24px 80px' }
-    const inputBarStyle = { display: 'flex', alignItems: 'center', background: '#1f1f1f', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', padding: '6px', width: '100%', maxWidth: '600px', margin: '0 auto 40px' }
+    const scanButtonStyle = { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', background: '#111', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.1)', padding: '40px', width: '100%', maxWidth: '400px', margin: '0 auto 60px', cursor: 'pointer', transition: 'all 0.2s' }
     const featureGridStyle = { display: 'flex', justifyContent: 'center', gap: '60px', width: '100%', maxWidth: '600px', margin: '60px auto 0' }
 
     return (
@@ -88,32 +88,37 @@ export default function LandingPage() {
                 </h1>
                 
                 <p style={{ fontSize: 'clamp(16px, 4vw, 20px)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: '64px', maxWidth: '600px' }}>
-                    Analysez vos plats africains en une photo. Sans effort, avec l'IA Yao.
+                    Identifiez vos plats africains et leurs calories instantanément.
                 </p>
 
-                {/* Action Bar */}
+                {/* New Action Area (Not an input) */}
                 <div style={{ width: '100%', position: 'relative' }}>
                     {!isAnalyzing && !analysisResult && !error && (
-                        <div style={inputBarStyle}>
-                            <div style={{ flex: 1, padding: '0 20px', textAlign: 'left', color: 'rgba(255,255,255,0.4)', fontSize: '16px' }}>
-                                Prenez une photo de votre plat...
+                        <div 
+                            onClick={() => fileInputRef.current?.click()}
+                            style={scanButtonStyle}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.5)' }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                        >
+                            <div style={{ width: '64px', height: '64px', background: 'rgba(16,185,129,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', color: '#10b981' }}>
+                                <Camera size={32} />
                             </div>
-                            <button 
-                                onClick={() => fileInputRef.current?.click()}
-                                style={{ padding: '12px 32px', background: '#131313', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontWeight: 500, cursor: 'pointer' }}
-                            >
-                                Scanner
-                            </button>
+                            <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Scanner un plat</div>
+                            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>Prenez une photo ou importez un fichier</div>
                         </div>
                     )}
 
                     {/* Loading State */}
                     {isAnalyzing && (
-                        <div style={{ background: '#1a1a1a', padding: '32px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '600px', margin: '0 auto' }}>
-                            <div style={{ width: '100%', background: 'rgba(255,255,255,0.05)', height: '8px', borderRadius: '100px', overflow: 'hidden', marginBottom: '16px' }}>
-                                <motion.div style={{ height: '100%', background: '#10b981', width: `${progress}%` }} />
+                        <div style={{ background: '#1a1a1a', padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '400px', margin: '0 auto 60px' }}>
+                            <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 24px' }}>
+                                <svg style={{ transform: 'rotate(-90deg)', width: '80px', height: '80px' }}>
+                                    <circle cx="40" cy="40" r="36" stroke="rgba(255,255,255,0.05)" strokeWidth="4" fill="none" />
+                                    <motion.circle cx="40" cy="40" r="36" stroke="#10b981" strokeWidth="4" fill="none" strokeDasharray="226" strokeDashoffset={226 - (226 * progress) / 100} />
+                                </svg>
+                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>{progress}%</div>
                             </div>
-                            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981', textTransform: 'uppercase', letterSpacing: '2px' }}>Analyse en cours...</p>
+                            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981', textTransform: 'uppercase', letterSpacing: '2px' }}>Analyse Yao...</p>
                         </div>
                     )}
 
@@ -123,7 +128,7 @@ export default function LandingPage() {
                             <motion.div 
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                style={{ background: '#1a1a1a', borderRadius: '32px', padding: '40px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', maxWidth: '600px', margin: '0 auto', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
+                                style={{ background: '#1a1a1a', borderRadius: '32px', padding: '40px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', maxWidth: '600px', margin: '0 auto 60px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', marginBottom: '32px', fontWeight: 'bold', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                     <CheckCircle2 size={20} /> Résultat prêt
@@ -151,26 +156,32 @@ export default function LandingPage() {
                                 </div>
 
                                 <Link href="/login?mode=register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '16px', background: '#fff', color: '#000', borderRadius: '12px', fontWeight: 'bold', textDecoration: 'none', fontSize: '18px' }}>
-                                    Voir le détail + 5 scans gratuits <ChevronRight size={20} />
+                                    S'inscrire pour voir l'analyse <ChevronRight size={20} />
                                 </Link>
                                 
                                 <button onClick={() => setAnalysisResult(null)} style={{ marginTop: '24px', width: '100%', background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', cursor: 'pointer' }}>
-                                    Réanalyser
+                                    Scanner un autre plat
                                 </button>
                             </motion.div>
                         )}
                     </AnimatePresence>
+
+                    {/* Error state */}
+                    {error && (
+                        <div style={{ background: '#1a1a1a', padding: '40px', borderRadius: '32px', border: '1px solid rgba(239,68,68,0.2)', maxWidth: '400px', margin: '0 auto 60px' }}>
+                            <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '20px' }} />
+                            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '32px' }}>{error}</p>
+                            <button onClick={() => setError(null)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Réessayer</button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Secondary CTA */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                    <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{ padding: '14px 40px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', color: '#fff', fontSize: '18px', fontWeight: 500, cursor: 'pointer' }}
-                    >
-                        Commencer gratuitement
-                    </button>
-                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '2px' }}>Aucune carte bancaire requise</p>
+                    <Link href="/login?mode=register" style={{ padding: '14px 40px', background: '#10b981', borderRadius: '12px', color: '#fff', fontSize: '18px', fontWeight: 'bold', textDecoration: 'none', boxShadow: '0 10px 30px rgba(16,185,129,0.2)' }}>
+                        Obtenir mes 5 scans offerts
+                    </Link>
+                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '2px' }}>C'est gratuit et sans engagement</p>
                 </div>
 
                 {/* Features */}
