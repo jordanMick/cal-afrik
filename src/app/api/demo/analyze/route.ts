@@ -43,6 +43,10 @@ Si l'image ne montre pas de nourriture, renvoie:
 
 export async function POST(req: Request) {
     try {
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error("GEMINI_API_KEY is not configured")
+        }
+
         const body = await req.json()
         const { image } = body
 
@@ -64,23 +68,27 @@ export async function POST(req: Request) {
             {
                 inlineData: {
                     data: image.data,
-                    mimeType: image.mimeType
+                    mimeType: image.mimeType || "image/jpeg"
                 }
             }
         ])
 
         const response = await result.response
+        
+        if (!response.candidates || response.candidates.length === 0) {
+            throw new Error("L'IA n'a pas pu générer de réponse pour cette image. (Sécurité ou Qualité)")
+        }
+
         const text = response.text()
         console.log("Gemini Raw Response:", text)
         
         let data;
         try {
-            // Clean markdown if present
             const cleanedText = text.replace(/```json|```/g, "").trim()
             data = JSON.parse(cleanedText)
         } catch (e) {
             console.error("JSON Parse Error:", e, "Text:", text)
-            throw new Error("Invalid response format from AI")
+            throw new Error("Format de réponse IA invalide")
         }
 
         return NextResponse.json({
@@ -88,10 +96,10 @@ export async function POST(req: Request) {
             ...data
         })
     } catch (error: any) {
-        console.error("Demo Analyze Error:", error)
+        console.error("Demo Analyze Error Details:", error)
         return NextResponse.json({ 
             success: false, 
-            error: error.message || "Analysis failed" 
+            error: error.message || "Erreur lors de l'analyse" 
         }, { status: 500 })
     }
 }
