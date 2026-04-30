@@ -19,8 +19,8 @@ export default function LoginPage() {
     const [error, setError] = useState('')
     const [successMsg, setSuccessMsg] = useState('')
     const [isRegister, setIsRegister] = useState(false)
-    const [regStep, setRegStep] = useState(1) // 1: Email, 2: Password
-    const [isOtpMode, setIsOtpMode] = useState(false) // Pour la récupération par code
+    const [regStep, setRegStep] = useState(1) 
+    const [isOtpMode, setIsOtpMode] = useState(false) 
     const [otp, setOtp] = useState('')
 
     useEffect(() => {
@@ -52,7 +52,6 @@ export default function LoginPage() {
         setError('')
         setSuccessMsg('')
 
-        // Mode OTP (Récupération)
         if (isOtpMode) {
             if (otp.length < 6) { setError("Saisis les 6 chiffres du code 🔢"); return }
             setIsLoading(true)
@@ -63,7 +62,6 @@ export default function LoginPage() {
                     type: 'recovery'
                 })
                 if (error) { setError(translateError(error.message)); return }
-                // Succès : rediriger vers le changement de mot de passe
                 router.push('/settings/security?mode=reset')
             } catch {
                 setError("Erreur lors de la vérification")
@@ -73,7 +71,6 @@ export default function LoginPage() {
             return
         }
 
-        // Validation Email (Format)
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(email)) {
             setError("L'adresse email n'est pas valide ❌")
@@ -81,7 +78,6 @@ export default function LoginPage() {
         }
 
         if (isRegister) {
-            // ÉTAPE 1 : Validation E-mail et Domaine
             if (regStep === 1) {
                 if (email !== confirmEmail) {
                     setError("Les adresses e-mail ne correspondent pas ❌")
@@ -114,7 +110,6 @@ export default function LoginPage() {
                 return
             }
 
-            // ÉTAPE 2 : Validation Mot de passe
             if (password !== confirmPassword) {
                 setError("Les mots de passe ne correspondent pas ❌")
                 return
@@ -191,68 +186,145 @@ export default function LoginPage() {
         }
     }
 
-    // Styles & Constantes
-    const ACCENT_GRADIENT = 'linear-gradient(135deg, #065f46 0%, #10b981 100%)'
-    const CARD_BG = 'rgba(15, 23, 42, 0.6)'
+    // Design System constants
+    const COLORS = {
+        primary: '#10b981',
+        primaryDark: '#065f46',
+        bg: '#020617',
+        card: 'rgba(15, 23, 42, 0.7)',
+        textMuted: 'rgba(255, 255, 255, 0.5)'
+    }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#020617', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'var(--font-dm-sans), sans-serif', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ 
+            minHeight: '100vh', 
+            background: COLORS.bg, 
+            color: '#fff', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            padding: '24px', 
+            fontFamily: 'var(--font-dm-sans), sans-serif', 
+            position: 'relative', 
+            overflow: 'hidden' 
+        }}>
             
-            {/* Halos d'ambiance */}
-            <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 8, repeat: Infinity }} style={{ position: 'absolute', top: '-10%', right: '-10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0 }} />
-            <motion.div animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 10, repeat: Infinity }} style={{ position: 'absolute', bottom: '-10%', left: '-10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,95,70,0.15) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0 }} />
+            {/* Background Halos - Deep Emerald Theme */}
+            <motion.div 
+                animate={{ 
+                    scale: [1, 1.2, 1], 
+                    opacity: [0.15, 0.25, 0.15],
+                    rotate: [0, 90, 0]
+                }} 
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }} 
+                style={{ position: 'absolute', top: '-20%', right: '-10%', width: '800px', height: '800px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%)', filter: 'blur(100px)', zIndex: 0 }} 
+            />
+            <motion.div 
+                animate={{ 
+                    scale: [1.2, 1, 1.2], 
+                    opacity: [0.1, 0.2, 0.1],
+                    rotate: [0, -90, 0]
+                }} 
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }} 
+                style={{ position: 'absolute', bottom: '-20%', left: '-10%', width: '800px', height: '800px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,95,70,0.2) 0%, transparent 70%)', filter: 'blur(100px)', zIndex: 0 }} 
+            />
 
-            <div style={{ width: '100%', maxWidth: '440px', position: 'relative', zIndex: 10, textAlign: 'center' }}>
-                <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '40px', textDecoration: 'none' }}>
-                    <LeafIcon size={24} />
-                    <h1 style={{ fontSize: '20px', fontWeight: '900', letterSpacing: '4px', textTransform: 'uppercase', color: '#10b981', margin: 0 }}>Cal Afrik</h1>
-                </Link>
+            <div style={{ width: '100%', maxWidth: '460px', position: 'relative', zIndex: 10 }}>
+                {/* Brand Header */}
+                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                    <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', textDecoration: 'none', marginBottom: '16px' }}>
+                        <div style={{ background: 'rgba(16,185,129,0.1)', padding: '10px', borderRadius: '14px', border: '1px solid rgba(16,185,129,0.2)' }}>
+                            <LeafIcon size={28} />
+                        </div>
+                        <h1 style={{ fontSize: '24px', fontWeight: '900', letterSpacing: '4px', textTransform: 'uppercase', color: COLORS.primary, margin: 0, fontFamily: 'var(--font-syne), sans-serif' }}>Cal Afrik</h1>
+                    </Link>
+                </div>
 
-                <motion.div layout style={{ background: CARD_BG, backdropFilter: 'blur(25px)', borderRadius: '32px', padding: '32px', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
+                <motion.div 
+                    layout 
+                    style={{ 
+                        background: COLORS.card, 
+                        backdropFilter: 'blur(30px)', 
+                        borderRadius: '40px', 
+                        padding: '48px 40px', 
+                        border: '1px solid rgba(255,255,255,0.08)', 
+                        boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}
+                >
+                    {/* Subtle border shine effect */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.3), transparent)' }} />
+
                     <AnimatePresence mode="wait">
-                        <motion.div key={isOtpMode ? 'otp' : (isRegister ? `reg-${regStep}` : 'login')} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
+                        <motion.div 
+                            key={isOtpMode ? 'otp' : (isRegister ? `reg-${regStep}` : 'login')} 
+                            initial={{ opacity: 0, y: 10 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            exit={{ opacity: 0, y: -10 }} 
+                            transition={{ duration: 0.3 }}
+                        >
                             
-                            <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px', fontFamily: 'var(--font-syne), sans-serif' }}>
+                            <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px', fontFamily: 'var(--font-syne), sans-serif', letterSpacing: '-0.5px' }}>
                                 {isOtpMode ? "Code de vérification" : (isRegister ? "Nouveau compte" : "Bon retour parmi nous")}
                             </h2>
-                            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', marginBottom: '32px' }}>
-                                {isOtpMode ? `Saisis le code envoyé à ${email}` : (isRegister ? "Commence ton voyage santé" : "Connecte-toi pour suivre tes progrès")}
+                            <p style={{ fontSize: '15px', color: COLORS.textMuted, marginBottom: '40px', lineHeight: 1.5 }}>
+                                {isOtpMode ? `Nous avons envoyé un code à 6 chiffres à ${email}` : (isRegister ? "Commencez votre voyage vers une meilleure santé." : "Entrez vos identifiants pour accéder à votre dashboard.")}
                             </p>
 
-                            {/* Google Login (Seulement Login/Register Step 1) */}
+                            {/* Social Auth */}
                             {!isOtpMode && (!isRegister || regStep === 1) && (
                                 <>
-                                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleGoogleLogin} style={{ width: '100%', height: '56px', background: '#fff', border: 'none', borderRadius: '18px', color: '#000', fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', cursor: 'pointer', marginBottom: '24px' }}>
+                                    <motion.button 
+                                        whileHover={{ scale: 1.02, backgroundColor: '#f8fafc' }} 
+                                        whileTap={{ scale: 0.98 }} 
+                                        onClick={handleGoogleLogin} 
+                                        style={{ 
+                                            width: '100%', height: '60px', background: '#fff', border: 'none', borderRadius: '20px', 
+                                            color: '#000', fontSize: '16px', fontWeight: '700', display: 'flex', alignItems: 'center', 
+                                            justifyContent: 'center', gap: '12px', cursor: 'pointer', marginBottom: '24px', transition: 'background-color 0.2s' 
+                                        }}
+                                    >
                                         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
-                                        Google
+                                        Continuer avec Google
                                     </motion.button>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
-                                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
-                                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: '700', textTransform: 'uppercase' }}>Ou</span>
-                                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '32px 0' }}>
+                                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                                        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>OU</span>
+                                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
                                     </div>
                                 </>
                             )}
 
-                            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 
                                 {isOtpMode ? (
                                     <div style={{ position: 'relative' }}>
-                                        <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(16,185,129,0.5)' }}><KeyRound size={20} /></div>
-                                        <input type="text" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="Code à 6 chiffres" required style={{ width: '100%', height: '56px', padding: '0 18px 0 50px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '18px', color: '#fff', fontSize: '20px', letterSpacing: '8px', textAlign: 'center', outline: 'none' }} />
+                                        <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: COLORS.primary }}><KeyRound size={22} /></div>
+                                        <input 
+                                            type="text" maxLength={6} value={otp} 
+                                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} 
+                                            placeholder="000000" required 
+                                            style={{ 
+                                                width: '100%', height: '64px', padding: '0 20px 0 54px', 
+                                                background: 'rgba(255,255,255,0.03)', border: `1px solid ${COLORS.primary}40`, 
+                                                borderRadius: '20px', color: '#fff', fontSize: '24px', letterSpacing: '10px', 
+                                                textAlign: 'center', outline: 'none', fontWeight: '900' 
+                                            }} 
+                                        />
                                     </div>
                                 ) : (
                                     <>
                                         {(!isRegister || regStep === 1) && (
                                             <>
                                                 <div style={{ position: 'relative' }}>
-                                                    <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}><Mail size={18} /></div>
-                                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required style={{ width: '100%', height: '56px', padding: '0 18px 0 50px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none' }} />
+                                                    <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)' }}><Mail size={20} /></div>
+                                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse e-mail" required style={{ width: '100%', height: '60px', padding: '0 20px 0 54px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', color: '#fff', fontSize: '16px', outline: 'none' }} />
                                                 </div>
                                                 {isRegister && (
                                                     <div style={{ position: 'relative' }}>
-                                                        <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}><Mail size={18} /></div>
-                                                        <input type="email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} placeholder="Confirmer l'email" required style={{ width: '100%', height: '56px', padding: '0 18px 0 50px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none' }} />
+                                                        <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)' }}><Mail size={20} /></div>
+                                                        <input type="email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} placeholder="Confirmer l'e-mail" required style={{ width: '100%', height: '60px', padding: '0 20px 0 54px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', color: '#fff', fontSize: '16px', outline: 'none' }} />
                                                     </div>
                                                 )}
                                             </>
@@ -260,46 +332,60 @@ export default function LoginPage() {
 
                                         {(!isRegister || regStep === 2) && (
                                             <>
-                                                {isRegister && <button type="button" onClick={() => setRegStep(1)} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><ChevronLeft size={14} /> Retour</button>}
+                                                {isRegister && <button type="button" onClick={() => setRegStep(1)} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: COLORS.primary, fontSize: '14px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', marginBottom: '8px' }}><ChevronLeft size={16} /> Retour à l'e-mail</button>}
                                                 <div style={{ position: 'relative' }}>
-                                                    <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}><Lock size={18} /></div>
-                                                    <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={isRegister ? "Mot de passe" : "Ton mot de passe"} required style={{ width: '100%', height: '56px', padding: '0 50px 0 50px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none' }} />
-                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                                                    <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)' }}><Lock size={20} /></div>
+                                                    <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={isRegister ? "Mot de passe" : "Mot de passe"} required style={{ width: '100%', height: '60px', padding: '0 54px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', color: '#fff', fontSize: '16px', outline: 'none' }} />
+                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
                                                 </div>
                                                 {isRegister && (
                                                     <div style={{ position: 'relative' }}>
-                                                        <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}><ShieldCheck size={18} /></div>
-                                                        <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirmer mot de passe" required style={{ width: '100%', height: '56px', padding: '0 18px 0 50px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none' }} />
+                                                        <div style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.2)' }}><ShieldCheck size={20} /></div>
+                                                        <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirmer mot de passe" required style={{ width: '100%', height: '60px', padding: '0 20px 0 54px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', color: '#fff', fontSize: '16px', outline: 'none' }} />
                                                     </div>
                                                 )}
                                                 {!isRegister && (
-                                                    <button type="button" onClick={handleSendRecoveryOtp} style={{ alignSelf: 'flex-end', fontSize: '13px', fontWeight: '600', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: '-8px' }}>Mot de passe oublié ?</button>
+                                                    <button type="button" onClick={handleSendRecoveryOtp} style={{ alignSelf: 'flex-end', fontSize: '14px', fontWeight: '700', color: COLORS.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: '-4px' }}>Mot de passe oublié ?</button>
                                                 )}
                                             </>
                                         )}
                                     </>
                                 )}
 
-                                {error && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '12px', background: 'rgba(239,68,68,0.08)', borderRadius: '14px', color: '#f87171', fontSize: '13px', border: '1px solid rgba(239,68,68,0.1)' }}>{error}</motion.div>}
-                                {successMsg && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '12px', background: 'rgba(16,185,129,0.08)', borderRadius: '14px', color: '#10b981', fontSize: '13px', border: '1px solid rgba(16,185,129,0.1)' }}>{successMsg}</motion.div>}
+                                {error && <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderRadius: '16px', color: '#fca5a5', fontSize: '14px', border: '1px solid rgba(239,68,68,0.2)', fontWeight: '600' }}>{error}</motion.div>}
+                                {successMsg && <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ padding: '16px', background: 'rgba(16,185,129,0.1)', borderRadius: '16px', color: '#6ee7b7', fontSize: '14px', border: '1px solid rgba(16,185,129,0.2)', fontWeight: '600' }}>{successMsg}</motion.div>}
 
-                                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} type="submit" disabled={isLoading} style={{ width: '100%', height: '56px', background: ACCENT_GRADIENT, border: 'none', borderRadius: '18px', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '10px', boxShadow: '0 10px 30px rgba(16,185,129,0.2)' }}>
-                                    {isLoading ? "Action en cours..." : (isOtpMode ? "Vérifier le code" : (isRegister ? (regStep === 1 ? "Continuer" : "S'inscrire") : "Se connecter"))}
-                                    {!isLoading && <ChevronRight size={18} />}
+                                <motion.button 
+                                    whileHover={{ scale: 1.01, boxShadow: '0 15px 35px rgba(16,185,129,0.4)' }} 
+                                    whileTap={{ scale: 0.99 }} 
+                                    type="submit" disabled={isLoading} 
+                                    style={{ 
+                                        width: '100%', height: '64px', 
+                                        background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`, 
+                                        border: 'none', borderRadius: '20px', color: '#fff', fontSize: '17px', 
+                                        fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', 
+                                        justifyContent: 'center', gap: '10px', marginTop: '12px', 
+                                        boxShadow: '0 10px 25px rgba(16,185,129,0.25)', transition: 'all 0.3s' 
+                                    }}
+                                >
+                                    {isLoading ? "Vérification..." : (isOtpMode ? "Vérifier le code" : (isRegister ? (regStep === 1 ? "Suivant" : "S'inscrire") : "Se connecter"))}
+                                    {!isLoading && <ChevronRight size={20} />}
                                 </motion.button>
                             </form>
 
-                            <div style={{ marginTop: '32px' }}>
-                                <button onClick={() => { setIsRegister(!isRegister); setRegStep(1); setIsOtpMode(false); setError(''); setSuccessMsg('') }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer' }}>
+                            <div style={{ marginTop: '40px' }}>
+                                <button onClick={() => { setIsRegister(!isRegister); setRegStep(1); setIsOtpMode(false); setError(''); setSuccessMsg('') }} style={{ background: 'none', border: 'none', color: COLORS.textMuted, fontSize: '15px', cursor: 'pointer', fontWeight: '500' }}>
                                     {isRegister ? "Déjà un compte ? " : "Pas encore de compte ? "}
-                                    <span style={{ color: '#10b981', fontWeight: '700' }}>{isRegister ? "Se connecter" : "S'inscrire"}</span>
+                                    <span style={{ color: COLORS.primary, fontWeight: '800' }}>{isRegister ? "Se connecter" : "S'inscrire"}</span>
                                 </button>
                             </div>
                         </motion.div>
                     </AnimatePresence>
                 </motion.div>
 
-                <p style={{ marginTop: '32px', fontSize: '12px', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: '2px' }}>© 2026 Cal Afrik — Santé Digitale</p>
+                <p style={{ marginTop: '40px', fontSize: '13px', color: 'rgba(255,255,255,0.15)', textTransform: 'uppercase', letterSpacing: '3px', fontWeight: '800' }}>
+                    © 2026 CAL AFRIK — IA NUTRITIONNELLE
+                </p>
             </div>
         </div>
     )
