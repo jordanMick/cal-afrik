@@ -53,18 +53,14 @@ export default function LandingPage() {
         }
     }
 
-    const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.readAsDataURL(file)
-        reader.onload = () => resolve(reader.result!.toString().split(',')[1])
-        reader.onerror = reject
-    })
-
     // Inline Styles for bulletproof layout
     const navStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '0 24px', height: '80px' }
     const heroStyle = { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', textAlign: 'center' as const, maxWidth: '800px', margin: '0 auto', padding: '160px 24px 80px' }
     const scanButtonStyle = { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', background: '#111', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.1)', padding: '40px', width: '100%', maxWidth: '400px', margin: '0 auto 60px', cursor: 'pointer', transition: 'all 0.2s' }
     const featureGridStyle = { display: 'flex', justifyContent: 'center', gap: '60px', width: '100%', maxWidth: '600px', margin: '60px auto 0' }
+    
+    // Premium Green Gradient matching login
+    const LOGIN_GRADIENT = 'linear-gradient(135deg, #065f46 0%, #10b981 100%)'
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'var(--font-dm-sans), sans-serif', overflowX: 'hidden', position: 'relative' }}>
@@ -89,7 +85,7 @@ export default function LandingPage() {
                         <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981', margin: 0 }}>Cal Afrik</h2>
                     </div>
                     <Link href="/login" style={{ padding: '10px 24px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '14px', fontWeight: 500, color: '#fff', textDecoration: 'none' }}>
-                        Ouvrir Cal Afrik
+                        Connexion
                     </Link>
                 </div>
             </nav>
@@ -112,18 +108,26 @@ export default function LandingPage() {
                 {/* New Action Area */}
                 <div style={{ width: '100%', position: 'relative' }}>
                     {!isAnalyzing && !analysisResult && !error && (
-                        <div 
-                            onClick={() => fileInputRef.current?.click()}
-                            style={scanButtonStyle}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.5)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
-                        >
-                            <div style={{ width: '64px', height: '64px', background: 'rgba(16,185,129,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', color: '#10b981' }}>
-                                <Camera size={32} />
+                        <>
+                            <div 
+                                onClick={() => fileInputRef.current?.click()}
+                                style={scanButtonStyle}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.5)' }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                            >
+                                <div style={{ width: '64px', height: '64px', background: 'rgba(16,185,129,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', color: '#10b981' }}>
+                                    <Camera size={32} />
+                                </div>
+                                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Scanner un plat</div>
+                                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>Prenez une photo ou importez un fichier</div>
                             </div>
-                            <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Scanner un plat</div>
-                            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>Prenez une photo ou importez un fichier</div>
-                        </div>
+                            
+                            <div style={{ marginBottom: '60px' }}>
+                                <Link href="/login?mode=register" style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                    Pas de photo ? S'inscrire directement <ChevronRight size={16} />
+                                </Link>
+                            </div>
+                        </>
                     )}
 
                     {/* Loading State */}
@@ -137,6 +141,15 @@ export default function LandingPage() {
                                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>{progress}%</div>
                             </div>
                             <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981', textTransform: 'uppercase', letterSpacing: '2px' }}>Analyse Yao...</p>
+                        </div>
+                    )}
+
+                    {/* Error state */}
+                    {error && (
+                        <div style={{ background: '#1a1a1a', padding: '40px', borderRadius: '32px', border: '1px solid rgba(239,68,68,0.2)', maxWidth: '400px', margin: '0 auto 60px' }}>
+                            <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '20px' }} />
+                            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '32px' }}>{error}</p>
+                            <button onClick={() => setError(null)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Réessayer</button>
                         </div>
                     )}
 
@@ -170,7 +183,21 @@ export default function LandingPage() {
                                     </div>
                                 </div>
 
-                                <Link href="/login?mode=register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '20px', background: '#10b981', color: '#fff', borderRadius: '16px', fontWeight: 'bold', textDecoration: 'none', fontSize: '18px', boxShadow: '0 10px 30px rgba(16,185,129,0.3)' }}>
+                                <Link href="/login?mode=register" style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    gap: '8px', 
+                                    width: '100%', 
+                                    padding: '20px', 
+                                    background: LOGIN_GRADIENT, 
+                                    color: '#fff', 
+                                    borderRadius: '16px', 
+                                    fontWeight: 'bold', 
+                                    textDecoration: 'none', 
+                                    fontSize: '18px', 
+                                    boxShadow: '0 10px 30px rgba(16,185,129,0.3)' 
+                                }}>
                                     Voir mon résultat + 5 scans offerts <ChevronRight size={20} />
                                 </Link>
                                 
@@ -180,14 +207,6 @@ export default function LandingPage() {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
-
-                {/* Secondary CTA */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                    <Link href="/login?mode=register" style={{ padding: '14px 40px', background: '#10b981', borderRadius: '12px', color: '#fff', fontSize: '18px', fontWeight: 'bold', textDecoration: 'none', boxShadow: '0 10px 30px rgba(16,185,129,0.2)' }}>
-                        Obtenir mes 5 scans offerts
-                    </Link>
-                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '2px' }}>C'est gratuit et sans engagement</p>
                 </div>
 
                 {/* Features */}
