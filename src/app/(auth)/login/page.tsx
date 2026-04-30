@@ -62,7 +62,7 @@ export default function LoginPage() {
                     type: 'recovery'
                 })
                 if (error) { setError(translateError(error.message)); return }
-                router.push('/settings/security?mode=reset')
+                router.push('/reset-password')
             } catch {
                 setError("Erreur lors de la vérification")
             } finally {
