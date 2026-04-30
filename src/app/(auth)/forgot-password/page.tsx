@@ -86,7 +86,11 @@ export default function ForgotPasswordPage() {
             setSuccessMsg('Mot de passe mis à jour ! 🎉')
             setTimeout(() => router.push('/login'), 2000)
         } catch (err: any) {
-            setError(err.message || 'Erreur lors de la mise à jour')
+            let msg = err.message || 'Erreur lors de la mise à jour'
+            if (msg.includes('should be different from the old password')) {
+                msg = "Ton nouveau mot de passe doit être différent de l'ancien ! 🔑"
+            }
+            setError(msg)
         } finally {
             setLoading(false)
         }
