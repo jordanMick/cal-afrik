@@ -116,33 +116,9 @@ export async function DELETE(req: NextRequest) {
         const user = await getUser(req)
         if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-        // 1. Supprimer les données applicatives AVANT le compte Auth
-        // On liste toutes les tables connues liées au user_id
-        const tables = [
-            'push_subscriptions', 
-            'notifications', 
-            'food_items', 
-            'meals', 
-            'weight_logs', 
-            'account_deletions',
-            'user_profiles'
-        ]
-
-        for (const table of tables) {
-            try {
-                const { error: tableError } = await supabaseAdmin.from(table).delete().eq('user_id', user.id)
-                if (tableError) {
-                    console.warn(`[Cleanup] Échec suppression table ${table}:`, tableError.message)
-                }
-            } catch (tableErr) {
-                console.warn(`[Cleanup] Exception table ${table}:`, tableErr)
-            }
-        }
-
-        // 2. Audit log optionnel (on le met dans le cleanup ou séparé, ici on l'a déjà mis dans la boucle)
-        // Note: On peut aussi insérer un log final si besoin avant de supprimer l'utilisateur de l'auth
-
-        // 3. EN DERNIER : Supprimer l'utilisateur de l'auth
+        // Grâce au ON DELETE CASCADE configuré en base de données, 
+        // la suppression de l'utilisateur dans l'auth déclenchera automatiquement 
+        // la suppression de toutes ses données (profil, repas, scans, notifications, etc.)
         const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
 
         // "User not found" = déjà supprimé ou erreur mineure
