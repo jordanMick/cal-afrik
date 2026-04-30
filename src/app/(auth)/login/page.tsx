@@ -20,6 +20,13 @@ export default function LoginPage() {
     const [isRegister, setIsRegister] = useState(false)
     const [regStep, setRegStep] = useState(1) // 1: Email, 2: Password
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('mode') === 'register') {
+            setIsRegister(true)
+        }
+    }, [])
+
     const translateError = (err: string) => {
         if (err.includes('Invalid login credentials')) return "Email ou mot de passe incorrect 🧐"
         if (err.includes('User already registered')) return "Un compte existe déjà avec cet email ✉️"
