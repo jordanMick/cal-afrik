@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, ShieldCheck, ChevronRight, ChevronLeft, KeyRound } from 'lucide-react'
 import { LeafIcon } from '@/components/icons/LeafIcon'
 
