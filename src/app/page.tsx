@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Camera, Sparkles, CheckCircle2, ChevronRight, AlertCircle, Upload, Clock, Star, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { LeafIcon } from '@/components/icons/LeafIcon'
 
 export default function LandingPage() {
     const router = useRouter()
@@ -60,15 +61,26 @@ export default function LandingPage() {
     const featureGridStyle = { display: 'flex', justifyContent: 'center', gap: '60px', width: '100%', maxWidth: '600px', margin: '60px auto 0' }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'var(--font-dm-sans), sans-serif', overflowX: 'hidden' }}>
+        <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'var(--font-dm-sans), sans-serif', overflowX: 'hidden', position: 'relative' }}>
+            
+            {/* Halos d'ambiance comme sur login */}
+            <motion.div
+                animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
+                transition={{ duration: 10, repeat: Infinity }}
+                style={{ position: 'fixed', top: '-10%', right: '-10%', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', pointerEvents: 'none', filter: 'blur(80px)', zIndex: 0 }}
+            />
+            <motion.div
+                animate={{ scale: [1.1, 1, 1.1], opacity: [0.1, 0.2, 0.1] }}
+                transition={{ duration: 8, repeat: Infinity }}
+                style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,95,70,0.15) 0%, transparent 70%)', pointerEvents: 'none', filter: 'blur(80px)', zIndex: 0 }}
+            />
+
             {/* Header */}
-            <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={navStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '40px', height: '40px', background: '#10b981', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px' }}>
-                            CA
-                        </div>
-                        <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.5px', fontFamily: 'var(--font-syne), sans-serif' }}>Cal Afrik</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LeafIcon size={18} />
+                        <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981', margin: 0 }}>Cal Afrik</h2>
                     </div>
                     <Link href="/login" style={{ padding: '10px 24px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '14px', fontWeight: 500, color: '#fff', textDecoration: 'none' }}>
                         Ouvrir Cal Afrik
@@ -76,7 +88,7 @@ export default function LandingPage() {
                 </div>
             </nav>
 
-            <main style={heroStyle}>
+            <main style={{ ...heroStyle, position: 'relative', zIndex: 10 }}>
                 {/* Badge Pill */}
                 <div style={{ padding: '8px 24px', borderRadius: '100px', border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)', color: '#10b981', fontSize: '14px', fontWeight: 500, marginBottom: '48px' }}>
                     IA Yao — Analyse nutritionnelle africaine
@@ -91,7 +103,7 @@ export default function LandingPage() {
                     Identifiez vos plats africains et leurs calories instantanément.
                 </p>
 
-                {/* New Action Area (Not an input) */}
+                {/* New Action Area */}
                 <div style={{ width: '100%', position: 'relative' }}>
                     {!isAnalyzing && !analysisResult && !error && (
                         <div 
@@ -165,15 +177,6 @@ export default function LandingPage() {
                             </motion.div>
                         )}
                     </AnimatePresence>
-
-                    {/* Error state */}
-                    {error && (
-                        <div style={{ background: '#1a1a1a', padding: '40px', borderRadius: '32px', border: '1px solid rgba(239,68,68,0.2)', maxWidth: '400px', margin: '0 auto 60px' }}>
-                            <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '20px' }} />
-                            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '32px' }}>{error}</p>
-                            <button onClick={() => setError(null)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>Réessayer</button>
-                        </div>
-                    )}
                 </div>
 
                 {/* Secondary CTA */}
@@ -205,7 +208,7 @@ export default function LandingPage() {
             </main>
 
             {/* Footer */}
-            <footer style={{ padding: '40px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+            <footer style={{ padding: '40px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', position: 'relative', zIndex: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginBottom: '24px' }}>
                     <Link href="/privacy" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Confidentialité</Link>
                     <Link href="/terms" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Conditions</Link>
