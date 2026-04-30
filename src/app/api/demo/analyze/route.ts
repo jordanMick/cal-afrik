@@ -71,14 +71,27 @@ export async function POST(req: Request) {
 
         const response = await result.response
         const text = response.text()
-        const data = JSON.parse(text)
+        console.log("Gemini Raw Response:", text)
+        
+        let data;
+        try {
+            // Clean markdown if present
+            const cleanedText = text.replace(/```json|```/g, "").trim()
+            data = JSON.parse(cleanedText)
+        } catch (e) {
+            console.error("JSON Parse Error:", e, "Text:", text)
+            throw new Error("Invalid response format from AI")
+        }
 
         return NextResponse.json({
             success: true,
             ...data
         })
-    } catch (error) {
+    } catch (error: any) {
         console.error("Demo Analyze Error:", error)
-        return NextResponse.json({ success: false, error: "Analysis failed" }, { status: 500 })
+        return NextResponse.json({ 
+            success: false, 
+            error: error.message || "Analysis failed" 
+        }, { status: 500 })
     }
 }

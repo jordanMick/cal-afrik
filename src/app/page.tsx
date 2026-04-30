@@ -38,13 +38,23 @@ export default function LandingPage() {
                 body: JSON.stringify({ image: { data: base64, mimeType: file.type } })
             })
             const data = await res.json()
-            setTimeout(() => {
-                setProgress(100)
-                if (data.success && data.items.length > 0) setAnalysisResult(data)
-                else setError(data.success ? "Plat non reconnu." : "Erreur d'analyse.")
-                setIsAnalyzing(false)
-            }, 1000)
-        } catch { setError("Erreur réseau."); setIsAnalyzing(false) }
+            
+            setProgress(100)
+            if (data.success) {
+                if (data.items && data.items.length > 0) {
+                    setAnalysisResult(data)
+                } else {
+                    setError("Yao n'a pas reconnu de nourriture sur cette photo. Essayez une image plus claire !")
+                }
+            } else {
+                setError(data.error || "L'analyse a échoué. Veuillez réessayer.")
+            }
+            setIsAnalyzing(false)
+        } catch (err) {
+            console.error("Scan Error:", err)
+            setError("Erreur de connexion. Vérifiez votre réseau.")
+            setIsAnalyzing(false)
+        }
     }
 
     const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
