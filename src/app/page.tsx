@@ -31,21 +31,17 @@ export default function LandingPage() {
         if (!file) return
         setIsAnalyzing(true); setError(null); setAnalysisResult(null)
         try {
-            const base64 = await toBase64(file)
+            // Plus besoin d'envoyer l'image réelle (trop lourde) car c'est une simulation
             const res = await fetch('/api/demo/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: { data: base64, mimeType: file.type } })
+                body: JSON.stringify({ trigger: true }) // On envoie juste un signal
             })
             const data = await res.json()
             
             setProgress(100)
             if (data.success) {
-                if (data.items && data.items.length > 0) {
-                    setAnalysisResult(data)
-                } else {
-                    setError("Yao n'a pas reconnu de nourriture sur cette photo. Essayez une image plus claire !")
-                }
+                setAnalysisResult(data)
             } else {
                 setError(data.error || "L'analyse a échoué. Veuillez réessayer.")
             }
