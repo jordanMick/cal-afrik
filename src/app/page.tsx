@@ -183,7 +183,7 @@ export default function LandingPage() {
                                         <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
                                         <motion.circle cx="50" cy="50" r="45" stroke="#10b981" strokeWidth="6" fill="none" strokeDasharray="283" strokeDashoffset={283 - (283 * progress) / 100} />
                                     </svg>
-                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '900', color: '#10b981' }}>{progress}%</div>
+                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '900', color: '#10b981' }}>{Math.round(progress)}%</div>
                                 </div>
                                 <AnimatePresence mode="wait">
                                     <motion.div key={analysisStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
