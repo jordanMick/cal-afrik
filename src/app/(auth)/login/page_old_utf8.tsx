@@ -1,11 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
-import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, ShieldCheck, ChevronRight, ChevronLeft, KeyRound } from 'lucide-react'
+import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff, ShieldCheck, ChevronRight, ChevronLeft } from 'lucide-react'
 import { LeafIcon } from '@/components/icons/LeafIcon'
 
 export default function LoginPage() {
@@ -20,8 +19,6 @@ export default function LoginPage() {
     const [successMsg, setSuccessMsg] = useState('')
     const [isRegister, setIsRegister] = useState(false)
     const [regStep, setRegStep] = useState(1) // 1: Email, 2: Password
-    const [isOtpMode, setIsOtpMode] = useState(false)
-    const [otp, setOtp] = useState('')
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -31,12 +28,11 @@ export default function LoginPage() {
     }, [])
 
     const translateError = (err: string) => {
-        if (err.includes('Invalid login credentials')) return "Email ou mot de passe incorrect 🧐"
-        if (err.includes('User already registered')) return "Un compte existe déjà avec cet email ✉️"
-        if (err.includes('at least 6 characters')) return "Le mot de passe doit faire au moins 6 caractères 🔑"
-        if (err.includes('Email not confirmed')) return "Vérifie tes emails pour confirmer ton compte ! 📧"
-        if (err.includes('rate limit')) return "Trop de tentatives ! Réessaie dans quelques minutes ⏳"
-        if (err.includes('Token has expired')) return "Le code a expiré ou est invalide ❌"
+        if (err.includes('Invalid login credentials')) return "Email ou mot de passe incorrect ­ƒºÉ"
+        if (err.includes('User already registered')) return "Un compte existe d├®j├á avec cet email Ô£ë´©Å"
+        if (err.includes('at least 6 characters')) return "Le mot de passe doit faire au moins 6 caract├¿res ­ƒöæ"
+        if (err.includes('Email not confirmed')) return "V├®rifie tes emails pour confirmer ton compte ! ­ƒôº"
+        if (err.includes('rate limit')) return "Trop de tentatives ! R├®essaie dans quelques minutes ÔÅ│"
         return err
     }
 
@@ -52,41 +48,24 @@ export default function LoginPage() {
         setError('')
         setSuccessMsg('')
 
-        if (isOtpMode) {
-            if (otp.length < 6) { setError("Saisis les 6 chiffres du code 🔢"); return }
-            setIsLoading(true)
-            try {
-                const { error } = await supabase.auth.verifyOtp({
-                    email,
-                    token: otp,
-                    type: 'recovery'
-                })
-                if (error) { setError(translateError(error.message)); return }
-                router.push('/reset-password')
-            } catch {
-                setError("Erreur lors de la vérification")
-            } finally {
-                setIsLoading(false)
-            }
-            return
-        }
-
+        // Validation Email (Format)
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(email)) {
-            setError("L'adresse email n'est pas valide ❌")
+            setError("L'adresse email n'est pas valide ÔØî")
             return
         }
 
         if (isRegister) {
+            // ├ëTAPE 1 : Validation E-mail et Domaine
             if (regStep === 1) {
                 if (email !== confirmEmail) {
-                    setError("Les adresses e-mail ne correspondent pas ❌")
+                    setError("Les adresses e-mail ne correspondent pas ÔØî")
                     return
                 }
 
                 const domain = email.split('@')[1]?.toLowerCase()
                 if (DISPOSABLE_DOMAINS.includes(domain)) {
-                    setError("Les emails jetables ne sont pas autorisés 🛑")
+                    setError("Les emails jetables ne sont pas autoris├®s ­ƒøæ")
                     return
                 }
 
@@ -103,19 +82,20 @@ export default function LoginPage() {
                     }
                     setRegStep(2)
                 } catch (err) {
-                    setError("Erreur lors de la vérification du domaine")
+                    setError("Erreur lors de la v├®rification du domaine")
                 } finally {
                     setIsLoading(false)
                 }
                 return
             }
 
+            // ├ëTAPE 2 : Validation Mot de passe
             if (password !== confirmPassword) {
-                setError("Les mots de passe ne correspondent pas ❌")
+                setError("Les mots de passe ne correspondent pas ÔØî")
                 return
             }
             if (password.length < 6) {
-                setError("Le mot de passe doit faire au moins 6 caractères 🔑")
+                setError("Le mot de passe doit faire au moins 6 caract├¿res ­ƒöæ")
                 return
             }
         }
@@ -130,6 +110,7 @@ export default function LoginPage() {
                 })
                 if (error) { setError(translateError(error.message)); return }
                 
+                // Enregistrer le succ├¿s de l'inscription pour la limite d'IP
                 try {
                     await fetch('/api/auth/verify-domain', {
                         method: 'POST',
@@ -139,10 +120,12 @@ export default function LoginPage() {
                     console.error('Erreur logging signup IP:', logErr)
                 }
 
+                // Si l'auto-confirm est activ├® dans Supabase, on a une session
                 if (data.session) {
                     router.push('/onboarding')
                 } else {
-                    setSuccessMsg('Compte créé ! Vérifie tes mails 📧')
+                    // Si on n'a pas de session, c'est que l'e-mail a ├®t├® envoy├® (donc pas d├®sactiv├® dans Supabase)
+                    setSuccessMsg('Compte cr├®├® ! V├®rifie tes mails (si tu ne les as pas encore d├®sactiv├®s dans Supabase) ­ƒôº')
                 }
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -151,22 +134,6 @@ export default function LoginPage() {
             }
         } catch {
             setError('Une erreur est survenue lors de la connexion')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handleSendRecoveryOtp = async () => {
-        if (!email) { setError("Saisis ton email d'abord ! 📧"); return }
-        setIsLoading(true)
-        setError('')
-        try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email)
-            if (error) { setError(translateError(error.message)); return }
-            setIsOtpMode(true)
-            setSuccessMsg("Code à 6 chiffres envoyé par mail ! 📧")
-        } catch {
-            setError("Erreur lors de l'envoi du code")
         } finally {
             setIsLoading(false)
         }
@@ -186,6 +153,7 @@ export default function LoginPage() {
         }
     }
 
+    // New Premium Color Palette: Deep Emerald / Forest
     const ACCENT_GRADIENT = 'linear-gradient(135deg, #065f46 0%, #10b981 100%)'
     const CARD_BG = 'rgba(10, 10, 10, 0.8)'
 
@@ -204,7 +172,7 @@ export default function LoginPage() {
             color: '#fff'
         }}>
 
-            {/* Halos d'ambiance */}
+            {/* Halos d'ambiance - Plus subtils et profonds */}
             <motion.div
                 animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.3, 0.2] }}
                 transition={{ duration: 10, repeat: Infinity }}
@@ -220,7 +188,7 @@ export default function LoginPage() {
 
                 {/* Header */}
                 <motion.div
-                    key={isOtpMode ? 'otp' : (isRegister ? 'reg' : 'login')}
+                    key={isRegister ? 'reg' : 'login'}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     style={{ marginBottom: '40px' }}
@@ -230,6 +198,7 @@ export default function LoginPage() {
                         <h2 style={{ fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '3px', color: '#10b981' }}>Cal Afrik</h2>
                     </div>
                     
+                    {/* Illustration Scanner AI */}
                     <div style={{ 
                         position: 'relative', 
                         width: '100px', 
@@ -239,15 +208,17 @@ export default function LoginPage() {
                         alignItems: 'center',
                         justifyContent: 'center'
                     }}>
+                        {/* Scanner Corners */}
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '20px', height: '20px', borderTop: '3px solid #10b981', borderLeft: '3px solid #10b981', borderRadius: '4px 0 0 0' }} />
                         <div style={{ position: 'absolute', top: 0, right: 0, width: '20px', height: '20px', borderTop: '3px solid #10b981', borderRight: '3px solid #10b981', borderRadius: '0 4px 0 0' }} />
                         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '20px', height: '20px', borderBottom: '3px solid #10b981', borderLeft: '3px solid #10b981', borderRadius: '0 0 0 4px' }} />
                         <div style={{ position: 'absolute', bottom: 0, right: 0, width: '20px', height: '20px', borderBottom: '3px solid #10b981', borderRight: '3px solid #10b981', borderRadius: '0 0 4px 0' }} />
                         
                         <div style={{ fontSize: '50px' }}>
-                            {isOtpMode ? '🔑' : (isRegister ? '🍲' : '🥗')}
+                            {isRegister ? '­ƒÑù' : '­ƒì▓'}
                         </div>
                         
+                        {/* Scanning Line Animation */}
                         <motion.div 
                             animate={{ top: ['10%', '90%', '10%'] }}
                             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
@@ -256,14 +227,14 @@ export default function LoginPage() {
                     </div>
 
                     <h1 style={{ fontSize: '32px', fontWeight: '900', marginBottom: '12px', letterSpacing: '-1px', lineHeight: '1.1' }}>
-                        {isOtpMode ? "Vérification par code" : (isRegister 
-                            ? (regStep === 1 ? 'Commence ton suivi nutrition intelligent' : 'Sécurise ton compte') 
-                            : 'Reprends le contrôle de ton alimentation')}
+                        {isRegister 
+                            ? (regStep === 1 ? 'Commence ton suivi nutrition intelligent' : 'S├®curise ton compte') 
+                            : 'Reprends le contr├┤le de ton alimentation'}
                     </h1>
                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '15px', fontWeight: '500', lineHeight: '1.5' }}>
-                        {isOtpMode ? `Saisis le code envoyé à ${email}` : (isRegister
+                        {isRegister
                             ? (regStep === 1 ? 'Analyse tes repas en quelques secondes' : 'Choisis un mot de passe robuste')
-                            : 'Scanne tes plats et optimise ton alimentation')}
+                            : 'Scanne tes plats et optimise ton alimentation'}
                     </p>
                 </motion.div>
 
@@ -280,14 +251,14 @@ export default function LoginPage() {
                 >
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={isOtpMode ? 'otp' : (isRegister ? `reg-${regStep}` : 'login')}
+                            key={isRegister ? `reg-${regStep}` : 'login'}
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            {/* Google Login */}
-                            {!isOtpMode && (!isRegister || regStep === 1) && (
+                            {/* Google Login (Only on Step 1 or Login) */}
+                            {(!isRegister || regStep === 1) && (
                                 <>
                                     <div style={{ marginBottom: '24px' }}>
                                         <motion.button
@@ -307,7 +278,7 @@ export default function LoginPage() {
                                             </svg>
                                             {isRegister ? "S'inscrire avec Google" : "Continuer avec Google"}
                                         </motion.button>
-                                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px', fontWeight: '500' }}>🛡️ Rapide et sécurisé</p>
+                                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px', fontWeight: '500' }}>­ƒøí´©Å Rapide et s├®curis├®</p>
                                     </div>
 
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
@@ -320,116 +291,95 @@ export default function LoginPage() {
 
                             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
-                                {isOtpMode ? (
-                                    <div style={{ position: 'relative' }}>
-                                        <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: '#10b981' }}>
-                                            <KeyRound size={20} />
-                                        </div>
-                                        <input
-                                            type="text" maxLength={6} value={otp}
-                                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                            placeholder="Code à 6 chiffres" required
-                                            style={{
-                                                width: '100%', height: '56px', padding: '0 18px 0 50px',
-                                                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(16,185,129,0.3)',
-                                                borderRadius: '18px', color: '#fff', fontSize: '20px', letterSpacing: '8px', textAlign: 'center', outline: 'none'
-                                            }}
-                                        />
-                                    </div>
-                                ) : (
+                                {(!isRegister || regStep === 1) && (
                                     <>
-                                        {(!isRegister || regStep === 1) && (
-                                            <>
-                                                <div style={{ position: 'relative' }}>
-                                                    <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
-                                                        <Mail size={18} />
-                                                    </div>
-                                                    <input
-                                                        type="email" value={email}
-                                                        onChange={(e) => setEmail(e.target.value)}
-                                                        placeholder="Email" required
-                                                        style={{
-                                                            width: '100%', height: '56px', padding: '0 18px 0 50px',
-                                                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
-                                                            borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
-                                                        }}
-                                                    />
+                                        <div style={{ position: 'relative' }}>
+                                            <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
+                                                <Mail size={18} />
+                                            </div>
+                                            <input
+                                                type="email" value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                placeholder="Email" required
+                                                style={{
+                                                    width: '100%', height: '56px', padding: '0 18px 0 50px',
+                                                    background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                                                    borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
+                                                }}
+                                            />
+                                        </div>
+                                        
+                                        {isRegister && (
+                                            <div style={{ position: 'relative', marginTop: '14px' }}>
+                                                <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
+                                                    <Mail size={18} />
                                                 </div>
-                                                
-                                                {isRegister && (
-                                                    <div style={{ position: 'relative', marginTop: '14px' }}>
-                                                        <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
-                                                            <Mail size={18} />
-                                                        </div>
-                                                        <input
-                                                            type="email" value={confirmEmail}
-                                                            onChange={(e) => setConfirmEmail(e.target.value)}
-                                                            placeholder="Confirmer l'e-mail" required
-                                                            style={{
-                                                                width: '100%', height: '56px', padding: '0 18px 0 50px',
-                                                                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
-                                                                borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-
-                                        {(!isRegister || regStep === 2) && (
-                                            <>
-                                                {isRegister && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setRegStep(1)}
-                                                        style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', marginBottom: '4px' }}
-                                                    >
-                                                        <ChevronLeft size={14} /> Modifier l'email
-                                                    </button>
-                                                )}
-                                                <div style={{ position: 'relative' }}>
-                                                    <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
-                                                        <Lock size={18} />
-                                                    </div>
-                                                    <input
-                                                        type={showPassword ? "text" : "password"} value={password}
-                                                        onChange={(e) => setPassword(e.target.value)}
-                                                        placeholder={isRegister ? "Mot de passe" : "Ton mot de passe"} required
-                                                        style={{
-                                                            width: '100%', height: '56px', padding: '0 50px 0 50px',
-                                                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
-                                                            borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
-                                                        }}
-                                                    />
-                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-                                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                    </button>
-                                                </div>
-
-                                                {isRegister && (
-                                                    <div style={{ position: 'relative' }}>
-                                                        <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
-                                                            <ShieldCheck size={18} />
-                                                        </div>
-                                                        <input
-                                                            type={showPassword ? "text" : "password"} value={confirmPassword}
-                                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                                            placeholder="Confirmer le mot de passe" required
-                                                            style={{
-                                                                width: '100%', height: '56px', padding: '0 18px 0 50px',
-                                                                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
-                                                                borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )}
-                                                {!isRegister && (
-                                                    <button type="button" onClick={handleSendRecoveryOtp} style={{ alignSelf: 'flex-end', fontSize: '13px', fontWeight: '600', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: '-8px' }}>Mot de passe oublié ?</button>
-                                                )}
-                                            </>
+                                                <input
+                                                    type="email" value={confirmEmail}
+                                                    onChange={(e) => setConfirmEmail(e.target.value)}
+                                                    placeholder="Confirmer l'e-mail" required
+                                                    style={{
+                                                        width: '100%', height: '56px', padding: '0 18px 0 50px',
+                                                        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                                                        borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
+                                                    }}
+                                                />
+                                            </div>
                                         )}
                                     </>
                                 )}
+
+                                {(!isRegister || regStep === 2) && (
+                                    <>
+                                        {isRegister && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setRegStep(1)}
+                                                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', marginBottom: '4px' }}
+                                            >
+                                                <ChevronLeft size={14} /> Modifier l'email
+                                            </button>
+                                        )}
+                                        <div style={{ position: 'relative' }}>
+                                            <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
+                                                <Lock size={18} />
+                                            </div>
+                                            <input
+                                                type={showPassword ? "text" : "password"} value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder={isRegister ? "Mot de passe" : "Ton mot de passe"} required
+                                                style={{
+                                                    width: '100%', height: '56px', padding: '0 50px 0 50px',
+                                                    background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                                                    borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
+                                                }}
+                                            />
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
+
+                                        {isRegister && (
+                                            <div style={{ position: 'relative' }}>
+                                                <div style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }}>
+                                                    <ShieldCheck size={18} />
+                                                </div>
+                                                <input
+                                                    type={showPassword ? "text" : "password"} value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                    placeholder="Confirmer le mot de passe" required
+                                                    style={{
+                                                        width: '100%', height: '56px', padding: '0 18px 0 50px',
+                                                        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)',
+                                                        borderRadius: '18px', color: '#fff', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {/* Lien mot de passe oubli├® supprim├® pour ├®viter les envois d'emails */}
 
                                 {error && (
                                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '12px', background: 'rgba(239,68,68,0.08)', borderRadius: '14px', color: '#f87171', fontSize: '13px', border: '1px solid rgba(239,68,68,0.1)' }}>
@@ -462,8 +412,8 @@ export default function LoginPage() {
                                         <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                                     ) : (
                                         <>
-                                            {isOtpMode ? "Vérifier le code" : (isRegister ? (regStep === 1 ? 'Suivant' : 'Commencer maintenant') : 'Accéder à mon suivi')}
-                                            {isOtpMode ? <KeyRound size={20} /> : ((isRegister && regStep === 1) ? <ChevronRight size={18} /> : (isRegister ? <UserPlus size={20} /> : <LogIn size={20} />))}
+                                            {isRegister ? (regStep === 1 ? 'Suivant' : 'Commencer maintenant') : 'Acc├®der ├á mon suivi'}
+                                            {(isRegister && regStep === 1) ? <ChevronRight size={18} /> : (isRegister ? <UserPlus size={20} /> : <LogIn size={20} />)}
                                         </>
                                     )}
                                 </motion.button>
@@ -477,9 +427,9 @@ export default function LoginPage() {
                                     flexWrap: 'wrap'
                                 }}>
                                     {[
-                                        { icon: '✓', text: '+10 000 utilisateurs' },
-                                        { icon: '✓', text: 'Résultats en 7 jours' },
-                                        { icon: '✓', text: 'Basé sur l’IA' }
+                                        { icon: 'Ô£ö', text: '+10 000 utilisateurs' },
+                                        { icon: 'Ô£ö', text: 'R├®sultats en 7 jours' },
+                                        { icon: 'Ô£ö', text: 'Bas├® sur lÔÇÖIA' }
                                     ].map((badge, i) => (
                                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                             <span style={{ color: '#10b981', fontSize: '10px', fontWeight: '900' }}>{badge.icon}</span>
@@ -495,9 +445,9 @@ export default function LoginPage() {
                 {/* Toggle Login/Register */}
                 <motion.div style={{ marginTop: '32px' }}>
                     <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>
-                        {isRegister ? 'Déjà un compte ?' : 'Pas encore de compte ?'}
+                        {isRegister ? 'D├®j├á un compte ?' : 'Pas encore de compte ?'}
                         <button
-                            onClick={() => { setIsRegister(!isRegister); setRegStep(1); setIsOtpMode(false); setError(''); setSuccessMsg('') }}
+                            onClick={() => { setIsRegister(!isRegister); setRegStep(1); setError(''); setSuccessMsg('') }}
                             style={{ background: 'none', border: 'none', color: '#10b981', fontWeight: '800', marginLeft: '8px', cursor: 'pointer' }}
                         >
                             {isRegister ? 'Se connecter' : "S'inscrire"}
@@ -509,7 +459,7 @@ export default function LoginPage() {
                     En continuant, tu acceptes nos{' '}
                     <span onClick={() => router.push('/terms')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>CGU</span>
                     {' '}et notre{' '}
-                    <span onClick={() => router.push('/privacy')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>Confidentialité</span>
+                    <span onClick={() => router.push('/privacy')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>Confidentialit├®</span>
                 </div>
             </div>
             <style>{`
