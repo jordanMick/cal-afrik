@@ -19,10 +19,7 @@ export default function LandingPage() {
         if (isAnalyzing) {
             setProgress(0)
             interval = setInterval(() => {
-                setProgress(prev => {
-                    if (prev >= 95) return 95 // Hold at 95 until data arrives
-                    return prev + 5
-                })
+                setProgress(prev => (prev >= 95 ? 95 : prev + 5))
             }, 100)
             return () => clearInterval(interval)
         }
@@ -31,42 +28,22 @@ export default function LandingPage() {
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-
-        setIsAnalyzing(true)
-        setError(null)
-        setAnalysisResult(null)
-
+        setIsAnalyzing(true); setError(null); setAnalysisResult(null)
         try {
             const base64 = await toBase64(file)
             const res = await fetch('/api/demo/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    image: { data: base64, mimeType: file.type }
-                })
+                body: JSON.stringify({ image: { data: base64, mimeType: file.type } })
             })
-
             const data = await res.json()
-            
-            // Simuler un temps de traitement pour l'expérience utilisateur
             setTimeout(() => {
                 setProgress(100)
-                if (data.success) {
-                    if (data.items.length === 0) {
-                        setError("Yao n'a pas reconnu de nourriture sur cette photo.")
-                    } else {
-                        setAnalysisResult(data)
-                    }
-                } else {
-                    setError("Erreur d'analyse. Réessayez.")
-                }
+                if (data.success && data.items.length > 0) setAnalysisResult(data)
+                else setError(data.success ? "Plat non reconnu." : "Erreur d'analyse.")
                 setIsAnalyzing(false)
-            }, 1500)
-
-        } catch (err) {
-            setError("Erreur réseau.")
-            setIsAnalyzing(false)
-        }
+            }, 1000)
+        } catch { setError("Erreur réseau."); setIsAnalyzing(false) }
     }
 
     const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
@@ -77,178 +54,182 @@ export default function LandingPage() {
     })
 
     return (
-        <div className="min-h-screen bg-[#f9fafb] text-[#111827] font-sans overflow-x-hidden">
+        <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-emerald-100">
             {/* Header style taap.it */}
-            <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-gray-100">
-                <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-[#00d084] rounded-full flex items-center justify-center">
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
+                <div className="max-w-5xl mx-auto px-4 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-10">
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+                            <div className="w-9 h-9 bg-[#00d084] rounded-full flex items-center justify-center shadow-lg shadow-emerald-200">
                                 <Sparkles className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-xl font-bold tracking-tight text-[#111827] syne-font">Cal Afrik</span>
+                            <span className="text-xl font-bold tracking-tight text-slate-900 font-display">Cal Afrik</span>
                         </div>
-                        <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-gray-500">
-                            <Link href="#" className="hover:text-black transition-colors">Produit</Link>
-                            <Link href="#" className="hover:text-black transition-colors">Tarifs</Link>
-                            <Link href="#" className="hover:text-black transition-colors">F.A.Q</Link>
+                        <div className="hidden md:flex items-center gap-8 text-[13px] font-bold text-slate-400 uppercase tracking-widest">
+                            <Link href="#" className="hover:text-emerald-500 transition-colors">Produit</Link>
+                            <Link href="#" className="hover:text-emerald-500 transition-colors">Tarifs</Link>
+                            <Link href="#" className="hover:text-emerald-500 transition-colors">F.A.Q</Link>
                         </div>
                     </div>
-                    <Link href="/login" className="px-5 py-2 bg-[#00d084] text-white rounded-lg text-sm font-bold hover:bg-[#00ba76] transition-all shadow-sm">
+                    <Link href="/login" className="px-6 py-3 bg-[#00d084] text-white rounded-xl text-[13px] font-black uppercase tracking-widest hover:bg-[#00ba76] transition-all shadow-xl shadow-emerald-100 hover:-translate-y-0.5 active:translate-y-0">
                         Ouvrir Cal Afrik
                     </Link>
                 </div>
             </nav>
 
-            <main className="pt-40 pb-20 px-6 max-w-4xl mx-auto text-center">
-                {/* Hero section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                >
-                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-[#111827] mb-6 leading-tight syne-font">
-                        Booster votre santé grâce au <br />
-                        <span className="text-[#00d084]">scanner nutritionnel intelligent.</span>
-                    </h1>
-                    <p className="text-lg md:text-xl text-gray-500 mb-12 font-medium">
-                        Analysez vos plats africains en une photo. Sans effort.
-                    </p>
-
-                    {/* Action Bar (Input style) */}
-                    <div className="relative max-w-2xl mx-auto mb-8">
-                        {!isAnalyzing && !analysisResult && !error && (
-                            <div className="flex items-center p-1 bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100">
-                                <div className="flex-1 px-4 text-left text-gray-400 text-sm md:text-base font-medium truncate">
-                                    Prenez une photo ou choisissez une image de votre plat...
-                                </div>
-                                <button 
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="px-8 py-3 bg-[#00d084] text-white rounded-xl font-bold text-lg hover:bg-[#00ba76] transition-all active:scale-95"
-                                >
-                                    SCAN
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Loading State */}
-                        {isAnalyzing && (
-                            <div className="bg-white p-4 rounded-2xl shadow-lg border border-gray-100">
-                                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                    <motion.div 
-                                        className="h-full bg-[#00d084]"
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${progress}%` }}
-                                    />
-                                </div>
-                                <p className="mt-4 text-sm font-bold text-[#00d084] animate-pulse uppercase tracking-widest">
-                                    Analyse Yao en cours...
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Result Modal-like state */}
-                        <AnimatePresence>
-                            {analysisResult && (
-                                <motion.div 
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-50 text-left"
-                                >
-                                    <div className="flex items-center gap-3 text-[#00d084] mb-6 font-bold">
-                                        <CheckCircle2 className="w-6 h-6" />
-                                        <span>Résultat prêt !</span>
-                                    </div>
-                                    
-                                    <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
-                                        <div className="text-center md:text-left flex-1">
-                                            <div className="text-6xl font-black text-[#111827]">{analysisResult.total_summary.calories}</div>
-                                            <div className="text-sm text-gray-400 font-bold uppercase tracking-widest">Calories</div>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-6 flex-1 w-full">
-                                            <div className="text-center">
-                                                <div className="text-xl font-bold text-[#111827]">{analysisResult.total_summary.proteins}g</div>
-                                                <div className="text-[10px] text-gray-400 uppercase font-bold">Prot.</div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-xl font-bold text-[#111827]">{analysisResult.total_summary.carbs}g</div>
-                                                <div className="text-[10px] text-gray-400 uppercase font-bold">Gluc.</div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-xl font-bold text-[#111827]">{analysisResult.total_summary.lipids}g</div>
-                                                <div className="text-[10px] text-gray-400 uppercase font-bold">Lip.</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <Link href="/login?mode=register" className="w-full py-4 bg-[#00d084] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-[#00ba76] transition-all shadow-lg shadow-[#00d084]/20">
-                                        Voir l'analyse détaillée + 5 scans gratuits
-                                        <ChevronRight className="w-5 h-5" />
-                                    </Link>
-                                    
-                                    <button onClick={() => setAnalysisResult(null)} className="mt-6 w-full text-center text-sm text-gray-400 font-bold hover:text-gray-600 transition-colors uppercase tracking-widest">
-                                        Recommencer
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Error state */}
-                        {error && (
-                            <div className="bg-white p-8 rounded-3xl shadow-xl border border-red-50 border-t-4 border-t-red-500">
-                                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">Erreur d'analyse</h3>
-                                <p className="text-gray-500 mb-6 font-medium">{error}</p>
-                                <button onClick={() => setError(null)} className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition-all">
-                                    Réessayer
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Secondary CTA */}
-                    <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-10 py-4 bg-[#00d084] text-white rounded-2xl font-black text-xl hover:bg-[#00ba76] transition-all shadow-xl shadow-[#00d084]/20 hover:-translate-y-1"
+            <main className="pt-44 pb-32 px-4">
+                <div className="max-w-3xl mx-auto text-center">
+                    {/* Hero section */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
                     >
-                        Commencer gratuitement
-                    </button>
-                    <p className="mt-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Aucune carte bancaire requise</p>
+                        <h1 className="text-5xl md:text-7xl font-black tracking-tight text-slate-900 mb-8 leading-[1.05] font-display">
+                            Boostez votre santé grâce au <br />
+                            <span className="text-[#00d084]">scanner intelligent.</span>
+                        </h1>
+                        <p className="text-xl md:text-2xl text-slate-400 mb-16 font-medium max-w-2xl mx-auto">
+                            Analysez vos plats africains en une photo. <br className="hidden md:block" /> Sans effort, avec l'IA Yao.
+                        </p>
 
-                    {/* Hidden input */}
-                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
-                </motion.div>
+                        {/* Action Bar (Input style) */}
+                        <div className="relative max-w-2xl mx-auto mb-10">
+                            {!isAnalyzing && !analysisResult && !error && (
+                                <div className="group flex items-center p-2 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 hover:border-emerald-200 transition-all">
+                                    <div className="flex-1 px-6 text-left text-slate-300 text-base font-bold truncate uppercase tracking-widest">
+                                        Prenez une photo de votre plat...
+                                    </div>
+                                    <button 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="px-10 py-4 bg-[#00d084] text-white rounded-2xl font-black text-xl hover:bg-[#00ba76] transition-all shadow-xl shadow-emerald-100 group-hover:scale-[1.02] active:scale-95"
+                                    >
+                                        SCAN
+                                    </button>
+                                </div>
+                            )}
 
-                {/* Integration Icons style taap.it */}
-                <div className="mt-20 flex flex-wrap justify-center items-center gap-10 opacity-30">
-                    <div className="flex flex-col items-center gap-2">
-                        <Camera className="w-6 h-6" />
-                        <span className="text-[10px] font-black uppercase tracking-tighter">Vision AI</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <Upload className="w-6 h-6" />
-                        <span className="text-[10px] font-black uppercase tracking-tighter">Instant Sync</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <Sparkles className="w-6 h-6" />
-                        <span className="text-[10px] font-black uppercase tracking-tighter">Coach Yao</span>
-                    </div>
-                </div>
+                            {/* Loading State */}
+                            {isAnalyzing && (
+                                <div className="bg-white p-8 rounded-[32px] shadow-2xl border border-slate-50">
+                                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-6">
+                                        <motion.div 
+                                            className="h-full bg-[#00d084]"
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${progress}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-sm font-black text-[#00d084] animate-pulse uppercase tracking-[0.3em]">
+                                        Analyse Yao en cours...
+                                    </p>
+                                </div>
+                            )}
 
-                <div className="mt-8">
-                    <Link href="#" className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest underline underline-offset-4">Voir plus d'applications</Link>
+                            {/* Result State */}
+                            <AnimatePresence>
+                                {analysisResult && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="bg-white rounded-[40px] p-10 shadow-[0_30px_100px_rgba(0,0,0,0.1)] border border-slate-50 text-left"
+                                    >
+                                        <div className="flex items-center gap-3 text-[#00d084] mb-8 font-black uppercase tracking-widest text-sm">
+                                            <CheckCircle2 className="w-6 h-6" />
+                                            <span>Résultat prêt !</span>
+                                        </div>
+                                        
+                                        <div className="flex flex-col md:flex-row items-center gap-12 mb-10">
+                                            <div className="text-center md:text-left">
+                                                <div className="text-8xl font-black text-slate-900 leading-none mb-2">{analysisResult.total_summary.calories}</div>
+                                                <div className="text-xs text-slate-300 font-black uppercase tracking-[0.2em]">Calories Estimées</div>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-8 flex-1 w-full border-l border-slate-100 pl-12 hidden md:grid">
+                                                <div>
+                                                    <div className="text-2xl font-black text-slate-900">{analysisResult.total_summary.proteins}g</div>
+                                                    <div className="text-[10px] text-slate-300 uppercase font-black tracking-widest">Protéines</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-2xl font-black text-slate-900">{analysisResult.total_summary.carbs}g</div>
+                                                    <div className="text-[10px] text-slate-300 uppercase font-black tracking-widest">Glucides</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-2xl font-black text-slate-900">{analysisResult.total_summary.lipids}g</div>
+                                                    <div className="text-[10px] text-slate-300 uppercase font-black tracking-widest">Lipides</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <Link href="/login?mode=register" className="w-full py-5 bg-[#00d084] text-white rounded-[24px] font-black text-xl flex items-center justify-center gap-3 hover:bg-[#00ba76] transition-all shadow-2xl shadow-emerald-100">
+                                            Voir l'analyse détaillée + 5 scans offerts
+                                            <ChevronRight className="w-6 h-6" />
+                                        </Link>
+                                        
+                                        <button onClick={() => setAnalysisResult(null)} className="mt-8 w-full text-center text-xs text-slate-300 font-black hover:text-slate-500 transition-colors uppercase tracking-[0.2em]">
+                                            Réanalyser un plat
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {/* Error state */}
+                            {error && (
+                                <div className="bg-white p-12 rounded-[40px] shadow-2xl border border-red-50">
+                                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
+                                    <h3 className="text-2xl font-black text-slate-900 mb-3 uppercase tracking-tight">Erreur d'analyse</h3>
+                                    <p className="text-slate-400 mb-10 font-bold">{error}</p>
+                                    <button onClick={() => setError(null)} className="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
+                                        Réessayer
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Secondary CTA */}
+                        <div className="flex flex-col items-center gap-6">
+                            <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="px-12 py-5 bg-[#00d084] text-white rounded-3xl font-black text-2xl hover:bg-[#00ba76] transition-all shadow-2xl shadow-emerald-100 hover:-translate-y-1 active:translate-y-0"
+                            >
+                                Commencer gratuitement
+                            </button>
+                            <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">Aucune carte bancaire requise</p>
+                        </div>
+
+                        {/* Hidden input */}
+                        <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
+                    </motion.div>
+
+                    {/* Platform Icons style taap.it */}
+                    <div className="mt-32 flex flex-wrap justify-center items-center gap-16 opacity-20">
+                        <div className="flex flex-col items-center gap-4">
+                            <Camera className="w-8 h-8" />
+                            <span className="text-[11px] font-black uppercase tracking-[0.3em]">Vision AI</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-4">
+                            <Upload className="w-8 h-8" />
+                            <span className="text-[11px] font-black uppercase tracking-[0.3em]">Instant Sync</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-4">
+                            <Sparkles className="w-8 h-8" />
+                            <span className="text-[11px] font-black uppercase tracking-[0.3em]">Coach Yao</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-16">
+                        <Link href="#" className="text-xs font-black text-slate-300 hover:text-slate-900 transition-colors uppercase tracking-[0.2em] border-b-2 border-slate-100 pb-1">Voir plus d'applications</Link>
+                    </div>
                 </div>
             </main>
 
             {/* Footer style taap.it */}
-            <footer className="mt-20 py-10 border-t border-gray-100 text-center">
-                <div className="max-w-6xl mx-auto flex flex-col items-center gap-6">
-                    <div className="flex gap-8 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        <Link href="/privacy" className="hover:text-black transition-colors">Confidentialité</Link>
-                        <Link href="/terms" className="hover:text-black transition-colors">Conditions</Link>
-                        <Link href="#" className="hover:text-black transition-colors">Contact</Link>
+            <footer className="py-16 border-t border-slate-50 text-center">
+                <div className="max-w-5xl mx-auto flex flex-col items-center gap-10">
+                    <div className="flex flex-wrap justify-center gap-10 text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">
+                        <Link href="/privacy" className="hover:text-slate-900 transition-colors">Confidentialité</Link>
+                        <Link href="/terms" className="hover:text-slate-900 transition-colors">Conditions</Link>
+                        <Link href="#" className="hover:text-slate-900 transition-colors">Contact</Link>
                     </div>
-                    <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">© 2026 Cal Afrik</p>
+                    <p className="text-[10px] font-black text-slate-200 uppercase tracking-[0.4em]">© 2026 Cal Afrik</p>
                 </div>
             </footer>
         </div>
