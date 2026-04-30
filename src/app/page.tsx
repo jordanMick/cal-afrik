@@ -53,192 +53,154 @@ export default function LandingPage() {
         reader.onerror = reject
     })
 
+    // Inline Styles for bulletproof layout
+    const navStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '0 24px', height: '80px' }
+    const heroStyle = { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', textAlign: 'center' as const, maxWidth: '800px', margin: '0 auto', padding: '160px 24px 80px' }
+    const inputBarStyle = { display: 'flex', alignItems: 'center', background: '#1f1f1f', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', padding: '6px', width: '100%', maxWidth: '600px', margin: '0 auto 40px' }
+    const featureGridStyle = { display: 'flex', justifyContent: 'center', gap: '60px', width: '100%', maxWidth: '600px', margin: '60px auto 0' }
+
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-emerald-500/30 overflow-x-hidden">
-            {/* Header style mockup */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5">
-                <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#10b981] rounded-lg flex items-center justify-center font-bold text-lg">
+        <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'var(--font-dm-sans), sans-serif', overflowX: 'hidden' }}>
+            {/* Header */}
+            <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={navStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '40px', height: '40px', background: '#10b981', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px' }}>
                             CA
                         </div>
-                        <span className="text-xl font-bold tracking-tight font-display">Cal Afrik</span>
+                        <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '-0.5px', fontFamily: 'var(--font-syne), sans-serif' }}>Cal Afrik</span>
                     </div>
-                    <Link href="/login" className="px-6 py-2.5 border border-white/20 rounded-xl text-sm font-medium hover:bg-white/5 transition-all">
+                    <Link href="/login" style={{ padding: '10px 24px', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', fontSize: '14px', fontWeight: 500, color: '#fff', textDecoration: 'none' }}>
                         Ouvrir Cal Afrik
                     </Link>
                 </div>
             </nav>
 
-            <main className="pt-40 pb-24 px-6">
-                <div className="max-w-4xl mx-auto text-center">
-                    {/* Badge Pill */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="inline-flex items-center px-6 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/5 text-[#10b981] text-sm font-medium mb-12"
-                    >
-                        IA Yao — Analyse nutritionnelle africaine
-                    </motion.div>
+            <main style={heroStyle}>
+                {/* Badge Pill */}
+                <div style={{ padding: '8px 24px', borderRadius: '100px', border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)', color: '#10b981', fontSize: '14px', fontWeight: 500, marginBottom: '48px' }}>
+                    IA Yao — Analyse nutritionnelle africaine
+                </div>
 
-                    {/* Hero section */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.1 }}
-                    >
-                        <h1 className="text-5xl md:text-[64px] font-bold tracking-tight mb-8 leading-[1.1] font-display">
-                            Boostez votre santé grâce au <br />
-                            <span className="text-[#10b981]/80">scanner intelligent.</span>
-                        </h1>
-                        <p className="text-lg md:text-xl text-white/60 mb-16 max-w-2xl mx-auto leading-relaxed">
-                            Analysez vos plats africains en une photo. Sans effort, avec l'IA Yao.
-                        </p>
+                <h1 style={{ fontSize: 'clamp(32px, 8vw, 64px)', fontWeight: 'bold', letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '32px', fontFamily: 'var(--font-syne), sans-serif' }}>
+                    Boostez votre santé grâce au <br />
+                    <span style={{ color: 'rgba(16,185,129,0.8)' }}>scanner intelligent.</span>
+                </h1>
+                
+                <p style={{ fontSize: 'clamp(16px, 4vw, 20px)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: '64px', maxWidth: '600px' }}>
+                    Analysez vos plats africains en une photo. Sans effort, avec l'IA Yao.
+                </p>
 
-                        {/* Action Bar (Mockup style) */}
-                        <div className="relative max-w-2xl mx-auto mb-10">
-                            {!isAnalyzing && !analysisResult && !error && (
-                                <div className="flex items-center p-1.5 bg-[#1f1f1f] rounded-2xl border border-white/10">
-                                    <div className="flex-1 px-5 text-left text-white/40 text-base md:text-lg truncate">
-                                        Prenez une photo de votre plat...
-                                    </div>
-                                    <button 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="px-8 py-3 bg-[#131313] border border-white/10 text-white rounded-xl font-medium hover:bg-white/5 transition-all"
-                                    >
-                                        Scanner
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Loading State */}
-                            {isAnalyzing && (
-                                <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/5">
-                                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden mb-4">
-                                        <motion.div 
-                                            className="h-full bg-emerald-500"
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${progress}%` }}
-                                        />
-                                    </div>
-                                    <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Analyse en cours...</p>
-                                </div>
-                            )}
-
-                            {/* Result State */}
-                            <AnimatePresence>
-                                {analysisResult && (
-                                    <motion.div 
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="bg-[#1a1a1a] rounded-3xl p-10 border border-white/10 text-left shadow-2xl"
-                                    >
-                                        <div className="flex items-center gap-2 text-emerald-500 mb-8 font-bold text-sm uppercase tracking-widest">
-                                            <CheckCircle2 className="w-5 h-5" />
-                                            <span>Résultat prêt</span>
-                                        </div>
-                                        
-                                        <div className="flex flex-col md:flex-row items-center gap-12 mb-10">
-                                            <div className="text-center md:text-left">
-                                                <div className="text-7xl font-bold text-white mb-2">{analysisResult.total_summary.calories}</div>
-                                                <div className="text-[10px] text-white/30 font-bold uppercase tracking-[0.3em]">Calories</div>
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-8 flex-1 w-full border-l border-white/5 pl-10">
-                                                <div>
-                                                    <div className="text-xl font-bold text-white">{analysisResult.total_summary.proteins}g</div>
-                                                    <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Protéines</div>
-                                                </div>
-                                                <div>
-                                                    <div className="text-xl font-bold text-white">{analysisResult.total_summary.carbs}g</div>
-                                                    <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Glucides</div>
-                                                </div>
-                                                <div>
-                                                    <div className="text-xl font-bold text-white">{analysisResult.total_summary.lipids}g</div>
-                                                    <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest">Lipides</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <Link href="/login?mode=register" className="w-full py-4 bg-white text-black rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-all">
-                                            Voir le détail + 5 scans gratuits
-                                            <ChevronRight className="w-5 h-5" />
-                                        </Link>
-                                        
-                                        <button onClick={() => setAnalysisResult(null)} className="mt-6 w-full text-center text-[10px] text-white/20 font-bold uppercase tracking-[0.2em]">
-                                            Réanalyser
-                                        </button>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Error state */}
-                            {error && (
-                                <div className="bg-[#1a1a1a] p-10 rounded-3xl border border-red-500/20">
-                                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                                    <p className="text-white/60 mb-8 font-medium">{error}</p>
-                                    <button onClick={() => setError(null)} className="px-8 py-3 bg-white/5 border border-white/10 rounded-xl font-bold">
-                                        Réessayer
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Secondary CTA */}
-                        <div className="flex flex-col items-center gap-5">
+                {/* Action Bar */}
+                <div style={{ width: '100%', position: 'relative' }}>
+                    {!isAnalyzing && !analysisResult && !error && (
+                        <div style={inputBarStyle}>
+                            <div style={{ flex: 1, padding: '0 20px', textAlign: 'left', color: 'rgba(255,255,255,0.4)', fontSize: '16px' }}>
+                                Prenez une photo de votre plat...
+                            </div>
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="px-10 py-3.5 bg-transparent border border-white/20 rounded-xl font-medium text-lg hover:bg-white/5 transition-all"
+                                style={{ padding: '12px 32px', background: '#131313', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontWeight: 500, cursor: 'pointer' }}
                             >
-                                Commencer gratuitement
+                                Scanner
                             </button>
-                            <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Aucune carte bancaire requise</p>
                         </div>
+                    )}
 
-                        {/* Hidden input */}
-                        <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
-                    </motion.div>
-
-                    {/* Divider */}
-                    <div className="h-px bg-white/5 w-full my-16 max-w-2xl mx-auto" />
-
-                    {/* Features Grid style mockup */}
-                    <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/60">
-                                <Clock className="w-6 h-6" />
+                    {/* Loading State */}
+                    {isAnalyzing && (
+                        <div style={{ background: '#1a1a1a', padding: '32px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '600px', margin: '0 auto' }}>
+                            <div style={{ width: '100%', background: 'rgba(255,255,255,0.05)', height: '8px', borderRadius: '100px', overflow: 'hidden', marginBottom: '16px' }}>
+                                <motion.div style={{ height: '100%', background: '#10b981', width: `${progress}%` }} />
                             </div>
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-white/40">Vision AI</span>
+                            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981', textTransform: 'uppercase', letterSpacing: '2px' }}>Analyse en cours...</p>
                         </div>
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/60">
-                                <Upload className="w-6 h-6" />
-                            </div>
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-white/40">Sync Coach</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/60">
-                                <Star className="w-6 h-6" />
-                            </div>
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-white/40">Yao</span>
-                        </div>
-                    </div>
+                    )}
 
-                    <div className="mt-20">
-                        <Link href="#" className="text-xs font-bold text-emerald-500/80 hover:text-emerald-400 transition-colors underline underline-offset-8 decoration-emerald-500/30">Voir plus d'applications</Link>
-                    </div>
+                    {/* Result State */}
+                    <AnimatePresence>
+                        {analysisResult && (
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                style={{ background: '#1a1a1a', borderRadius: '32px', padding: '40px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left', maxWidth: '600px', margin: '0 auto', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', marginBottom: '32px', fontWeight: 'bold', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                    <CheckCircle2 size={20} /> Résultat prêt
+                                </div>
+                                
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginBottom: '40px' }}>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '64px', fontWeight: 'bold' }}>{analysisResult.total_summary.calories}</div>
+                                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px' }}>Calories</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '32px', flex: 1, borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: '32px' }}>
+                                        <div>
+                                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{analysisResult.total_summary.proteins}g</div>
+                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 'bold' }}>Prot.</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{analysisResult.total_summary.carbs}g</div>
+                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 'bold' }}>Gluc.</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{analysisResult.total_summary.lipids}g</div>
+                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 'bold' }}>Lip.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Link href="/login?mode=register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '16px', background: '#fff', color: '#000', borderRadius: '12px', fontWeight: 'bold', textDecoration: 'none', fontSize: '18px' }}>
+                                    Voir le détail + 5 scans gratuits <ChevronRight size={20} />
+                                </Link>
+                                
+                                <button onClick={() => setAnalysisResult(null)} style={{ marginTop: '24px', width: '100%', background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', cursor: 'pointer' }}>
+                                    Réanalyser
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
+
+                {/* Secondary CTA */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                    <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ padding: '14px 40px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', color: '#fff', fontSize: '18px', fontWeight: 500, cursor: 'pointer' }}
+                    >
+                        Commencer gratuitement
+                    </button>
+                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '2px' }}>Aucune carte bancaire requise</p>
+                </div>
+
+                {/* Features */}
+                <div style={featureGridStyle}>
+                    {[
+                        { icon: <Clock size={24} />, label: 'Vision AI' },
+                        { icon: <Upload size={24} />, label: 'Sync Coach' },
+                        { icon: <Star size={24} />, label: 'Yao' }
+                    ].map((f, i) => (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)' }}>
+                                {f.icon}
+                            </div>
+                            <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>{f.label}</span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Hidden input */}
+                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" style={{ display: 'none' }} />
             </main>
 
-            {/* Footer style mockup */}
-            <footer className="mt-12 py-10 border-t border-white/5 text-center">
-                <div className="max-w-6xl mx-auto flex flex-col items-center gap-6">
-                    <div className="flex gap-8 text-[11px] font-medium text-white/40">
-                        <Link href="/privacy" className="hover:text-white transition-colors">Confidentialité</Link>
-                        <Link href="/terms" className="hover:text-white transition-colors">Conditions</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Contact</Link>
-                    </div>
-                    <p className="text-[10px] font-medium text-white/20 uppercase tracking-[0.3em]">© 2026 Cal Afrik</p>
+            {/* Footer */}
+            <footer style={{ padding: '40px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginBottom: '24px' }}>
+                    <Link href="/privacy" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Confidentialité</Link>
+                    <Link href="/terms" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Conditions</Link>
+                    <Link href="#" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Contact</Link>
                 </div>
+                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: '3px' }}>© 2026 Cal Afrik</p>
             </footer>
         </div>
     )
