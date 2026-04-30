@@ -27,24 +27,37 @@ export default function LandingPage() {
 
     useEffect(() => {
         let interval: any
-        let stepInterval: any
+        let timeoutId: any
+        
         if (isAnalyzing) {
             setProgress(0)
             setAnalysisStep(0)
             
-            // Progression de la barre
+            // Progression de la barre (ralentit sur la fin)
             interval = setInterval(() => {
-                setProgress(prev => (prev >= 98 ? 98 : prev + 2))
+                setProgress(prev => {
+                    if (prev < 30) return prev + 3
+                    if (prev < 70) return prev + 1.5
+                    if (prev < 95) return prev + 0.5
+                    return prev >= 98 ? 98 : prev + 0.1
+                })
             }, 100)
 
-            // Progression des messages d'étapes
-            stepInterval = setInterval(() => {
-                setAnalysisStep(prev => (prev < steps.length - 1 ? prev + 1 : prev))
-            }, 800)
+            // Progression séquentielle des messages avec délais variables (Total 10s)
+            const stepDurations = [1000, 1500, 1500, 2000, 4000] 
+            
+            const runStep = (index: number) => {
+                if (index < steps.length) {
+                    setAnalysisStep(index)
+                    timeoutId = setTimeout(() => runStep(index + 1), stepDurations[index])
+                }
+            }
+            
+            runStep(0)
 
             return () => {
                 clearInterval(interval)
-                clearInterval(stepInterval)
+                clearTimeout(timeoutId)
             }
         }
     }, [isAnalyzing])
@@ -53,7 +66,6 @@ export default function LandingPage() {
         const file = e.target.files?.[0]
         if (!file) return
         
-        // Créer une URL locale pour la preview
         const url = URL.createObjectURL(file)
         setPreviewUrl(url)
         
@@ -66,7 +78,7 @@ export default function LandingPage() {
             })
             const data = await res.json()
             
-            // On laisse un peu de temps pour voir les étapes
+            // On attend les 10 secondes prévues
             setTimeout(() => {
                 setProgress(100)
                 if (data.success) {
@@ -75,7 +87,7 @@ export default function LandingPage() {
                     setError(data.error || "L'analyse a échoué.")
                 }
                 setIsAnalyzing(false)
-            }, 4000)
+            }, 10000)
         } catch (err) {
             setError("Erreur de connexion.")
             setIsAnalyzing(false)
