@@ -379,7 +379,24 @@ export default function LoginPage() {
                                     </>
                                 )}
 
-                                {/* Lien mot de passe oublié supprimé pour éviter les envois d'emails */}
+                                {!isRegister && (
+                                    <button 
+                                        type="button"
+                                        onClick={async () => {
+                                            if (!email) { setError("Saisis ton email d'abord ! 📧"); return }
+                                            setIsLoading(true)
+                                            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                                                redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+                                            })
+                                            setIsLoading(false)
+                                            if (error) setError(translateError(error.message))
+                                            else setSuccessMsg("Lien de récupération envoyé ! Vérifie tes mails 📧")
+                                        }}
+                                        style={{ alignSelf: 'flex-end', fontSize: '13px', fontWeight: '600', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: '-8px' }}
+                                    >
+                                        Mot de passe oublié ?
+                                    </button>
+                                )}
 
                                 {error && (
                                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '12px', background: 'rgba(239,68,68,0.08)', borderRadius: '14px', color: '#f87171', fontSize: '13px', border: '1px solid rgba(239,68,68,0.1)' }}>
