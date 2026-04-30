@@ -42,9 +42,8 @@ Si l'image ne montre pas de nourriture, renvoie:
 `
 
 const GEMINI_MODEL_CANDIDATES = [
-    "gemini-1.5-flash-latest",
+    "gemini-2.5-flash",
     "gemini-1.5-flash",
-    "gemini-1.5-pro-latest"
 ]
 
 export async function POST(req: Request) {
@@ -93,14 +92,14 @@ export async function POST(req: Request) {
         }
 
         const response = await result.response
-        
+
         if (!response.candidates || response.candidates.length === 0) {
             throw new Error("L'IA n'a pas pu générer de réponse pour cette image. (Sécurité ou Qualité)")
         }
 
         const text = response.text()
         console.log("Gemini Raw Response:", text)
-        
+
         let data;
         try {
             const cleanedText = text.replace(/```json|```/g, "").trim()
@@ -116,9 +115,9 @@ export async function POST(req: Request) {
         })
     } catch (error: any) {
         console.error("Demo Analyze Error Details:", error)
-        return NextResponse.json({ 
-            success: false, 
-            error: error.message || "Erreur lors de l'analyse" 
+        return NextResponse.json({
+            success: false,
+            error: error.message || "Erreur lors de l'analyse"
         }, { status: 500 })
     }
 }
