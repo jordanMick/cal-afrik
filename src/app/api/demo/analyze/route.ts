@@ -41,6 +41,12 @@ Si l'image ne montre pas de nourriture, renvoie:
 }
 `
 
+const GEMINI_MODEL_CANDIDATES = [
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro-latest"
+]
+
 export async function POST(req: Request) {
     try {
         if (!process.env.GEMINI_API_KEY) {
@@ -58,19 +64,33 @@ export async function POST(req: Request) {
             })
         }
 
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash-latest"
-        })
+        let lastError = null
+        let result = null
 
-        const result = await model.generateContent([
-            PROMPT,
-            {
-                inlineData: {
-                    data: image.data,
-                    mimeType: image.mimeType || "image/jpeg"
-                }
+        // Boucle sur les modèles candidats
+        for (const modelName of GEMINI_MODEL_CANDIDATES) {
+            try {
+                console.log(`Tentative avec le modèle : ${modelName}`)
+                const model = genAI.getGenerativeModel({ model: modelName })
+                result = await model.generateContent([
+                    PROMPT,
+                    {
+                        inlineData: {
+                            data: image.data,
+                            mimeType: image.mimeType || "image/jpeg"
+                        }
+                    }
+                ])
+                if (result) break // Succès !
+            } catch (err: any) {
+                console.error(`Échec avec ${modelName}:`, err.message)
+                lastError = err
             }
-        ])
+        }
+
+        if (!result) {
+            throw lastError || new Error("Aucun modèle n'a pu répondre")
+        }
 
         const response = await result.response
         
