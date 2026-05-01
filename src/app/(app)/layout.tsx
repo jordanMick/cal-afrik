@@ -22,7 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Background Aura Blobs */}
             <div className="bg-blob" style={{ top: '-100px', right: '-150px', background: 'var(--success)', opacity: 0.08 }} />
             <div className="bg-blob" style={{ bottom: '100px', left: '-150px', background: 'var(--accent)', opacity: 0.08 }} />
-            
+
             <AuthProvider>
                 {/* ✅ Surveille les changements de créneau */}
                 <SlotWatcherInit />
@@ -40,7 +40,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </motion.div>
                 </AnimatePresence>
             </AuthProvider>
-
             <BottomNav />
             {/* ✅ Dégradés SVG globaux (Fix pour les bugs d'affichage sur iPhone/Safari lors de la navigation) */}
             <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
