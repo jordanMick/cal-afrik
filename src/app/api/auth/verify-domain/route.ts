@@ -15,12 +15,23 @@ export async function POST(req: Request) {
     try {
         const { email, logSignup } = await req.json()
 
-        // 1. Récupérer l'IP
-        const forwarded = req.headers.get('x-forwarded-for')
-        const ip = forwarded ? forwarded.split(',')[0] : '127.0.0.1'
+        // 1. Récupérer l'IP de manière fiable (protection contre le spoofing)
+        // Sur Vercel, x-real-ip est injecté par le proxy et n'est pas falsifiable par le client.
+        const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1'
 
         // 2. Si on demande juste d'enregistrer l'inscription réussie
         if (logSignup) {
+            // SÉCURITÉ : On vérifie si l'utilisateur existe réellement et s'il est récent (dernières 5 min)
+            const { data: users, error: userError } = await supabaseAdmin.auth.admin.listUsers()
+            const newUser = users?.users.find(u => u.email === email)
+            
+            const isRecent = newUser && (Date.now() - new Date(newUser.created_at).getTime() < 300000)
+
+            if (!isRecent) {
+                console.warn(`[Verify] Tentative de log d'inscription invalide pour ${email}`)
+                return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+            }
+
             await supabaseAdmin.from('signup_logs').insert({ ip_address: ip })
             return NextResponse.json({ success: true })
         }

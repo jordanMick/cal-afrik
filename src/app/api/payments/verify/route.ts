@@ -182,6 +182,20 @@ export async function POST(req: Request) {
         const metadata = cart?.meta || {};
         const cartUserId: string = metadata?.user_id || metadata?.userId || '';
         const tier: string = (metadata?.tier || 'premium').toLowerCase();
+        
+        // 🛡️ SÉCURITÉ : Vérification financière (Faille 1)
+        // On compare le montant payé chez Maketou avec le montant qu'on attendait.
+        // Note: Selon l'API Maketou, le montant payé est souvent dans cart.total ou cart.price.
+        const paidAmount = Number(cart?.total || cart?.price || 0);
+        const expectedAmount = Number(metadata?.expected_amount || 0);
+
+        if (expectedAmount > 0 && Math.abs(paidAmount - expectedAmount) > 1) {
+            console.error(`${cartTag} 🚨 ÉCART DE PAIEMENT : Attendu=${expectedAmount}, Reçu=${paidAmount}`);
+            return NextResponse.json({ 
+                success: false, 
+                error: 'Validation financière échouée : le montant payé ne correspond pas au produit.' 
+            }, { status: 400 });
+        }
 
         if (!cartUserId) {
             console.error(`${cartTag} user_id introuvable dans cart.meta`);

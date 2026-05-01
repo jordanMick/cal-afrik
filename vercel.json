@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/push/send?secret=cal_afrik_push_2024",
+      "path": "/api/push/send?secret=cal_afrik_secure_push_2026_xYz",
       "schedule": "0 8 * * *"
     }
   ]

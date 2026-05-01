@@ -1,48 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getAuthenticatedUser } from '@/lib/admin-auth'
 
-export async function GET(req: NextRequest) {
+export const dynamic = 'force-dynamic'
+
+function isBootstrapEmailAllowed(email: string | undefined) {
+    const allowed = (process.env.ADMIN_BOOTSTRAP_EMAIL || 'jomickeal11@gmail.com')
+        .trim()
+        .toLowerCase()
+
+    return !!email && email.toLowerCase() === allowed
+}
+
+export async function POST(req: NextRequest) {
     try {
-        // 1. Tenter d'ajouter la colonne is_admin (ignore l'erreur si elle existe déjà)
-        try {
-            await supabaseAdmin.rpc('run_sql', { 
-                sql: 'ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE' 
-            })
-        } catch (e) {
-            console.log('SQL Migration might have failed or not supported via RPC:', e)
+        if (process.env.ENABLE_ADMIN_BOOTSTRAP !== 'true') {
+            return NextResponse.json({
+                error: "Bootstrap admin desactive. Active ENABLE_ADMIN_BOOTSTRAP=true temporairement pour l'utiliser."
+            }, { status: 403 })
         }
 
-        // 2. Promouvoir l'utilisateur jomickeal11@gmail.com
-        // On récupère d'abord l'ID de l'utilisateur par son email
-        const { data: users, error: userError } = await supabaseAdmin.auth.admin.listUsers()
-        if (userError) throw userError
+        const user = await getAuthenticatedUser(req)
+        if (!user) {
+            return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })
+        }
 
-        const targetUser = users.users.find(u => u.email === 'jomickeal11@gmail.com')
-        
-        if (!targetUser) {
-            return NextResponse.json({ error: 'Utilisateur jomickeal11@gmail.com non trouvé dans la base Auth.' })
+        if (!isBootstrapEmailAllowed(user.email)) {
+            return NextResponse.json({ error: 'Compte non autorise pour le bootstrap admin' }, { status: 403 })
+        }
+
+        const setupSecret = req.headers.get('x-admin-setup-secret')
+        if (!setupSecret || setupSecret !== process.env.ADMIN_SETUP_SECRET) {
+            return NextResponse.json({ error: 'Secret de bootstrap invalide' }, { status: 403 })
         }
 
         const { error: updateError } = await supabaseAdmin
             .from('user_profiles')
             .update({ is_admin: true })
-            .eq('user_id', targetUser.id)
+            .eq('user_id', user.id)
 
         if (updateError) {
-            // Si l'erreur est que la colonne n'existe pas, on renvoie une erreur spécifique
             if (updateError.message.includes('is_admin')) {
-                return NextResponse.json({ 
-                    error: "La colonne 'is_admin' n'existe pas encore. Veuillez l'ajouter manuellement dans le SQL Editor de Supabase: ALTER TABLE user_profiles ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;" 
-                })
+                return NextResponse.json({
+                    error: "La colonne 'is_admin' n'existe pas encore. Ajoute-la d'abord dans Supabase."
+                }, { status: 500 })
             }
+
             throw updateError
         }
 
-        return NextResponse.json({ 
-            success: true, 
-            message: `L'utilisateur ${targetUser.email} est maintenant ADMIN. Vous pouvez accéder à /admin` 
+        return NextResponse.json({
+            success: true,
+            message: `Le compte ${user.email} est maintenant administrateur. Desactive ensuite ENABLE_ADMIN_BOOTSTRAP.`
         })
-
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 })
     }

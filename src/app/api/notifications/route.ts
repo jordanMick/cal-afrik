@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import * as webpush from 'web-push'
 
-webpush.setVapidDetails(
-    'mailto:contact@Cal Afrik.com',
-    'BNfv7lFwqaZzo_KHZe6nmPCyVHse5lLyxy93uIlJql-1FiK0TDbXMEWCqHjszAuMxbUlZyIq-PE3UJy8Ci_vWAI',
-    'X7Ar5GPmj-iXaJWadrKgowvIZfYtcDKbJ9LnKlCvoiY'
-)
+function configureWebPush() {
+    const subject = process.env.WEB_PUSH_SUBJECT
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    const privateKey = process.env.VAPID_PRIVATE_KEY
+
+    if (!subject || !publicKey || !privateKey) {
+        console.warn('Configuration Web Push manquante dans /api/notifications')
+        return false
+    }
+
+    webpush.setVapidDetails(subject, publicKey, privateKey)
+    return true
+}
 
 async function getAuthClient(req: NextRequest) {
     const auth = req.headers.get('authorization')
@@ -83,14 +91,16 @@ export async function POST(req: NextRequest) {
                     .single()
 
                 if (subData?.subscription) {
-                    await webpush.sendNotification(
-                        subData.subscription,
-                        JSON.stringify({
-                            title: `🦁 ${title}`,
-                            body: message,
-                            url: '/dashboard'
-                        })
-                    )
+                    if (configureWebPush()) {
+                        await webpush.sendNotification(
+                            subData.subscription,
+                            JSON.stringify({
+                                title: `🦁 ${title}`,
+                                body: message,
+                                url: '/dashboard'
+                            })
+                        )
+                    }
                 }
             } catch (pushErr) {
                 console.error('Erreur envoi push Smart Alert:', pushErr)
