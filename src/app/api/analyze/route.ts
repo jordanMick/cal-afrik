@@ -105,6 +105,7 @@ DIRECTIVES D'ANALYSE VISUELLE :
 - Une pâte rouge/orange ne peut PAS être un Akple/Akpan ; c'est plutôt un profil de pâte assaisonnée.
 - Décomposition systématique : sépare l'accompagnement (pâte, riz, fufu) de la sauce et des protéines (viande, poisson).
 - PRIORITÉ NOM LOCAL: detected_name doit être formulé avec une appellation locale cohérente avec le pays fourni.
+- CONFUSION FRÉQUENTE: un petit végétal vert accompagnant un plat en Afrique de l'Ouest est presque toujours du piment vert frais (souvent appelé "Gbesse" au Togo/Bénin) et NON du citron vert. Analyse bien la forme (souvent allongée ou cabossée) avant de déduire que c'est un citron.
 
 PROTOCOLE DE MESURE SPATIALE :
 - Utilise les objets témoins (couverts, mains, bords de l'assiette) pour estimer l'échelle.
@@ -163,16 +164,28 @@ ERREUR DE POIDS CRITIQUE :
 - Si tes estimations dépassent ces valeurs, réduis-les fortement (divise par 2 ou 3), car tu surestimes probablement la profondeur de l'assiette.
 `
 const TECHNICAL_MATCH_ALLOWED = [
+    "gari_sec",
+    "gari_photo_pinon",
+    "sodabi_local",
+    "kom_local",
+    "semoule_manioc_seche",
+    "sauce_claire_bouillon",
     "pate_mais_fermente",
-    "pate_mais_non_fermente",
     "pate_mais_assaisonnee",
-    "pate_igname_pilee",
     "pate_mil_sorgho",
     "pate_manioc_fermente",
     "semoule_manioc_vapeur",
     "riz_blanc_vapeur",
-    "riz_gras_jollof",
     "riz_legumineuse_mix",
+    "pate_igname_pilee",
+    "pate_mais_non_fermente",
+    "riz_gras_jollof",
+    "riz_blanc_bouilli",
+    "legumineuse_bouillie",
+    "tubercule_bouilli",
+    "viande_rouge_sauce",
+    "wagashi_frais",
+    "wagashi_frit",
     "pain_mais_vapeur",
     "igname_bouillie",
     "manioc_bouilli",
@@ -188,22 +201,67 @@ const TECHNICAL_MATCH_ALLOWED = [
     "viande_rouge_braisee",
     "viande_rouge_frite",
     "volaille_braisee",
-    "volaille_frite",
     "poisson_frit",
     "poisson_fume",
     "oeuf_bouilli",
-    "oeuf_frit",
-    "fromage_traditionnel_frit",
     "puree_legumineuse_vapeur",
     "beignet_farine_sucre",
     "beignet_legumineuse_frit",
     "snack_arachide_pate",
     "banane_plantain_frite",
-    "pates_alimentaires_cuites",
-    "frites_pomme_de_terre",
-    "pain_baguette_ble",
-    "riz_au_gras_complet",
-    "unknown",
+    "bouillie_mais_granules",
+    "bouillie_riz_sucre",
+    "bouillie_tapioca",
+    "pain_brioche_local",
+    "galette_riz_frite",
+    "igname_frite_koliko",
+    "beignet_manioc_coco",
+    "fromage_traditionnel_frit",
+    "volaille_frite",
+    "oeuf_frit",
+    "mangue_fraiche",
+    "ananas_frais",
+    "papaye_fraiche",
+    "banane_douce",
+    "goyave_fraiche",
+    "corossol_frais",
+    "orange_locale",
+    "pasteque_fraiche",
+    "citron_vert",
+    "avocat_local",
+    "noix_de_coco_eau",
+    "bissap_fleur_seche",
+    "jus_de_baobab",
+    "jus_de_citron_frais",
+    "degue_yaourt",
+    "arraw_lait",
+    "salade_fruits_exotiques",
+    "riz_au_lait_coco",
+    "gnomon_sucre",
+    "beignets_coco",
+    "klui_klui",
+    "conserve_coco",
+    "kanklo_banane",
+    "yaourt_douceur_vanille",
+    "degue_mil",
+    "degue_couscous",
+    "degue_fonio",
+    "piment_noir_fionfion",
+    "piment_poudre_rouge",
+    "piment_vert_frais",
+    "sauce_piment_ebessessi",
+    "akpan_local",
+    "pates_alimentaires",
+    "riz_vermicelle",
+    "viande_porc_braise",
+    "poulet_braise",
+    "poulet_frit",
+    "salade_composee",
+    "mayonnaise_standard",
+    "sauce_barbecue",
+    "pain_torre_toast",
+    "manioc_frit",
+    "unknown"
 ]
 
 function buildPrompt(country?: string | null) {
@@ -614,6 +672,35 @@ export async function POST(req: Request) {
             }
             const normalizedLabel = normalize(detectedName)
 
+            // 0) Recherche dans l'historique utilisateur (meals table)
+            let matchedByHistory: any = null
+            const { data: historyRows } = await supabase
+                .from("meals")
+                .select("custom_name, calories, protein_g, carbs_g, fat_g, portion_g")
+                .eq("user_id", user.id)
+                .ilike("custom_name", detectedName)
+                .order("logged_at", { ascending: false })
+                .limit(1)
+            
+            if (historyRows && historyRows.length > 0) {
+                const hist = historyRows[0]
+                const prevPortion = hist.portion_g || 100
+                matchedByHistory = {
+                    display_name: hist.custom_name,
+                    name_standard: normalizeTechnicalKey(hist.custom_name),
+                    calories_per_100g: (hist.calories / prevPortion) * 100,
+                    proteins_100g: (hist.protein_g / prevPortion) * 100,
+                    carbs_100g: (hist.carbs_g / prevPortion) * 100,
+                    lipids_100g: (hist.fat_g / prevPortion) * 100,
+                }
+                console.log("[ANALYZE][PIPELINE] user_history_lookup", {
+                    detectedName,
+                    matched: true,
+                    histPortion: prevPortion,
+                    histCalories: hist.calories
+                })
+            }
+
             // 1) Recherche Alias
             const { data: sqlAliasMatchRows } = await supabase
                 .from("food_aliases")
@@ -642,9 +729,23 @@ export async function POST(req: Request) {
                 matchedName: matchedByAliasSql?.display_name || matchedByAliasSql?.name_standard || null,
             })
 
-            // 2) Recherche unknown_logs
+            // 2) Recherche standard via technical_match -> name_standard
+            let matchedByTechnical: any = null
+            if (!matchedByAliasSql && technicalMatch) {
+                const normalizedTechnical = normalizeTechnicalKey(technicalMatch)
+                matchedByTechnical = (foodItems || []).find((food: any) =>
+                    normalizeTechnicalKey(food?.name_standard) === normalizedTechnical
+                ) || null
+                console.log("[ANALYZE][PIPELINE] technical_match_lookup", {
+                    technicalMatch,
+                    matched: !!matchedByTechnical,
+                    matchedName: matchedByTechnical?.display_name || matchedByTechnical?.name_standard || null,
+                })
+            }
+
+            // 3) Recherche unknown_logs
             let unknownLogMatch: any = null
-            if (!matchedByAliasSql) {
+            if (!matchedByAliasSql && !matchedByTechnical) {
                 const { data: unknownRows } = await supabase
                     .from("unknown_logs")
                     .select("*")
@@ -658,23 +759,9 @@ export async function POST(req: Request) {
                 })
             }
 
-            // 3) Recherche standard via technical_match -> name_standard
-            let matchedByTechnical: any = null
-            if (!matchedByAliasSql && !unknownLogMatch && technicalMatch) {
-                const normalizedTechnical = normalizeTechnicalKey(technicalMatch)
-                matchedByTechnical = (foodItems || []).find((food: any) =>
-                    normalizeTechnicalKey(food?.name_standard) === normalizedTechnical
-                ) || null
-                console.log("[ANALYZE][PIPELINE] technical_match_lookup", {
-                    technicalMatch,
-                    matched: !!matchedByTechnical,
-                    matchedName: matchedByTechnical?.display_name || matchedByTechnical?.name_standard || null,
-                })
-            }
-
             const matchedByAlias = matchedByAliasSql || aliasToFood.get(normalizedLabel) || null
-            // L'ordre demandé : Alias -> technical_match -> unknown_logs
-            const matchedFood = matchedByAlias || matchedByTechnical || unknownLogMatch || null
+            // L'ordre demandé : Historique -> Alias -> technical_match -> unknown_logs
+            const matchedFood = matchedByHistory || matchedByAlias || matchedByTechnical || unknownLogMatch || null
             console.log("🧪 FOOD ITEM MATCH:", matchedFood)
             console.log("Match trouvé en BD ?:", !!matchedFood)
             const topMatches = getTopMatches(detectedName, foodItems || [])
