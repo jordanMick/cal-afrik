@@ -15,9 +15,15 @@ export async function POST(req: Request) {
     try {
         const { email, logSignup } = await req.json()
 
-        // 1. Récupérer l'IP de manière fiable (protection contre le spoofing)
-        // Sur Vercel, x-real-ip est injecté par le proxy et n'est pas falsifiable par le client.
-        const ip = req.headers.get('x-real-ip') || req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1'
+        // 1. Récupérer l'IP de manière fiable (protection contre le spoofing - P1 Hardened)
+        // On utilise UNIQUEMENT l'en-tête x-real-ip garanti par Vercel. 
+        // Si l'app est lancée localement, on autorise le loopback.
+        const ip = req.headers.get('x-real-ip') || (process.env.NODE_ENV === 'development' ? '127.0.0.1' : null)
+
+        if (!ip) {
+            console.error('[Verify] Requête bloquée : IP non fiable ou manquante')
+            return NextResponse.json({ error: 'Connexion non sécurisée' }, { status: 403 })
+        }
 
         // 2. Si on demande juste d'enregistrer l'inscription réussie
         if (logSignup) {

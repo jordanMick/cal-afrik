@@ -2,8 +2,14 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@supabase/supabase-js';
 
+// Source de vérité des prix (doit matcher checkout/route.ts)
+const EXPECTED_AMOUNTS: Record<string, any> = {
+    pro: { '1': 1500, '3': 4000, '12': 14000 },
+    premium: { '1': 2500, '3': 6500, '12': 22000 },
+    scan: 100,
+    suggestion: 100
+};
 /**
- * ─── ARCHITECTURE MAKETOU (sans webhook) ────────────────────────────────────
  *
  * Maketou ne pousse PAS de webhook → c'est à nous de poll l'API.
  *
@@ -183,17 +189,29 @@ export async function POST(req: Request) {
         const cartUserId: string = metadata?.user_id || metadata?.userId || '';
         const tier: string = (metadata?.tier || 'premium').toLowerCase();
         
-        // 🛡️ SÉCURITÉ : Vérification financière (Faille 1)
-        // On compare le montant payé chez Maketou avec le montant qu'on attendait.
-        // Note: Selon l'API Maketou, le montant payé est souvent dans cart.total ou cart.price.
-        const paidAmount = Number(cart?.total || cart?.price || 0);
-        const expectedAmount = Number(metadata?.expected_amount || 0);
+        // 🛡️ SÉCURITÉ : Vérification financière (Faille 1 - Durcie)
+        // On NE fait PLUS confiance aux métadonnées 'expected_amount' du panier.
+        // On recalcule nous-mêmes le prix théorique à partir du tier et de la duration.
+        const duration = Number(metadata?.duration || 1);
+        const tierBase = EXPECTED_AMOUNTS[tier];
+        const rawBaseAmount = typeof tierBase === 'object' ? tierBase[String(duration)] : tierBase;
+        
+        if (!rawBaseAmount) {
+            console.error(`${cartTag} Tier ou duration invalide : ${tier}/${duration}`);
+            return NextResponse.json({ success: false, error: 'Produit invalide' }, { status: 400 });
+        }
 
-        if (expectedAmount > 0 && Math.abs(paidAmount - expectedAmount) > 1) {
-            console.error(`${cartTag} 🚨 ÉCART DE PAIEMENT : Attendu=${expectedAmount}, Reçu=${paidAmount}`);
+        // Application de la réduction si présente dans les metas (calculée au checkout)
+        const discountPercent = Number(metadata?.discount_percent || 0);
+        const recalculatedAmount = Math.round(rawBaseAmount * (1 - (discountPercent / 100)));
+
+        const paidAmount = Number(cart?.total || cart?.price || 0);
+
+        if (Math.abs(paidAmount - recalculatedAmount) > 1) {
+            console.error(`${cartTag} 🚨 ÉCART DE PAIEMENT : Attendu (calculé)=${recalculatedAmount}, Reçu=${paidAmount}`);
             return NextResponse.json({ 
                 success: false, 
-                error: 'Validation financière échouée : le montant payé ne correspond pas au produit.' 
+                error: 'Validation financière échouée : le montant payé ne correspond pas au produit calculé.' 
             }, { status: 400 });
         }
 
