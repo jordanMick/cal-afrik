@@ -15,16 +15,17 @@ function configureWebPush() {
     webpush.setVapidDetails(subject, publicKey, privateKey)
 }
 
-// 🤖 GET : Appel par le CRON Job (SÉCURITÉ DURCIE : Header au lieu d'URL)
+// 🤖 GET : Appel par le CRON Job (Support Header et Query parameter)
 export async function GET(req: NextRequest) {
     const authHeader = req.headers.get('authorization')
     const customHeader = req.headers.get('x-cron-secret')
+    const querySecret = req.nextUrl.searchParams.get('secret')
     
-    // Le secret peut venir du header Authorization (standard Vercel) ou x-cron-secret
-    const secret = authHeader?.replace('Bearer ', '') || customHeader
+    // Le secret peut venir du header Authorization (standard Vercel), x-cron-secret ou paramètre d'URL (cron-job.org)
+    const secret = authHeader?.replace('Bearer ', '') || customHeader || querySecret
 
     if (!secret || secret !== process.env.PUSH_CRON_SECRET) {
-        console.warn('[Push Cron] Tentative d\'accès sans secret valide (Header manquant)')
+        console.warn('[Push Cron] Tentative d\'accès sans secret valide (Header/Query manquant)')
         return NextResponse.json({ error: 'Non autorise' }, { status: 403 })
     }
 
