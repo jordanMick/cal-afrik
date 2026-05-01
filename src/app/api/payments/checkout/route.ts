@@ -12,14 +12,12 @@ const EXPECTED_AMOUNTS: Record<string, any> = {
 export async function POST(req: Request) {
     const tag = '[Maketou Checkout]';
     try {
-        const { tier, discount = 0, duration = 1 } = await req.json();
         const apiKey = process.env.MAKETOU_API_KEY;
 
         if (!apiKey) {
             console.error(`${tag} MAKETOU_API_KEY manquante`);
             return NextResponse.json({ error: 'Configuration serveur incomplète' }, { status: 500 });
         }
-
         // 1. Authentification
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) {
@@ -31,6 +29,16 @@ export async function POST(req: Request) {
         if (authError || !user) {
             return NextResponse.json({ error: 'Session invalide' }, { status: 401 });
         }
+
+        // 🛡️ SÉCURITÉ : Ne PLUS faire confiance au discount envoyé par le client (P1 Hardened)
+        // On va chercher la réduction RÉELLE de l'utilisateur dans la base de données.
+        const { data: profile } = await supabase.from('user_profiles')
+            .select('promo_discount')
+            .eq('user_id', user.id)
+            .single();
+
+        const discount = Number(profile?.promo_discount || 0);
+        const { tier, duration = 1 } = await req.json();
 
         // 2. Validation stricte du produit
         let tierUpper = (tier || '').toUpperCase(); // ex: PRO, PREMIUM
